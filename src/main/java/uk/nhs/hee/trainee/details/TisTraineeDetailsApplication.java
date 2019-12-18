@@ -1,13 +1,13 @@
-package uk.nhs.tis.traineedetails;
+package uk.nhs.hee.trainee.details;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class TraineeDetailsApplication {
+public class TisTraineeDetailsApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(TraineeDetailsApplication.class, args);
+		SpringApplication.run(TisTraineeDetailsApplication.class, args);
 	}
 
 }
