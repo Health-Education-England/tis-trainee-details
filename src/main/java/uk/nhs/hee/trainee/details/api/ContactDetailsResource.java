@@ -18,15 +18,8 @@ public class ContactDetailsResource {
   @Autowired
   private ContactDetailsService contactDetailsService;
 
- /* @RequestMapping("/")
-  public String home(){
-    return "Hello World!";
-  }*/
-
   @GetMapping("/contactdetails/{traineeId}")
-  public ContactDetails getContactDetails(@PathVariable(name = "traineeId") String domainId){
-    return contactDetailsService.getContactDetails(domainId);
+  public ContactDetails getContactDetails(@PathVariable(name = "traineeId") String traineeId){
+    return contactDetailsService.getContactDetails(traineeId);
   }
-
-
 }

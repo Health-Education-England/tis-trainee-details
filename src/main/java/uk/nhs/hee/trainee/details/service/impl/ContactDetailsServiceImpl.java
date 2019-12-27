@@ -14,7 +14,6 @@ public class ContactDetailsServiceImpl implements ContactDetailsService{
   ContactDetailsRepository contactDetailsRepository;
 
   public ContactDetails getContactDetails(String id){
-    //return domainRepository.findOne(id);
     return contactDetailsRepository.findById(id).orElse(null);
   }
 
