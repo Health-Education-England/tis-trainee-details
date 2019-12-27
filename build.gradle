@@ -4,7 +4,7 @@ plugins {
 	id 'java'
 }
 
-group = 'uk.nhs.hee.trainee'
+group = 'uk.nhs.hee.trainee.details'
 version = '0.0.1-SNAPSHOT'
 sourceCompatibility = '11'
 
@@ -29,9 +29,13 @@ dependencies {
 	testImplementation('org.springframework.boot:spring-boot-starter-test') {
 		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
 	}
+    //logging
 	compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.29'
-	compileOnly 'org.projectlombok:lombok'
-	compile group: 'org.hibernate.javax.persistence', name: 'hibernate-jpa-2.1-api', version: '1.0.2.Final'
+    //lombok
+    compileOnly 'org.projectlombok:lombok:1.18.10'
+    annotationProcessor 'org.projectlombok:lombok:1.18.10'
+
+    compile group: 'org.hibernate.javax.persistence', name: 'hibernate-jpa-2.1-api', version: '1.0.2.Final'
     testCompile group: 'junit', name: 'junit', version: '4.10'
 }
 

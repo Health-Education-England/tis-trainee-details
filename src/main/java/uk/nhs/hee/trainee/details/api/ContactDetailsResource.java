@@ -7,6 +7,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.CrossOrigin;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import uk.nhs.hee.trainee.details.service.ContactDetailsService;
 import uk.nhs.hee.trainee.details.model.ContactDetails;
 
@@ -18,8 +21,11 @@ public class ContactDetailsResource {
   @Autowired
   private ContactDetailsService contactDetailsService;
 
+  private static final Logger log = LoggerFactory.getLogger(ContactDetailsResource.class);
+
   @GetMapping("/contactdetails/{traineeId}")
   public ContactDetails getContactDetails(@PathVariable(name = "traineeId") String traineeId){
+    log.trace("Contact Details of a trainee by traineeId {}", traineeId);
     return contactDetailsService.getContactDetails(traineeId);
   }
 }
