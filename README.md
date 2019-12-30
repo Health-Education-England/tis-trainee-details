@@ -12,6 +12,6 @@ You can run this project without going through the build with
 
 ./gradlew bootRun
 
-####Testing
+####Testing####
 
 To run the tests use: ./gradlew clean test
