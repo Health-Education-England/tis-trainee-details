@@ -10,7 +10,7 @@ pipeline {
         
         stage ('Step-2') {
             steps{
-                sh "ansible-playbook -vvv -i /var/jenkins_home/workspace/TIS-OPS/ansible/inventory/simple-inventory.ini /var/jenkins_home/workspace/TIS-OPS/ansible/install-docker.yml"
+                sh "ansible-playbook -i ~/workspace/TIS-OPS/ansible/inventory/simple-inventory.ini ~/workspace/TIS-OPS/ansible/install-docker.yml -vvv"
             }
         }
              
