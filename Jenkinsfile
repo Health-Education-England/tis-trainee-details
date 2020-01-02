@@ -5,9 +5,8 @@ pipeline {
         stage ('Deploy') {
             steps{
                 sshagent(credentials : ['jenkins']) {
-                    sh 'ssh -o StrictHostKeyChecking=no ubuntu@172.26.1.140'
-                    sh 'ssh -v ubuntu@172.26.1.140'
-                    sh 'touch file1'
+                    sh 'ssh -o StrictHostKeyChecking=no ubuntu@172.26.1.140 ls'
+                    sh 'ls'
                 }
             }
         }
