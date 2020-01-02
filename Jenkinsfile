@@ -4,7 +4,7 @@ pipeline {
         
         stage ('Test') {
             steps{
-                sh 'ls'
+                sh 'scp file1 ubuntu@172.26.1.140:file1-received'
             }
         }
         
