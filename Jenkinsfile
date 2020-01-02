@@ -11,7 +11,7 @@ pipeline {
         stage ('Deploy') {
             steps{
                 sshagent(credentials : ['jenkins']) {
-                    sh 'ssh -o StrictHostKeyChecking=no ubuntu@172.26.1.140 touch file2'
+                    sh 'ssh -o StrictHostKeyChecking=no ubuntu@172.26.1.140 touch file3'
                 }
             }
         }
