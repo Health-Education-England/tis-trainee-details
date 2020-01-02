@@ -28,27 +28,10 @@ node {
 
   println "[Jenkinsfile INFO] Commit Hash is ${GIT_COMMIT}"
 
-  try {
-
     milestone 1
 
-     stage('test') {
-      try {
+     stage('test') {      
         sh 'scp $env.DEVOPS_BASE/README.md ubuntu@172.26.1.140:readme'
-      } catch (err) {
-        throw err
-      }
     }
-
-   
-        
-
-    }
-  } catch (hudson.AbortException ae) {
-    // We want to do nothing for Aborts.
-  } catch (err) {
-    throw err
-  } finally {
-    archiveArtifacts allowEmptyArchive: true, artifacts: 'npm-debug.log, package-lock.json, src/*'
-  }
+  
 }
