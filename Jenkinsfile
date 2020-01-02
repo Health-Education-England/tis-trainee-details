@@ -4,17 +4,11 @@ pipeline {
         
         stage ('Test') {
             steps{
-                sh 'scp file1 ubuntu@172.26.1.140:file1-received'
+                sh 'scp TIS-OPS/README.md ubuntu@172.26.1.140:readme'
             }
         }
         
-        stage ('Deploy') {
-            steps{
-                sshagent(credentials : ['jenkins']) {
-                    sh 'ssh -o StrictHostKeyChecking=no ubuntu@172.26.1.140'
-                }
-            }
-        }
+        
         
     }
 }
