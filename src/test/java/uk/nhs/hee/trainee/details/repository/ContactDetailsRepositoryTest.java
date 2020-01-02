@@ -1,4 +1,4 @@
-package uk.nhs.trainee.details.repository;
+package uk.nhs.hee.trainee.details.repository;
 
 import com.transformuk.hee.tis.tcs.service.TestConfig;
 import uk.nhs.hee.trainee.details.model.ContactDetails;
