@@ -4,7 +4,7 @@ pipeline {
         
         stage ('Step-1') {
             steps{
-                sh "pwd"
+                sh "ls ~/workspace/TIS-OPS/ansible"
             }
         }
         
