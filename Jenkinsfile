@@ -1,12 +1,3 @@
-// -*- mode: groovy -*-
-// vim: set filetype=groovy :
-
-@Library('utils@master')_
-
-def utils = new hee.tis.utils()
-
-def service = "trainee-details"
-
 node {
 
   deleteDir()
