@@ -9,5 +9,5 @@ import uk.nhs.hee.trainee.details.model.ContactDetails;
 
 @Repository
 public interface ContactDetailsRepository extends MongoRepository<ContactDetails, String > {
-
+  ContactDetails findByTraineeTISId(String traineeTISId);
 }

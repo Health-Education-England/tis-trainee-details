@@ -114,7 +114,7 @@ public class ContactDetailsResourceIntTest {
     contactDetailsRepository.save(contactDetails);
 
     // When and Then
-    mvc.perform(get("/trainee/contactdetails/{traineeId}", contactDetails.getId())
+    mvc.perform(get("/api/contactdetails/{id}", contactDetails.getId())
         .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.id").value(contactDetails.getId()))

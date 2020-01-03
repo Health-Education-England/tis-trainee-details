@@ -32,6 +32,7 @@ public class ContactDetailsRepositoryTest {
   public void setup() {
     contactDetails = new ContactDetails();
     contactDetails.setId("1");
+    contactDetails.setTraineeTISId("1111");
     contactDetails.setSurname("Test");
     entityManager.persist(contactDetails);
   }
@@ -48,6 +49,14 @@ public class ContactDetailsRepositoryTest {
     Optional <ContactDetails> result = contactDetailsRepository.findById("1");
     Assert.assertTrue(result.isPresent());
     ContactDetails contactDetails = result.get();
+    Assert.assertEquals(contactDetails.getId(), "1s");
+    Assert.assertEquals(contactDetails.getSurname(), "Test");
+  }
+
+  @Test
+  @Transactional
+  public void shouldReturnContactDetailsByTraineeTISId() {
+    ContactDetails contactDetails = contactDetailsRepository.findByTraineeTISId("1111");
     Assert.assertEquals(contactDetails.getId(), "1");
     Assert.assertEquals(contactDetails.getSurname(), "Test");
   }

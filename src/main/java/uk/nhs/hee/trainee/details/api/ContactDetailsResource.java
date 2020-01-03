@@ -17,7 +17,7 @@ import uk.nhs.hee.trainee.details.model.ContactDetails;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:3000")
-@RequestMapping("/trainee")
+@RequestMapping("/api")
 public class ContactDetailsResource {
 
   @Autowired
@@ -25,10 +25,16 @@ public class ContactDetailsResource {
 
   private static final Logger log = LoggerFactory.getLogger(ContactDetailsResource.class);
 
-  @GetMapping("/contactdetails/{traineeId}")
-  public ContactDetails getContactDetails(@PathVariable(name = "traineeId") String traineeId){
+  @GetMapping("/contactdetails/{id}")
+  public ContactDetails getContactDetailsById(@PathVariable(name = "id") String contactDetailsId){
+    log.trace("Contact Details of a trainee by contactDetailsId {}", contactDetailsId);
+    return contactDetailsService.getContactDetails(contactDetailsId);
+  }
+
+  @GetMapping("/contactdetails/trainee/{traineeId}")
+  public ContactDetails getContactDetailsByTraineeId(@PathVariable(name = "traineeId") String traineeId){
     log.trace("Contact Details of a trainee by traineeId {}", traineeId);
-    return contactDetailsService.getContactDetails(traineeId);
+    return contactDetailsService.getContactDetailsByTraineeTISId(traineeId);
   }
 
   @PostMapping("/contactdetails/")

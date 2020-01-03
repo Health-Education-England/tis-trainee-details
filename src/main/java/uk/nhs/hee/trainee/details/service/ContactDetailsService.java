@@ -4,4 +4,5 @@ import uk.nhs.hee.trainee.details.model.ContactDetails;
 
 public interface ContactDetailsService {
   ContactDetails getContactDetails(String id);
+  ContactDetails getContactDetailsByTraineeTISId(String traineeTISId);
 }
