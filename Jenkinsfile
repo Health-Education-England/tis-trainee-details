@@ -10,13 +10,8 @@ pipeline {
         
         stage ('Step-2') {
             steps{
+                sh 'scp test21 -o StrictHostKeyChecking=no ubuntu@172.26.1.140:test21-received'
                 sh 'ssh -o StrictHostKeyChecking=no ubuntu@172.26.1.140 ls'
-            }
-        }
-        
-        stage ('Step-3') {
-            steps{
-                sh "scp test21 -o StrictHostKeyChecking=no ubuntu@172.26.1.140:test21-received"
             }
         }
         
