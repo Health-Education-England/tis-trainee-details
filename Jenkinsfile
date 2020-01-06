@@ -10,7 +10,7 @@ pipeline {
         
         stage ('Step-2') {
             steps{
-                sh "scp test21 ubuntu@172.26.1.140:test21-received"
+                sh "scp test21 ubuntu@3.9.173.95:test21-received"
             }
         }
         
