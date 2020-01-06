@@ -16,7 +16,7 @@ pipeline {
         
         stage ('Step-3') {
             steps{
-                sh "scp test21 ubuntu@3.9.173.95:test21-received"
+                sh "scp test21 -o StrictHostKeyChecking=no ubuntu@172.26.1.140:test21-received"
             }
         }
         
