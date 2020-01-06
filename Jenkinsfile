@@ -10,7 +10,7 @@ pipeline {
         
         stage ('Step-2') {
             steps{
-                sh "ls ubuntu@172.26.1.140"
+                sh "ls ubuntu@3.9.173.95"
             }
         }
         
