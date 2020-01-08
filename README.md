@@ -2,23 +2,20 @@
 
 This is one of the BE microservices of Trainee UI app. In this service SpringBoot, MongoDB, Gradle and RabbitMQ have been used.
 
-####Running TIS-TRAINEE-DETAILS Like all of the existing projects, we use a build wrapper.
+## Running TIS-TRAINEE-DETAILS Like all of the existing projects, we use a build wrapper.
 
-To build the project use: ./gradlew clean build
+To build the project use: `./gradlew clean build`
 
 This will create a .jar artifact in the ./build/libs directory
 
 You can run this project without going through the build with
 
-./gradlew bootRun
+`./gradlew bootRun`
 
-####Testing####
+## Testing
 
-To run the tests use: ./gradlew clean test
+To run the tests use: `./gradlew clean test`
 
-####Accessing Swagger API 
+## Accessing Swagger API 
 
-Paste this URI to the browser http://localhost:8203/swagger-ui.html 
-
-=======
-
+Paste this URI to the browser http://localhost:8203/swagger-ui.html
