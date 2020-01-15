@@ -33,7 +33,7 @@ public class TisTraineeDetailsApplication {
 
     return new Docket(DocumentationType.SWAGGER_2)
       .select()
-      .paths(regex("/trainee.*"))
+      .paths(regex("/api.*"))
       .apis(RequestHandlerSelectors.basePackage("uk.nhs.hee.trainee.details"))
       .build()
       .apiInfo(apiDetails());
