@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import uk.nhs.hee.trainee.details.dto.ContactDetailsDTO;
+import uk.nhs.hee.trainee.details.dto.ContactDetailsDto;
 import uk.nhs.hee.trainee.details.mapper.ContactDetailsMapper;
 import uk.nhs.hee.trainee.details.service.ContactDetailsService;
 import uk.nhs.hee.trainee.details.model.ContactDetails;
@@ -31,17 +31,17 @@ public class ContactDetailsResource {
   private static final Logger log = LoggerFactory.getLogger(ContactDetailsResource.class);
 
   @GetMapping("/contactdetails/{id}")
-  public ContactDetailsDTO getContactDetailsById(@PathVariable(name = "id") String contactDetailsId){
+  public ContactDetailsDto getContactDetailsById(@PathVariable(name = "id") String contactDetailsId){
     log.trace("Contact Details of a trainee by contactDetailsId {}", contactDetailsId);
     ContactDetails contactDetails = contactDetailsService.getContactDetails(contactDetailsId);
-    return contactDetailsMapper.contactDetailsToContactDetailsDTO(contactDetails);
+    return contactDetailsMapper.contactDetailsToContactDetailsDto(contactDetails);
   }
 
   @GetMapping("/contactdetails/trainee/{traineeId}")
-  public ContactDetailsDTO getContactDetailsByTraineeId(@PathVariable(name = "traineeId") String traineeId){
+  public ContactDetailsDto getContactDetailsByTraineeId(@PathVariable(name = "traineeId") String traineeId){
     log.trace("Contact Details of a trainee by traineeId {}", traineeId);
     ContactDetails contactDetails = contactDetailsService.getContactDetailsByTraineeTisId(traineeId);
-      return contactDetailsMapper.contactDetailsToContactDetailsDTO(contactDetails);
+      return contactDetailsMapper.contactDetailsToContactDetailsDto(contactDetails);
   }
 
   @PostMapping("/contactdetails/")
