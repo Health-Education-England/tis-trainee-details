@@ -4,6 +4,9 @@ plugins {
   id "io.spring.dependency-management" version "1.0.8.RELEASE"
   // TODO: check if required, can be achieved with config but may not be better.
   id "net.ltgt.apt" version "0.20"
+
+  // Code Quality
+  id "checkstyle"
 }
 
 group = "uk.nhs.hee.trainee.details"
@@ -39,6 +42,11 @@ dependencies {
   // Swagger
   implementation "io.springfox:springfox-swagger2:2.9.2"
   implementation "io.springfox:springfox-swagger-ui:2.9.2"
+}
+
+checkstyle {
+  toolVersion = "8.26"
+  config = resources.text.fromArchiveEntry(configurations.checkstyle[0], 'google_checks.xml')
 }
 
 test {
