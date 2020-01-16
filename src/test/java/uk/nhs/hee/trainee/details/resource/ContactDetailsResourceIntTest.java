@@ -77,7 +77,7 @@ public class ContactDetailsResourceIntTest {
   public static ContactDetails createEntity(EntityManager em) {
     ContactDetails contactDetails = new ContactDetails()
         .id("101")
-        .traineeTISId("2222")
+        .traineeTisId("2222")
         .surname(DEFAULT_SURNAME)
         .forenames(DEFAULT_FORENAMES)
         .knownAs(DEFAULT_KNOWN_AS)
@@ -118,7 +118,7 @@ public class ContactDetailsResourceIntTest {
         .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.id").value(contactDetails.getId()))
-        .andExpect(jsonPath("$.traineeTISId").value(contactDetails.getTraineeTISId()))
+        .andExpect(jsonPath("$.traineeTisId").value(contactDetails.getTraineeTisId()))
         .andExpect(jsonPath("$.surname").value(DEFAULT_SURNAME.toString()))
         .andExpect(jsonPath("$.forenames").value(DEFAULT_FORENAMES.toString()))
         .andExpect(jsonPath("$.knownAs").value(DEFAULT_KNOWN_AS.toString()))

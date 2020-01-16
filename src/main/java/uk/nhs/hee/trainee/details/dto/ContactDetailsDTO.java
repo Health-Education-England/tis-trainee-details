@@ -7,7 +7,7 @@ import java.time.LocalDate;
 @Data
 public class ContactDetailsDTO {
     private String id;
-    private String traineeTISId;
+    private String traineeTisId;
     private String surname;
     private String forenames;
     private String knownAs;

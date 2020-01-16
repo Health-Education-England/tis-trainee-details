@@ -17,8 +17,8 @@ public class ContactDetails {
   private String id;
 
   @Indexed(unique = true)
-  @Field(value = "traineeTISId")
-  private String traineeTISId;
+  @Field(value = "traineeTisId")
+  private String traineeTisId;
   @Field(value = "surname")
   private String surname;
   @Field(value = "forenames")
@@ -71,8 +71,8 @@ public class ContactDetails {
     return this;
   }
 
-  public ContactDetails traineeTISId(String traineeTISId){
-    this.traineeTISId = traineeTISId;
+  public ContactDetails traineeTisId(String traineeTisId){
+    this.traineeTisId = traineeTisId;
     return this;
   }
 

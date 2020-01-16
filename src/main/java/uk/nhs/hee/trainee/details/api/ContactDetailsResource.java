@@ -37,7 +37,7 @@ public class ContactDetailsResource {
   @GetMapping("/contactdetails/trainee/{traineeId}")
   public ContactDetailsDTO getContactDetailsByTraineeId(@PathVariable(name = "traineeId") String traineeId){
     log.trace("Contact Details of a trainee by traineeId {}", traineeId);
-    ContactDetails contactDetails = contactDetailsService.getContactDetailsByTraineeTISId(traineeId);
+    ContactDetails contactDetails = contactDetailsService.getContactDetailsByTraineeTisId(traineeId);
       return ContactDetailsMapper.MAPPER.contactDetailsToContactDetailsDTO(contactDetails);
   }
 
