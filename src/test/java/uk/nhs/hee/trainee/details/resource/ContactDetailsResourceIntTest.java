@@ -23,6 +23,7 @@ import uk.nhs.hee.trainee.details.api.ContactDetailsResource;
 import uk.nhs.hee.trainee.details.model.ContactDetails;
 import uk.nhs.hee.trainee.details.repository.ContactDetailsRepository;
 
+@Ignore("Current requires a local DB instance, ignore until in-memory test DB is set up")
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = TisTraineeDetailsApplication.class)
 public class ContactDetailsResourceIntTest {
