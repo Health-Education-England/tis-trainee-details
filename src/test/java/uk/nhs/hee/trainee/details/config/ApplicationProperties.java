@@ -1,4 +1,4 @@
-package uk.nhs.trainee.details.config;
+package uk.nhs.hee.trainee.details.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
