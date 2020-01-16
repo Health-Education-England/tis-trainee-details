@@ -1,5 +1,5 @@
 # Default Behaviour
-* text = auto
+* text=auto
 
 # Export Ignore
 .gitattributes export-ignore
