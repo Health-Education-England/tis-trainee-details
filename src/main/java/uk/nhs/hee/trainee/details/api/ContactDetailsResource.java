@@ -25,20 +25,23 @@ public class ContactDetailsResource {
   @Autowired
   private ContactDetailsService contactDetailsService;
 
+  @Autowired
+  private ContactDetailsMapper contactDetailsMapper;
+
   private static final Logger log = LoggerFactory.getLogger(ContactDetailsResource.class);
 
   @GetMapping("/contactdetails/{id}")
   public ContactDetailsDTO getContactDetailsById(@PathVariable(name = "id") String contactDetailsId){
     log.trace("Contact Details of a trainee by contactDetailsId {}", contactDetailsId);
     ContactDetails contactDetails = contactDetailsService.getContactDetails(contactDetailsId);
-    return ContactDetailsMapper.MAPPER.contactDetailsToContactDetailsDTO(contactDetails);
+    return contactDetailsMapper.contactDetailsToContactDetailsDTO(contactDetails);
   }
 
   @GetMapping("/contactdetails/trainee/{traineeId}")
   public ContactDetailsDTO getContactDetailsByTraineeId(@PathVariable(name = "traineeId") String traineeId){
     log.trace("Contact Details of a trainee by traineeId {}", traineeId);
     ContactDetails contactDetails = contactDetailsService.getContactDetailsByTraineeTisId(traineeId);
-      return ContactDetailsMapper.MAPPER.contactDetailsToContactDetailsDTO(contactDetails);
+      return contactDetailsMapper.contactDetailsToContactDetailsDTO(contactDetails);
   }
 
   @PostMapping("/contactdetails/")
