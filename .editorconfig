@@ -1,0 +1,17 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_size = 2
+indent_style = space
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.java]
+# IntelliJ specific config should not be here, but is required to allow correct
+# application of styling rules. Otherwise continued lines use standard indent.
+ij_continuation_indent_size = 4
