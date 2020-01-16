@@ -32,7 +32,7 @@ public class ContactDetailsRepositoryTest {
   public void setup() {
     contactDetails = new ContactDetails();
     contactDetails.setId("1");
-    contactDetails.setTraineeTISId("1111");
+    contactDetails.setTraineeTisId("1111");
     contactDetails.setSurname("Test");
     entityManager.persist(contactDetails);
   }
@@ -55,8 +55,8 @@ public class ContactDetailsRepositoryTest {
 
   @Test
   @Transactional
-  public void shouldReturnContactDetailsByTraineeTISId() {
-    ContactDetails contactDetails = contactDetailsRepository.findByTraineeTISId("1111");
+  public void shouldReturnContactDetailsByTraineeTisId() {
+    ContactDetails contactDetails = contactDetailsRepository.findByTraineeTisId("1111");
     Assert.assertEquals(contactDetails.getId(), "1");
     Assert.assertEquals(contactDetails.getSurname(), "Test");
   }

@@ -4,14 +4,12 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
-import java.util.Objects;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
+import java.time.LocalDate;
 import lombok.NoArgsConstructor;
 
 @Document(collection = "ContactDetails")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 public class ContactDetails {
 
@@ -19,8 +17,8 @@ public class ContactDetails {
   private String id;
 
   @Indexed(unique = true)
-  @Field(value = "traineeTISId")
-  private String traineeTISId;
+  @Field(value = "traineeTisId")
+  private String traineeTisId;
   @Field(value = "surname")
   private String surname;
   @Field(value = "forenames")
@@ -47,14 +45,34 @@ public class ContactDetails {
   private String address4;
   @Field(value = "postCode")
   private String postCode;
+  @Field(value = "gmcNumber")
+  private String gmcNumber;
+  @Field(value = "gmcStatus")
+  private String gmcStatus;
+  @Field(value = "gdcNumber")
+  private String gdcNumber;
+  @Field(value = "gdcStatus")
+  private String gdcStatus;
+  @Field(value = "publicHealthNumber")
+  private String publicHealthNumber;
+  @Field(value = "eeaResident")
+  private String eeaResident;
+  @Field(value = "permitToWork")
+  private String permitToWork;
+  @Field(value = "settled")
+  private String settled;
+  @Field(value = "visaIssued")
+  private LocalDate visaIssued;
+  @Field(value = "detailsNumber")
+  private String detailsNumber;
 
   public ContactDetails id(String id){
     this.id = id;
     return this;
   }
 
-  public ContactDetails traineeTISId(String traineeTISId){
-    this.traineeTISId = traineeTISId;
+  public ContactDetails traineeTisId(String traineeTisId){
+    this.traineeTisId = traineeTisId;
     return this;
   }
 
@@ -120,6 +138,56 @@ public class ContactDetails {
 
   public ContactDetails postCode(String postCode){
     this.postCode = postCode;
+    return this;
+  }
+
+  public ContactDetails gmcNumber(String gmcNumber){
+    this.gmcNumber = gmcNumber;
+    return this;
+  }
+
+  public ContactDetails gmcStatus(String gmcStatus){
+    this.gmcStatus = gmcStatus;
+    return this;
+  }
+
+  public ContactDetails gdcNumber(String gdcNumber){
+    this.gdcNumber = gdcNumber;
+    return this;
+  }
+
+  public ContactDetails gdcStatus(String gdcStatus){
+    this.gdcStatus = gdcStatus;
+    return this;
+  }
+
+  public ContactDetails publicHealthNumber(String publicHealthNumber){
+    this.publicHealthNumber = publicHealthNumber;
+    return this;
+  }
+
+  public ContactDetails eeaResident(String eeaResident){
+    this.eeaResident = eeaResident;
+    return this;
+  }
+
+  public ContactDetails permitToWork(String permitToWork){
+    this.permitToWork = permitToWork;
+    return this;
+  }
+
+  public ContactDetails settled(String settled){
+    this.settled = settled;
+    return this;
+  }
+
+  public ContactDetails visaIssued(LocalDate visaIssued){
+    this.visaIssued = visaIssued;
+    return this;
+  }
+
+  public ContactDetails detailsNumber(String detailsNumber){
+    this.detailsNumber = detailsNumber;
     return this;
   }
 }

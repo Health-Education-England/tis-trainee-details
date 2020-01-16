@@ -17,8 +17,8 @@ public class ContactDetailsServiceImpl implements ContactDetailsService{
     return contactDetailsRepository.findById(id).orElse(null);
   }
 
-  public ContactDetails getContactDetailsByTraineeTISId(String traineeTISId){
-    return contactDetailsRepository.findByTraineeTISId(traineeTISId);
+  public ContactDetails getContactDetailsByTraineeTisId(String traineeTisId){
+    return contactDetailsRepository.findByTraineeTisId(traineeTisId);
   }
 
 }
