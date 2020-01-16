@@ -34,14 +34,14 @@ public class ContactDetailsResource {
   public ContactDetailsDto getContactDetailsById(@PathVariable(name = "id") String contactDetailsId){
     log.trace("Contact Details of a trainee by contactDetailsId {}", contactDetailsId);
     ContactDetails contactDetails = contactDetailsService.getContactDetails(contactDetailsId);
-    return contactDetailsMapper.contactDetailsToContactDetailsDto(contactDetails);
+    return contactDetailsMapper.toDto(contactDetails);
   }
 
   @GetMapping("/contactdetails/trainee/{traineeId}")
   public ContactDetailsDto getContactDetailsByTraineeId(@PathVariable(name = "traineeId") String traineeId){
     log.trace("Contact Details of a trainee by traineeId {}", traineeId);
     ContactDetails contactDetails = contactDetailsService.getContactDetailsByTraineeTisId(traineeId);
-      return contactDetailsMapper.contactDetailsToContactDetailsDto(contactDetails);
+      return contactDetailsMapper.toDto(contactDetails);
   }
 
   @PostMapping("/contactdetails/")

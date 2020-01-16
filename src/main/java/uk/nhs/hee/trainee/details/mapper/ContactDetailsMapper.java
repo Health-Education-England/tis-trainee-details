@@ -7,6 +7,6 @@ import uk.nhs.hee.trainee.details.model.ContactDetails;
 
 @Mapper(componentModel = "spring")
 public interface ContactDetailsMapper {
-    ContactDetailsDto contactDetailsToContactDetailsDto(ContactDetails contactDetails);
-    ContactDetails contactDetailsDtoToContactDetails(ContactDetailsDto contactDetailsDto);
+    ContactDetailsDto toDto(ContactDetails contactDetails);
+    ContactDetails toEntity(ContactDetailsDto contactDetailsDto);
 }
