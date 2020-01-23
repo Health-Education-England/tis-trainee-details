@@ -24,7 +24,7 @@ public class ContactDetails {
   private String id;
 
   @Indexed(unique = true)
-  @Field(value = "traineeTId")
+  @Field(value = "traineeTisId")
   private String traineeTisId;
   @Field(value = "surname")
   private String surname;
