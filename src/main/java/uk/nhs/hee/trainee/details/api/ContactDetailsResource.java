@@ -33,11 +33,11 @@ public class ContactDetailsResource {
    * @return The {@link ContactDetailsDto} representing the contact details.
    */
   @GetMapping("/contactdetails/{id}")
-  public ContactDetailsDto getContactDetailsById(
+  public ContactDetails getContactDetailsById(
       @PathVariable(name = "id") String contactDetailsId) {
     log.trace("Contact Details of a trainee by contactDetailsId {}", contactDetailsId);
     ContactDetails contactDetails = contactDetailsService.getContactDetails(contactDetailsId);
-    return contactDetailsMapper.toDto(contactDetails);
+    return contactDetails;
   }
 
   /**
