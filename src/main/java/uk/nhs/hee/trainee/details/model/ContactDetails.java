@@ -80,10 +80,12 @@ public class ContactDetails {
   @NoArgsConstructor
   @AllArgsConstructor
   public static class ProgrammeMembership {
+    private String programmeTisId;
+    private String programmeName;
+    private String programmeNumber;
+    private String managingDeanery;
     private LocalDate startDate;
     private LocalDate endDate;
-    @DBRef
-    private String programmeId;
     @Builder.Default
     private List<Curriculum> curricula = new ArrayList<>();
   }
