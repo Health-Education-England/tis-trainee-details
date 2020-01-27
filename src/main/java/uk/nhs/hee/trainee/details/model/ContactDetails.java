@@ -12,6 +12,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
+import uk.nhs.hee.trainee.details.dto.enumeration.PlacementStatus;
 
 @Document(collection = "ContactDetails")
 @Data
@@ -88,18 +89,18 @@ public class ContactDetails {
     @Builder.Default
     private List<Curriculum> curricula = new ArrayList<>();
 
-    public String getStatus() {
+    public PlacementStatus getStatus() {
       if (this.startDate == null || this.endDate == null) {
         return null;
       }
 
       LocalDate today = LocalDate.now();
       if (today.isBefore(this.startDate)) {
-        return "FUTURE";
+        return PlacementStatus.FUTURE;
       } else if (today.isAfter(this.endDate)) {
-        return "PAST";
+        return PlacementStatus.PAST;
       }
-      return "CURRENT";
+      return PlacementStatus.CURRENT;
     }
   }
 
