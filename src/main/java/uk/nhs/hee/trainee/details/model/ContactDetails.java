@@ -87,6 +87,20 @@ public class ContactDetails {
     private LocalDate endDate;
     @Builder.Default
     private List<Curriculum> curricula = new ArrayList<>();
+
+    public String getStatus() {
+      if (this.startDate == null || this.endDate == null) {
+        return null;
+      }
+
+      LocalDate today = LocalDate.now();
+      if (today.isBefore(this.startDate)) {
+        return "FUTURE";
+      } else if (today.isAfter(this.endDate)) {
+        return "PAST";
+      }
+      return "CURRENT";
+    }
   }
 
   @Data

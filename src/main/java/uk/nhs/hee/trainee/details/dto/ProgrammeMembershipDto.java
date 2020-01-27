@@ -13,5 +13,6 @@ public class ProgrammeMembershipDto {
   private String managingDeanery;
   private LocalDate startDate;
   private LocalDate endDate;
+  private String status;
   private List<CurriculumDto> curricula;
 }
