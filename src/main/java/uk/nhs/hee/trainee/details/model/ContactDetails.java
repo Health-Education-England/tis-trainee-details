@@ -74,42 +74,4 @@ public class ContactDetails {
   private String detailsNumber;
   @Builder.Default
   private List<ProgrammeMembership> programmeMemberships = new ArrayList<>();
-
-  @Data
-  @Builder
-  @NoArgsConstructor
-  @AllArgsConstructor
-  public static class ProgrammeMembership {
-    private String programmeTisId;
-    private String programmeName;
-    private String programmeNumber;
-    private String managingDeanery;
-    private LocalDate startDate;
-    private LocalDate endDate;
-    @Builder.Default
-    private List<Curriculum> curricula = new ArrayList<>();
-
-    public PlacementStatus getStatus() {
-      if (this.startDate == null || this.endDate == null) {
-        return null;
-      }
-
-      LocalDate today = LocalDate.now();
-      if (today.isBefore(this.startDate)) {
-        return PlacementStatus.FUTURE;
-      } else if (today.isAfter(this.endDate)) {
-        return PlacementStatus.PAST;
-      }
-      return PlacementStatus.CURRENT;
-    }
-  }
-
-  @Data
-  @Builder
-  @NoArgsConstructor
-  @AllArgsConstructor
-  public static class Curriculum {
-    private String curriculumTisId;
-    private String curriculumName;
-  }
 }
