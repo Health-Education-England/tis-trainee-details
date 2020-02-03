@@ -1,6 +1,8 @@
 package uk.nhs.hee.trainee.details.dto;
 
 import java.time.LocalDate;
+import java.util.List;
+
 import lombok.Data;
 
 @Data
@@ -31,4 +33,5 @@ public class ContactDetailsDto {
   private String settled;
   private LocalDate visaIssued;
   private String detailsNumber;
+  private List<ProgrammeMembershipDto> programmeMemberships;
 }
