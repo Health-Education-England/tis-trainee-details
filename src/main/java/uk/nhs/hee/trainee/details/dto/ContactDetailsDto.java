@@ -34,4 +34,5 @@ public class ContactDetailsDto {
   private LocalDate visaIssued;
   private String detailsNumber;
   private List<ProgrammeMembershipDto> programmeMemberships;
+  private List<PlacementDto> placements;
 }
