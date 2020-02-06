@@ -38,6 +38,7 @@ public class ContactDetailsResource {
     log.trace("Contact Details of a trainee by contactDetailsId {}", contactDetailsId);
     ContactDetails contactDetails = contactDetailsService.getContactDetails(contactDetailsId);
     contactDetails = contactDetailsService.hidePastProgrammes(contactDetails);
+    contactDetails = contactDetailsService.hidePastPlacements(contactDetails);
     return contactDetailsMapper.toDto(contactDetails);
   }
 
@@ -54,6 +55,7 @@ public class ContactDetailsResource {
     ContactDetails contactDetails = contactDetailsService
         .getContactDetailsByTraineeTisId(traineeId);
     contactDetails = contactDetailsService.hidePastProgrammes(contactDetails);
+    contactDetails = contactDetailsService.hidePastPlacements(contactDetails);
     return contactDetailsMapper.toDto(contactDetails);
   }
 
