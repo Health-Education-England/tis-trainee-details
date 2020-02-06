@@ -2,7 +2,7 @@ package uk.nhs.hee.trainee.details.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import uk.nhs.hee.trainee.details.dto.enumeration.PlacementStatus;
+import uk.nhs.hee.trainee.details.dto.enumeration.ProgrammeStatus;
 import uk.nhs.hee.trainee.details.model.ContactDetails;
 import uk.nhs.hee.trainee.details.repository.ContactDetailsRepository;
 import uk.nhs.hee.trainee.details.service.ContactDetailsService;
@@ -21,8 +21,8 @@ public class ContactDetailsServiceImpl implements ContactDetailsService {
     return contactDetailsRepository.findByTraineeTisId(traineeTisId);
   }
 
-  public ContactDetails hidePastPlacements(ContactDetails contactDetails) {
-    contactDetails.getProgrammeMemberships().removeIf(c -> c.getStatus() == PlacementStatus.PAST);
+  public ContactDetails hidePastProgrammes(ContactDetails contactDetails) {
+    contactDetails.getProgrammeMemberships().removeIf(c -> c.getStatus() == ProgrammeStatus.PAST);
     return contactDetails;
   }
 

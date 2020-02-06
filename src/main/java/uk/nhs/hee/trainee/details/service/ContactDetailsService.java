@@ -8,5 +8,5 @@ public interface ContactDetailsService {
 
   ContactDetails getContactDetailsByTraineeTisId(String traineeTisId);
 
-  ContactDetails hidePastPlacements(ContactDetails contactDetails);
+  ContactDetails hidePastProgrammes(ContactDetails contactDetails);
 }
