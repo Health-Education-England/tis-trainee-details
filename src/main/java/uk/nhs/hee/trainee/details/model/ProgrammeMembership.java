@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import uk.nhs.hee.trainee.details.dto.enumeration.ProgrammeStatus;
+import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -25,18 +25,18 @@ public class ProgrammeMembership {
   @Builder.Default
   private List<Curriculum> curricula = new ArrayList<>();
 
-  public ProgrammeStatus getStatus() {
+  public Status getStatus() {
     if (this.startDate == null || this.endDate == null) {
       return null;
     }
 
     LocalDate today = LocalDate.now();
     if (today.isBefore(this.startDate)) {
-      return ProgrammeStatus.FUTURE;
+      return Status.FUTURE;
     } else if (today.isAfter(this.endDate)) {
-      return ProgrammeStatus.PAST;
+      return Status.PAST;
     }
-    return ProgrammeStatus.CURRENT;
+    return Status.CURRENT;
   }
 
 }

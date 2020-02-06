@@ -1,7 +1,7 @@
 package uk.nhs.hee.trainee.details.dto;
 
 import lombok.Data;
-import uk.nhs.hee.trainee.details.dto.enumeration.ProgrammeStatus;
+import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -15,6 +15,6 @@ public class ProgrammeMembershipDto {
   private String managingDeanery;
   private LocalDate startDate;
   private LocalDate endDate;
-  private ProgrammeStatus status;
+  private Status status;
   private List<CurriculumDto> curricula;
 }

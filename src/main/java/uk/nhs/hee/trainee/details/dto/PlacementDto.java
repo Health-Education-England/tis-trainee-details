@@ -1,9 +1,9 @@
 package uk.nhs.hee.trainee.details.dto;
 
 import lombok.Data;
-import uk.nhs.hee.trainee.details.dto.enumeration.PlacementStatus;
 
 import java.time.LocalDate;
+import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 
 @Data
 public class PlacementDto {
@@ -15,5 +15,5 @@ public class PlacementDto {
   private String grade;
   private String specialty;
   private String placementType;
-  private PlacementStatus status;
+  private Status status;
 }

@@ -4,9 +4,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import uk.nhs.hee.trainee.details.dto.enumeration.PlacementStatus;
 
 import java.time.LocalDate;
+import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 
 @Data
 @Builder
@@ -21,5 +21,5 @@ public class Placement {
   private String grade;
   private String specialty;
   private String placementType;
-  private PlacementStatus status;
+  private Status status;
 }
