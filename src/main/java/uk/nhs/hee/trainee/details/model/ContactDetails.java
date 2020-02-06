@@ -73,4 +73,6 @@ public class ContactDetails {
   private String detailsNumber;
   @Builder.Default
   private List<ProgrammeMembership> programmeMemberships = new ArrayList<>();
+  @Builder.Default
+  private List<Placement> placements = new ArrayList<>();
 }
