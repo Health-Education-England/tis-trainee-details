@@ -4,6 +4,9 @@ import java.time.LocalDate;
 import lombok.Data;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 
+/**
+ * A DTO for placement information
+ */
 @Data
 public class PlacementDto {
 
