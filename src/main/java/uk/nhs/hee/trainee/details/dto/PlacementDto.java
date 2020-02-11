@@ -1,8 +1,7 @@
 package uk.nhs.hee.trainee.details.dto;
 
-import lombok.Data;
-
 import java.time.LocalDate;
+import lombok.Data;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 
 @Data
