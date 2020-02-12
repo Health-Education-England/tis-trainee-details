@@ -59,7 +59,7 @@ public class ContactDetailsResourceIntTest {
    * @return The create {@code ContactDetails}.
    */
   public static ContactDetails createEntity() {
-    return new ContactDetails()
+    return new ContactDetails().builder()
         .id("101")
         .traineeTisId("2222")
         .surname(DEFAULT_SURNAME)
@@ -74,7 +74,8 @@ public class ContactDetailsResourceIntTest {
         .address2(DEFAULT_ADDRESS2)
         .address3(DEFAULT_ADDRESS3)
         .address4(DEFAULT_ADDRESS4)
-        .postCode(DEFAULT_POST_CODE);
+        .postCode(DEFAULT_POST_CODE)
+        .build();
   }
 
   /**

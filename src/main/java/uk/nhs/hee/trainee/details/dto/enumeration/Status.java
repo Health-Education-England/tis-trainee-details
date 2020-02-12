@@ -1,5 +1,5 @@
 package uk.nhs.hee.trainee.details.dto.enumeration;
 
-public enum PlacementStatus {
+public enum Status {
   PAST, CURRENT, FUTURE
 }

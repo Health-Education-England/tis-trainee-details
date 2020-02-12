@@ -1,14 +1,13 @@
 package uk.nhs.hee.trainee.details.model;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import uk.nhs.hee.trainee.details.dto.enumeration.PlacementStatus;
-
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
+import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 
 @Data
 @Builder
@@ -25,18 +24,21 @@ public class ProgrammeMembership {
   @Builder.Default
   private List<Curriculum> curricula = new ArrayList<>();
 
-  public PlacementStatus getStatus() {
+  /**
+   * Get programme status according to programme startDate and endDate.
+   */
+  public Status getStatus() {
     if (this.startDate == null || this.endDate == null) {
       return null;
     }
 
     LocalDate today = LocalDate.now();
     if (today.isBefore(this.startDate)) {
-      return PlacementStatus.FUTURE;
+      return Status.FUTURE;
     } else if (today.isAfter(this.endDate)) {
-      return PlacementStatus.PAST;
+      return Status.PAST;
     }
-    return PlacementStatus.CURRENT;
+    return Status.CURRENT;
   }
 
 }

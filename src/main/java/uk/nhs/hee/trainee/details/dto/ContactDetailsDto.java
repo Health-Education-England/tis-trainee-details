@@ -5,6 +5,10 @@ import java.util.List;
 
 import lombok.Data;
 
+/**
+ * A DTO for ContactDetails entity
+ * Holds the fields for all the information of the trainee
+ */
 @Data
 public class ContactDetailsDto {
 
@@ -34,4 +38,5 @@ public class ContactDetailsDto {
   private LocalDate visaIssued;
   private String detailsNumber;
   private List<ProgrammeMembershipDto> programmeMemberships;
+  private List<PlacementDto> placements;
 }
