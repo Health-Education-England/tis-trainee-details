@@ -7,6 +7,8 @@ plugins {
 
   // Code Quality
   id "checkstyle"
+  id "jacoco"
+  id "org.sonarqube" version "2.8"
 }
 
 group = "uk.nhs.hee.trainee.details"
@@ -50,6 +52,22 @@ checkstyle {
   maxWarnings = 0
 }
 
+jacocoTestReport {
+  reports {
+    xml.enabled true
+  }
+}
+
+sonarqube {
+  properties {
+    property "sonar.host.url", "https://sonarcloud.io"
+    property "sonar.login", System.getenv("SONAR_TOKEN")
+    property "sonar.organization", "health-education-england"
+    property "sonar.projectKey", "Health-Education-England_TIS-TRAINEE-DETAILS"
+  }
+}
+
 test {
+  finalizedBy jacocoTestReport
   useJUnitPlatform()
 }
