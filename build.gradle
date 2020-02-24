@@ -48,12 +48,11 @@ dependencies {
 checkstyle {
   toolVersion = "8.26"
   config = resources.text.fromArchiveEntry(configurations.checkstyle[0], 'google_checks.xml')
-  maxErrors = 0
-  maxWarnings = 0
 }
 
 jacocoTestReport {
   reports {
+    html.enabled true
     xml.enabled true
   }
 }
@@ -64,6 +63,9 @@ sonarqube {
     property "sonar.login", System.getenv("SONAR_TOKEN")
     property "sonar.organization", "health-education-england"
     property "sonar.projectKey", "Health-Education-England_TIS-TRAINEE-DETAILS"
+
+    property "sonar.java.checkstyle.reportPaths",
+      "build/reports/checkstyle/main.xml,build/reports/checkstyle/test.xml"
   }
 }
 
