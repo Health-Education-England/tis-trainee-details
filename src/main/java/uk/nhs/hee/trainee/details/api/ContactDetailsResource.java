@@ -37,7 +37,6 @@ import uk.nhs.hee.trainee.details.model.ContactDetails;
 import uk.nhs.hee.trainee.details.service.ContactDetailsService;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:3000")
 @RequestMapping("/api")
 public class ContactDetailsResource {
 
