@@ -21,6 +21,7 @@
 
 package uk.nhs.hee.trainee.details.model;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -42,4 +43,6 @@ public class Placement {
   private String specialty;
   private String placementType;
   private Status status;
+  private String gradeName;
+  private BigDecimal wte;
 }

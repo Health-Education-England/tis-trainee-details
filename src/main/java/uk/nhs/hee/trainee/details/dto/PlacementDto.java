@@ -21,6 +21,7 @@
 
 package uk.nhs.hee.trainee.details.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import lombok.Data;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
@@ -39,4 +40,6 @@ public class PlacementDto {
   private String specialty;
   private String placementType;
   private Status status;
+  private String gradeName;
+  private BigDecimal wte;
 }

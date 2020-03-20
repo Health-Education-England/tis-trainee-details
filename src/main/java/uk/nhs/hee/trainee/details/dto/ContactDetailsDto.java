@@ -40,6 +40,8 @@ public class ContactDetailsDto {
   private String knownAs;
   private String maidenName;
   private String title;
+  private String gender;
+  private LocalDate dateOfBirth;
   private String telephoneNumber;
   private String mobileNumber;
   private String email;
