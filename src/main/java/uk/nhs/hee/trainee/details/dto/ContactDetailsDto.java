@@ -23,12 +23,10 @@ package uk.nhs.hee.trainee.details.dto;
 
 import java.time.LocalDate;
 import java.util.List;
-
 import lombok.Data;
 
 /**
- * A DTO for ContactDetails entity
- * Holds the fields for all the information of the trainee
+ * A DTO for ContactDetails entity, holds the fields for all the information of the trainee.
  */
 @Data
 public class ContactDetailsDto {
