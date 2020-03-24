@@ -99,7 +99,7 @@ jobs:
         id: task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: task-definition.json
+          task-definition: .aws/task-definition.json
           container-name: ${{ github.event.repository.name }}
           image: ${{ steps.read-image-uri.outputs.image-uri }}
 
