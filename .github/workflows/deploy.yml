@@ -55,6 +55,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Build, tag and push image to Amazon ECR
+        id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ github.event.repository.name }}
@@ -62,3 +63,57 @@ jobs:
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "::set-output name=image-uri::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+      - name: Write image uri
+        run: ${{ steps.build-image.outputs.image-uri }} > image-uri.txt
+
+      - name: Upload image uri
+        uses: actions/upload-artifact@v1
+        with:
+          name: image-uri
+          path: image-uri.txt
+
+  deploy:
+    name: Deploy
+    needs: dockerize
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Download image uri
+        uses: actions/download-artifact@v1
+        with:
+          name: image-uri
+
+      - name: Read image uri
+        id: read-image-uri
+        run:
+          image-uri = `cat image-uri.txt`
+          echo "::set-output name=image-uri::$image-uri"
+
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ github.event.repository.name }}
+          image: ${{ steps.read-image-uri.outputs.image-uri }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-2
+
+      - name: Deploy Amazon ECS task definition
+        env:
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: ${{ github.event.repository.name }}
+          cluster: ${{ github.event.repository.name }}
+          wait-for-service-stability: true
