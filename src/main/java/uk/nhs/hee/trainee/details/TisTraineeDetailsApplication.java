@@ -43,7 +43,7 @@ public class TisTraineeDetailsApplication {
 
   public static void main(String[] args) {
     log.info("INSIDE TisTraineeDetailsApplication main() METHOD");
-    SpringApplication.run(TisTraineeDetailsApplication.class, args);
+    SpringApplication.run(TisTraineeDetailsApplication.class);
   }
 
   /**

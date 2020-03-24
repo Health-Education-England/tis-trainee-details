@@ -70,15 +70,15 @@ public class ContactDetailsRepositoryTest {
     Optional<ContactDetails> result = repository.findById("1");
     Assert.assertTrue(result.isPresent());
     ContactDetails contactDetails = result.get();
-    Assert.assertEquals(contactDetails.getId(), "1s");
-    Assert.assertEquals(contactDetails.getSurname(), "Test");
+    Assert.assertEquals("1s", contactDetails.getId());
+    Assert.assertEquals("Test", contactDetails.getSurname());
   }
 
   @Test
   @Transactional
   public void shouldReturnContactDetailsByTraineeTisId() {
     ContactDetails contactDetails = repository.findByTraineeTisId("1111");
-    Assert.assertEquals(contactDetails.getId(), "1");
-    Assert.assertEquals(contactDetails.getSurname(), "Test");
+    Assert.assertEquals("1", contactDetails.getId());
+    Assert.assertEquals("Test", contactDetails.getSurname());
   }
 }
