@@ -87,6 +87,7 @@ jobs:
         uses: actions/download-artifact@v1
         with:
           name: image-uri
+          path: image-uri.txt
 
       - name: Read image uri
         id: read-image-uri
