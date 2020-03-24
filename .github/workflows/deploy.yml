@@ -115,5 +115,5 @@ jobs:
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
           service: ${{ github.event.repository.name }}
-          cluster: ${{ github.event.repository.name }}
+          cluster: trainee-ui-fargate
           wait-for-service-stability: true
