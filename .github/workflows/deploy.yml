@@ -110,7 +110,6 @@ jobs:
           aws-region: eu-west-2
 
       - name: Deploy Amazon ECS task definition
-        env:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
