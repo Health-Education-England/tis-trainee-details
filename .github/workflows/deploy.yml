@@ -92,8 +92,8 @@ jobs:
       - name: Read image uri
         id: read-image-uri
         run: |
-          image-uri=`cat image-uri.txt`
-          echo "::set-output name=image-uri::$image-uri"
+          imageUri=`cat image-uri.txt`
+          echo "::set-output name=image-uri::$imageUri"
 
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
