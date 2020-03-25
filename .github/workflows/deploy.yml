@@ -93,12 +93,12 @@ jobs:
         with:
           task-definition: .aws/task-definition.json
           container-name: ${{ github.event.repository.name }}
-          image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          image: "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
           service: ${{ github.event.repository.name }}
-          cluster: trainee-ui-fargate
+          cluster: trainee-ui
           wait-for-service-stability: true
