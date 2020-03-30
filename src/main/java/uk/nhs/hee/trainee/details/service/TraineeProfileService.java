@@ -21,15 +21,15 @@
 
 package uk.nhs.hee.trainee.details.service;
 
-import uk.nhs.hee.trainee.details.model.ContactDetails;
+import uk.nhs.hee.trainee.details.model.TraineeProfile;
 
-public interface ContactDetailsService {
+public interface TraineeProfileService {
 
-  ContactDetails getContactDetails(String id);
+  TraineeProfile getTraineeProfile(String id);
 
-  ContactDetails getContactDetailsByTraineeTisId(String traineeTisId);
+  TraineeProfile getTraineeProfileByTraineeTisId(String traineeTisId);
 
-  ContactDetails hidePastProgrammes(ContactDetails contactDetails);
+  TraineeProfile hidePastProgrammes(TraineeProfile traineeProfile);
 
-  ContactDetails hidePastPlacements(ContactDetails contactDetails);
+  TraineeProfile hidePastPlacements(TraineeProfile traineeProfile);
 }

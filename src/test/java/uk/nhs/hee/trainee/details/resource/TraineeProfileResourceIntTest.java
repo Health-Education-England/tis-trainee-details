@@ -40,14 +40,14 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import uk.nhs.hee.trainee.details.TisTraineeDetailsApplication;
-import uk.nhs.hee.trainee.details.api.ContactDetailsResource;
-import uk.nhs.hee.trainee.details.model.ContactDetails;
-import uk.nhs.hee.trainee.details.repository.ContactDetailsRepository;
+import uk.nhs.hee.trainee.details.api.TraineeProfileResource;
+import uk.nhs.hee.trainee.details.model.TraineeProfile;
+import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 
 @Ignore("Current requires a local DB instance, ignore until in-memory test DB is set up")
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = TisTraineeDetailsApplication.class)
-public class ContactDetailsResourceIntTest {
+public class TraineeProfileResourceIntTest {
 
   private static final String DEFAULT_SURNAME = "defaultSurname";
   private static final String DEFAULT_FORENAMES = "defaultForenames";
@@ -63,27 +63,27 @@ public class ContactDetailsResourceIntTest {
   private static final String DEFAULT_ADDRESS4 = "defaultAddress4";
   private static final String DEFAULT_POST_CODE = "defaultPostCode";
   @Autowired
-  ContactDetailsResource contactDetailsResource;
+  TraineeProfileResource traineeProfileResource;
   @Autowired
   private MappingJackson2HttpMessageConverter jacksonMessageConverter;
   @Autowired
   private PageableHandlerMethodArgumentResolver pageableArgumentResolver;
   @Autowired
-  private ContactDetailsRepository repository;
+  private TraineeProfileRepository repository;
 
   private MockMvc mvc;
 
-  private ContactDetails contactDetails;
+  private TraineeProfile traineeProfile;
 
   /**
-   * Create a {@link ContactDetails} entity with default values for all fields.
-   * @return The create {@code ContactDetails}.
+   * Create a {@link TraineeProfile} entity with default values for all fields.
+   * @return The create {@code TraineeProfile}.
    */
-  public static ContactDetails createEntity() {
-    return new ContactDetails().builder()
+  public static TraineeProfile createEntity() {
+    return new TraineeProfile().builder()
         .id("101")
         .traineeTisId("2222")
-        .surname(DEFAULT_SURNAME)
+      /*  .surname(DEFAULT_SURNAME)
         .forenames(DEFAULT_FORENAMES)
         .knownAs(DEFAULT_KNOWN_AS)
         .maidenName(DEFAULT_MAIDEN_NAME)
@@ -95,7 +95,7 @@ public class ContactDetailsResourceIntTest {
         .address2(DEFAULT_ADDRESS2)
         .address3(DEFAULT_ADDRESS3)
         .address4(DEFAULT_ADDRESS4)
-        .postCode(DEFAULT_POST_CODE)
+        .postCode(DEFAULT_POST_CODE)*/
         .build();
   }
 
@@ -105,25 +105,25 @@ public class ContactDetailsResourceIntTest {
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
-    this.mvc = MockMvcBuilders.standaloneSetup(contactDetailsResource)
+    this.mvc = MockMvcBuilders.standaloneSetup(traineeProfileResource)
         .setCustomArgumentResolvers(pageableArgumentResolver)
         .setMessageConverters(jacksonMessageConverter).build();
 
-    contactDetails = createEntity();
+    traineeProfile = createEntity();
   }
 
   @Test
   @Transactional
-  public void getContactDetailsById() throws Exception {
+  public void getTraineeProfileById() throws Exception {
     // Given
-    repository.save(contactDetails);
+    repository.save(traineeProfile);
 
     // When and Then
-    mvc.perform(get("/api/contactdetails/{id}", contactDetails.getId())
+    mvc.perform(get("/api/traineeprofile/{id}", traineeProfile.getId())
         .contentType(MediaType.APPLICATION_JSON_VALUE))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.id").value(contactDetails.getId()))
-        .andExpect(jsonPath("$.traineeTisId").value(contactDetails.getTraineeTisId()))
+        .andExpect(jsonPath("$.id").value(traineeProfile.getId()))
+        .andExpect(jsonPath("$.traineeTisId").value(traineeProfile.getTraineeTisId()))
         .andExpect(jsonPath("$.surname").value(DEFAULT_SURNAME))
         .andExpect(jsonPath("$.forenames").value(DEFAULT_FORENAMES))
         .andExpect(jsonPath("$.knownAs").value(DEFAULT_KNOWN_AS))
