@@ -33,17 +33,17 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
 import uk.nhs.hee.trainee.details.TestConfig;
-import uk.nhs.hee.trainee.details.model.ContactDetails;
+import uk.nhs.hee.trainee.details.model.TraineeProfile;
 
 @Ignore("Current requires a local DB instance, ignore until in-memory test DB is set up")
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = TestConfig.class)
-public class ContactDetailsRepositoryTest {
+public class TraineeProfileRepositoryTest {
 
   @Autowired
-  private ContactDetailsRepository repository;
+  private TraineeProfileRepository repository;
 
-  private ContactDetails contactDetails;
+  private TraineeProfile traineeProfile;
 
   /**
    * Set up before each test.
@@ -51,34 +51,34 @@ public class ContactDetailsRepositoryTest {
   @Before
   @Transactional
   public void setUp() {
-    contactDetails = new ContactDetails();
-    contactDetails.setId("1");
-    contactDetails.setTraineeTisId("1111");
-    contactDetails.setSurname("Test");
-    repository.save(contactDetails);
+    traineeProfile = new TraineeProfile();
+    traineeProfile.setId("1");
+    traineeProfile.setTraineeTisId("1111");
+   /* traineeProfile.setSurname("Test");*/
+    repository.save(traineeProfile);
   }
 
   @After
   @Transactional
   public void tearDown() {
-    repository.delete(contactDetails);
+    repository.delete(traineeProfile);
   }
 
   @Test
   @Transactional
-  public void findContactDetailsById() {
-    Optional<ContactDetails> result = repository.findById("1");
+  public void findTraineeProfileById() {
+    Optional<TraineeProfile> result = repository.findById("1");
     Assert.assertTrue(result.isPresent());
-    ContactDetails contactDetails = result.get();
-    Assert.assertEquals("1s", contactDetails.getId());
-    Assert.assertEquals("Test", contactDetails.getSurname());
+    TraineeProfile traineeProfile = result.get();
+    Assert.assertEquals(traineeProfile.getId(), "1s");
+   /* Assert.assertEquals(traineeProfile.getSurname(), "Test");*/
   }
 
   @Test
   @Transactional
-  public void shouldReturnContactDetailsByTraineeTisId() {
-    ContactDetails contactDetails = repository.findByTraineeTisId("1111");
-    Assert.assertEquals("1", contactDetails.getId());
-    Assert.assertEquals("Test", contactDetails.getSurname());
+  public void shouldReturnTraineeProfileByTraineeTisId() {
+    TraineeProfile traineeProfile = repository.findByTraineeTisId("1111");
+    Assert.assertEquals(traineeProfile.getId(), "1");
+   /* Assert.assertEquals(traineeProfile.getSurname(), "Test");*/
   }
 }

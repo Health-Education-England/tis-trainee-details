@@ -23,10 +23,10 @@ package uk.nhs.hee.trainee.details.repository;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
-import uk.nhs.hee.trainee.details.model.ContactDetails;
+import uk.nhs.hee.trainee.details.model.TraineeProfile;
 
 @Repository
-public interface ContactDetailsRepository extends MongoRepository<ContactDetails, String> {
+public interface TraineeProfileRepository extends MongoRepository<TraineeProfile, String> {
 
-  ContactDetails findByTraineeTisId(String traineeTisId);
+  TraineeProfile findByTraineeTisId(String traineeTisId);
 }
