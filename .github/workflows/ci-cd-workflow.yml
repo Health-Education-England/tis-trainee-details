@@ -78,10 +78,9 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ github.event.repository.name }}
-          IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha::7 }} -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY
 
   deploy:
     name: Deploy
@@ -109,7 +108,7 @@ jobs:
         with:
           task-definition: .aws/task-definition.json
           container-name: ${{ github.event.repository.name }}
-          image: ${{ steps.login-ecr.outputs.registry }}/${{ github.event.repository.name }}:${{ github.sha }}
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ github.event.repository.name }}:${{ github.sha::7 }}
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
