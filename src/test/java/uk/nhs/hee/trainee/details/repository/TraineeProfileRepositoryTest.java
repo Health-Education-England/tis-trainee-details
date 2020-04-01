@@ -54,7 +54,6 @@ public class TraineeProfileRepositoryTest {
     traineeProfile = new TraineeProfile();
     traineeProfile.setId("1");
     traineeProfile.setTraineeTisId("1111");
-   /* traineeProfile.setSurname("Test");*/
     repository.save(traineeProfile);
   }
 
@@ -71,7 +70,6 @@ public class TraineeProfileRepositoryTest {
     Assert.assertTrue(result.isPresent());
     TraineeProfile traineeProfile = result.get();
     Assert.assertEquals(traineeProfile.getId(), "1s");
-   /* Assert.assertEquals(traineeProfile.getSurname(), "Test");*/
   }
 
   @Test
@@ -79,6 +77,5 @@ public class TraineeProfileRepositoryTest {
   public void shouldReturnTraineeProfileByTraineeTisId() {
     TraineeProfile traineeProfile = repository.findByTraineeTisId("1111");
     Assert.assertEquals(traineeProfile.getId(), "1");
-   /* Assert.assertEquals(traineeProfile.getSurname(), "Test");*/
   }
 }
