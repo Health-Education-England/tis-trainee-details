@@ -36,6 +36,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import uk.nhs.hee.trainee.details.TisTraineeDetailsApplication;
@@ -105,7 +106,7 @@ public class TraineeProfileResourceIntTest {
     repository.save(traineeProfile);
 
     // When and Then
-    mvc.perform(get("/api/traineeprofile/{id}", traineeProfile.getId())
+    mvc.perform(MockMvcRequestBuilders.get("/api/traineeprofile/{id}", traineeProfile.getId())
         .contentType(MediaType.APPLICATION_JSON_VALUE))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.id").value(traineeProfile.getId()))
