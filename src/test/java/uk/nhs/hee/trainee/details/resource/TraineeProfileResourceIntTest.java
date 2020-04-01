@@ -21,7 +21,6 @@
 
 package uk.nhs.hee.trainee.details.resource;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -83,19 +82,6 @@ public class TraineeProfileResourceIntTest {
     return new TraineeProfile().builder()
         .id("101")
         .traineeTisId("2222")
-      /*  .surname(DEFAULT_SURNAME)
-        .forenames(DEFAULT_FORENAMES)
-        .knownAs(DEFAULT_KNOWN_AS)
-        .maidenName(DEFAULT_MAIDEN_NAME)
-        .title(DEFAULT_TITLE)
-        .telephoneNumber(DEFAULT_CONTACT_PHONE_NR_1)
-        .mobileNumber(DEFAULT_CONTACT_PHONE_NR_2)
-        .email(DEFAULT_EMAIL)
-        .address1(DEFAULT_ADDRESS1)
-        .address2(DEFAULT_ADDRESS2)
-        .address3(DEFAULT_ADDRESS3)
-        .address4(DEFAULT_ADDRESS4)
-        .postCode(DEFAULT_POST_CODE)*/
         .build();
   }
 
