@@ -38,6 +38,12 @@ public class PersonalDetails {
   private String knownAs;
   private String maidenName;
   private String title;
+  private String personOwner;
+  private LocalDate dateOfBirth;
+  private String gender;
+  private String qualification;
+  private String dateAttained;
+  private String medicalSchool;
   private String telephoneNumber;
   private String mobileNumber;
   private String email;

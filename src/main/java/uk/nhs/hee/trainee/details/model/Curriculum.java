@@ -21,6 +21,7 @@
 
 package uk.nhs.hee.trainee.details.model;
 
+import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -34,4 +35,6 @@ public class Curriculum {
 
   private String curriculumTisId;
   private String curriculumName;
+  private String curriculumSubType;
+  private LocalDate curriculumCompletionDate;
 }

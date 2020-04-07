@@ -21,6 +21,7 @@
 
 package uk.nhs.hee.trainee.details.dto;
 
+import java.time.LocalDate;
 import lombok.Data;
 
 /**
@@ -31,4 +32,6 @@ public class CurriculumDto {
 
   private String curriculumTisId;
   private String curriculumName;
+  private String curriculumSubType;
+  private LocalDate curriculumCompletionDate;
 }

@@ -36,6 +36,7 @@ public class ProgrammeMembershipDto {
   private String programmeName;
   private String programmeNumber;
   private String managingDeanery;
+  private String programmeMembershipType;
   private LocalDate startDate;
   private LocalDate endDate;
   private Status status;

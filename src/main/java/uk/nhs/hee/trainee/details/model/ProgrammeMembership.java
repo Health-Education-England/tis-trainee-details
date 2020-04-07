@@ -40,6 +40,7 @@ public class ProgrammeMembership {
   private String programmeName;
   private String programmeNumber;
   private String managingDeanery;
+  private String programmeMembershipType;
   private LocalDate startDate;
   private LocalDate endDate;
   @Builder.Default
