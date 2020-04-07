@@ -21,10 +21,8 @@
 
 package uk.nhs.hee.trainee.details.model;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -40,6 +38,7 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @AllArgsConstructor
 @Builder
 public class TraineeProfile {
+
   @Id
   private String id;
 

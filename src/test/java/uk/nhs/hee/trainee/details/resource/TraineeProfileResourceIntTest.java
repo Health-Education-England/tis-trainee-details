@@ -76,6 +76,7 @@ public class TraineeProfileResourceIntTest {
 
   /**
    * Create a {@link TraineeProfile} entity with default values for all fields.
+   *
    * @return The create {@code TraineeProfile}.
    */
   public static TraineeProfile createEntity() {
