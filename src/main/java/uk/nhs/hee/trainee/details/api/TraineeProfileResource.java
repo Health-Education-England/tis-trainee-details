@@ -69,7 +69,7 @@ public class TraineeProfileResource {
   /**
    * Get a trainee's trainee profile based on the trainee's ID.
    *
-   * @param traineeId The trainee's ID.
+   * @param traineeId The trainee's TIS ID.
    * @return The {@link PersonalDetailsDto} representing the trainee profile.
    */
   @GetMapping("/trainee-profile/trainee/{traineeId}")

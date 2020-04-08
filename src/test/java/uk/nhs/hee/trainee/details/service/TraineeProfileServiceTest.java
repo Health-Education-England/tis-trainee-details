@@ -23,8 +23,10 @@ package uk.nhs.hee.trainee.details.service;
 
 import static org.mockito.Mockito.when;
 
-import org.junit.Test;
+import java.util.Optional;
+import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -54,15 +56,21 @@ public class TraineeProfileServiceTest {
     traineeProfile = new TraineeProfile();
     traineeProfile.setId(DEFAULT_ID_1);
     traineeProfile.setTraineeTisId(DEFAULT_TIS_ID_1);
-
-    traineeProfileDto = new TraineeProfileDto();
-    traineeProfileDto.setId(DEFAULT_ID_1);
-    traineeProfileDto.setTraineeTisId(DEFAULT_TIS_ID_1);
   }
 
   @Test
   public void getTraineeProfileShouldReturnTraineeProfile() {
-    when(traineeProfileRepositoryMock.findById(DEFAULT_ID_1)).thenReturn(
-        java.util.Optional.ofNullable(traineeProfile));
+    when(traineeProfileRepositoryMock.findById(DEFAULT_ID_1))
+        .thenReturn(Optional.of(traineeProfile));
+    TraineeProfile returnedTraineeProfile = traineeProfileServiceImpl.getTraineeProfile(DEFAULT_ID_1);
+    Assert.assertEquals(returnedTraineeProfile, traineeProfile);
+  }
+
+  @Test
+  public void getTraineeProfileByTraineeTisIdShouldReturnTraineeProfile() {
+    when(traineeProfileRepositoryMock.findByTraineeTisId(DEFAULT_TIS_ID_1))
+        .thenReturn(traineeProfile);
+    TraineeProfile returnedTraineeProfile = traineeProfileServiceImpl.getTraineeProfileByTraineeTisId(DEFAULT_TIS_ID_1);
+    Assert.assertEquals(returnedTraineeProfile, traineeProfile);
   }
 }

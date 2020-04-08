@@ -24,10 +24,11 @@ package uk.nhs.hee.trainee.details.api;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import org.junit.Test;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -67,11 +68,15 @@ public class TraineeProfileResourceTest {
   @BeforeEach
   public void setup() {
     TraineeProfileResource traineeProfileResource = new TraineeProfileResource(
-      traineeProfileServiceMock, traineeProfileMapperMock);
-      this.mockMvc = MockMvcBuilders.standaloneSetup(traineeProfileResource)
-          .setMessageConverters(jacksonMessageConverter)
-          .build();
+        traineeProfileServiceMock, traineeProfileMapperMock);
+    this.mockMvc = MockMvcBuilders.standaloneSetup(traineeProfileResource)
+        .setMessageConverters(jacksonMessageConverter)
+        .build();
 
+    initData();
+  }
+
+  public void initData() {
     traineeProfile = new TraineeProfile();
     traineeProfile.setId(DEFAULT_ID_1);
     traineeProfile.setTraineeTisId(DEFAULT_TIS_ID_1);
@@ -81,26 +86,33 @@ public class TraineeProfileResourceTest {
     traineeProfileDto.setTraineeTisId(DEFAULT_TIS_ID_1);
   }
 
-//  public void initData() {
-//    traineeProfile = new TraineeProfile();
-//    traineeProfile.setId(DEFAULT_ID_1);
-//    traineeProfile.setTraineeTisId(DEFAULT_TIS_ID_1);
-//
-//    traineeProfileDto = new TraineeProfileDto();
-//    traineeProfileDto.setId(DEFAULT_ID_1);
-//    traineeProfileDto.setTraineeTisId(DEFAULT_TIS_ID_1);
-//  }
-
   @Test
   public void testGetTraineeProfileById() throws Exception {
-    when(traineeProfileServiceMock.getTraineeProfileByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+    when(traineeProfileServiceMock.getTraineeProfile(DEFAULT_ID_1)).thenReturn(traineeProfile);
     when(traineeProfileServiceMock.hidePastProgrammes(traineeProfile)).thenReturn(traineeProfile);
     when(traineeProfileServiceMock.hidePastPlacements(traineeProfile)).thenReturn(traineeProfile);
     when(traineeProfileMapperMock.toDto(traineeProfile)).thenReturn(traineeProfileDto);
-    this.mockMvc.perform(MockMvcRequestBuilders.get("api/trainee-profile/trainee/123")
+    this.mockMvc.perform(MockMvcRequestBuilders.get("/api/trainee-profile/{id}", DEFAULT_ID_1)
         .contentType(MediaType.APPLICATION_JSON))
         .andDo(print())
         .andExpect(status().isOk())
-        .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.traineeTisId").value(DEFAULT_TIS_ID_1));
+  }
+
+  @Test
+  public void testGetTraineeProfileByTraineeTisId() throws Exception {
+    when(traineeProfileServiceMock.getTraineeProfileByTraineeTisId(DEFAULT_TIS_ID_1))
+        .thenReturn(traineeProfile);
+    when(traineeProfileServiceMock.hidePastProgrammes(traineeProfile)).thenReturn(traineeProfile);
+    when(traineeProfileServiceMock.hidePastPlacements(traineeProfile)).thenReturn(traineeProfile);
+    when(traineeProfileMapperMock.toDto(traineeProfile)).thenReturn(traineeProfileDto);
+    this.mockMvc.perform(
+        MockMvcRequestBuilders.get("/api/trainee-profile/trainee/{traineeId}", DEFAULT_TIS_ID_1)
+            .contentType(MediaType.APPLICATION_JSON))
+        .andDo(print())
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.id").value(DEFAULT_ID_1));
   }
 }
