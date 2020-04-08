@@ -39,10 +39,16 @@ import uk.nhs.hee.trainee.details.service.TraineeProfileService;
 public class TraineeProfileResource {
 
   private static final Logger log = LoggerFactory.getLogger(TraineeProfileResource.class);
-  @Autowired
+
   private TraineeProfileService traineeProfileService;
-  @Autowired
   private TraineeProfileMapper traineeProfileMapper;
+
+  public TraineeProfileResource(TraineeProfileService traineeProfileService, TraineeProfileMapper traineeProfileMapper) {
+    this.traineeProfileService = traineeProfileService;
+    this.traineeProfileMapper = traineeProfileMapper;
+  }
+
+
 
   /**
    * Get a trainee profile record with a given ID.
