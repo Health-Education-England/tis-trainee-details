@@ -89,9 +89,6 @@ jobs:
         with:
           java-version: 11
 
-      - name: Run checks
-        run: ./gradlew check
-
       - name: Run quality analysis
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
