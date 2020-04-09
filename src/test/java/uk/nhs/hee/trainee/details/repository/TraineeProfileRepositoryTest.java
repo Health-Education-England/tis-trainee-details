@@ -69,13 +69,13 @@ public class TraineeProfileRepositoryTest {
     Optional<TraineeProfile> result = repository.findById("1");
     Assert.assertTrue(result.isPresent());
     TraineeProfile traineeProfile = result.get();
-    Assert.assertEquals(traineeProfile.getId(), "1s");
+    Assert.assertEquals("1s", traineeProfile.getId());
   }
 
   @Test
   @Transactional
   public void shouldReturnTraineeProfileByTraineeTisId() {
     TraineeProfile traineeProfile = repository.findByTraineeTisId("1111");
-    Assert.assertEquals(traineeProfile.getId(), "1");
+    Assert.assertEquals("1",traineeProfile.getId());
   }
 }
