@@ -23,7 +23,6 @@ package uk.nhs.hee.trainee.details.api;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -43,11 +42,11 @@ public class TraineeProfileResource {
   private TraineeProfileService traineeProfileService;
   private TraineeProfileMapper traineeProfileMapper;
 
-  public TraineeProfileResource(TraineeProfileService traineeProfileService, TraineeProfileMapper traineeProfileMapper) {
+  public TraineeProfileResource(TraineeProfileService traineeProfileService,
+      TraineeProfileMapper traineeProfileMapper) {
     this.traineeProfileService = traineeProfileService;
     this.traineeProfileMapper = traineeProfileMapper;
   }
-
 
 
   /**

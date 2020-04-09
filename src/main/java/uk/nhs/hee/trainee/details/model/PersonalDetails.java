@@ -42,7 +42,7 @@ public class PersonalDetails {
   private LocalDate dateOfBirth;
   private String gender;
   private String qualification;
-  private String dateAttained;
+  private LocalDate dateAttained;
   private String medicalSchool;
   private String telephoneNumber;
   private String mobileNumber;

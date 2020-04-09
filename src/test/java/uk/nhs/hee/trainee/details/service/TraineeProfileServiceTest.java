@@ -39,7 +39,7 @@ import uk.nhs.hee.trainee.details.service.impl.TraineeProfileServiceImpl;
 @ExtendWith(MockitoExtension.class)
 public class TraineeProfileServiceTest {
 
-  private static final String DEFAULT_ID_1 = "5e00c7942749a84794644f83";
+  private static final String DEFAULT_ID_1 = "DEFAULT_ID_1";
   private static final String DEFAULT_TIS_ID_1 = "123";
 
   @InjectMocks
@@ -51,8 +51,11 @@ public class TraineeProfileServiceTest {
   private TraineeProfile traineeProfile;
   private TraineeProfileDto traineeProfileDto;
 
+  /**
+   * Set up mocks before each test.
+   */
   @BeforeEach
-  public void initData() {
+  public void setupData() {
     traineeProfile = new TraineeProfile();
     traineeProfile.setId(DEFAULT_ID_1);
     traineeProfile.setTraineeTisId(DEFAULT_TIS_ID_1);
@@ -62,7 +65,8 @@ public class TraineeProfileServiceTest {
   public void getTraineeProfileShouldReturnTraineeProfile() {
     when(traineeProfileRepositoryMock.findById(DEFAULT_ID_1))
         .thenReturn(Optional.of(traineeProfile));
-    TraineeProfile returnedTraineeProfile = traineeProfileServiceImpl.getTraineeProfile(DEFAULT_ID_1);
+    TraineeProfile returnedTraineeProfile = traineeProfileServiceImpl
+        .getTraineeProfile(DEFAULT_ID_1);
     Assert.assertEquals(returnedTraineeProfile, traineeProfile);
   }
 
@@ -70,7 +74,8 @@ public class TraineeProfileServiceTest {
   public void getTraineeProfileByTraineeTisIdShouldReturnTraineeProfile() {
     when(traineeProfileRepositoryMock.findByTraineeTisId(DEFAULT_TIS_ID_1))
         .thenReturn(traineeProfile);
-    TraineeProfile returnedTraineeProfile = traineeProfileServiceImpl.getTraineeProfileByTraineeTisId(DEFAULT_TIS_ID_1);
+    TraineeProfile returnedTraineeProfile = traineeProfileServiceImpl
+        .getTraineeProfileByTraineeTisId(DEFAULT_TIS_ID_1);
     Assert.assertEquals(returnedTraineeProfile, traineeProfile);
   }
 }

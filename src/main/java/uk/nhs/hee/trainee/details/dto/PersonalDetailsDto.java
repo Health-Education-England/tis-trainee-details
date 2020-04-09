@@ -25,7 +25,7 @@ import java.time.LocalDate;
 import lombok.Data;
 
 /**
- * A DTO for PersonalDetails entity, holds the fields for personal information of the trainee
+ * A DTO for PersonalDetails entity, holds the fields for personal information of the trainee.
  */
 @Data
 public class PersonalDetailsDto {
@@ -39,7 +39,7 @@ public class PersonalDetailsDto {
   private LocalDate dateOfBirth;
   private String gender;
   private String qualification;
-  private String dateAttained;
+  private LocalDate dateAttained;
   private String medicalSchool;
   private String telephoneNumber;
   private String mobileNumber;
