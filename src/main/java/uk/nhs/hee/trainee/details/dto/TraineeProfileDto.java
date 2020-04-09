@@ -19,16 +19,21 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package uk.nhs.hee.trainee.details.mapper;
+package uk.nhs.hee.trainee.details.dto;
 
-import org.mapstruct.Mapper;
-import uk.nhs.hee.trainee.details.dto.ContactDetailsDto;
-import uk.nhs.hee.trainee.details.model.ContactDetails;
+import java.util.List;
+import lombok.Data;
 
-@Mapper(componentModel = "spring")
-public interface ContactDetailsMapper {
+/**
+ * A DTO for TraineeProfile entity Holds the fields for all the information of the trainee.
+ */
+@Data
+public class TraineeProfileDto {
 
-  ContactDetailsDto toDto(ContactDetails contactDetails);
+  private String id;
+  private String traineeTisId;
+  private PersonalDetailsDto personalDetails;
+  private List<ProgrammeMembershipDto> programmeMemberships;
+  private List<PlacementDto> placements;
 
-  ContactDetails toEntity(ContactDetailsDto contactDetailsDto);
 }

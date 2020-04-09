@@ -19,26 +19,27 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package uk.nhs.hee.trainee.details.dto;
+package uk.nhs.hee.trainee.details.model;
 
-import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.Data;
-import uk.nhs.hee.trainee.details.dto.enumeration.Status;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
-/**
- * A DTO for programme membership information.
- */
+@Document(collection = "TraineeProfile")
 @Data
-public class ProgrammeMembershipDto {
+public class TraineeProfile {
 
-  private String programmeTisId;
-  private String programmeName;
-  private String programmeNumber;
-  private String managingDeanery;
-  private String programmeMembershipType;
-  private LocalDate startDate;
-  private LocalDate endDate;
-  private Status status;
-  private List<CurriculumDto> curricula;
+  @Id
+  private String id;
+
+  @Indexed(unique = true)
+  @Field(value = "traineeTisId")
+  private String traineeTisId;
+  private PersonalDetails personalDetails;
+  private List<ProgrammeMembership> programmeMemberships = new ArrayList<>();
+  private List<Placement> placements = new ArrayList<>();
 }

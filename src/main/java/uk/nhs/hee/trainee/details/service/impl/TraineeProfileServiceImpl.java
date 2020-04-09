@@ -24,32 +24,32 @@ package uk.nhs.hee.trainee.details.service.impl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
-import uk.nhs.hee.trainee.details.model.ContactDetails;
-import uk.nhs.hee.trainee.details.repository.ContactDetailsRepository;
-import uk.nhs.hee.trainee.details.service.ContactDetailsService;
+import uk.nhs.hee.trainee.details.model.TraineeProfile;
+import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
+import uk.nhs.hee.trainee.details.service.TraineeProfileService;
 
 @Service
-public class ContactDetailsServiceImpl implements ContactDetailsService {
+public class TraineeProfileServiceImpl implements TraineeProfileService {
 
   @Autowired
-  ContactDetailsRepository contactDetailsRepository;
+  TraineeProfileRepository traineeProfileRepository;
 
-  public ContactDetails getContactDetails(String id) {
-    return contactDetailsRepository.findById(id).orElse(null);
+  public TraineeProfile getTraineeProfile(String id) {
+    return traineeProfileRepository.findById(id).orElse(null);
   }
 
-  public ContactDetails getContactDetailsByTraineeTisId(String traineeTisId) {
-    return contactDetailsRepository.findByTraineeTisId(traineeTisId);
+  public TraineeProfile getTraineeProfileByTraineeTisId(String traineeTisId) {
+    return traineeProfileRepository.findByTraineeTisId(traineeTisId);
   }
 
-  public ContactDetails hidePastProgrammes(ContactDetails contactDetails) {
-    contactDetails.getProgrammeMemberships().removeIf(c -> c.getStatus() == Status.PAST);
-    return contactDetails;
+  public TraineeProfile hidePastProgrammes(TraineeProfile traineeProfile) {
+    traineeProfile.getProgrammeMemberships().removeIf(c -> c.getStatus() == Status.PAST);
+    return traineeProfile;
   }
 
-  public ContactDetails hidePastPlacements(ContactDetails contactDetails) {
-    contactDetails.getPlacements().removeIf(c -> c.getStatus() == Status.PAST);
-    return contactDetails;
+  public TraineeProfile hidePastPlacements(TraineeProfile traineeProfile) {
+    traineeProfile.getPlacements().removeIf(c -> c.getStatus() == Status.PAST);
+    return traineeProfile;
   }
 
 }

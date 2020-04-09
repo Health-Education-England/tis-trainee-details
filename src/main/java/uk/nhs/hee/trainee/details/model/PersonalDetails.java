@@ -19,26 +19,41 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package uk.nhs.hee.trainee.details.dto;
+package uk.nhs.hee.trainee.details.model;
 
 import java.time.LocalDate;
-import java.util.List;
 import lombok.Data;
-import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 
-/**
- * A DTO for programme membership information.
- */
 @Data
-public class ProgrammeMembershipDto {
+public class PersonalDetails {
 
-  private String programmeTisId;
-  private String programmeName;
-  private String programmeNumber;
-  private String managingDeanery;
-  private String programmeMembershipType;
-  private LocalDate startDate;
-  private LocalDate endDate;
-  private Status status;
-  private List<CurriculumDto> curricula;
+  private String surname;
+  private String forenames;
+  private String knownAs;
+  private String maidenName;
+  private String title;
+  private String personOwner;
+  private LocalDate dateOfBirth;
+  private String gender;
+  private String qualification;
+  private LocalDate dateAttained;
+  private String medicalSchool;
+  private String telephoneNumber;
+  private String mobileNumber;
+  private String email;
+  private String address1;
+  private String address2;
+  private String address3;
+  private String address4;
+  private String postCode;
+  private String gmcNumber;
+  private String gmcStatus;
+  private String gdcNumber;
+  private String gdcStatus;
+  private String publicHealthNumber;
+  private String eeaResident;
+  private String permitToWork;
+  private String settled;
+  private LocalDate visaIssued;
+  private String detailsNumber;
 }

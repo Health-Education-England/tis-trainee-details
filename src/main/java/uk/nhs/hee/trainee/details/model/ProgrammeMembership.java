@@ -24,25 +24,19 @@ package uk.nhs.hee.trainee.details.model;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 
 @Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class ProgrammeMembership {
 
   private String programmeTisId;
   private String programmeName;
   private String programmeNumber;
   private String managingDeanery;
+  private String programmeMembershipType;
   private LocalDate startDate;
   private LocalDate endDate;
-  @Builder.Default
   private List<Curriculum> curricula = new ArrayList<>();
 
   /**
