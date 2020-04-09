@@ -72,7 +72,8 @@ public class TraineeProfileResourceTest {
   private static final LocalDate PERSON_DATEOFBIRTH = LocalDate.parse("1991-11-11",
       DateTimeFormatter.ofPattern("yyyy-MM-dd"));
   private static final String PERSON_GENDER = "Male";
-  private static final String PERSON_QUALIFICATION = "MBBS Bachelor of Medicine and Bachelor of Surgery";
+  private static final String PERSON_QUALIFICATION =
+      "MBBS Bachelor of Medicine and Bachelor of Surgery";
   private static final LocalDate PERSON_DATEATTAINED = LocalDate.parse("2018-05-30",
       DateTimeFormatter.ofPattern("yyyy-MM-dd"));
   private static final String PERSON_MEDICALSCHOOL = "University of Science and Technology";
@@ -160,6 +161,9 @@ public class TraineeProfileResourceTest {
     traineeProfileDto.setPlacements(Lists.newArrayList(placementDto));
   }
 
+  /**
+   * Set up data for personalDetails.
+   */
   public void setupPersonalDetailsData() {
     personalDetails = new PersonalDetails();
     personalDetails.setSurname(PERSON_SURNAME);
@@ -206,6 +210,9 @@ public class TraineeProfileResourceTest {
     personalDetailsDto.setGmcNumber(PERSON_GMC);
   }
 
+  /**
+   * Set up data for programmeMembership.
+   */
   public void setupProgrammeMembershipsData() {
     programmeMembership = new ProgrammeMembership();
     programmeMembership.setProgrammeTisId(PROGRAMME_TISID);
@@ -220,6 +227,9 @@ public class TraineeProfileResourceTest {
     programmeMembershipDto.setCurricula(Lists.newArrayList(curriculumDto));
   }
 
+  /**
+   * Set up data for curriculum.
+   */
   public void setupCurriculumData() {
     curriculum = new Curriculum();
     curriculum.setCurriculumTisId(CURRICULUM_TISID);
@@ -232,6 +242,9 @@ public class TraineeProfileResourceTest {
     curriculumDto.setCurriculumSubType(CURRICULUM_SUBTYPE);
   }
 
+  /**
+   * Set up data for placement.
+   */
   public void setupPlacementData() {
     placement = new Placement();
     placement.setPlacementTisId(PLACEMENT_TISID);

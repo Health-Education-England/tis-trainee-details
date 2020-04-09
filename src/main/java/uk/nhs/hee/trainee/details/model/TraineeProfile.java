@@ -23,10 +23,7 @@ package uk.nhs.hee.trainee.details.model;
 
 import java.util.ArrayList;
 import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -34,9 +31,6 @@ import org.springframework.data.mongodb.core.mapping.Field;
 
 @Document(collection = "TraineeProfile")
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class TraineeProfile {
 
   @Id
@@ -46,8 +40,6 @@ public class TraineeProfile {
   @Field(value = "traineeTisId")
   private String traineeTisId;
   private PersonalDetails personalDetails;
-  @Builder.Default
   private List<ProgrammeMembership> programmeMemberships = new ArrayList<>();
-  @Builder.Default
   private List<Placement> placements = new ArrayList<>();
 }
