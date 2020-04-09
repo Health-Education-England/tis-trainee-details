@@ -165,6 +165,6 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: backend
-          cluster: trainee-ui
+          service: trainee-details
+          cluster: trainee
           wait-for-service-stability: true
