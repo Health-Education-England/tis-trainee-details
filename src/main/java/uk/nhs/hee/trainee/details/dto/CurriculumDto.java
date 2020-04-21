@@ -34,5 +34,4 @@ public class CurriculumDto {
   private String curriculumName;
   private String curriculumSubType;
   private LocalDate curriculumStartDate;
-  private LocalDate curriculumCompletionDate;
 }

@@ -39,6 +39,7 @@ public class ProgrammeMembershipDto {
   private String programmeMembershipType;
   private LocalDate startDate;
   private LocalDate endDate;
+  private LocalDate programmeCompletionDate;
   private Status status;
   private List<CurriculumDto> curricula;
 }

@@ -37,6 +37,7 @@ public class ProgrammeMembership {
   private String programmeMembershipType;
   private LocalDate startDate;
   private LocalDate endDate;
+  private LocalDate programmeCompletionDate;
   private List<Curriculum> curricula = new ArrayList<>();
 
   /**
