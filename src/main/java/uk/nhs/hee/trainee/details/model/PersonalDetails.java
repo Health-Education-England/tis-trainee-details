@@ -56,4 +56,7 @@ public class PersonalDetails {
   private String settled;
   private LocalDate visaIssued;
   private String detailsNumber;
+  private String prevRevalBody;
+  private LocalDate currRevalDate;
+  private LocalDate prevRevalDate;
 }
