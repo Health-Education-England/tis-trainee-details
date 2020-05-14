@@ -35,6 +35,7 @@ public class PlacementDto {
   private LocalDate startDate;
   private LocalDate endDate;
   private String site;
+  private String siteLocation;
   private String grade;
   private String specialty;
   private String placementType;
