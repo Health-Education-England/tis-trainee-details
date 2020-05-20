@@ -47,7 +47,7 @@ dependencies {
 
   // test
   testImplementation('org.junit.jupiter:junit-jupiter-engine:5.2.0')
-  testImplementation('org.mockito:mockito-junit-jupiter:2.23.0')
+  testImplementation('org.mockito:mockito-junit-jupiter:3.3.3')
 }
 
 checkstyle {
