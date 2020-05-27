@@ -1,6 +1,9 @@
 name: CI/CD Workflow
 
-on: push
+on:
+  push:
+  repository_dispatch:
+    types: [run_ci-cd]
 
 jobs:
   assemble:
