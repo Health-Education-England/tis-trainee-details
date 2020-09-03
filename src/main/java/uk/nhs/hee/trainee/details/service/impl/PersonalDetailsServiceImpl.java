@@ -19,19 +19,36 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package uk.nhs.hee.trainee.details.service;
+package uk.nhs.hee.trainee.details.service.impl;
 
+import java.util.Optional;
+import org.springframework.stereotype.Service;
+import uk.nhs.hee.trainee.details.mapper.PersonalDetailsMapper;
+import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
+import uk.nhs.hee.trainee.details.service.PersonalDetailsService;
+import uk.nhs.hee.trainee.details.service.TraineeProfileService;
 
-public interface TraineeProfileService {
+@Service
+public class PersonalDetailsServiceImpl implements PersonalDetailsService {
 
-  TraineeProfile getTraineeProfile(String id);
+  private final TraineeProfileService profileService;
+  private PersonalDetailsMapper mapper;
 
-  TraineeProfile getTraineeProfileByTraineeTisId(String traineeTisId);
+  PersonalDetailsServiceImpl(TraineeProfileService profileService, PersonalDetailsMapper mapper) {
+    this.profileService = profileService;
+    this.mapper = mapper;
+  }
 
-  TraineeProfile save(TraineeProfile traineeProfile);
+  @Override
+  public Optional<PersonalDetails> updateByTisId(String tisId, PersonalDetails personalDetails) {
+    TraineeProfile traineeProfile = profileService.getTraineeProfileByTraineeTisId(tisId);
 
-  TraineeProfile hidePastProgrammes(TraineeProfile traineeProfile);
+    if (traineeProfile == null) {
+      return Optional.empty();
+    }
 
-  TraineeProfile hidePastPlacements(TraineeProfile traineeProfile);
+    mapper.update(traineeProfile.getPersonalDetails(), personalDetails);
+    return Optional.of(profileService.save(traineeProfile).getPersonalDetails());
+  }
 }
