@@ -41,14 +41,15 @@ public class PersonalDetailsServiceImpl implements PersonalDetailsService {
   }
 
   @Override
-  public Optional<PersonalDetails> updateByTisId(String tisId, PersonalDetails personalDetails) {
+  public Optional<PersonalDetails> updateContactDetailsByTisId(String tisId,
+      PersonalDetails personalDetails) {
     TraineeProfile traineeProfile = profileService.getTraineeProfileByTraineeTisId(tisId);
 
     if (traineeProfile == null) {
       return Optional.empty();
     }
 
-    mapper.update(traineeProfile.getPersonalDetails(), personalDetails);
+    mapper.updateContactDetails(traineeProfile.getPersonalDetails(), personalDetails);
     return Optional.of(profileService.save(traineeProfile).getPersonalDetails());
   }
 }

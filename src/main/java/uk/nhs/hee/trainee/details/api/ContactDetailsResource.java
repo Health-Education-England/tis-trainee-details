@@ -55,7 +55,7 @@ public class ContactDetailsResource {
       @RequestBody PersonalDetailsDto dto) {
     log.trace("Update contact details of trainee with TIS ID {}", tisId);
     PersonalDetails entity = mapper.toEntity(dto);
-    Optional<PersonalDetails> optionalEntity = service.updateByTisId(tisId, entity);
+    Optional<PersonalDetails> optionalEntity = service.updateContactDetailsByTisId(tisId, entity);
     entity = optionalEntity
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trainee not found."));
     return ResponseEntity.ok(mapper.toDto(entity));
