@@ -35,4 +35,14 @@ public interface PersonalDetailsService {
    */
   Optional<PersonalDetails> updateContactDetailsByTisId(String tisId,
       PersonalDetails personalDetails);
+
+  /**
+   * Update the personal info for the trainee with the given TIS ID.
+   *
+   * @param tisId           The TIS id of the trainee.
+   * @param personalDetails The personal details to add to the trainee.
+   * @return The updated personal details or empty if a trainee with the ID was not found.
+   */
+  Optional<PersonalDetails> updatePersonalInfoByTisId(String tisId,
+      PersonalDetails personalDetails);
 }
