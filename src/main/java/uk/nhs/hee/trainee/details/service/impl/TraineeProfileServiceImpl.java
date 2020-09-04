@@ -21,7 +21,6 @@
 
 package uk.nhs.hee.trainee.details.service.impl;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
@@ -31,15 +30,22 @@ import uk.nhs.hee.trainee.details.service.TraineeProfileService;
 @Service
 public class TraineeProfileServiceImpl implements TraineeProfileService {
 
-  @Autowired
-  TraineeProfileRepository traineeProfileRepository;
+  private final TraineeProfileRepository repository;
+
+  TraineeProfileServiceImpl(TraineeProfileRepository repository) {
+    this.repository = repository;
+  }
 
   public TraineeProfile getTraineeProfile(String id) {
-    return traineeProfileRepository.findById(id).orElse(null);
+    return repository.findById(id).orElse(null);
   }
 
   public TraineeProfile getTraineeProfileByTraineeTisId(String traineeTisId) {
-    return traineeProfileRepository.findByTraineeTisId(traineeTisId);
+    return repository.findByTraineeTisId(traineeTisId);
+  }
+
+  public TraineeProfile save(TraineeProfile traineeProfile) {
+    return repository.save(traineeProfile);
   }
 
   public TraineeProfile hidePastProgrammes(TraineeProfile traineeProfile) {
@@ -51,5 +57,4 @@ public class TraineeProfileServiceImpl implements TraineeProfileService {
     traineeProfile.getPlacements().removeIf(c -> c.getStatus() == Status.PAST);
     return traineeProfile;
   }
-
 }

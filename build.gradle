@@ -31,6 +31,9 @@ dependencies {
   implementation "org.springframework.boot:spring-boot-starter-web"
   implementation "org.springframework.boot:spring-boot-starter-actuator"
   testImplementation "org.springframework.boot:spring-boot-starter-test"
+  testImplementation("org.springframework.boot:spring-boot-starter-test") {
+    exclude group: "org.junit.vintage", module: "junit-vintage-engine"
+  }
 
   // Lombok
   compileOnly "org.projectlombok:lombok"
@@ -48,7 +51,7 @@ dependencies {
 
 checkstyle {
   toolVersion = "8.26"
-  config = resources.text.fromArchiveEntry(configurations.checkstyle[0], 'google_checks.xml')
+  config = resources.text.fromArchiveEntry(configurations.checkstyle[0], "google_checks.xml")
 }
 
 jacocoTestReport {
