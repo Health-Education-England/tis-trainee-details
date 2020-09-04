@@ -58,7 +58,7 @@ import uk.nhs.hee.trainee.details.service.TraineeProfileService;
 
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(controllers = TraineeProfileResource.class)
-public class TraineeProfileResourceTest {
+class TraineeProfileResourceTest {
 
   private static final String DEFAULT_ID_1 = "DEFAULT_ID_1";
   private static final String DEFAULT_TIS_ID_1 = "123";
@@ -127,7 +127,7 @@ public class TraineeProfileResourceTest {
    * Set up mocks before each test.
    */
   @BeforeEach
-  public void setup() {
+  void setup() {
     TraineeProfileResource traineeProfileResource = new TraineeProfileResource(
         traineeProfileServiceMock, traineeProfileMapperMock);
     this.mockMvc = MockMvcBuilders.standaloneSetup(traineeProfileResource)
@@ -140,7 +140,7 @@ public class TraineeProfileResourceTest {
   /**
    * Set up data for traineeProfile.
    */
-  public void setupData() {
+  void setupData() {
     setupPersonalDetailsData();
     setupCurriculumData();
     setupProgrammeMembershipsData();
@@ -164,7 +164,7 @@ public class TraineeProfileResourceTest {
   /**
    * Set up data for personalDetails.
    */
-  public void setupPersonalDetailsData() {
+  void setupPersonalDetailsData() {
     personalDetails = new PersonalDetails();
     personalDetails.setSurname(PERSON_SURNAME);
     personalDetails.setForenames(PERSON_FORENAME);
@@ -213,7 +213,7 @@ public class TraineeProfileResourceTest {
   /**
    * Set up data for programmeMembership.
    */
-  public void setupProgrammeMembershipsData() {
+  void setupProgrammeMembershipsData() {
     programmeMembership = new ProgrammeMembership();
     programmeMembership.setProgrammeTisId(PROGRAMME_TISID);
     programmeMembership.setProgrammeName(PROGRAMME_NAME);
@@ -230,7 +230,7 @@ public class TraineeProfileResourceTest {
   /**
    * Set up data for curriculum.
    */
-  public void setupCurriculumData() {
+  void setupCurriculumData() {
     curriculum = new Curriculum();
     curriculum.setCurriculumTisId(CURRICULUM_TISID);
     curriculum.setCurriculumName(CURRICULUM_NAME);
@@ -245,7 +245,7 @@ public class TraineeProfileResourceTest {
   /**
    * Set up data for placement.
    */
-  public void setupPlacementData() {
+  void setupPlacementData() {
     placement = new Placement();
     placement.setPlacementTisId(PLACEMENT_TISID);
     placement.setSite(PLACEMENT_SITE);
@@ -259,7 +259,7 @@ public class TraineeProfileResourceTest {
 
 
   @Test
-  public void testGetTraineeProfileById() throws Exception {
+  void testGetTraineeProfileById() throws Exception {
     when(traineeProfileServiceMock.getTraineeProfile(DEFAULT_ID_1)).thenReturn(traineeProfile);
     when(traineeProfileServiceMock.hidePastProgrammes(traineeProfile)).thenReturn(traineeProfile);
     when(traineeProfileServiceMock.hidePastPlacements(traineeProfile)).thenReturn(traineeProfile);
@@ -305,7 +305,7 @@ public class TraineeProfileResourceTest {
   }
 
   @Test
-  public void testGetTraineeProfileByTraineeTisId() throws Exception {
+  void testGetTraineeProfileByTraineeTisId() throws Exception {
     when(traineeProfileServiceMock.getTraineeProfileByTraineeTisId(DEFAULT_TIS_ID_1))
         .thenReturn(traineeProfile);
     when(traineeProfileServiceMock.hidePastProgrammes(traineeProfile)).thenReturn(traineeProfile);

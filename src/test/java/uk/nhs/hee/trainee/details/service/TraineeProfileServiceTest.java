@@ -26,7 +26,6 @@ import static org.mockito.Mockito.when;
 import com.google.common.collect.Lists;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Optional;
 import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,11 +34,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.nhs.hee.trainee.details.dto.CurriculumDto;
-import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
-import uk.nhs.hee.trainee.details.dto.PlacementDto;
-import uk.nhs.hee.trainee.details.dto.ProgrammeMembershipDto;
-import uk.nhs.hee.trainee.details.dto.TraineeProfileDto;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 import uk.nhs.hee.trainee.details.model.Curriculum;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
@@ -50,7 +44,7 @@ import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 import uk.nhs.hee.trainee.details.service.impl.TraineeProfileServiceImpl;
 
 @ExtendWith(MockitoExtension.class)
-public class TraineeProfileServiceTest {
+class TraineeProfileServiceTest {
 
   private static final String DEFAULT_ID_1 = "DEFAULT_ID_1";
   private static final String DEFAULT_TIS_ID_1 = "123";
@@ -111,7 +105,7 @@ public class TraineeProfileServiceTest {
    * Set up mocks before each test.
    */
   @BeforeEach
-  public void setupData() {
+  void setupData() {
     setupPersonalDetailsData();
     setupCurriculumData();
     setupProgrammeMembershipsData();
@@ -128,7 +122,7 @@ public class TraineeProfileServiceTest {
   /**
    * Set up data for personalDetails.
    */
-  public void setupPersonalDetailsData() {
+  void setupPersonalDetailsData() {
     personalDetails = new PersonalDetails();
     personalDetails.setSurname(PERSON_SURNAME);
     personalDetails.setForenames(PERSON_FORENAME);
@@ -155,7 +149,7 @@ public class TraineeProfileServiceTest {
   /**
    * Set up data for programmeMembership.
    */
-  public void setupProgrammeMembershipsData() {
+  void setupProgrammeMembershipsData() {
     programmeMembership = new ProgrammeMembership();
     programmeMembership.setProgrammeTisId(PROGRAMME_TISID);
     programmeMembership.setProgrammeName(PROGRAMME_NAME);
@@ -166,7 +160,7 @@ public class TraineeProfileServiceTest {
   /**
    * Set up data for curriculum.
    */
-  public void setupCurriculumData() {
+  void setupCurriculumData() {
     curriculum = new Curriculum();
     curriculum.setCurriculumTisId(CURRICULUM_TISID);
     curriculum.setCurriculumName(CURRICULUM_NAME);
@@ -176,7 +170,7 @@ public class TraineeProfileServiceTest {
   /**
    * Set up data for placement.
    */
-  public void setupPlacementData() {
+  void setupPlacementData() {
     placement1 = new Placement();
     placement1.setPlacementTisId(PLACEMENT_TISID1);
     placement1.setSite(PLACEMENT_SITE1);
@@ -189,7 +183,7 @@ public class TraineeProfileServiceTest {
   }
 
   @Test
-  public void getTraineeProfileShouldReturnTraineeProfile() {
+  void getTraineeProfileShouldReturnTraineeProfile() {
     when(traineeProfileRepositoryMock.findById(DEFAULT_ID_1))
         .thenReturn(Optional.of(traineeProfile));
     TraineeProfile returnedTraineeProfile = traineeProfileServiceImpl
@@ -198,7 +192,7 @@ public class TraineeProfileServiceTest {
   }
 
   @Test
-  public void getTraineeProfileByTraineeTisIdShouldReturnTraineeProfile() {
+  void getTraineeProfileByTraineeTisIdShouldReturnTraineeProfile() {
     when(traineeProfileRepositoryMock.findByTraineeTisId(DEFAULT_TIS_ID_1))
         .thenReturn(traineeProfile);
     TraineeProfile returnedTraineeProfile = traineeProfileServiceImpl
@@ -207,14 +201,14 @@ public class TraineeProfileServiceTest {
   }
 
   @Test
-  public void hidePastProgrammesShouldHidePastProgrammes() {
+  void hidePastProgrammesShouldHidePastProgrammes() {
     TraineeProfile returnedTraineeProfile = traineeProfileServiceImpl
         .hidePastProgrammes(traineeProfile);
     Assert.assertEquals(returnedTraineeProfile, traineeProfile);
   }
 
   @Test
-  public void hidePastPlacementsShouldHidePastPlacements() {
+  void hidePastPlacementsShouldHidePastPlacements() {
     TraineeProfile returnedTraineeProfile = traineeProfileServiceImpl
         .hidePastPlacements(traineeProfile);
     Assert.assertTrue(returnedTraineeProfile.getPlacements().contains(placement1));

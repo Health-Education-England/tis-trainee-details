@@ -1,0 +1,90 @@
+package uk.nhs.hee.trainee.details.api;
+
+import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mapstruct.factory.Mappers;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
+import uk.nhs.hee.trainee.details.mapper.PersonalDetailsMapper;
+import uk.nhs.hee.trainee.details.model.PersonalDetails;
+import uk.nhs.hee.trainee.details.service.PersonalDetailsService;
+
+@ContextConfiguration(classes = {PersonalDetailsMapper.class})
+@ExtendWith(SpringExtension.class)
+@WebMvcTest(ContactDetailsResource.class)
+class ContactDetailsResourceTest {
+
+  @Autowired
+  private MappingJackson2HttpMessageConverter jacksonMessageConverter;
+
+  @Autowired
+  private ObjectMapper mapper;
+
+  private MockMvc mockMvc;
+
+  @MockBean
+  private PersonalDetailsService service;
+
+  @BeforeEach
+  void setUp() {
+    PersonalDetailsMapper mapper = Mappers.getMapper(PersonalDetailsMapper.class);
+    ContactDetailsResource collegeResource = new ContactDetailsResource(service, mapper);
+    mockMvc = MockMvcBuilders.standaloneSetup(collegeResource)
+        .setMessageConverters(jacksonMessageConverter)
+        .build();
+  }
+
+  @Test
+  void shouldThrowExceptionWhenTraineeNotFound() throws Exception {
+    when(service.updateContactDetailsByTisId(eq("40"), eq(new PersonalDetails())))
+        .thenReturn(Optional.empty());
+
+    PersonalDetailsDto personalDetailsDto = new PersonalDetailsDto();
+    personalDetailsDto.setForenames("John");
+    personalDetailsDto.setSurname("Doe");
+
+    mockMvc.perform(patch("/api/contact-details/{tisId}", 40)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(mapper.writeValueAsBytes(new PersonalDetailsDto())))
+        .andExpect(status().isNotFound())
+        .andExpect(status().reason("Trainee not found."));
+  }
+
+  @Test
+  void shouldUpdateContactDetailsWhenTraineeFound() throws Exception {
+    PersonalDetails personalDetails = new PersonalDetails();
+    personalDetails.setForenames("John");
+    personalDetails.setSurname("Doe");
+
+    when(service.updateContactDetailsByTisId(eq("40"), any(PersonalDetails.class)))
+        .thenReturn(Optional.of(personalDetails));
+
+    mockMvc.perform(patch("/api/contact-details/{tisId}", 40)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(mapper.writeValueAsBytes(new PersonalDetailsDto())))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.forenames").value(is("John")))
+        .andExpect(jsonPath("$.surname").value(is("Doe")));
+  }
+}

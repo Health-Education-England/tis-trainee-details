@@ -76,6 +76,6 @@ public class TraineeProfileRepositoryTest {
   @Transactional
   public void shouldReturnTraineeProfileByTraineeTisId() {
     TraineeProfile traineeProfile = repository.findByTraineeTisId("1111");
-    Assert.assertEquals("1",traineeProfile.getId());
+    Assert.assertEquals("1", traineeProfile.getId());
   }
 }
