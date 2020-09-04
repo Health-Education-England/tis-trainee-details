@@ -49,6 +49,13 @@ public class ContactDetailsResource {
     this.mapper = mapper;
   }
 
+  /**
+   * Update the contact details for the trainee.
+   *
+   * @param tisId The ID of the trainee to update.
+   * @param dto   The contact details to update with.
+   * @return The updated PersonalDetails.
+   */
   @PatchMapping("/{tisId}")
   public ResponseEntity<PersonalDetailsDto> updateContactDetails(
       @PathVariable(name = "tisId") String tisId,
