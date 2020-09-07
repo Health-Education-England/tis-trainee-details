@@ -83,7 +83,7 @@ class PersonalInfoResourceTest {
   }
 
   @Test
-  void shouldThrowExceptionWhenTraineeNotFound() throws Exception {
+  void shouldReturnNotFoundStatusWhenTraineeNotFound() throws Exception {
     when(service.updatePersonalInfoByTisId(eq("40"), personalDetailsCaptor.capture()))
         .thenReturn(Optional.empty());
 
