@@ -23,8 +23,10 @@ package uk.nhs.hee.trainee.details.service.impl;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
@@ -41,8 +43,40 @@ import uk.nhs.hee.trainee.details.service.PersonalDetailsService;
 
 class PersonalDetailsServiceImplTest {
 
-  private PersonalDetailsService service;
+  private static final String TITLE = "title-";
+  private static final String FORENAMES = "forenames-";
+  private static final String KNOWN_AS = "knownAs-";
+  private static final String SURNAME = "surname-";
+  private static final String MAIDEN_NAME = "maidenName-";
+  private static final String TELEPHONE_NUMBER = "telephoneNumber-";
+  private static final String MOBILE_NUMBER = "mobileNumber-";
+  private static final String EMAIL = "email-";
+  private static final String ADDRESS_1 = "address1-";
+  private static final String ADDRESS_2 = "address2-";
+  private static final String ADDRESS_3 = "address3-";
+  private static final String ADDRESS_4 = "address4-";
+  private static final String POST_CODE = "postCode-";
+  private static final String PERSON_OWNER = "personOwner-";
+  private static final String GENDER = "gender-";
+  private static final LocalDate DATE = LocalDate.EPOCH;
+  private static final String QUALIFICATION = "qualification-";
+  private static final String MEDICAL_SCHOOL = "medicalSchool-";
+  private static final String GMC_NUMBER = "gmcNumber-";
+  private static final String GMC_STATUS = "gmcStatus-";
+  private static final String GDC_NUMBER = "gdcNumber-";
+  private static final String GDC_STATUS = "gdcStatus-";
+  private static final String PUBLIC_HEALTH_NUMBER = "publicHealthNumber-";
+  private static final String EEA_RESIDENT = "eeaResident-";
+  private static final String PERMIT_TO_WORK = "permitToWork-";
+  private static final String SETTLED = "settled-";
+  private static final String DETAILS_NUMBER = "detailsNumber-";
+  private static final String PREV_REVAL_BODY = "prevRevalBody-";
+  private static final String TRAINEE_TIS_ID = "40";
+  private static final String MODIFIED_SUFFIX = "post";
+  private static final String ORIGINAL_SUFFIX = "pre";
+  private static final int ONE_HUNDRED = 100;
 
+  private PersonalDetailsService service;
   private TraineeProfileRepository repository;
 
   @BeforeEach
@@ -77,19 +111,51 @@ class PersonalDetailsServiceImplTest {
     assertThat("Unexpected optional isEmpty flag.", personalDetails.isEmpty(), is(false));
 
     PersonalDetails expectedPersonalDetails = createPersonalDetails("pre", 0);
-    expectedPersonalDetails.setTitle("title-post");
-    expectedPersonalDetails.setForenames("forenames-post");
-    expectedPersonalDetails.setKnownAs("knownAs-post");
-    expectedPersonalDetails.setSurname("surname-post");
-    expectedPersonalDetails.setMaidenName("maidenName-post");
-    expectedPersonalDetails.setTelephoneNumber("telephoneNumber-post");
-    expectedPersonalDetails.setMobileNumber("mobileNumber-post");
-    expectedPersonalDetails.setEmail("email-post");
-    expectedPersonalDetails.setAddress1("address1-post");
-    expectedPersonalDetails.setAddress2("address2-post");
-    expectedPersonalDetails.setAddress3("address3-post");
-    expectedPersonalDetails.setAddress4("address4-post");
-    expectedPersonalDetails.setPostCode("postCode-post");
+    expectedPersonalDetails.setTitle(TITLE + MODIFIED_SUFFIX);
+    expectedPersonalDetails.setForenames(FORENAMES + MODIFIED_SUFFIX);
+    expectedPersonalDetails.setKnownAs(KNOWN_AS + MODIFIED_SUFFIX);
+    expectedPersonalDetails.setSurname(SURNAME + MODIFIED_SUFFIX);
+    expectedPersonalDetails.setMaidenName(MAIDEN_NAME + MODIFIED_SUFFIX);
+    expectedPersonalDetails.setTelephoneNumber(TELEPHONE_NUMBER + MODIFIED_SUFFIX);
+    expectedPersonalDetails.setMobileNumber(MOBILE_NUMBER + MODIFIED_SUFFIX);
+    expectedPersonalDetails.setEmail(EMAIL + MODIFIED_SUFFIX);
+    expectedPersonalDetails.setAddress1(ADDRESS_1 + MODIFIED_SUFFIX);
+    expectedPersonalDetails.setAddress2(ADDRESS_2 + MODIFIED_SUFFIX);
+    expectedPersonalDetails.setAddress3(ADDRESS_3 + MODIFIED_SUFFIX);
+    expectedPersonalDetails.setAddress4(ADDRESS_4 + MODIFIED_SUFFIX);
+    expectedPersonalDetails.setPostCode(POST_CODE + MODIFIED_SUFFIX);
+
+    assertThat("Unexpected personal details.", personalDetails.get(), is(expectedPersonalDetails));
+  }
+
+  @Test
+  void shouldNotUpdatePersonalInfoWhenTraineeIdNotFound() {
+    PersonalDetails personalDetailsMock = mock(PersonalDetails.class);
+    Optional<PersonalDetails> personalDetails = service
+        .updatePersonalInfoByTisId("notFound", personalDetailsMock);
+
+    assertTrue(personalDetails.isEmpty(), "Expected personal details to have been empty");
+    verify(repository).findByTraineeTisId("notFound");
+    verifyNoInteractions(personalDetailsMock);
+  }
+
+  @Test
+  void shouldUpdatePersonalInfoWhenTraineeIdFound() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPersonalDetails(createPersonalDetails(ORIGINAL_SUFFIX, 0));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+    when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
+
+    Optional<PersonalDetails> personalDetails = service
+        .updatePersonalInfoByTisId(
+            TRAINEE_TIS_ID, createPersonalDetails(MODIFIED_SUFFIX, ONE_HUNDRED));
+
+    assertTrue(personalDetails.isPresent(), "Expected a PersonalDetails to be returned");
+
+    PersonalDetails expectedPersonalDetails = createPersonalDetails(ORIGINAL_SUFFIX, 0);
+    expectedPersonalDetails.setDateOfBirth(DATE.plusDays(ONE_HUNDRED));
+    expectedPersonalDetails.setGender(GENDER + MODIFIED_SUFFIX);
 
     assertThat("Unexpected personal details.", personalDetails.get(), is(expectedPersonalDetails));
   }
@@ -101,38 +167,38 @@ class PersonalDetailsServiceImplTest {
    */
   private PersonalDetails createPersonalDetails(String stringSuffix, int dateAdjustmentDays) {
     PersonalDetails personalDetails = new PersonalDetails();
-    personalDetails.setTitle("title-" + stringSuffix);
-    personalDetails.setForenames("forenames-" + stringSuffix);
-    personalDetails.setKnownAs("knownAs-" + stringSuffix);
-    personalDetails.setSurname("surname-" + stringSuffix);
-    personalDetails.setMaidenName("maidenName-" + stringSuffix);
-    personalDetails.setTelephoneNumber("telephoneNumber-" + stringSuffix);
-    personalDetails.setMobileNumber("mobileNumber-" + stringSuffix);
-    personalDetails.setEmail("email-" + stringSuffix);
-    personalDetails.setAddress1("address1-" + stringSuffix);
-    personalDetails.setAddress2("address2-" + stringSuffix);
-    personalDetails.setAddress3("address3-" + stringSuffix);
-    personalDetails.setAddress4("address4-" + stringSuffix);
-    personalDetails.setPostCode("postCode-" + stringSuffix);
-    personalDetails.setPersonOwner("personOwner-" + stringSuffix);
-    personalDetails.setDateOfBirth(LocalDate.EPOCH.plusDays(dateAdjustmentDays));
-    personalDetails.setGender("gender-" + stringSuffix);
-    personalDetails.setQualification("qualification-" + stringSuffix);
-    personalDetails.setDateAttained(LocalDate.EPOCH.plusDays(dateAdjustmentDays));
-    personalDetails.setMedicalSchool("medicalSchool-" + stringSuffix);
-    personalDetails.setGmcNumber("gmcNumber-" + stringSuffix);
-    personalDetails.setGmcStatus("gmcStatus-" + stringSuffix);
-    personalDetails.setGdcNumber("gdcNumber-" + stringSuffix);
-    personalDetails.setGdcStatus("gdcStatus-" + stringSuffix);
-    personalDetails.setPublicHealthNumber("publicHealthNumber-" + stringSuffix);
-    personalDetails.setEeaResident("eeaResident-" + stringSuffix);
-    personalDetails.setPermitToWork("permitToWork-" + stringSuffix);
-    personalDetails.setSettled("settled-" + stringSuffix);
-    personalDetails.setVisaIssued(LocalDate.EPOCH.plusDays(dateAdjustmentDays));
-    personalDetails.setDetailsNumber("detailsNumber-" + stringSuffix);
-    personalDetails.setPrevRevalBody("prevRevalBody-" + stringSuffix);
-    personalDetails.setCurrRevalDate(LocalDate.EPOCH.plusDays(dateAdjustmentDays));
-    personalDetails.setPrevRevalDate(LocalDate.EPOCH.plusDays(dateAdjustmentDays));
+    personalDetails.setTitle(TITLE + stringSuffix);
+    personalDetails.setForenames(FORENAMES + stringSuffix);
+    personalDetails.setKnownAs(KNOWN_AS + stringSuffix);
+    personalDetails.setSurname(SURNAME + stringSuffix);
+    personalDetails.setMaidenName(MAIDEN_NAME + stringSuffix);
+    personalDetails.setTelephoneNumber(TELEPHONE_NUMBER + stringSuffix);
+    personalDetails.setMobileNumber(MOBILE_NUMBER + stringSuffix);
+    personalDetails.setEmail(EMAIL + stringSuffix);
+    personalDetails.setAddress1(ADDRESS_1 + stringSuffix);
+    personalDetails.setAddress2(ADDRESS_2 + stringSuffix);
+    personalDetails.setAddress3(ADDRESS_3 + stringSuffix);
+    personalDetails.setAddress4(ADDRESS_4 + stringSuffix);
+    personalDetails.setPostCode(POST_CODE + stringSuffix);
+    personalDetails.setPersonOwner(PERSON_OWNER + stringSuffix);
+    personalDetails.setDateOfBirth(DATE.plusDays(dateAdjustmentDays));
+    personalDetails.setGender(GENDER + stringSuffix);
+    personalDetails.setQualification(QUALIFICATION + stringSuffix);
+    personalDetails.setDateAttained(DATE.plusDays(dateAdjustmentDays));
+    personalDetails.setMedicalSchool(MEDICAL_SCHOOL + stringSuffix);
+    personalDetails.setGmcNumber(GMC_NUMBER + stringSuffix);
+    personalDetails.setGmcStatus(GMC_STATUS + stringSuffix);
+    personalDetails.setGdcNumber(GDC_NUMBER + stringSuffix);
+    personalDetails.setGdcStatus(GDC_STATUS + stringSuffix);
+    personalDetails.setPublicHealthNumber(PUBLIC_HEALTH_NUMBER + stringSuffix);
+    personalDetails.setEeaResident(EEA_RESIDENT + stringSuffix);
+    personalDetails.setPermitToWork(PERMIT_TO_WORK + stringSuffix);
+    personalDetails.setSettled(SETTLED + stringSuffix);
+    personalDetails.setVisaIssued(DATE.plusDays(dateAdjustmentDays));
+    personalDetails.setDetailsNumber(DETAILS_NUMBER + stringSuffix);
+    personalDetails.setPrevRevalBody(PREV_REVAL_BODY + stringSuffix);
+    personalDetails.setCurrRevalDate(DATE.plusDays(dateAdjustmentDays));
+    personalDetails.setPrevRevalDate(DATE.plusDays(dateAdjustmentDays));
 
     return personalDetails;
   }

@@ -50,4 +50,9 @@ public interface PersonalDetailsMapper {
   @Mapping(target = "address4", source = "address4")
   @Mapping(target = "postCode", source = "postCode")
   void updateContactDetails(@MappingTarget PersonalDetails target, PersonalDetails source);
+
+  @BeanMapping(ignoreByDefault = true)
+  @Mapping(target = "dateOfBirth", source = "dateOfBirth")
+  @Mapping(target = "gender", source = "gender")
+  void updatePersonalInfo(@MappingTarget PersonalDetails target, PersonalDetails source);
 }

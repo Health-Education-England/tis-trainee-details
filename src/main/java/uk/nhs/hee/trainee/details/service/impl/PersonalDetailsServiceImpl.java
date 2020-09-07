@@ -52,4 +52,15 @@ public class PersonalDetailsServiceImpl implements PersonalDetailsService {
     mapper.updateContactDetails(traineeProfile.getPersonalDetails(), personalDetails);
     return Optional.of(profileService.save(traineeProfile).getPersonalDetails());
   }
+
+  @Override
+  public Optional<PersonalDetails> updatePersonalInfoByTisId(String tisId,
+      PersonalDetails personalDetails) {
+    TraineeProfile traineeProfile = profileService.getTraineeProfileByTraineeTisId(tisId);
+    if (traineeProfile == null) {
+      return Optional.empty();
+    }
+    mapper.updatePersonalInfo(traineeProfile.getPersonalDetails(), personalDetails);
+    return Optional.of(profileService.save(traineeProfile).getPersonalDetails());
+  }
 }
