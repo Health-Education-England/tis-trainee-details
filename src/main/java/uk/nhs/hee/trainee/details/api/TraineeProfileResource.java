@@ -21,10 +21,16 @@
 
 package uk.nhs.hee.trainee.details.api;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
@@ -33,52 +39,57 @@ import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapper;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.service.TraineeProfileService;
 
+@Slf4j
 @RestController
 @RequestMapping("/api")
 public class TraineeProfileResource {
 
-  private static final Logger log = LoggerFactory.getLogger(TraineeProfileResource.class);
+  private static final String TIS_ID_ATTRIBUTE = "custom:tisId";
 
   private TraineeProfileService traineeProfileService;
   private TraineeProfileMapper traineeProfileMapper;
+  private ObjectMapper objectMapper;
 
   public TraineeProfileResource(TraineeProfileService traineeProfileService,
-      TraineeProfileMapper traineeProfileMapper) {
+      TraineeProfileMapper traineeProfileMapper, ObjectMapper objectMapper) {
     this.traineeProfileService = traineeProfileService;
     this.traineeProfileMapper = traineeProfileMapper;
-  }
-
-
-  /**
-   * Get a trainee profile record with a given ID.
-   *
-   * @param traineeProfileId The ID of the trainee profile to get.
-   * @return The {@link PersonalDetailsDto} representing the trainee profile.
-   */
-  @GetMapping("/trainee-profile/{id}")
-  public TraineeProfileDto getTraineeProfileById(
-      @PathVariable(name = "id") String traineeProfileId) {
-    log.trace("Trainee Profile of a trainee by traineeProfileId {}", traineeProfileId);
-    TraineeProfile traineeProfile = traineeProfileService.getTraineeProfile(traineeProfileId);
-    traineeProfile = traineeProfileService.hidePastProgrammes(traineeProfile);
-    traineeProfile = traineeProfileService.hidePastPlacements(traineeProfile);
-    return traineeProfileMapper.toDto(traineeProfile);
+    this.objectMapper = objectMapper;
   }
 
   /**
-   * Get a trainee's trainee profile based on the trainee's ID.
+   * Get a trainee's profile.
    *
-   * @param traineeId The trainee's TIS ID.
+   * @param token The authorization token from the request header.
    * @return The {@link PersonalDetailsDto} representing the trainee profile.
    */
-  @GetMapping("/trainee-profile/trainee/{traineeId}")
-  public TraineeProfileDto getTraineeProfileByTraineeId(
-      @PathVariable(name = "traineeId") String traineeId) {
-    log.trace("Trainee Profile of a trainee by traineeId {}", traineeId);
-    TraineeProfile traineeProfile = traineeProfileService
-        .getTraineeProfileByTraineeTisId(traineeId);
+  @GetMapping("/trainee-profile")
+  public ResponseEntity<TraineeProfileDto> getTraineeProfile(
+      @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
+    log.trace("Trainee Profile of authenticated user.");
+
+    String[] tokenSections = token.split("\\.");
+    byte[] payloadBytes = Base64.getDecoder()
+        .decode(tokenSections[1].getBytes(StandardCharsets.UTF_8));
+    String tisId;
+
+    try {
+      Map payload = objectMapper.readValue(payloadBytes, Map.class);
+      tisId = (String) payload.get(TIS_ID_ATTRIBUTE);
+    } catch (IOException e) {
+      log.warn("Unable to read tisId from token.", e);
+      return ResponseEntity.badRequest().build();
+    }
+
+    TraineeProfile traineeProfile = traineeProfileService.getTraineeProfileByTraineeTisId(tisId);
+
+    if (traineeProfile == null) {
+      log.warn("Trainee profile not found for id {}.", tisId);
+      return ResponseEntity.notFound().build();
+    }
+
     traineeProfile = traineeProfileService.hidePastProgrammes(traineeProfile);
     traineeProfile = traineeProfileService.hidePastPlacements(traineeProfile);
-    return traineeProfileMapper.toDto(traineeProfile);
+    return ResponseEntity.ok(traineeProfileMapper.toDto(traineeProfile));
   }
 }
