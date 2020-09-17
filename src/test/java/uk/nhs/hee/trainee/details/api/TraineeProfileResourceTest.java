@@ -26,6 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -104,6 +105,9 @@ class TraineeProfileResourceTest {
   @Autowired
   private MappingJackson2HttpMessageConverter jacksonMessageConverter;
 
+  @Autowired
+  private ObjectMapper objectMapper;
+
   private MockMvc mockMvc;
 
   @MockBean
@@ -122,7 +126,7 @@ class TraineeProfileResourceTest {
   void setup() {
     TraineeProfileMapper mapper = Mappers.getMapper(TraineeProfileMapper.class);
     TraineeProfileResource traineeProfileResource = new TraineeProfileResource(
-        traineeProfileServiceMock, mapper);
+        traineeProfileServiceMock, mapper, objectMapper);
     this.mockMvc = MockMvcBuilders.standaloneSetup(traineeProfileResource)
         .setMessageConverters(jacksonMessageConverter)
         .build();

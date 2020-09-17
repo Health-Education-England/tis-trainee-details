@@ -48,11 +48,13 @@ public class TraineeProfileResource {
 
   private TraineeProfileService traineeProfileService;
   private TraineeProfileMapper traineeProfileMapper;
+  private ObjectMapper objectMapper;
 
   public TraineeProfileResource(TraineeProfileService traineeProfileService,
-      TraineeProfileMapper traineeProfileMapper) {
+      TraineeProfileMapper traineeProfileMapper, ObjectMapper objectMapper) {
     this.traineeProfileService = traineeProfileService;
     this.traineeProfileMapper = traineeProfileMapper;
+    this.objectMapper = objectMapper;
   }
 
   /**
@@ -72,8 +74,7 @@ public class TraineeProfileResource {
     String tisId;
 
     try {
-      ObjectMapper mapper = new ObjectMapper();
-      Map payload = mapper.readValue(payloadBytes, Map.class);
+      Map payload = objectMapper.readValue(payloadBytes, Map.class);
       tisId = (String) payload.get(TIS_ID_ATTRIBUTE);
     } catch (IOException e) {
       log.warn("Unable to read tisId from token.", e);
