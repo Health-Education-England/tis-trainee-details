@@ -22,31 +22,30 @@
 package uk.nhs.hee.trainee.details.api;
 
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.google.common.collect.Lists;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Base64;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mapstruct.factory.Mappers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import uk.nhs.hee.trainee.details.dto.CurriculumDto;
-import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
-import uk.nhs.hee.trainee.details.dto.PlacementDto;
-import uk.nhs.hee.trainee.details.dto.ProgrammeMembershipDto;
-import uk.nhs.hee.trainee.details.dto.TraineeProfileDto;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapper;
 import uk.nhs.hee.trainee.details.model.Curriculum;
@@ -56,9 +55,12 @@ import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.service.TraineeProfileService;
 
+@ContextConfiguration(classes = TraineeProfileMapper.class)
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(controllers = TraineeProfileResource.class)
 class TraineeProfileResourceTest {
+
+  private static final String TIS_ID_ATTRIBUTE = "custom:tisId";
 
   private static final String DEFAULT_ID_1 = "DEFAULT_ID_1";
   private static final String DEFAULT_TIS_ID_1 = "123";
@@ -99,7 +101,6 @@ class TraineeProfileResourceTest {
   private static final String PLACEMENT_SITE = "Addenbrookes Hospital";
   private static final Status PLACEMENT_STATUS = Status.CURRENT;
 
-
   @Autowired
   private MappingJackson2HttpMessageConverter jacksonMessageConverter;
 
@@ -108,28 +109,20 @@ class TraineeProfileResourceTest {
   @MockBean
   private TraineeProfileService traineeProfileServiceMock;
 
-  @MockBean
-  private TraineeProfileMapper traineeProfileMapperMock;
-
   private TraineeProfile traineeProfile;
   private PersonalDetails personalDetails;
   private ProgrammeMembership programmeMembership;
   private Curriculum curriculum;
   private Placement placement;
 
-  private TraineeProfileDto traineeProfileDto;
-  private PersonalDetailsDto personalDetailsDto;
-  private ProgrammeMembershipDto programmeMembershipDto;
-  private CurriculumDto curriculumDto;
-  private PlacementDto placementDto;
-
   /**
    * Set up mocks before each test.
    */
   @BeforeEach
   void setup() {
+    TraineeProfileMapper mapper = Mappers.getMapper(TraineeProfileMapper.class);
     TraineeProfileResource traineeProfileResource = new TraineeProfileResource(
-        traineeProfileServiceMock, traineeProfileMapperMock);
+        traineeProfileServiceMock, mapper);
     this.mockMvc = MockMvcBuilders.standaloneSetup(traineeProfileResource)
         .setMessageConverters(jacksonMessageConverter)
         .build();
@@ -152,13 +145,6 @@ class TraineeProfileResourceTest {
     traineeProfile.setPersonalDetails(personalDetails);
     traineeProfile.setProgrammeMemberships(Lists.newArrayList(programmeMembership));
     traineeProfile.setPlacements(Lists.newArrayList(placement));
-
-    traineeProfileDto = new TraineeProfileDto();
-    traineeProfileDto.setId(DEFAULT_ID_1);
-    traineeProfileDto.setTraineeTisId(DEFAULT_TIS_ID_1);
-    traineeProfileDto.setPersonalDetails(personalDetailsDto);
-    traineeProfileDto.setProgrammeMemberships(Lists.newArrayList(programmeMembershipDto));
-    traineeProfileDto.setPlacements(Lists.newArrayList(placementDto));
   }
 
   /**
@@ -186,28 +172,6 @@ class TraineeProfileResourceTest {
     personalDetails.setAddress4(PERSON_ADDRESS4);
     personalDetails.setPostCode(PERSON_POSTCODE);
     personalDetails.setGmcNumber(PERSON_GMC);
-
-    personalDetailsDto = new PersonalDetailsDto();
-    personalDetailsDto.setSurname(PERSON_SURNAME);
-    personalDetailsDto.setForenames(PERSON_FORENAME);
-    personalDetailsDto.setKnownAs(PERSON_KNOWNAS);
-    personalDetailsDto.setMaidenName(PERSON_MAIDENNAME);
-    personalDetailsDto.setTitle(PERSON_TITLE);
-    personalDetailsDto.setPersonOwner(PERSON_PERSONOWNER);
-    personalDetailsDto.setDateOfBirth(PERSON_DATEOFBIRTH);
-    personalDetailsDto.setGender(PERSON_GENDER);
-    personalDetailsDto.setQualification(PERSON_QUALIFICATION);
-    personalDetailsDto.setDateAttained(PERSON_DATEATTAINED);
-    personalDetailsDto.setMedicalSchool(PERSON_MEDICALSCHOOL);
-    personalDetailsDto.setTelephoneNumber(PERSON_TELEPHONENUMBER);
-    personalDetailsDto.setMobileNumber(PERSON_MOBILE);
-    personalDetailsDto.setEmail(PERSON_EMAIL);
-    personalDetailsDto.setAddress1(PERSON_ADDRESS1);
-    personalDetailsDto.setAddress2(PERSON_ADDRESS2);
-    personalDetailsDto.setAddress3(PERSON_ADDRESS3);
-    personalDetailsDto.setAddress4(PERSON_ADDRESS4);
-    personalDetailsDto.setPostCode(PERSON_POSTCODE);
-    personalDetailsDto.setGmcNumber(PERSON_GMC);
   }
 
   /**
@@ -219,12 +183,6 @@ class TraineeProfileResourceTest {
     programmeMembership.setProgrammeName(PROGRAMME_NAME);
     programmeMembership.setProgrammeNumber(PROGRAMME_NUMBER);
     programmeMembership.setCurricula(Lists.newArrayList(curriculum));
-
-    programmeMembershipDto = new ProgrammeMembershipDto();
-    programmeMembershipDto.setProgrammeTisId(PROGRAMME_TISID);
-    programmeMembershipDto.setProgrammeName(PROGRAMME_NAME);
-    programmeMembershipDto.setProgrammeNumber(PROGRAMME_NUMBER);
-    programmeMembershipDto.setCurricula(Lists.newArrayList(curriculumDto));
   }
 
   /**
@@ -235,11 +193,6 @@ class TraineeProfileResourceTest {
     curriculum.setCurriculumTisId(CURRICULUM_TISID);
     curriculum.setCurriculumName(CURRICULUM_NAME);
     curriculum.setCurriculumSubType(CURRICULUM_SUBTYPE);
-
-    curriculumDto = new CurriculumDto();
-    curriculumDto.setCurriculumTisId(CURRICULUM_TISID);
-    curriculumDto.setCurriculumName(CURRICULUM_NAME);
-    curriculumDto.setCurriculumSubType(CURRICULUM_SUBTYPE);
   }
 
   /**
@@ -250,71 +203,73 @@ class TraineeProfileResourceTest {
     placement.setPlacementTisId(PLACEMENT_TISID);
     placement.setSite(PLACEMENT_SITE);
     placement.setStatus(PLACEMENT_STATUS);
-
-    placementDto = new PlacementDto();
-    placementDto.setPlacementTisId(PLACEMENT_TISID);
-    placementDto.setSite(PLACEMENT_SITE);
-    placementDto.setStatus(PLACEMENT_STATUS);
-  }
-
-
-  @Test
-  void testGetTraineeProfileById() throws Exception {
-    when(traineeProfileServiceMock.getTraineeProfile(DEFAULT_ID_1)).thenReturn(traineeProfile);
-    when(traineeProfileServiceMock.hidePastProgrammes(traineeProfile)).thenReturn(traineeProfile);
-    when(traineeProfileServiceMock.hidePastPlacements(traineeProfile)).thenReturn(traineeProfile);
-    when(traineeProfileMapperMock.toDto(traineeProfile)).thenReturn(traineeProfileDto);
-    this.mockMvc.perform(MockMvcRequestBuilders.get("/api/trainee-profile/{id}", DEFAULT_ID_1)
-        .contentType(MediaType.APPLICATION_JSON))
-        .andDo(print())
-        .andExpect(status().isOk())
-        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.traineeTisId").value(DEFAULT_TIS_ID_1))
-        .andExpect(jsonPath("$.personalDetails.surname").value(PERSON_SURNAME))
-        .andExpect(jsonPath("$.personalDetails.forenames").value(PERSON_FORENAME))
-        .andExpect(jsonPath("$.personalDetails.knownAs").value(PERSON_KNOWNAS))
-        .andExpect(jsonPath("$.personalDetails.maidenName").value(PERSON_MAIDENNAME))
-        .andExpect(jsonPath("$.personalDetails.title").value(PERSON_TITLE))
-        .andExpect(jsonPath("$.personalDetails.personOwner").value(PERSON_PERSONOWNER))
-        .andExpect(jsonPath("$.personalDetails.dateOfBirth").value(PERSON_DATEOFBIRTH.toString()))
-        .andExpect(jsonPath("$.personalDetails.gender").value(PERSON_GENDER))
-        .andExpect(jsonPath("$.personalDetails.qualification").value(PERSON_QUALIFICATION))
-        .andExpect(jsonPath("$.personalDetails.dateAttained").value(PERSON_DATEATTAINED.toString()))
-        .andExpect(jsonPath("$.personalDetails.medicalSchool").value(PERSON_MEDICALSCHOOL))
-        .andExpect(jsonPath("$.personalDetails.telephoneNumber").value(PERSON_TELEPHONENUMBER))
-        .andExpect(jsonPath("$.personalDetails.mobileNumber").value(PERSON_MOBILE))
-        .andExpect(jsonPath("$.personalDetails.email").value(PERSON_EMAIL))
-        .andExpect(jsonPath("$.personalDetails.address1").value(PERSON_ADDRESS1))
-        .andExpect(jsonPath("$.personalDetails.address2").value(PERSON_ADDRESS2))
-        .andExpect(jsonPath("$.personalDetails.address3").value(PERSON_ADDRESS3))
-        .andExpect(jsonPath("$.personalDetails.address4").value(PERSON_ADDRESS4))
-        .andExpect(jsonPath("$.personalDetails.postCode").value(PERSON_POSTCODE))
-        .andExpect(jsonPath("$.personalDetails.gmcNumber").value(PERSON_GMC))
-        .andExpect(jsonPath("$.programmeMemberships[*].programmeTisId").value(PROGRAMME_TISID))
-        .andExpect(jsonPath("$.programmeMemberships[*].programmeName").value(PROGRAMME_NAME))
-        .andExpect(jsonPath("$.programmeMemberships[*].programmeNumber").value(PROGRAMME_NUMBER))
-        .andExpect(jsonPath("$.programmeMemberships[*].curricula[*].curriculumTisId")
-            .value(CURRICULUM_TISID))
-        .andExpect(jsonPath("$.programmeMemberships[*].curricula[*].curriculumName")
-            .value(CURRICULUM_NAME))
-        .andExpect(jsonPath("$.programmeMemberships[*].curricula[*].curriculumSubType")
-            .value(CURRICULUM_SUBTYPE))
-        .andExpect(jsonPath("$.placements[*].placementTisId").value(PLACEMENT_TISID))
-        .andExpect(jsonPath("$.placements[*].site").value(PLACEMENT_SITE))
-        .andExpect(jsonPath("$.placements[*].status").value(PLACEMENT_STATUS.toString()));
   }
 
   @Test
-  void testGetTraineeProfileByTraineeTisId() throws Exception {
+  void shouldReturnBadRequestWhenTokenNotFound() throws Exception {
+    this.mockMvc.perform(
+        MockMvcRequestBuilders.get("/api/trainee-profile")
+            .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void shouldReturnBadRequestWhenPayloadNotMap() throws Exception {
+    String payload = "[]";
+    String encodedPayload = Base64.getEncoder()
+        .encodeToString(payload.getBytes(StandardCharsets.UTF_8));
+    String token = String.format("aGVhZGVy.%s.c2lnbmF0dXJl", encodedPayload);
+
+    this.mockMvc.perform(
+        MockMvcRequestBuilders.get("/api/trainee-profile")
+            .contentType(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void shouldReturnNotFoundWhenTisIdNotInToken() throws Exception {
+    String payload = "{}";
+    String encodedPayload = Base64.getEncoder()
+        .encodeToString(payload.getBytes(StandardCharsets.UTF_8));
+    String token = String.format("aGVhZGVy.%s.c2lnbmF0dXJl", encodedPayload);
+
+    this.mockMvc.perform(
+        MockMvcRequestBuilders.get("/api/trainee-profile")
+            .contentType(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void shouldReturnNotFoundWhenTisIdNotExists() throws Exception {
+    String payload = String.format("{\"%s\":\"40\"}", TIS_ID_ATTRIBUTE);
+    String encodedPayload = Base64.getEncoder()
+        .encodeToString(payload.getBytes(StandardCharsets.UTF_8));
+    String token = String.format("aGVhZGVy.%s.c2lnbmF0dXJl", encodedPayload);
+
+    this.mockMvc.perform(
+        MockMvcRequestBuilders.get("/api/trainee-profile")
+            .contentType(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void shouldReturnTraineeProfileWhenTisIdExists() throws Exception {
+    String payload = String.format("{\"%s\":\"%s\"}", TIS_ID_ATTRIBUTE, DEFAULT_TIS_ID_1);
+    String encodedPayload = Base64.getEncoder()
+        .encodeToString(payload.getBytes(StandardCharsets.UTF_8));
+    String token = String.format("aGVhZGVy.%s.c2lnbmF0dXJl", encodedPayload);
+
     when(traineeProfileServiceMock.getTraineeProfileByTraineeTisId(DEFAULT_TIS_ID_1))
         .thenReturn(traineeProfile);
     when(traineeProfileServiceMock.hidePastProgrammes(traineeProfile)).thenReturn(traineeProfile);
     when(traineeProfileServiceMock.hidePastPlacements(traineeProfile)).thenReturn(traineeProfile);
-    when(traineeProfileMapperMock.toDto(traineeProfile)).thenReturn(traineeProfileDto);
     this.mockMvc.perform(
-        MockMvcRequestBuilders.get("/api/trainee-profile/trainee/{traineeId}", DEFAULT_TIS_ID_1)
-            .contentType(MediaType.APPLICATION_JSON))
-        .andDo(print())
+        MockMvcRequestBuilders.get("/api/trainee-profile")
+            .contentType(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.id").value(DEFAULT_ID_1))

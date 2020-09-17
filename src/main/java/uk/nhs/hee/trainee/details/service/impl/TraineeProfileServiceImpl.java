@@ -36,23 +36,23 @@ public class TraineeProfileServiceImpl implements TraineeProfileService {
     this.repository = repository;
   }
 
-  public TraineeProfile getTraineeProfile(String id) {
-    return repository.findById(id).orElse(null);
-  }
-
+  @Override
   public TraineeProfile getTraineeProfileByTraineeTisId(String traineeTisId) {
     return repository.findByTraineeTisId(traineeTisId);
   }
 
+  @Override
   public TraineeProfile save(TraineeProfile traineeProfile) {
     return repository.save(traineeProfile);
   }
 
+  @Override
   public TraineeProfile hidePastProgrammes(TraineeProfile traineeProfile) {
     traineeProfile.getProgrammeMemberships().removeIf(c -> c.getStatus() == Status.PAST);
     return traineeProfile;
   }
 
+  @Override
   public TraineeProfile hidePastPlacements(TraineeProfile traineeProfile) {
     traineeProfile.getPlacements().removeIf(c -> c.getStatus() == Status.PAST);
     return traineeProfile;

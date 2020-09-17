@@ -25,8 +25,6 @@ import uk.nhs.hee.trainee.details.model.TraineeProfile;
 
 public interface TraineeProfileService {
 
-  TraineeProfile getTraineeProfile(String id);
-
   TraineeProfile getTraineeProfileByTraineeTisId(String traineeTisId);
 
   TraineeProfile save(TraineeProfile traineeProfile);

@@ -26,7 +26,6 @@ import static org.mockito.Mockito.when;
 import com.google.common.collect.Lists;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Optional;
 import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -180,15 +179,6 @@ class TraineeProfileServiceTest {
     placement2.setPlacementTisId(PLACEMENT_TISID2);
     placement2.setSite(PLACEMENT_SITE2);
     placement2.setStatus(PLACEMENT_STATUS2);
-  }
-
-  @Test
-  void getTraineeProfileShouldReturnTraineeProfile() {
-    when(traineeProfileRepositoryMock.findById(DEFAULT_ID_1))
-        .thenReturn(Optional.of(traineeProfile));
-    TraineeProfile returnedTraineeProfile = traineeProfileServiceImpl
-        .getTraineeProfile(DEFAULT_ID_1);
-    Assert.assertEquals(returnedTraineeProfile, traineeProfile);
   }
 
   @Test
