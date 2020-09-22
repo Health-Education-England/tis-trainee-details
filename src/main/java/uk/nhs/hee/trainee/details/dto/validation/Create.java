@@ -19,25 +19,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package uk.nhs.hee.trainee.details.dto;
+package uk.nhs.hee.trainee.details.dto.validation;
 
-import java.util.List;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Null;
-import lombok.Data;
-import uk.nhs.hee.trainee.details.dto.validation.Create;
+public interface Create {
 
-/**
- * A DTO for TraineeProfile entity Holds the fields for all the information of the trainee.
- */
-@Data
-public class TraineeProfileDto {
-
-  @Null(groups = Create.class)
-  private String id;
-  @NotNull(groups = Create.class)
-  private String traineeTisId;
-  private PersonalDetailsDto personalDetails;
-  private List<ProgrammeMembershipDto> programmeMemberships;
-  private List<PlacementDto> placements;
 }

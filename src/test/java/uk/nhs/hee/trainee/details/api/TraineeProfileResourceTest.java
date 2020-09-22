@@ -21,7 +21,10 @@
 
 package uk.nhs.hee.trainee.details.api;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -45,8 +48,8 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import uk.nhs.hee.trainee.details.dto.TraineeProfileDto;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapper;
 import uk.nhs.hee.trainee.details.model.Curriculum;
@@ -111,7 +114,7 @@ class TraineeProfileResourceTest {
   private MockMvc mockMvc;
 
   @MockBean
-  private TraineeProfileService traineeProfileServiceMock;
+  private TraineeProfileService service;
 
   private TraineeProfile traineeProfile;
   private PersonalDetails personalDetails;
@@ -125,8 +128,8 @@ class TraineeProfileResourceTest {
   @BeforeEach
   void setup() {
     TraineeProfileMapper mapper = Mappers.getMapper(TraineeProfileMapper.class);
-    TraineeProfileResource traineeProfileResource = new TraineeProfileResource(
-        traineeProfileServiceMock, mapper, objectMapper);
+    TraineeProfileResource traineeProfileResource = new TraineeProfileResource(service, mapper,
+        objectMapper);
     this.mockMvc = MockMvcBuilders.standaloneSetup(traineeProfileResource)
         .setMessageConverters(jacksonMessageConverter)
         .build();
@@ -210,70 +213,132 @@ class TraineeProfileResourceTest {
   }
 
   @Test
-  void shouldReturnBadRequestWhenTokenNotFound() throws Exception {
-    this.mockMvc.perform(
-        MockMvcRequestBuilders.get("/api/trainee-profile")
-            .contentType(MediaType.APPLICATION_JSON))
+  void postShouldCreateNewProfile() throws Exception {
+    TraineeProfileDto dto = new TraineeProfileDto();
+    dto.setTraineeTisId("tisId");
+
+    when(service.save(any(TraineeProfile.class))).then(invocation -> {
+      TraineeProfile entity = invocation.getArgument(0);
+      entity.setId("newId");
+      return entity;
+    });
+
+    this.mockMvc.perform(post("/api/trainee-profile")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsBytes(dto)))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.id").value("newId"))
+        .andExpect(jsonPath("$.traineeTisId").value("tisId"));
+  }
+
+  @Test
+  void postShouldReturnExistingProfile() throws Exception {
+    TraineeProfileDto dto = new TraineeProfileDto();
+    dto.setTraineeTisId("tisId");
+
+    when(service.getTraineeProfileByTraineeTisId("tisId")).thenReturn(traineeProfile);
+
+    this.mockMvc.perform(post("/api/trainee-profile")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsBytes(dto)))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.id").value(DEFAULT_ID_1))
+        .andExpect(jsonPath("$.traineeTisId").value(DEFAULT_TIS_ID_1))
+        .andExpect(jsonPath("$.personalDetails.surname").value(PERSON_SURNAME))
+        .andExpect(jsonPath("$.personalDetails.forenames").value(PERSON_FORENAME))
+        .andExpect(jsonPath("$.personalDetails.knownAs").value(PERSON_KNOWNAS))
+        .andExpect(jsonPath("$.personalDetails.maidenName").value(PERSON_MAIDENNAME))
+        .andExpect(jsonPath("$.personalDetails.title").value(PERSON_TITLE))
+        .andExpect(jsonPath("$.personalDetails.personOwner").value(PERSON_PERSONOWNER))
+        .andExpect(jsonPath("$.personalDetails.dateOfBirth").value(PERSON_DATEOFBIRTH.toString()))
+        .andExpect(jsonPath("$.personalDetails.gender").value(PERSON_GENDER))
+        .andExpect(jsonPath("$.personalDetails.qualification").value(PERSON_QUALIFICATION))
+        .andExpect(jsonPath("$.personalDetails.dateAttained").value(PERSON_DATEATTAINED.toString()))
+        .andExpect(jsonPath("$.personalDetails.medicalSchool").value(PERSON_MEDICALSCHOOL))
+        .andExpect(jsonPath("$.personalDetails.telephoneNumber").value(PERSON_TELEPHONENUMBER))
+        .andExpect(jsonPath("$.personalDetails.mobileNumber").value(PERSON_MOBILE))
+        .andExpect(jsonPath("$.personalDetails.email").value(PERSON_EMAIL))
+        .andExpect(jsonPath("$.personalDetails.address1").value(PERSON_ADDRESS1))
+        .andExpect(jsonPath("$.personalDetails.address2").value(PERSON_ADDRESS2))
+        .andExpect(jsonPath("$.personalDetails.address3").value(PERSON_ADDRESS3))
+        .andExpect(jsonPath("$.personalDetails.address4").value(PERSON_ADDRESS4))
+        .andExpect(jsonPath("$.personalDetails.postCode").value(PERSON_POSTCODE))
+        .andExpect(jsonPath("$.personalDetails.gmcNumber").value(PERSON_GMC))
+        .andExpect(jsonPath("$.programmeMemberships[*].programmeTisId").value(PROGRAMME_TISID))
+        .andExpect(jsonPath("$.programmeMemberships[*].programmeName").value(PROGRAMME_NAME))
+        .andExpect(jsonPath("$.programmeMemberships[*].programmeNumber").value(PROGRAMME_NUMBER))
+        .andExpect(jsonPath("$.programmeMemberships[*].curricula[*].curriculumTisId")
+            .value(CURRICULUM_TISID))
+        .andExpect(jsonPath("$.programmeMemberships[*].curricula[*].curriculumName")
+            .value(CURRICULUM_NAME))
+        .andExpect(jsonPath("$.programmeMemberships[*].curricula[*].curriculumSubType")
+            .value(CURRICULUM_SUBTYPE))
+        .andExpect(jsonPath("$.placements[*].placementTisId").value(PLACEMENT_TISID))
+        .andExpect(jsonPath("$.placements[*].site").value(PLACEMENT_SITE))
+        .andExpect(jsonPath("$.placements[*].status").value(PLACEMENT_STATUS.toString()));
+  }
+
+  @Test
+  void getShouldReturnBadRequestWhenTokenNotFound() throws Exception {
+    this.mockMvc.perform(get("/api/trainee-profile")
+        .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isBadRequest());
   }
 
   @Test
-  void shouldReturnBadRequestWhenPayloadNotMap() throws Exception {
+  void getShouldReturnBadRequestWhenPayloadNotMap() throws Exception {
     String payload = "[]";
     String encodedPayload = Base64.getEncoder()
         .encodeToString(payload.getBytes(StandardCharsets.UTF_8));
     String token = String.format("aGVhZGVy.%s.c2lnbmF0dXJl", encodedPayload);
 
-    this.mockMvc.perform(
-        MockMvcRequestBuilders.get("/api/trainee-profile")
-            .contentType(MediaType.APPLICATION_JSON)
-            .header(HttpHeaders.AUTHORIZATION, token))
+    this.mockMvc.perform(get("/api/trainee-profile")
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isBadRequest());
   }
 
   @Test
-  void shouldReturnNotFoundWhenTisIdNotInToken() throws Exception {
+  void getShouldReturnNotFoundWhenTisIdNotInToken() throws Exception {
     String payload = "{}";
     String encodedPayload = Base64.getEncoder()
         .encodeToString(payload.getBytes(StandardCharsets.UTF_8));
     String token = String.format("aGVhZGVy.%s.c2lnbmF0dXJl", encodedPayload);
 
-    this.mockMvc.perform(
-        MockMvcRequestBuilders.get("/api/trainee-profile")
-            .contentType(MediaType.APPLICATION_JSON)
-            .header(HttpHeaders.AUTHORIZATION, token))
+    this.mockMvc.perform(get("/api/trainee-profile")
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isNotFound());
   }
 
   @Test
-  void shouldReturnNotFoundWhenTisIdNotExists() throws Exception {
+  void getShouldReturnNotFoundWhenTisIdNotExists() throws Exception {
     String payload = String.format("{\"%s\":\"40\"}", TIS_ID_ATTRIBUTE);
     String encodedPayload = Base64.getEncoder()
         .encodeToString(payload.getBytes(StandardCharsets.UTF_8));
     String token = String.format("aGVhZGVy.%s.c2lnbmF0dXJl", encodedPayload);
 
-    this.mockMvc.perform(
-        MockMvcRequestBuilders.get("/api/trainee-profile")
-            .contentType(MediaType.APPLICATION_JSON)
-            .header(HttpHeaders.AUTHORIZATION, token))
+    this.mockMvc.perform(get("/api/trainee-profile")
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isNotFound());
   }
 
   @Test
-  void shouldReturnTraineeProfileWhenTisIdExists() throws Exception {
+  void getShouldReturnTraineeProfileWhenTisIdExists() throws Exception {
     String payload = String.format("{\"%s\":\"%s\"}", TIS_ID_ATTRIBUTE, DEFAULT_TIS_ID_1);
     String encodedPayload = Base64.getEncoder()
         .encodeToString(payload.getBytes(StandardCharsets.UTF_8));
     String token = String.format("aGVhZGVy.%s.c2lnbmF0dXJl", encodedPayload);
 
-    when(traineeProfileServiceMock.getTraineeProfileByTraineeTisId(DEFAULT_TIS_ID_1))
-        .thenReturn(traineeProfile);
-    when(traineeProfileServiceMock.hidePastProgrammes(traineeProfile)).thenReturn(traineeProfile);
-    when(traineeProfileServiceMock.hidePastPlacements(traineeProfile)).thenReturn(traineeProfile);
-    this.mockMvc.perform(
-        MockMvcRequestBuilders.get("/api/trainee-profile")
-            .contentType(MediaType.APPLICATION_JSON)
-            .header(HttpHeaders.AUTHORIZATION, token))
+    when(service.getTraineeProfileByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+    when(service.hidePastProgrammes(traineeProfile)).thenReturn(traineeProfile);
+    when(service.hidePastPlacements(traineeProfile)).thenReturn(traineeProfile);
+    this.mockMvc.perform(get("/api/trainee-profile")
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.id").value(DEFAULT_ID_1))
