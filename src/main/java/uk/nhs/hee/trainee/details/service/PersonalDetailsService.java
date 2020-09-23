@@ -27,6 +27,34 @@ import uk.nhs.hee.trainee.details.model.PersonalDetails;
 public interface PersonalDetailsService {
 
   /**
+   * Update the GDC details for the trainee with the given TIS ID.
+   *
+   * @param tisId           The TIS id of the trainee.
+   * @param personalDetails The personal details to add to the trainee.
+   * @return The updated personal details or empty if a trainee with the ID was not found.
+   */
+  Optional<PersonalDetails> updateGdcDetailsByTisId(String tisId, PersonalDetails personalDetails);
+
+  /**
+   * Update the GMC details for the trainee with the given TIS ID.
+   *
+   * @param tisId           The TIS id of the trainee.
+   * @param personalDetails The personal details to add to the trainee.
+   * @return The updated personal details or empty if a trainee with the ID was not found.
+   */
+  Optional<PersonalDetails> updateGmcDetailsByTisId(String tisId, PersonalDetails personalDetails);
+
+  /**
+   * Update the person owner for the trainee with the given TIS ID.
+   *
+   * @param tisId           The TIS id of the trainee.
+   * @param personalDetails The personal details to add to the trainee.
+   * @return The updated personal details or empty if a trainee with the ID was not found.
+   */
+  Optional<PersonalDetails> updatePersonOwnerByTisId(String tisId,
+      PersonalDetails personalDetails);
+
+  /**
    * Update the contact details for the trainee with the given TIS ID.
    *
    * @param tisId           The TIS id of the trainee.

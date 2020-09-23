@@ -53,6 +53,20 @@ public interface TraineeProfileMapper {
   void updateContactDetails(@MappingTarget TraineeProfile target, PersonalDetails source);
 
   @BeanMapping(ignoreByDefault = true)
+  @Mapping(target = "personalDetails.gdcNumber", source = "gdcNumber")
+  @Mapping(target = "personalDetails.gdcStatus", source = "gdcStatus")
+  void updateGdcDetails(@MappingTarget TraineeProfile target, PersonalDetails source);
+
+  @BeanMapping(ignoreByDefault = true)
+  @Mapping(target = "personalDetails.gmcNumber", source = "gmcNumber")
+  @Mapping(target = "personalDetails.gmcStatus", source = "gmcStatus")
+  void updateGmcDetails(@MappingTarget TraineeProfile target, PersonalDetails source);
+
+  @BeanMapping(ignoreByDefault = true)
+  @Mapping(target = "personalDetails.personOwner", source = "personOwner")
+  void updatePersonOwner(@MappingTarget TraineeProfile target, PersonalDetails source);
+
+  @BeanMapping(ignoreByDefault = true)
   @Mapping(target = "personalDetails.dateOfBirth", source = "dateOfBirth")
   @Mapping(target = "personalDetails.gender", source = "gender")
   void updatePersonalInfo(@MappingTarget TraineeProfile target, PersonalDetails source);

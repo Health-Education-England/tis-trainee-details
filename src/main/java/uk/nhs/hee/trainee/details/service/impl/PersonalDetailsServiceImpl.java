@@ -22,6 +22,7 @@
 package uk.nhs.hee.trainee.details.service.impl;
 
 import java.util.Optional;
+import java.util.function.BiConsumer;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapper;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
@@ -41,26 +42,52 @@ public class PersonalDetailsServiceImpl implements PersonalDetailsService {
   }
 
   @Override
+  public Optional<PersonalDetails> updateGdcDetailsByTisId(String tisId,
+      PersonalDetails personalDetails) {
+    return updatePersonalDetailsByTisId(tisId, personalDetails, mapper::updateGdcDetails);
+  }
+
+  @Override
+  public Optional<PersonalDetails> updateGmcDetailsByTisId(String tisId,
+      PersonalDetails personalDetails) {
+    return updatePersonalDetailsByTisId(tisId, personalDetails, mapper::updateGmcDetails);
+  }
+
+  @Override
+  public Optional<PersonalDetails> updatePersonOwnerByTisId(String tisId,
+      PersonalDetails personalDetails) {
+    return updatePersonalDetailsByTisId(tisId, personalDetails, mapper::updatePersonOwner);
+  }
+
+  @Override
   public Optional<PersonalDetails> updateContactDetailsByTisId(String tisId,
       PersonalDetails personalDetails) {
-    TraineeProfile traineeProfile = profileService.getTraineeProfileByTraineeTisId(tisId);
-
-    if (traineeProfile == null) {
-      return Optional.empty();
-    }
-
-    mapper.updateContactDetails(traineeProfile, personalDetails);
-    return Optional.of(profileService.save(traineeProfile).getPersonalDetails());
+    return updatePersonalDetailsByTisId(tisId, personalDetails, mapper::updateContactDetails);
   }
 
   @Override
   public Optional<PersonalDetails> updatePersonalInfoByTisId(String tisId,
       PersonalDetails personalDetails) {
+    return updatePersonalDetailsByTisId(tisId, personalDetails, mapper::updatePersonalInfo);
+  }
+
+  /**
+   * Update the Personal Details entity for the given TIS ID.
+   *
+   * @param tisId           The TIS id of the trainee.
+   * @param personalDetails The personal details to add to the trainee.
+   * @param updateFunction  The function to use to update the personal details.
+   * @return The updated personal details or empty if a trainee with the ID was not found.
+   */
+  private Optional<PersonalDetails> updatePersonalDetailsByTisId(String tisId,
+      PersonalDetails personalDetails, BiConsumer<TraineeProfile, PersonalDetails> updateFunction) {
     TraineeProfile traineeProfile = profileService.getTraineeProfileByTraineeTisId(tisId);
+
     if (traineeProfile == null) {
       return Optional.empty();
     }
-    mapper.updatePersonalInfo(traineeProfile, personalDetails);
+
+    updateFunction.accept(traineeProfile, personalDetails);
     return Optional.of(profileService.save(traineeProfile).getPersonalDetails());
   }
 }

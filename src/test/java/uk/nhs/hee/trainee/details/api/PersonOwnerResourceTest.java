@@ -52,8 +52,8 @@ import uk.nhs.hee.trainee.details.service.PersonalDetailsService;
 
 @ContextConfiguration(classes = {PersonalDetailsMapper.class})
 @ExtendWith(SpringExtension.class)
-@WebMvcTest(ContactDetailsResource.class)
-class ContactDetailsResourceTest {
+@WebMvcTest(PersonOwnerResource.class)
+class PersonOwnerResourceTest {
 
   @Autowired
   private MappingJackson2HttpMessageConverter jacksonMessageConverter;
@@ -69,7 +69,7 @@ class ContactDetailsResourceTest {
   @BeforeEach
   void setUp() {
     PersonalDetailsMapper mapper = Mappers.getMapper(PersonalDetailsMapper.class);
-    ContactDetailsResource collegeResource = new ContactDetailsResource(service, mapper);
+    PersonOwnerResource collegeResource = new PersonOwnerResource(service, mapper);
     mockMvc = MockMvcBuilders.standaloneSetup(collegeResource)
         .setMessageConverters(jacksonMessageConverter)
         .build();
@@ -77,10 +77,10 @@ class ContactDetailsResourceTest {
 
   @Test
   void shouldThrowExceptionWhenTraineeNotFound() throws Exception {
-    when(service.updateContactDetailsByTisId(eq("40"), eq(new PersonalDetails())))
+    when(service.updatePersonOwnerByTisId(eq("40"), eq(new PersonalDetails())))
         .thenReturn(Optional.empty());
 
-    mockMvc.perform(patch("/api/contact-details/{tisId}", 40)
+    mockMvc.perform(patch("/api/person-owner/{tisId}", 40)
         .contentType(MediaType.APPLICATION_JSON)
         .content(mapper.writeValueAsBytes(new PersonalDetailsDto())))
         .andExpect(status().isNotFound())
@@ -88,20 +88,18 @@ class ContactDetailsResourceTest {
   }
 
   @Test
-  void shouldUpdateContactDetailsWhenTraineeFound() throws Exception {
+  void shouldUpdatePersonOwnerDetailsWhenTraineeFound() throws Exception {
     PersonalDetails personalDetails = new PersonalDetails();
-    personalDetails.setForenames("John");
-    personalDetails.setSurname("Doe");
+    personalDetails.setPersonOwner("An owner");
 
-    when(service.updateContactDetailsByTisId(eq("40"), any(PersonalDetails.class)))
+    when(service.updatePersonOwnerByTisId(eq("40"), any(PersonalDetails.class)))
         .thenReturn(Optional.of(personalDetails));
 
-    mockMvc.perform(patch("/api/contact-details/{tisId}", 40)
+    mockMvc.perform(patch("/api/person-owner/{tisId}", 40)
         .contentType(MediaType.APPLICATION_JSON)
         .content(mapper.writeValueAsBytes(new PersonalDetailsDto())))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.forenames").value(is("John")))
-        .andExpect(jsonPath("$.surname").value(is("Doe")));
+        .andExpect(jsonPath("$.personOwner").value(is("An owner")));
   }
 }
