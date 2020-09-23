@@ -23,7 +23,7 @@ package uk.nhs.hee.trainee.details.service.impl;
 
 import java.util.Optional;
 import org.springframework.stereotype.Service;
-import uk.nhs.hee.trainee.details.mapper.PersonalDetailsMapper;
+import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapper;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.service.PersonalDetailsService;
@@ -33,9 +33,9 @@ import uk.nhs.hee.trainee.details.service.TraineeProfileService;
 public class PersonalDetailsServiceImpl implements PersonalDetailsService {
 
   private final TraineeProfileService profileService;
-  private PersonalDetailsMapper mapper;
+  private TraineeProfileMapper mapper;
 
-  PersonalDetailsServiceImpl(TraineeProfileService profileService, PersonalDetailsMapper mapper) {
+  PersonalDetailsServiceImpl(TraineeProfileService profileService, TraineeProfileMapper mapper) {
     this.profileService = profileService;
     this.mapper = mapper;
   }
@@ -49,7 +49,7 @@ public class PersonalDetailsServiceImpl implements PersonalDetailsService {
       return Optional.empty();
     }
 
-    mapper.updateContactDetails(traineeProfile.getPersonalDetails(), personalDetails);
+    mapper.updateContactDetails(traineeProfile, personalDetails);
     return Optional.of(profileService.save(traineeProfile).getPersonalDetails());
   }
 
@@ -60,7 +60,7 @@ public class PersonalDetailsServiceImpl implements PersonalDetailsService {
     if (traineeProfile == null) {
       return Optional.empty();
     }
-    mapper.updatePersonalInfo(traineeProfile.getPersonalDetails(), personalDetails);
+    mapper.updatePersonalInfo(traineeProfile, personalDetails);
     return Optional.of(profileService.save(traineeProfile).getPersonalDetails());
   }
 }
