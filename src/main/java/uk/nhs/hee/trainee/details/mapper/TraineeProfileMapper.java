@@ -21,9 +21,12 @@
 
 package uk.nhs.hee.trainee.details.mapper;
 
-import org.mapstruct.InheritInverseConfiguration;
+import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 import uk.nhs.hee.trainee.details.dto.TraineeProfileDto;
+import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 
 @Mapper(componentModel = "spring")
@@ -31,6 +34,26 @@ public interface TraineeProfileMapper {
 
   TraineeProfileDto toDto(TraineeProfile traineeProfile);
 
-  @InheritInverseConfiguration
   TraineeProfile toEntity(TraineeProfileDto traineeProfileDto);
+
+  @BeanMapping(ignoreByDefault = true)
+  @Mapping(target = "personalDetails.title", source = "title")
+  @Mapping(target = "personalDetails.forenames", source = "forenames")
+  @Mapping(target = "personalDetails.knownAs", source = "knownAs")
+  @Mapping(target = "personalDetails.surname", source = "surname")
+  @Mapping(target = "personalDetails.maidenName", source = "maidenName")
+  @Mapping(target = "personalDetails.telephoneNumber", source = "telephoneNumber")
+  @Mapping(target = "personalDetails.mobileNumber", source = "mobileNumber")
+  @Mapping(target = "personalDetails.email", source = "email")
+  @Mapping(target = "personalDetails.address1", source = "address1")
+  @Mapping(target = "personalDetails.address2", source = "address2")
+  @Mapping(target = "personalDetails.address3", source = "address3")
+  @Mapping(target = "personalDetails.address4", source = "address4")
+  @Mapping(target = "personalDetails.postCode", source = "postCode")
+  void updateContactDetails(@MappingTarget TraineeProfile target, PersonalDetails source);
+
+  @BeanMapping(ignoreByDefault = true)
+  @Mapping(target = "personalDetails.dateOfBirth", source = "dateOfBirth")
+  @Mapping(target = "personalDetails.gender", source = "gender")
+  void updatePersonalInfo(@MappingTarget TraineeProfile target, PersonalDetails source);
 }

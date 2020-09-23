@@ -35,7 +35,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
-import uk.nhs.hee.trainee.details.mapper.PersonalDetailsMapper;
+import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapper;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
@@ -84,7 +84,7 @@ class PersonalDetailsServiceImplTest {
     repository = mock(TraineeProfileRepository.class);
     TraineeProfileServiceImpl profileService = new TraineeProfileServiceImpl(repository);
     service = new PersonalDetailsServiceImpl(profileService,
-        Mappers.getMapper(PersonalDetailsMapper.class));
+        Mappers.getMapper(TraineeProfileMapper.class));
   }
 
   @Test
@@ -129,6 +129,36 @@ class PersonalDetailsServiceImplTest {
   }
 
   @Test
+  void shouldPopulateContactDetailsWhenTraineeSkeletonFound() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+
+    when(repository.findByTraineeTisId("40")).thenReturn(traineeProfile);
+    when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
+
+    Optional<PersonalDetails> personalDetails = service
+        .updateContactDetailsByTisId("40", createPersonalDetails("post", 100));
+
+    assertThat("Unexpected optional isEmpty flag.", personalDetails.isEmpty(), is(false));
+
+    PersonalDetails expectedPersonalDetails = new PersonalDetails();
+    expectedPersonalDetails.setTitle(TITLE + MODIFIED_SUFFIX);
+    expectedPersonalDetails.setForenames(FORENAMES + MODIFIED_SUFFIX);
+    expectedPersonalDetails.setKnownAs(KNOWN_AS + MODIFIED_SUFFIX);
+    expectedPersonalDetails.setSurname(SURNAME + MODIFIED_SUFFIX);
+    expectedPersonalDetails.setMaidenName(MAIDEN_NAME + MODIFIED_SUFFIX);
+    expectedPersonalDetails.setTelephoneNumber(TELEPHONE_NUMBER + MODIFIED_SUFFIX);
+    expectedPersonalDetails.setMobileNumber(MOBILE_NUMBER + MODIFIED_SUFFIX);
+    expectedPersonalDetails.setEmail(EMAIL + MODIFIED_SUFFIX);
+    expectedPersonalDetails.setAddress1(ADDRESS_1 + MODIFIED_SUFFIX);
+    expectedPersonalDetails.setAddress2(ADDRESS_2 + MODIFIED_SUFFIX);
+    expectedPersonalDetails.setAddress3(ADDRESS_3 + MODIFIED_SUFFIX);
+    expectedPersonalDetails.setAddress4(ADDRESS_4 + MODIFIED_SUFFIX);
+    expectedPersonalDetails.setPostCode(POST_CODE + MODIFIED_SUFFIX);
+
+    assertThat("Unexpected personal details.", personalDetails.get(), is(expectedPersonalDetails));
+  }
+
+  @Test
   void shouldNotUpdatePersonalInfoWhenTraineeIdNotFound() {
     PersonalDetails personalDetailsMock = mock(PersonalDetails.class);
     Optional<PersonalDetails> personalDetails = service
@@ -154,6 +184,26 @@ class PersonalDetailsServiceImplTest {
     assertTrue(personalDetails.isPresent(), "Expected a PersonalDetails to be returned");
 
     PersonalDetails expectedPersonalDetails = createPersonalDetails(ORIGINAL_SUFFIX, 0);
+    expectedPersonalDetails.setDateOfBirth(DATE.plusDays(ONE_HUNDRED));
+    expectedPersonalDetails.setGender(GENDER + MODIFIED_SUFFIX);
+
+    assertThat("Unexpected personal details.", personalDetails.get(), is(expectedPersonalDetails));
+  }
+
+  @Test
+  void shouldPopulatePersonalInfoWhenTraineeSkeletonFound() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+    when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
+
+    Optional<PersonalDetails> personalDetails = service
+        .updatePersonalInfoByTisId(
+            TRAINEE_TIS_ID, createPersonalDetails(MODIFIED_SUFFIX, ONE_HUNDRED));
+
+    assertTrue(personalDetails.isPresent(), "Expected a PersonalDetails to be returned");
+
+    PersonalDetails expectedPersonalDetails = new PersonalDetails();
     expectedPersonalDetails.setDateOfBirth(DATE.plusDays(ONE_HUNDRED));
     expectedPersonalDetails.setGender(GENDER + MODIFIED_SUFFIX);
 
