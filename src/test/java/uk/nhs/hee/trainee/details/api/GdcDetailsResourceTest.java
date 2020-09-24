@@ -52,8 +52,8 @@ import uk.nhs.hee.trainee.details.service.PersonalDetailsService;
 
 @ContextConfiguration(classes = {PersonalDetailsMapper.class})
 @ExtendWith(SpringExtension.class)
-@WebMvcTest(ContactDetailsResource.class)
-class ContactDetailsResourceTest {
+@WebMvcTest(GdcDetailsResource.class)
+class GdcDetailsResourceTest {
 
   @Autowired
   private MappingJackson2HttpMessageConverter jacksonMessageConverter;
@@ -69,7 +69,7 @@ class ContactDetailsResourceTest {
   @BeforeEach
   void setUp() {
     PersonalDetailsMapper mapper = Mappers.getMapper(PersonalDetailsMapper.class);
-    ContactDetailsResource collegeResource = new ContactDetailsResource(service, mapper);
+    GdcDetailsResource collegeResource = new GdcDetailsResource(service, mapper);
     mockMvc = MockMvcBuilders.standaloneSetup(collegeResource)
         .setMessageConverters(jacksonMessageConverter)
         .build();
@@ -77,10 +77,10 @@ class ContactDetailsResourceTest {
 
   @Test
   void shouldThrowExceptionWhenTraineeNotFound() throws Exception {
-    when(service.updateContactDetailsByTisId(eq("40"), eq(new PersonalDetails())))
+    when(service.updateGdcDetailsByTisId(eq("40"), eq(new PersonalDetails())))
         .thenReturn(Optional.empty());
 
-    mockMvc.perform(patch("/api/contact-details/{tisId}", 40)
+    mockMvc.perform(patch("/api/gdc-details/{tisId}", 40)
         .contentType(MediaType.APPLICATION_JSON)
         .content(mapper.writeValueAsBytes(new PersonalDetailsDto())))
         .andExpect(status().isNotFound())
@@ -88,20 +88,20 @@ class ContactDetailsResourceTest {
   }
 
   @Test
-  void shouldUpdateContactDetailsWhenTraineeFound() throws Exception {
+  void shouldUpdateGdcDetailsWhenTraineeFound() throws Exception {
     PersonalDetails personalDetails = new PersonalDetails();
-    personalDetails.setForenames("John");
-    personalDetails.setSurname("Doe");
+    personalDetails.setGdcNumber("A number");
+    personalDetails.setGdcStatus("A status");
 
-    when(service.updateContactDetailsByTisId(eq("40"), any(PersonalDetails.class)))
+    when(service.updateGdcDetailsByTisId(eq("40"), any(PersonalDetails.class)))
         .thenReturn(Optional.of(personalDetails));
 
-    mockMvc.perform(patch("/api/contact-details/{tisId}", 40)
+    mockMvc.perform(patch("/api/gdc-details/{tisId}", 40)
         .contentType(MediaType.APPLICATION_JSON)
         .content(mapper.writeValueAsBytes(new PersonalDetailsDto())))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.forenames").value(is("John")))
-        .andExpect(jsonPath("$.surname").value(is("Doe")));
+        .andExpect(jsonPath("$.gdcNumber").value(is("A number")))
+        .andExpect(jsonPath("$.gdcStatus").value(is("A status")));
   }
 }
