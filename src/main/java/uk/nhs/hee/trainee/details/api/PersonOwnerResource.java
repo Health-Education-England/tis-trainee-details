@@ -57,7 +57,7 @@ public class PersonOwnerResource {
    * @return The updated PersonalDetails.
    */
   @PatchMapping("/{tisId}")
-  public ResponseEntity<PersonalDetailsDto> updateGmcDetails(
+  public ResponseEntity<PersonalDetailsDto> updatePersonOwner(
       @PathVariable(name = "tisId") String tisId, @RequestBody PersonalDetailsDto dto) {
     log.trace("Update person owner of trainee with TIS ID {}", tisId);
     PersonalDetails entity = mapper.toEntity(dto);
