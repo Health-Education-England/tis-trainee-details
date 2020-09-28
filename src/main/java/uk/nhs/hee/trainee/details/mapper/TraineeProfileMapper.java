@@ -37,6 +37,10 @@ public interface TraineeProfileMapper {
   TraineeProfile toEntity(TraineeProfileDto traineeProfileDto);
 
   @BeanMapping(ignoreByDefault = true)
+  @Mapping(target = "personalDetails.publicHealthNumber", source = "publicHealthNumber")
+  void updateBasicDetails(@MappingTarget TraineeProfile target, PersonalDetails source);
+
+  @BeanMapping(ignoreByDefault = true)
   @Mapping(target = "personalDetails.title", source = "title")
   @Mapping(target = "personalDetails.forenames", source = "forenames")
   @Mapping(target = "personalDetails.knownAs", source = "knownAs")

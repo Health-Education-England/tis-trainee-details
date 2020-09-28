@@ -29,16 +29,12 @@ import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
 import uk.nhs.hee.trainee.details.dto.TraineeProfileDto;
-import uk.nhs.hee.trainee.details.dto.validation.Create;
 import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapper;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.service.TraineeProfileService;
@@ -59,24 +55,6 @@ public class TraineeProfileResource {
     this.service = service;
     this.mapper = mapper;
     this.objectMapper = objectMapper;
-  }
-
-  /**
-   * Create a trainee profile with the given data. The traineeTisId field is required.
-   *
-   * @param dto The trainee profile data to insert.
-   * @return The inserted profile, or any pre-existing profile for the trainee's TIS ID.
-   */
-  @PostMapping
-  public ResponseEntity<TraineeProfileDto> createTraineeProfile(
-      @RequestBody @Validated(Create.class) TraineeProfileDto dto) {
-    TraineeProfile entity = service.getTraineeProfileByTraineeTisId(dto.getTraineeTisId());
-
-    if (entity == null) {
-      entity = service.save(mapper.toEntity(dto));
-    }
-
-    return ResponseEntity.ok(mapper.toDto(entity));
   }
 
   /**

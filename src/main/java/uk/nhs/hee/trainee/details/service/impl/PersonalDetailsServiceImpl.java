@@ -33,12 +33,29 @@ import uk.nhs.hee.trainee.details.service.TraineeProfileService;
 @Service
 public class PersonalDetailsServiceImpl implements PersonalDetailsService {
 
-  private final TraineeProfileService profileService;
+  private final TraineeProfileService service;
   private TraineeProfileMapper mapper;
 
-  PersonalDetailsServiceImpl(TraineeProfileService profileService, TraineeProfileMapper mapper) {
-    this.profileService = profileService;
+  PersonalDetailsServiceImpl(TraineeProfileService service, TraineeProfileMapper mapper) {
+    this.service = service;
     this.mapper = mapper;
+  }
+
+  @Override
+  public PersonalDetails createProfileOrUpdateBasicDetailsByTisId(String tisId,
+      PersonalDetails personalDetails) {
+    Optional<PersonalDetails> updatedDetails = updatePersonalDetailsByTisId(tisId, personalDetails,
+        mapper::updateBasicDetails);
+
+    if (updatedDetails.isEmpty()) {
+      TraineeProfile traineeProfile = new TraineeProfile();
+      traineeProfile.setId(tisId);
+      mapper.updateBasicDetails(traineeProfile, personalDetails);
+      TraineeProfile savedProfile = service.save(traineeProfile);
+      return savedProfile.getPersonalDetails();
+    }
+
+    return updatedDetails.get();
   }
 
   @Override
@@ -81,13 +98,13 @@ public class PersonalDetailsServiceImpl implements PersonalDetailsService {
    */
   private Optional<PersonalDetails> updatePersonalDetailsByTisId(String tisId,
       PersonalDetails personalDetails, BiConsumer<TraineeProfile, PersonalDetails> updateFunction) {
-    TraineeProfile traineeProfile = profileService.getTraineeProfileByTraineeTisId(tisId);
+    TraineeProfile traineeProfile = service.getTraineeProfileByTraineeTisId(tisId);
 
     if (traineeProfile == null) {
       return Optional.empty();
     }
 
     updateFunction.accept(traineeProfile, personalDetails);
-    return Optional.of(profileService.save(traineeProfile).getPersonalDetails());
+    return Optional.of(service.save(traineeProfile).getPersonalDetails());
   }
 }

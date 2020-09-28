@@ -27,6 +27,17 @@ import uk.nhs.hee.trainee.details.model.PersonalDetails;
 public interface PersonalDetailsService {
 
   /**
+   * Update the basic details for the trainee with the given TIS ID, or create a new profile if the
+   * trainee does not exist.
+   *
+   * @param tisId           The TIS id of the trainee.
+   * @param personalDetails The personal details to add to the trainee.
+   * @return The updated or created personal details.
+   */
+  PersonalDetails createProfileOrUpdateBasicDetailsByTisId(String tisId,
+      PersonalDetails personalDetails);
+
+  /**
    * Update the GDC details for the trainee with the given TIS ID.
    *
    * @param tisId           The TIS id of the trainee.
