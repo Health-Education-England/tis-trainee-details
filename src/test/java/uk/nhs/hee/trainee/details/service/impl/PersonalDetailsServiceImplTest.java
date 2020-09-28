@@ -35,6 +35,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
+import org.mockito.ArgumentCaptor;
 import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapper;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
@@ -88,6 +89,57 @@ class PersonalDetailsServiceImplTest {
   }
 
   @Test
+  void shouldCreateTraineeProfileWhenTraineeIdNotFound() {
+    ArgumentCaptor<TraineeProfile> profileCaptor = ArgumentCaptor.forClass(TraineeProfile.class);
+
+    when(repository.save(profileCaptor.capture()))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    PersonalDetails personalDetails = service.createProfileOrUpdateBasicDetailsByTisId("notFound",
+        createPersonalDetails(MODIFIED_SUFFIX, 100));
+
+    PersonalDetails expectedPersonalDetails = new PersonalDetails();
+    expectedPersonalDetails.setPublicHealthNumber(PUBLIC_HEALTH_NUMBER + MODIFIED_SUFFIX);
+    assertThat("Unexpected personal details.", personalDetails, is(expectedPersonalDetails));
+
+    TraineeProfile traineeProfile = profileCaptor.getValue();
+    assertThat("Unexpected TIS id.", traineeProfile.getId(), is("notFound"));
+  }
+
+  @Test
+  void shouldUpdateBasicDetailsWhenTraineeIdFound() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPersonalDetails(createPersonalDetails(ORIGINAL_SUFFIX, 0));
+
+    when(repository.findByTraineeTisId("40")).thenReturn(traineeProfile);
+    when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
+
+    PersonalDetails personalDetails = service.createProfileOrUpdateBasicDetailsByTisId("40",
+        createPersonalDetails(MODIFIED_SUFFIX, 100));
+
+    PersonalDetails expectedPersonalDetails = createPersonalDetails(ORIGINAL_SUFFIX, 0);
+    expectedPersonalDetails.setPublicHealthNumber(PUBLIC_HEALTH_NUMBER + MODIFIED_SUFFIX);
+
+    assertThat("Unexpected personal details.", personalDetails, is(expectedPersonalDetails));
+  }
+
+  @Test
+  void shouldPopulateBasicDetailsWhenTraineeSkeletonFound() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+
+    when(repository.findByTraineeTisId("40")).thenReturn(traineeProfile);
+    when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
+
+    PersonalDetails personalDetails = service.createProfileOrUpdateBasicDetailsByTisId("40",
+        createPersonalDetails(MODIFIED_SUFFIX, 100));
+
+    PersonalDetails expectedPersonalDetails = new PersonalDetails();
+    expectedPersonalDetails.setPublicHealthNumber(PUBLIC_HEALTH_NUMBER + MODIFIED_SUFFIX);
+
+    assertThat("Unexpected personal details.", personalDetails, is(expectedPersonalDetails));
+  }
+
+  @Test
   void shouldNotUpdateGdcDetailsWhenTraineeIdNotFound() {
     Optional<PersonalDetails> personalDetails = service
         .updateGdcDetailsByTisId("notFound", new PersonalDetails());
@@ -135,7 +187,6 @@ class PersonalDetailsServiceImplTest {
 
     assertThat("Unexpected personal details.", personalDetails.get(), is(expectedPersonalDetails));
   }
-
 
   @Test
   void shouldNotUpdateGmcDetailsWhenTraineeIdNotFound() {

@@ -27,36 +27,36 @@ import lombok.Data;
 @Data
 public class PersonalDetails {
 
-  private String surname;
-  private String forenames;
-  private String knownAs;
-  private String maidenName;
-  private String title;
-  private String personOwner;
-  private LocalDate dateOfBirth;
-  private String gender;
-  private String qualification;
-  private LocalDate dateAttained;
-  private String medicalSchool;
-  private String telephoneNumber;
-  private String mobileNumber;
-  private String email;
-  private String address1;
-  private String address2;
-  private String address3;
-  private String address4;
-  private String postCode;
-  private String gmcNumber;
-  private String gmcStatus;
-  private String gdcNumber;
-  private String gdcStatus;
-  private String publicHealthNumber;
-  private String eeaResident;
-  private String permitToWork;
-  private String settled;
-  private LocalDate visaIssued;
-  private String detailsNumber;
-  private String prevRevalBody;
-  private LocalDate currRevalDate;
-  private LocalDate prevRevalDate;
+  private String surname; // ContactDetails
+  private String forenames; // ContactDetails
+  private String knownAs; // ContactDetails
+  private String maidenName; // ContactDetails
+  private String title; // ContactDetails
+  private String personOwner; // PersonOwner
+  private LocalDate dateOfBirth; // PersonalDetails
+  private String gender; // PersonalDetails
+  private String qualification; // TODO: Qualifcation
+  private LocalDate dateAttained; // TODO: Qualifcation
+  private String medicalSchool; // TODO: Qualifcation
+  private String telephoneNumber; // ContactDetails
+  private String mobileNumber; // ContactDetails
+  private String email; // ContactDetails
+  private String address1; // ContactDetails
+  private String address2; // ContactDetails
+  private String address3; // ContactDetails
+  private String address4; // ContactDetails
+  private String postCode; // ContactDetails
+  private String gmcNumber; // GmcDetails
+  private String gmcStatus; // GmcDetails
+  private String gdcNumber; // GdcDetails
+  private String gdcStatus; // GdcDetails
+  private String publicHealthNumber; // Person
+  private String eeaResident; // TODO:
+  private String permitToWork; // TODO:
+  private String settled; // TODO:
+  private LocalDate visaIssued; // TODO:
+  private String detailsNumber; // TODO:
+  private String prevRevalBody; // TODO:
+  private LocalDate currRevalDate; // TODO:
+  private LocalDate prevRevalDate; // TODO:
 }
