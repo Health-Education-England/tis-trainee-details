@@ -21,24 +21,19 @@
 
 package uk.nhs.hee.trainee.details.dto;
 
-import java.util.List;
+import java.time.LocalDate;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Null;
 import lombok.Data;
-import uk.nhs.hee.trainee.details.dto.validation.Create;
 
 /**
- * A DTO for TraineeProfile entity Holds the fields for all the information of the trainee.
+ * A DTO for Qualification entity, holds the fields for qualification information of the trainee.
  */
 @Data
-public class TraineeProfileDto {
+public class QualificationDto {
 
-  @Null(groups = Create.class)
-  private String id;
-  @NotNull(groups = Create.class)
-  private String traineeTisId;
-  private PersonalDetailsDto personalDetails;
-  private List<QualificationDto> qualifications;
-  private List<ProgrammeMembershipDto> programmeMemberships;
-  private List<PlacementDto> placements;
+  @NotNull
+  private String tisId;
+  private String qualification;
+  private LocalDate dateAttained;
+  private String medicalSchool;
 }

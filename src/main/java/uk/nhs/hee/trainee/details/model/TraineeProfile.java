@@ -40,6 +40,7 @@ public class TraineeProfile {
   @Field(value = "traineeTisId")
   private String traineeTisId;
   private PersonalDetails personalDetails;
+  private List<Qualification> qualifications = new ArrayList<>();
   private List<ProgrammeMembership> programmeMemberships = new ArrayList<>();
   private List<Placement> placements = new ArrayList<>();
 }

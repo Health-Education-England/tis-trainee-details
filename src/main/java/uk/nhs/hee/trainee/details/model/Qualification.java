@@ -19,26 +19,16 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package uk.nhs.hee.trainee.details.dto;
+package uk.nhs.hee.trainee.details.model;
 
-import java.util.List;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Null;
+import java.time.LocalDate;
 import lombok.Data;
-import uk.nhs.hee.trainee.details.dto.validation.Create;
 
-/**
- * A DTO for TraineeProfile entity Holds the fields for all the information of the trainee.
- */
 @Data
-public class TraineeProfileDto {
+public class Qualification {
 
-  @Null(groups = Create.class)
-  private String id;
-  @NotNull(groups = Create.class)
-  private String traineeTisId;
-  private PersonalDetailsDto personalDetails;
-  private List<QualificationDto> qualifications;
-  private List<ProgrammeMembershipDto> programmeMemberships;
-  private List<PlacementDto> placements;
+  private String tisId;
+  private String qualification; // Qualification
+  private LocalDate dateAttained; // Qualification
+  private String medicalSchool; // Qualification
 }

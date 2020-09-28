@@ -21,8 +21,11 @@
 
 package uk.nhs.hee.trainee.details.service.impl;
 
+import java.util.Comparator;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
+import uk.nhs.hee.trainee.details.model.PersonalDetails;
+import uk.nhs.hee.trainee.details.model.Qualification;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 import uk.nhs.hee.trainee.details.service.TraineeProfileService;
@@ -38,7 +41,30 @@ public class TraineeProfileServiceImpl implements TraineeProfileService {
 
   @Override
   public TraineeProfile getTraineeProfileByTraineeTisId(String traineeTisId) {
-    return repository.findByTraineeTisId(traineeTisId);
+    TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
+
+    if (traineeProfile != null) {
+      traineeProfile.getQualifications()
+          .sort(Comparator.comparing(Qualification::getDateAttained).reversed());
+
+      { // TODO: Remove when FE can handle collection of qualifications directly.
+        if (!traineeProfile.getQualifications().isEmpty()) {
+          Qualification qualification = traineeProfile.getQualifications().get(0);
+          PersonalDetails personalDetails = traineeProfile.getPersonalDetails();
+
+          if (personalDetails == null) {
+            personalDetails = new PersonalDetails();
+            traineeProfile.setPersonalDetails(personalDetails);
+          }
+
+          personalDetails.setQualification(qualification.getQualification());
+          personalDetails.setDateAttained(qualification.getDateAttained());
+          personalDetails.setMedicalSchool(qualification.getMedicalSchool());
+        }
+      }
+    }
+
+    return traineeProfile;
   }
 
   @Override

@@ -21,12 +21,18 @@
 
 package uk.nhs.hee.trainee.details.service;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.Lists;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import org.junit.Assert;
+import java.util.Arrays;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,6 +44,7 @@ import uk.nhs.hee.trainee.details.model.Curriculum;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.model.Placement;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
+import uk.nhs.hee.trainee.details.model.Qualification;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 import uk.nhs.hee.trainee.details.service.impl.TraineeProfileServiceImpl;
@@ -88,12 +95,12 @@ class TraineeProfileServiceTest {
   private static final Status PLACEMENT_STATUS2 = Status.PAST;
 
   @InjectMocks
-  private TraineeProfileServiceImpl traineeProfileServiceImpl;
+  private TraineeProfileServiceImpl service;
 
   @Mock
-  private TraineeProfileRepository traineeProfileRepositoryMock;
+  private TraineeProfileRepository repository;
 
-  private TraineeProfile traineeProfile;
+  private TraineeProfile traineeProfile = new TraineeProfile();
   private PersonalDetails personalDetails;
   private ProgrammeMembership programmeMembership;
   private Curriculum curriculum;
@@ -183,25 +190,74 @@ class TraineeProfileServiceTest {
 
   @Test
   void getTraineeProfileByTraineeTisIdShouldReturnTraineeProfile() {
-    when(traineeProfileRepositoryMock.findByTraineeTisId(DEFAULT_TIS_ID_1))
-        .thenReturn(traineeProfile);
-    TraineeProfile returnedTraineeProfile = traineeProfileServiceImpl
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+    TraineeProfile returnedTraineeProfile = service
         .getTraineeProfileByTraineeTisId(DEFAULT_TIS_ID_1);
-    Assert.assertEquals(returnedTraineeProfile, traineeProfile);
+    assertEquals(returnedTraineeProfile, traineeProfile);
   }
 
   @Test
   void hidePastProgrammesShouldHidePastProgrammes() {
-    TraineeProfile returnedTraineeProfile = traineeProfileServiceImpl
-        .hidePastProgrammes(traineeProfile);
-    Assert.assertEquals(returnedTraineeProfile, traineeProfile);
+    TraineeProfile returnedTraineeProfile = service.hidePastProgrammes(traineeProfile);
+    assertEquals(returnedTraineeProfile, traineeProfile);
   }
 
   @Test
   void hidePastPlacementsShouldHidePastPlacements() {
-    TraineeProfile returnedTraineeProfile = traineeProfileServiceImpl
-        .hidePastPlacements(traineeProfile);
-    Assert.assertTrue(returnedTraineeProfile.getPlacements().contains(placement1));
-    Assert.assertFalse(returnedTraineeProfile.getPlacements().contains(placement2));
+    TraineeProfile returnedTraineeProfile = service.hidePastPlacements(traineeProfile);
+    assertTrue(returnedTraineeProfile.getPlacements().contains(placement1));
+    assertFalse(returnedTraineeProfile.getPlacements().contains(placement2));
+  }
+
+  @Test
+  void shouldSortQualificationsInDescendingOrder() {
+
+    Qualification qualification1 = new Qualification();
+    qualification1.setDateAttained(LocalDate.now());
+    Qualification qualification2 = new Qualification();
+    qualification2.setDateAttained(LocalDate.now().plusDays(100));
+    Qualification qualification3 = new Qualification();
+    qualification3.setDateAttained(LocalDate.now().minusDays(100));
+
+    List<Qualification> qualifications = Arrays
+        .asList(qualification1, qualification2, qualification3);
+    traineeProfile = new TraineeProfile();
+    traineeProfile.setQualifications(qualifications);
+
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+
+    service.getTraineeProfileByTraineeTisId(DEFAULT_TIS_ID_1);
+
+    assertThat("Unexpected qualification, check order is correct.",
+        traineeProfile.getQualifications().get(0), is(qualification2));
+    assertThat("Unexpected qualification, check order is correct.",
+        traineeProfile.getQualifications().get(1), is(qualification1));
+    assertThat("Unexpected qualification, check order is correct.",
+        traineeProfile.getQualifications().get(2), is(qualification3));
+  }
+
+  @Test
+  void shouldPopulatePersonalDetailsWithLatestQualification() {
+    Qualification qualification1 = new Qualification();
+    qualification1.setDateAttained(LocalDate.now());
+    Qualification qualification2 = new Qualification();
+    qualification2.setQualification("qualification2");
+    qualification2.setDateAttained(LocalDate.now().plusDays(100));
+    qualification2.setMedicalSchool("medicalSchool2");
+
+    List<Qualification> qualifications = Arrays.asList(qualification1, qualification2);
+    traineeProfile.setQualifications(qualifications);
+
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+
+    service.getTraineeProfileByTraineeTisId(DEFAULT_TIS_ID_1);
+
+    PersonalDetails personalDetails = traineeProfile.getPersonalDetails();
+    assertThat("Unexpected qualification, check order is correct.",
+        personalDetails.getQualification(), is("qualification2"));
+    assertThat("Unexpected qualification, check order is correct.",
+        personalDetails.getDateAttained(), is(LocalDate.now().plusDays(100)));
+    assertThat("Unexpected qualification, check order is correct.",
+        personalDetails.getMedicalSchool(), is("medicalSchool2"));
   }
 }
