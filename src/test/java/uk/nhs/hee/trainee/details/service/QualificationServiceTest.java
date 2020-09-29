@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package uk.nhs.hee.trainee.details.service.impl;
+package uk.nhs.hee.trainee.details.service;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -37,9 +37,8 @@ import uk.nhs.hee.trainee.details.mapper.QualificationMapper;
 import uk.nhs.hee.trainee.details.model.Qualification;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
-import uk.nhs.hee.trainee.details.service.QualificationService;
 
-class QualificationServiceImplTest {
+class QualificationServiceTest {
 
   private static final LocalDate DATE = LocalDate.EPOCH;
   private static final String QUALIFICATION = "qualification-";
@@ -56,8 +55,7 @@ class QualificationServiceImplTest {
   @BeforeEach
   void setUp() {
     repository = mock(TraineeProfileRepository.class);
-    TraineeProfileServiceImpl profileService = new TraineeProfileServiceImpl(repository);
-    service = new QualificationServiceImpl(profileService,
+    service = new QualificationService(repository,
         Mappers.getMapper(QualificationMapper.class));
   }
 

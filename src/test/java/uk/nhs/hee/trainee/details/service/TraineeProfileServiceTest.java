@@ -47,7 +47,6 @@ import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.Qualification;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
-import uk.nhs.hee.trainee.details.service.impl.TraineeProfileServiceImpl;
 
 @ExtendWith(MockitoExtension.class)
 class TraineeProfileServiceTest {
@@ -95,7 +94,7 @@ class TraineeProfileServiceTest {
   private static final Status PLACEMENT_STATUS2 = Status.PAST;
 
   @InjectMocks
-  private TraineeProfileServiceImpl service;
+  private TraineeProfileService service;
 
   @Mock
   private TraineeProfileRepository repository;
@@ -211,7 +210,6 @@ class TraineeProfileServiceTest {
 
   @Test
   void shouldSortQualificationsInDescendingOrder() {
-
     Qualification qualification1 = new Qualification();
     qualification1.setDateAttained(LocalDate.now());
     Qualification qualification2 = new Qualification();

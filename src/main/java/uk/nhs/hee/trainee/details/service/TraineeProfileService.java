@@ -21,15 +21,74 @@
 
 package uk.nhs.hee.trainee.details.service;
 
+import java.util.Comparator;
+import org.springframework.stereotype.Service;
+import uk.nhs.hee.trainee.details.dto.enumeration.Status;
+import uk.nhs.hee.trainee.details.model.PersonalDetails;
+import uk.nhs.hee.trainee.details.model.Qualification;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
+import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 
-public interface TraineeProfileService {
+@Service
+public class TraineeProfileService {
 
-  TraineeProfile getTraineeProfileByTraineeTisId(String traineeTisId);
+  private final TraineeProfileRepository repository;
 
-  TraineeProfile save(TraineeProfile traineeProfile);
+  TraineeProfileService(TraineeProfileRepository repository) {
+    this.repository = repository;
+  }
 
-  TraineeProfile hidePastProgrammes(TraineeProfile traineeProfile);
+  /**
+   * Get the trainee profile associated with the given TIS ID.
+   *
+   * @param traineeTisId The TIS ID of the trainee.
+   * @return The trainee's profile.
+   */
+  public TraineeProfile getTraineeProfileByTraineeTisId(String traineeTisId) {
+    TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
 
-  TraineeProfile hidePastPlacements(TraineeProfile traineeProfile);
+    if (traineeProfile != null) {
+      traineeProfile.getQualifications()
+          .sort(Comparator.comparing(Qualification::getDateAttained).reversed());
+
+      // TODO: Remove when FE can handle collection of qualifications directly.
+      if (!traineeProfile.getQualifications().isEmpty()) {
+        Qualification qualification = traineeProfile.getQualifications().get(0);
+        PersonalDetails personalDetails = traineeProfile.getPersonalDetails();
+
+        if (personalDetails == null) {
+          personalDetails = new PersonalDetails();
+          traineeProfile.setPersonalDetails(personalDetails);
+        }
+
+        personalDetails.setQualification(qualification.getQualification());
+        personalDetails.setDateAttained(qualification.getDateAttained());
+        personalDetails.setMedicalSchool(qualification.getMedicalSchool());
+      }
+    }
+
+    return traineeProfile;
+  }
+
+  /**
+   * Remove past programmes from the trainee profile.
+   *
+   * @param traineeProfile The trainee profile to modify.
+   * @return The modified trainee profile.
+   */
+  public TraineeProfile hidePastProgrammes(TraineeProfile traineeProfile) {
+    traineeProfile.getProgrammeMemberships().removeIf(c -> c.getStatus() == Status.PAST);
+    return traineeProfile;
+  }
+
+  /**
+   * Remove past placements from the trainee profile.
+   *
+   * @param traineeProfile The trainee profile to modify.
+   * @return The modified trainee profile.
+   */
+  public TraineeProfile hidePastPlacements(TraineeProfile traineeProfile) {
+    traineeProfile.getPlacements().removeIf(c -> c.getStatus() == Status.PAST);
+    return traineeProfile;
+  }
 }

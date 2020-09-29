@@ -22,9 +22,23 @@
 package uk.nhs.hee.trainee.details.service;
 
 import java.util.Optional;
+import java.util.function.BiConsumer;
+import org.springframework.stereotype.Service;
+import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapper;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
+import uk.nhs.hee.trainee.details.model.TraineeProfile;
+import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 
-public interface PersonalDetailsService {
+@Service
+public class PersonalDetailsService {
+
+  private final TraineeProfileRepository repository;
+  private final TraineeProfileMapper mapper;
+
+  PersonalDetailsService(TraineeProfileRepository repository, TraineeProfileMapper mapper) {
+    this.repository = repository;
+    this.mapper = mapper;
+  }
 
   /**
    * Update the basic details for the trainee with the given TIS ID, or create a new profile if the
@@ -34,8 +48,21 @@ public interface PersonalDetailsService {
    * @param personalDetails The personal details to add to the trainee.
    * @return The updated or created personal details.
    */
-  PersonalDetails createProfileOrUpdateBasicDetailsByTisId(String tisId,
-      PersonalDetails personalDetails);
+  public PersonalDetails createProfileOrUpdateBasicDetailsByTisId(String tisId,
+      PersonalDetails personalDetails) {
+    Optional<PersonalDetails> updatedDetails = updatePersonalDetailsByTisId(tisId, personalDetails,
+        mapper::updateBasicDetails);
+
+    if (updatedDetails.isEmpty()) {
+      TraineeProfile traineeProfile = new TraineeProfile();
+      traineeProfile.setId(tisId);
+      mapper.updateBasicDetails(traineeProfile, personalDetails);
+      TraineeProfile savedProfile = repository.save(traineeProfile);
+      return savedProfile.getPersonalDetails();
+    }
+
+    return updatedDetails.get();
+  }
 
   /**
    * Update the GDC details for the trainee with the given TIS ID.
@@ -44,7 +71,10 @@ public interface PersonalDetailsService {
    * @param personalDetails The personal details to add to the trainee.
    * @return The updated personal details or empty if a trainee with the ID was not found.
    */
-  Optional<PersonalDetails> updateGdcDetailsByTisId(String tisId, PersonalDetails personalDetails);
+  public Optional<PersonalDetails> updateGdcDetailsByTisId(String tisId,
+      PersonalDetails personalDetails) {
+    return updatePersonalDetailsByTisId(tisId, personalDetails, mapper::updateGdcDetails);
+  }
 
   /**
    * Update the GMC details for the trainee with the given TIS ID.
@@ -53,7 +83,10 @@ public interface PersonalDetailsService {
    * @param personalDetails The personal details to add to the trainee.
    * @return The updated personal details or empty if a trainee with the ID was not found.
    */
-  Optional<PersonalDetails> updateGmcDetailsByTisId(String tisId, PersonalDetails personalDetails);
+  public Optional<PersonalDetails> updateGmcDetailsByTisId(String tisId,
+      PersonalDetails personalDetails) {
+    return updatePersonalDetailsByTisId(tisId, personalDetails, mapper::updateGmcDetails);
+  }
 
   /**
    * Update the person owner for the trainee with the given TIS ID.
@@ -62,8 +95,10 @@ public interface PersonalDetailsService {
    * @param personalDetails The personal details to add to the trainee.
    * @return The updated personal details or empty if a trainee with the ID was not found.
    */
-  Optional<PersonalDetails> updatePersonOwnerByTisId(String tisId,
-      PersonalDetails personalDetails);
+  public Optional<PersonalDetails> updatePersonOwnerByTisId(String tisId,
+      PersonalDetails personalDetails) {
+    return updatePersonalDetailsByTisId(tisId, personalDetails, mapper::updatePersonOwner);
+  }
 
   /**
    * Update the contact details for the trainee with the given TIS ID.
@@ -72,8 +107,10 @@ public interface PersonalDetailsService {
    * @param personalDetails The personal details to add to the trainee.
    * @return The updated personal details or empty if a trainee with the ID was not found.
    */
-  Optional<PersonalDetails> updateContactDetailsByTisId(String tisId,
-      PersonalDetails personalDetails);
+  public Optional<PersonalDetails> updateContactDetailsByTisId(String tisId,
+      PersonalDetails personalDetails) {
+    return updatePersonalDetailsByTisId(tisId, personalDetails, mapper::updateContactDetails);
+  }
 
   /**
    * Update the personal info for the trainee with the given TIS ID.
@@ -82,6 +119,28 @@ public interface PersonalDetailsService {
    * @param personalDetails The personal details to add to the trainee.
    * @return The updated personal details or empty if a trainee with the ID was not found.
    */
-  Optional<PersonalDetails> updatePersonalInfoByTisId(String tisId,
-      PersonalDetails personalDetails);
+  public Optional<PersonalDetails> updatePersonalInfoByTisId(String tisId,
+      PersonalDetails personalDetails) {
+    return updatePersonalDetailsByTisId(tisId, personalDetails, mapper::updatePersonalInfo);
+  }
+
+  /**
+   * Update the Personal Details entity for the given TIS ID.
+   *
+   * @param tisId           The TIS id of the trainee.
+   * @param personalDetails The personal details to add to the trainee.
+   * @param updateFunction  The function to use to update the personal details.
+   * @return The updated personal details or empty if a trainee with the ID was not found.
+   */
+  private Optional<PersonalDetails> updatePersonalDetailsByTisId(String tisId,
+      PersonalDetails personalDetails, BiConsumer<TraineeProfile, PersonalDetails> updateFunction) {
+    TraineeProfile traineeProfile = repository.findByTraineeTisId(tisId);
+
+    if (traineeProfile == null) {
+      return Optional.empty();
+    }
+
+    updateFunction.accept(traineeProfile, personalDetails);
+    return Optional.of(repository.save(traineeProfile).getPersonalDetails());
+  }
 }
