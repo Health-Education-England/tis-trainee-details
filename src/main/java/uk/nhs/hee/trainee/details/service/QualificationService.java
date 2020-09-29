@@ -21,10 +21,24 @@
 
 package uk.nhs.hee.trainee.details.service;
 
+import java.util.List;
 import java.util.Optional;
+import org.springframework.stereotype.Service;
+import uk.nhs.hee.trainee.details.mapper.QualificationMapper;
 import uk.nhs.hee.trainee.details.model.Qualification;
+import uk.nhs.hee.trainee.details.model.TraineeProfile;
+import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 
-public interface QualificationService {
+@Service
+public class QualificationService {
+
+  private final TraineeProfileRepository repository;
+  private final QualificationMapper mapper;
+
+  QualificationService(TraineeProfileRepository repository, QualificationMapper mapper) {
+    this.repository = repository;
+    this.mapper = mapper;
+  }
 
   /**
    * Update the qualification for the trainee with the given TIS ID.
@@ -33,5 +47,28 @@ public interface QualificationService {
    * @param qualification The qualification to update for the trainee.
    * @return The updated qualification or empty if a trainee with the ID was not found.
    */
-  Optional<Qualification> updateQualificationByTisId(String tisId, Qualification qualification);
+  public Optional<Qualification> updateQualificationByTisId(String tisId,
+      Qualification qualification) {
+
+    TraineeProfile traineeProfile = repository.findByTraineeTisId(tisId);
+
+    if (traineeProfile == null) {
+      return Optional.empty();
+    }
+
+    List<Qualification> existingQualifications = traineeProfile.getQualifications();
+
+    for (Qualification existingQualification : existingQualifications) {
+
+      if (existingQualification.getTisId().equals(qualification.getTisId())) {
+        mapper.updateQualification(existingQualification, qualification);
+        repository.save(traineeProfile);
+        return Optional.of(existingQualification);
+      }
+    }
+
+    existingQualifications.add(qualification);
+    repository.save(traineeProfile);
+    return Optional.of(qualification);
+  }
 }

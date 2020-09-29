@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package uk.nhs.hee.trainee.details.service.impl;
+package uk.nhs.hee.trainee.details.service;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -40,9 +40,8 @@ import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapper;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
-import uk.nhs.hee.trainee.details.service.PersonalDetailsService;
 
-class PersonalDetailsServiceImplTest {
+class PersonalDetailsServiceTest {
 
   private static final String TITLE = "title-";
   private static final String FORENAMES = "forenames-";
@@ -83,8 +82,7 @@ class PersonalDetailsServiceImplTest {
   @BeforeEach
   void setUp() {
     repository = mock(TraineeProfileRepository.class);
-    TraineeProfileServiceImpl profileService = new TraineeProfileServiceImpl(repository);
-    service = new PersonalDetailsServiceImpl(profileService,
+    service = new PersonalDetailsService(repository,
         Mappers.getMapper(TraineeProfileMapper.class));
   }
 
