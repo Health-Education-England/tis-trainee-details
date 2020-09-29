@@ -19,26 +19,19 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package uk.nhs.hee.trainee.details.dto;
+package uk.nhs.hee.trainee.details.service;
 
-import java.util.List;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Null;
-import lombok.Data;
-import uk.nhs.hee.trainee.details.dto.validation.Create;
+import java.util.Optional;
+import uk.nhs.hee.trainee.details.model.Qualification;
 
-/**
- * A DTO for TraineeProfile entity Holds the fields for all the information of the trainee.
- */
-@Data
-public class TraineeProfileDto {
+public interface QualificationService {
 
-  @Null(groups = Create.class)
-  private String id;
-  @NotNull(groups = Create.class)
-  private String traineeTisId;
-  private PersonalDetailsDto personalDetails;
-  private List<QualificationDto> qualifications;
-  private List<ProgrammeMembershipDto> programmeMemberships;
-  private List<PlacementDto> placements;
+  /**
+   * Update the qualification for the trainee with the given TIS ID.
+   *
+   * @param tisId         The TIS id of the trainee.
+   * @param qualification The qualification to update for the trainee.
+   * @return The updated qualification or empty if a trainee with the ID was not found.
+   */
+  Optional<Qualification> updateQualificationByTisId(String tisId, Qualification qualification);
 }

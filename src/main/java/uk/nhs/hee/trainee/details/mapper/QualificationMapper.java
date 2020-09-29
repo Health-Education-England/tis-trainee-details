@@ -19,26 +19,19 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package uk.nhs.hee.trainee.details.dto;
+package uk.nhs.hee.trainee.details.mapper;
 
-import java.util.List;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Null;
-import lombok.Data;
-import uk.nhs.hee.trainee.details.dto.validation.Create;
+import org.mapstruct.Mapper;
+import org.mapstruct.MappingTarget;
+import uk.nhs.hee.trainee.details.dto.QualificationDto;
+import uk.nhs.hee.trainee.details.model.Qualification;
 
-/**
- * A DTO for TraineeProfile entity Holds the fields for all the information of the trainee.
- */
-@Data
-public class TraineeProfileDto {
+@Mapper(componentModel = "spring")
+public interface QualificationMapper {
 
-  @Null(groups = Create.class)
-  private String id;
-  @NotNull(groups = Create.class)
-  private String traineeTisId;
-  private PersonalDetailsDto personalDetails;
-  private List<QualificationDto> qualifications;
-  private List<ProgrammeMembershipDto> programmeMemberships;
-  private List<PlacementDto> placements;
+  QualificationDto toDto(Qualification entity);
+
+  Qualification toEntity(QualificationDto dto);
+
+  void updateQualification(@MappingTarget Qualification target, Qualification source);
 }

@@ -35,9 +35,9 @@ public class PersonalDetails {
   private String personOwner; // PersonOwner
   private LocalDate dateOfBirth; // PersonalDetails
   private String gender; // PersonalDetails
-  private String qualification; // TODO: Qualifcation
-  private LocalDate dateAttained; // TODO: Qualifcation
-  private String medicalSchool; // TODO: Qualifcation
+  private String qualification; // TODO: Remove when FE can handle sub-collection.
+  private LocalDate dateAttained; // TODO: Remove when FE can handle sub-collection.
+  private String medicalSchool; // TODO: Remove when FE can handle sub-collection.
   private String telephoneNumber; // ContactDetails
   private String mobileNumber; // ContactDetails
   private String email; // ContactDetails
