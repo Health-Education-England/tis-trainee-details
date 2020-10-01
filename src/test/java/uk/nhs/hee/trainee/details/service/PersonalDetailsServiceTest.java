@@ -22,6 +22,7 @@
 package uk.nhs.hee.trainee.details.service;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -101,7 +102,8 @@ class PersonalDetailsServiceTest {
     assertThat("Unexpected personal details.", personalDetails, is(expectedPersonalDetails));
 
     TraineeProfile traineeProfile = profileCaptor.getValue();
-    assertThat("Unexpected TIS id.", traineeProfile.getId(), is("notFound"));
+    assertThat("Unexpected id.", traineeProfile.getId(), nullValue());
+    assertThat("Unexpected trainee TIS id.", traineeProfile.getTraineeTisId(), is("notFound"));
   }
 
   @Test

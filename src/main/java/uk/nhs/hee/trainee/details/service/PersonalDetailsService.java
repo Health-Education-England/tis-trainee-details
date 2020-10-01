@@ -55,7 +55,7 @@ public class PersonalDetailsService {
 
     if (updatedDetails.isEmpty()) {
       TraineeProfile traineeProfile = new TraineeProfile();
-      traineeProfile.setId(tisId);
+      traineeProfile.setTraineeTisId(tisId);
       mapper.updateBasicDetails(traineeProfile, personalDetails);
       TraineeProfile savedProfile = repository.save(traineeProfile);
       return savedProfile.getPersonalDetails();
