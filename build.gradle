@@ -1,6 +1,6 @@
 plugins {
   id "java"
-  id "org.springframework.boot" version "2.3.2.RELEASE"
+  id "org.springframework.boot" version "2.4.1"
   id "io.spring.dependency-management" version "1.0.9.RELEASE"
   // TODO: check if required, can be achieved with config but may not be better.
   id "net.ltgt.apt" version "0.21"
