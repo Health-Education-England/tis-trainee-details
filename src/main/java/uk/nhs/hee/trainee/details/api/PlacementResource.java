@@ -27,18 +27,17 @@ public class PlacementResource {
   }
 
   /**
-   * Update the person details for the trainee, creates the parent profile if it does not already
-   * exist.
+   * Update the Placement details for the trainee.
    *
    * @param traineeTisId The ID of the trainee to update.
-   * @param dto          The person details to update with.
+   * @param dto          The placement to update with.
    * @return The updated or created Placement.
    */
   @PatchMapping("/{traineeTisId}")
   public ResponseEntity<PlacementDto> updatePlacement(
       @PathVariable(name = "traineeTisId") String traineeTisId,
       @RequestBody @Validated PlacementDto dto) {
-    log.trace("Update basic details of trainee with TIS ID {}", traineeTisId);
+    log.trace("Update placement of trainee with TIS ID {}", traineeTisId);
     Placement entity = mapper.toEntity(dto);
     Optional<Placement> optionalEntity = service
         .updatePlacementByTisId(traineeTisId, entity);

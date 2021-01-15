@@ -51,18 +51,17 @@ public class QualificationResource {
   }
 
   /**
-   * Update the person details for the trainee, creates the parent profile if it does not already
-   * exist.
+   * Update the Qualification details for the trainee.
    *
    * @param traineeTisId The ID of the trainee to update.
-   * @param dto          The person details to update with.
+   * @param dto          The qualification to update with.
    * @return The updated or created Qualification.
    */
   @PatchMapping("/{traineeTisId}")
   public ResponseEntity<QualificationDto> updateQualification(
       @PathVariable(name = "traineeTisId") String traineeTisId,
       @RequestBody @Validated QualificationDto dto) {
-    log.trace("Update basic details of trainee with TIS ID {}", traineeTisId);
+    log.trace("Update qualification of trainee with TIS ID {}", traineeTisId);
     Qualification entity = mapper.toEntity(dto);
     Optional<Qualification> optionalEntity = service
         .updateQualificationByTisId(traineeTisId, entity);

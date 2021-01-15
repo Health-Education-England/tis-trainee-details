@@ -40,7 +40,7 @@ public class PlacementService {
 
     for (Placement existingPlacement : existingPlacements) {
 
-      if (existingPlacement.getPlacementTisId().equals(placement.getPlacementTisId())) {
+      if (existingPlacement.getTisId().equals(placement.getTisId())) {
         mapper.updatePlacement(existingPlacement, placement);
         repository.save(traineeProfile);
         return Optional.of(existingPlacement);
