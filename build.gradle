@@ -51,7 +51,7 @@ dependencies {
   implementation "io.springfox:springfox-swagger-ui:2.9.2"
 
   // Sentry reporting
-  compile "io.sentry:sentry-spring:1.7.30"
+  compile "io.sentry:sentry-spring:4.0.0"
 }
 
 checkstyle {
