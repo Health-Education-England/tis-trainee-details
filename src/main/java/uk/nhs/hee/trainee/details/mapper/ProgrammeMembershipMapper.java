@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright 2020 Crown Copyright (Health Education England)
+ * Copyright 2021 Crown Copyright (Health Education England)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -19,27 +19,20 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package uk.nhs.hee.trainee.details.dto;
+package uk.nhs.hee.trainee.details.mapper;
 
-import java.time.LocalDate;
-import javax.validation.constraints.NotNull;
-import lombok.Data;
-import uk.nhs.hee.trainee.details.dto.enumeration.Status;
+import org.mapstruct.Mapper;
+import org.mapstruct.MappingTarget;
+import uk.nhs.hee.trainee.details.dto.ProgrammeMembershipDto;
+import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 
-/**
- * A DTO for placement information.
- */
-@Data
-public class PlacementDto {
+@Mapper(componentModel = "spring")
+public interface ProgrammeMembershipMapper {
 
-  @NotNull
-  private String tisId;
-  private LocalDate startDate;
-  private LocalDate endDate;
-  private String site;
-  private String siteLocation;
-  private String grade;
-  private String specialty;
-  private String placementType;
-  private Status status;
+  ProgrammeMembershipDto toDto(ProgrammeMembership entity);
+
+  ProgrammeMembership toEntity(ProgrammeMembershipDto dto);
+
+  void updateProgrammeMembership(@MappingTarget ProgrammeMembership target,
+      ProgrammeMembership source);
 }

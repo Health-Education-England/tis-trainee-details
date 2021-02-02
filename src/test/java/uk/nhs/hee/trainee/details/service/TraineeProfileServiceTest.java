@@ -177,12 +177,12 @@ class TraineeProfileServiceTest {
    */
   void setupPlacementData() {
     placement1 = new Placement();
-    placement1.setPlacementTisId(PLACEMENT_TISID1);
+    placement1.setTisId(PLACEMENT_TISID1);
     placement1.setSite(PLACEMENT_SITE1);
     placement1.setStatus(PLACEMENT_STATUS1);
 
     placement2 = new Placement();
-    placement2.setPlacementTisId(PLACEMENT_TISID2);
+    placement2.setTisId(PLACEMENT_TISID2);
     placement2.setSite(PLACEMENT_SITE2);
     placement2.setStatus(PLACEMENT_STATUS2);
   }

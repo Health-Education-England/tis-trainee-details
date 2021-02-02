@@ -204,7 +204,7 @@ class TraineeProfileResourceTest {
    */
   void setupPlacementData() {
     placement = new Placement();
-    placement.setPlacementTisId(PLACEMENT_TISID);
+    placement.setTisId(PLACEMENT_TISID);
     placement.setSite(PLACEMENT_SITE);
     placement.setStatus(PLACEMENT_STATUS);
   }
@@ -300,7 +300,7 @@ class TraineeProfileResourceTest {
             .value(CURRICULUM_NAME))
         .andExpect(jsonPath("$.programmeMemberships[*].curricula[*].curriculumSubType")
             .value(CURRICULUM_SUBTYPE))
-        .andExpect(jsonPath("$.placements[*].placementTisId").value(PLACEMENT_TISID))
+        .andExpect(jsonPath("$.placements[*].tisId").value(PLACEMENT_TISID))
         .andExpect(jsonPath("$.placements[*].site").value(PLACEMENT_SITE))
         .andExpect(jsonPath("$.placements[*].status").value(PLACEMENT_STATUS.toString()));
   }
