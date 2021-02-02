@@ -79,8 +79,7 @@ class PlacementResourceTest {
 
   @Test
   void shouldReturnBadRequestWhenIdIsNull() throws Exception {
-    when(service.updatePlacementForTrainee(eq("40"), eq(new Placement())))
-        .thenReturn(Optional.empty());
+    when(service.updatePlacementForTrainee("40", new Placement())).thenReturn(Optional.empty());
 
     mockMvc.perform(patch("/api/placement/{traineeTisId}", 40)
         .contentType(MediaType.APPLICATION_JSON)
@@ -90,8 +89,7 @@ class PlacementResourceTest {
 
   @Test
   void shouldReturnNotFoundStatusWhenTraineeNotFound() throws Exception {
-    when(service.updatePlacementForTrainee(eq("40"), eq(new Placement())))
-        .thenReturn(Optional.empty());
+    when(service.updatePlacementForTrainee("40", new Placement())).thenReturn(Optional.empty());
 
     PlacementDto dto = new PlacementDto();
     dto.setTisId("tisIdValue");

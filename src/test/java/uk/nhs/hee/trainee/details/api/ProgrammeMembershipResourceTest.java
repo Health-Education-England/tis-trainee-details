@@ -78,7 +78,7 @@ class ProgrammeMembershipResourceTest {
 
   @Test
   void shouldReturnBadRequestWhenIdIsNull() throws Exception {
-    when(service.updateProgrammeMembershipForTrainee(eq("40"), eq(new ProgrammeMembership())))
+    when(service.updateProgrammeMembershipForTrainee("40", new ProgrammeMembership()))
         .thenReturn(Optional.empty());
 
     mockMvc.perform(patch("/api/programme-membership/{traineeTisId}", 40)
@@ -89,7 +89,7 @@ class ProgrammeMembershipResourceTest {
 
   @Test
   void shouldReturnNotFoundStatusWhenTraineeNotFound() throws Exception {
-    when(service.updateProgrammeMembershipForTrainee(eq("40"), eq(new ProgrammeMembership())))
+    when(service.updateProgrammeMembershipForTrainee("40", new ProgrammeMembership()))
         .thenReturn(Optional.empty());
 
     ProgrammeMembershipDto dto = new ProgrammeMembershipDto();
