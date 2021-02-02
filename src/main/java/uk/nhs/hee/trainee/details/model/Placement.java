@@ -28,7 +28,7 @@ import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 @Data
 public class Placement {
 
-  private String placementTisId;
+  private String tisId;
   private LocalDate startDate;
   private LocalDate endDate;
   private String site;
