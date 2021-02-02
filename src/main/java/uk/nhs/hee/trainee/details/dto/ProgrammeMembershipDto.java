@@ -23,6 +23,7 @@ package uk.nhs.hee.trainee.details.dto;
 
 import java.time.LocalDate;
 import java.util.List;
+import javax.validation.constraints.NotNull;
 import lombok.Data;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 
@@ -32,6 +33,8 @@ import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 @Data
 public class ProgrammeMembershipDto {
 
+  @NotNull
+  private String tisId;
   private String programmeTisId;
   private String programmeName;
   private String programmeNumber;

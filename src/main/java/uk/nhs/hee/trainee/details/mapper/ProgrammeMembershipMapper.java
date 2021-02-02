@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright 2020 Crown Copyright (Health Education England)
+ * Copyright 2021 Crown Copyright (Health Education England)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -19,42 +19,20 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package uk.nhs.hee.trainee.details.model;
+package uk.nhs.hee.trainee.details.mapper;
 
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import lombok.Data;
-import uk.nhs.hee.trainee.details.dto.enumeration.Status;
+import org.mapstruct.Mapper;
+import org.mapstruct.MappingTarget;
+import uk.nhs.hee.trainee.details.dto.ProgrammeMembershipDto;
+import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 
-@Data
-public class ProgrammeMembership {
+@Mapper(componentModel = "spring")
+public interface ProgrammeMembershipMapper {
 
-  private String tisId;
-  private String programmeTisId;
-  private String programmeName;
-  private String programmeNumber;
-  private String managingDeanery;
-  private String programmeMembershipType;
-  private LocalDate startDate;
-  private LocalDate endDate;
-  private LocalDate programmeCompletionDate;
-  private List<Curriculum> curricula = new ArrayList<>();
+  ProgrammeMembershipDto toDto(ProgrammeMembership entity);
 
-  /**
-   * Get programme status according to programme startDate and endDate.
-   */
-  public Status getStatus() {
-    if (this.startDate == null || this.endDate == null) {
-      return null;
-    }
+  ProgrammeMembership toEntity(ProgrammeMembershipDto dto);
 
-    LocalDate today = LocalDate.now();
-    if (today.isBefore(this.startDate)) {
-      return Status.FUTURE;
-    } else if (today.isAfter(this.endDate)) {
-      return Status.PAST;
-    }
-    return Status.CURRENT;
-  }
+  void updateProgrammeMembership(@MappingTarget ProgrammeMembership target,
+      ProgrammeMembership source);
 }
