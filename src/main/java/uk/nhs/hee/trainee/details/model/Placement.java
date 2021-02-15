@@ -36,5 +36,8 @@ public class Placement {
   private String grade;
   private String specialty;
   private String placementType;
+  private String employingBody;
+  private String trainingBody;
+  private String wholeTimeEquivalent;
   private Status status;
 }
