@@ -28,11 +28,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Lists;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -147,8 +147,8 @@ class TraineeProfileResourceTest {
     traineeProfile.setId(DEFAULT_ID_1);
     traineeProfile.setTraineeTisId(DEFAULT_TIS_ID_1);
     traineeProfile.setPersonalDetails(personalDetails);
-    traineeProfile.setProgrammeMemberships(Lists.newArrayList(programmeMembership));
-    traineeProfile.setPlacements(Lists.newArrayList(placement));
+    traineeProfile.setProgrammeMemberships(List.of(programmeMembership));
+    traineeProfile.setPlacements(List.of(placement));
   }
 
   /**
@@ -186,7 +186,7 @@ class TraineeProfileResourceTest {
     programmeMembership.setProgrammeTisId(PROGRAMME_TISID);
     programmeMembership.setProgrammeName(PROGRAMME_NAME);
     programmeMembership.setProgrammeNumber(PROGRAMME_NUMBER);
-    programmeMembership.setCurricula(Lists.newArrayList(curriculum));
+    programmeMembership.setCurricula(List.of(curriculum));
   }
 
   /**

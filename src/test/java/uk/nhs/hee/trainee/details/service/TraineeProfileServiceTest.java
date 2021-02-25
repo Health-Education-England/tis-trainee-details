@@ -28,9 +28,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
-import com.google.common.collect.Lists;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -120,8 +120,8 @@ class TraineeProfileServiceTest {
     traineeProfile.setId(DEFAULT_ID_1);
     traineeProfile.setTraineeTisId(DEFAULT_TIS_ID_1);
     traineeProfile.setPersonalDetails(personalDetails);
-    traineeProfile.setProgrammeMemberships(Lists.newArrayList(programmeMembership));
-    traineeProfile.setPlacements(Lists.newArrayList(placement1, placement2));
+    traineeProfile.setProgrammeMemberships(new ArrayList<>(List.of(programmeMembership)));
+    traineeProfile.setPlacements(new ArrayList<>(List.of(placement1, placement2)));
   }
 
   /**
@@ -159,7 +159,7 @@ class TraineeProfileServiceTest {
     programmeMembership.setProgrammeTisId(PROGRAMME_TISID);
     programmeMembership.setProgrammeName(PROGRAMME_NAME);
     programmeMembership.setProgrammeNumber(PROGRAMME_NUMBER);
-    programmeMembership.setCurricula(Lists.newArrayList(curriculum));
+    programmeMembership.setCurricula(List.of(curriculum));
   }
 
   /**
