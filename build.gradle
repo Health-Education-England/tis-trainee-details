@@ -12,7 +12,7 @@ plugins {
 }
 
 group = "uk.nhs.hee.trainee.details"
-version = "0.8.0"
+version = "0.8.1"
 sourceCompatibility = "11"
 
 configurations {
@@ -50,7 +50,7 @@ dependencies {
   implementation "io.springfox:springfox-swagger-ui:3.0.0"
 
   // Sentry reporting
-  compile "io.sentry:sentry-spring:1.7.30"
+  implementation "io.sentry:sentry-spring-boot-starter:4.1.0"
 }
 
 checkstyle {
