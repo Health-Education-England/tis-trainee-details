@@ -21,11 +21,10 @@
 
 package uk.nhs.hee.trainee.details.service;
 
+import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
@@ -192,20 +191,20 @@ class TraineeProfileServiceTest {
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
     TraineeProfile returnedTraineeProfile = service
         .getTraineeProfileByTraineeTisId(DEFAULT_TIS_ID_1);
-    assertEquals(returnedTraineeProfile, traineeProfile);
+    assertThat(returnedTraineeProfile, is(traineeProfile));
   }
 
   @Test
   void hidePastProgrammesShouldHidePastProgrammes() {
     TraineeProfile returnedTraineeProfile = service.hidePastProgrammes(traineeProfile);
-    assertEquals(returnedTraineeProfile, traineeProfile);
+    assertThat(returnedTraineeProfile, is(traineeProfile));
   }
 
   @Test
   void hidePastPlacementsShouldHidePastPlacements() {
     TraineeProfile returnedTraineeProfile = service.hidePastPlacements(traineeProfile);
-    assertTrue(returnedTraineeProfile.getPlacements().contains(placement1));
-    assertFalse(returnedTraineeProfile.getPlacements().contains(placement2));
+    assertThat(returnedTraineeProfile.getPlacements(), hasItem(placement1));
+    assertThat(returnedTraineeProfile.getPlacements(), not(hasItem(placement2)));
   }
 
   @Test

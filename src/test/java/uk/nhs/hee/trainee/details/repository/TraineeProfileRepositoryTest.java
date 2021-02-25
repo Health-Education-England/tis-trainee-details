@@ -21,22 +21,24 @@
 
 package uk.nhs.hee.trainee.details.repository;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+
 import java.util.Optional;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 import uk.nhs.hee.trainee.details.TestConfig;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 
-@Ignore("Current requires a local DB instance, ignore until in-memory test DB is set up")
-@RunWith(SpringRunner.class)
+@Disabled("Current requires a local DB instance, ignore until in-memory test DB is set up")
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = TestConfig.class)
 public class TraineeProfileRepositoryTest {
 
@@ -48,7 +50,7 @@ public class TraineeProfileRepositoryTest {
   /**
    * Set up before each test.
    */
-  @Before
+  @BeforeEach
   @Transactional
   public void setUp() {
     traineeProfile = new TraineeProfile();
@@ -57,7 +59,7 @@ public class TraineeProfileRepositoryTest {
     repository.save(traineeProfile);
   }
 
-  @After
+  @AfterEach
   @Transactional
   public void tearDown() {
     repository.delete(traineeProfile);
@@ -67,15 +69,15 @@ public class TraineeProfileRepositoryTest {
   @Transactional
   public void findTraineeProfileById() {
     Optional<TraineeProfile> result = repository.findById("1");
-    Assert.assertTrue(result.isPresent());
+    assertThat(result.isPresent(), is(true));
     TraineeProfile traineeProfile = result.get();
-    Assert.assertEquals("1s", traineeProfile.getId());
+    assertThat(traineeProfile.getId(), is("1s"));
   }
 
   @Test
   @Transactional
   public void shouldReturnTraineeProfileByTraineeTisId() {
     TraineeProfile traineeProfile = repository.findByTraineeTisId("1111");
-    Assert.assertEquals("1", traineeProfile.getId());
+    assertThat(traineeProfile.getId(), is("1"));
   }
 }
