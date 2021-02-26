@@ -36,6 +36,8 @@ public class CurriculumDto {
   private String curriculumName;
   private String curriculumSubType;
   /**
+   * Curriculum Start Date has been deprecated.
+   *
    * @see CurriculumMembershipDto#getCurriculumStartDate()
    * @deprecated (2021-02-26, The startdate is trainee specific, Use CurriculumMembershipDto)
    */

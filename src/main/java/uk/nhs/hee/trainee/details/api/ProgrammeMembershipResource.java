@@ -86,8 +86,8 @@ public class ProgrammeMembershipResource {
       @PathVariable(name = "traineeTisId") String traineeTisId,
       @RequestBody @Validated ProgrammeMembershipDto dto) {
     log.trace("Update programme membership of trainee with TIS ID {}", traineeTisId);
-    if (CollectionUtils.isEmpty(dto.getCurriculumMemberships()) ||
-        dto.getCurriculumMemberships().size() != 1) {
+    if (CollectionUtils.isEmpty(dto.getCurriculumMemberships())
+        || dto.getCurriculumMemberships().size() != 1) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
           "Exactly one curriculum membership must be provided");
     }

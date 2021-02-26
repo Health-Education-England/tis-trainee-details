@@ -76,6 +76,13 @@ public class ProgrammeMembershipService {
     return Optional.of(programmeMembership);
   }
 
+  /**
+   * Updates a trainee with a given curriculum, as part of the provided curriculum.
+   *
+   * @param traineeTisId        - The identifier in TIS for the trainee
+   * @param programmeMembership - A {@link ProgrammeMembership} containing the curriculum to upsert
+   * @return The updated Programme Membership, merged with any existing record
+   */
   public Optional<ProgrammeMembership> updateCurriculumMembershipForTrainee(String traineeTisId,
       ProgrammeMembership programmeMembership) {
 
@@ -90,7 +97,7 @@ public class ProgrammeMembershipService {
         curriculumMembership -> curriculumMembership.getCurriculumMembershipTisId()
             .equals(curriculumMembershipTisId);
     final Predicate<? super ProgrammeMembership> filterByCurriculumMembership = pm ->
-      pm.getCurriculumMemberships().parallelStream().anyMatch(filterByCurriculumMembershipId);
+        pm.getCurriculumMemberships().parallelStream().anyMatch(filterByCurriculumMembershipId);
     // Find Programme Membership with existing Curriculum Membership
     List<ProgrammeMembership> existingProgrammeMemberships = traineeProfile
         .getProgrammeMemberships();

@@ -48,6 +48,8 @@ public class ProgrammeMembershipDto {
   @NotEmpty
   private List<CurriculumMembershipDto> curriculumMemberships;
   /**
+   * This field has been deprecated.
+   *
    * @see CurriculumMembershipDto#getCurriculum()
    * @deprecated (2021-02-26, A Curriculum Membership is required, Use CurriculumMembershipDto)
    */

@@ -41,6 +41,8 @@ public class ProgrammeMembership {
   private LocalDate programmeCompletionDate;
   private List<CurriculumMembership> curriculumMemberships = new ArrayList<>();
   /**
+   * This field has been deprecated.
+   *
    * @see CurriculumMembership#getCurriculum()
    * @deprecated (2021-02-26, A Curriculum Membership is required, Use CurriculumMembership)
    */

@@ -31,6 +31,8 @@ public class Curriculum {
   private String curriculumName;
   private String curriculumSubType;
   /**
+   * This field has been deprecated.
+   *
    * @see CurriculumMembership#getCurriculumStartDate()
    * @deprecated (2021-02-26, The start date is trainee specific, Use CurriculumMembership)
    */
