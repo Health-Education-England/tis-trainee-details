@@ -27,7 +27,7 @@ jobs:
 
       - name: Cache Gradle distribution
         id: cache
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.4
         with:
           path: ~/.gradle/wrapper
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
@@ -52,7 +52,7 @@ jobs:
           java-version: 11
 
       - name: Cache Gradle distribution
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.4
         with:
           path: ~/.gradle/wrapper
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
@@ -82,7 +82,7 @@ jobs:
           java-version: 11
 
       - name: Cache Gradle distribution
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.4
         with:
           path: ~/.gradle/wrapper
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
@@ -112,7 +112,7 @@ jobs:
           java-version: 11
 
       - name: Cache Gradle distribution
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.4
         with:
           path: ~/.gradle/wrapper
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
@@ -148,7 +148,7 @@ jobs:
           java-version: 11
 
       - name: Cache Gradle distribution
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.4
         with:
           path: ~/.gradle/wrapper
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
