@@ -73,4 +73,26 @@ public class ProgrammeMembershipService {
     repository.save(traineeProfile);
     return Optional.of(programmeMembership);
   }
+
+  /**
+   * Delete the programme memberships for the trainee with the given TIS ID.
+   *
+   * @param traineeTisId        The TIS id of the trainee.
+   * @return true if the programme memberships were deleted, false if a trainee with the ID was not found.
+   */
+  public boolean deleteProgrammeMembershipsForTrainee(String traineeTisId) {
+
+    TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
+
+    if (traineeProfile == null) {
+      return false;
+    }
+    List<ProgrammeMembership> existingProgrammeMemberships = traineeProfile
+        .getProgrammeMemberships();
+
+    existingProgrammeMemberships.clear();
+    repository.save(traineeProfile);
+
+    return true;
+  }
 }
