@@ -33,7 +33,7 @@ public class CurriculumMembershipDto {
 
   @NotNull
   private String curriculumMembershipTisId;
-  private CurriculumMembershipDto curriculum;
+  private CurriculumDto curriculum;
   private LocalDate curriculumStartDate;
   private LocalDate curriculumEndDate;
 }
