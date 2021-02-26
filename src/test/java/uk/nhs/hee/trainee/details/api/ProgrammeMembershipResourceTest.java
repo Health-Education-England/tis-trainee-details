@@ -24,6 +24,7 @@ package uk.nhs.hee.trainee.details.api;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -36,6 +37,8 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mapstruct.factory.Mappers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -87,15 +90,19 @@ class ProgrammeMembershipResourceTest {
         .andExpect(status().isBadRequest());
   }
 
-  @Test
-  void shouldReturnNotFoundStatusWhenTraineeNotFound() throws Exception {
-    when(service.updateProgrammeMembershipForTrainee("40", new ProgrammeMembership()))
+  @ParameterizedTest
+  @CsvSource({"/api/programme-membership/{traineeTisId}",
+      "/api/programme-membership/curriculum-membership/{traineeTisId}"})
+  void shouldReturnNotFoundStatusWhenTraineeNotFound(String urlTemplate) throws Exception {
+    lenient().when(service.updateProgrammeMembershipForTrainee("40", new ProgrammeMembership()))
+        .thenReturn(Optional.empty());
+    lenient().when(service.updateCurriculumMembershipForTrainee("40", new ProgrammeMembership()))
         .thenReturn(Optional.empty());
 
     ProgrammeMembershipDto dto = new ProgrammeMembershipDto();
     dto.setTisId("tisIdValue");
 
-    mockMvc.perform(patch("/api/programme-membership/{traineeTisId}", 40)
+    mockMvc.perform(patch(urlTemplate, 40)
         .contentType(MediaType.APPLICATION_JSON)
         .content(mapper.writeValueAsBytes(dto)))
         .andExpect(status().isNotFound())
@@ -126,6 +133,45 @@ class ProgrammeMembershipResourceTest {
     dto.setTisId("tisIdValue");
 
     mockMvc.perform(patch("/api/programme-membership/{traineeTisId}", 40)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(mapper.writeValueAsBytes(dto)))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.tisId").value(is("tisIdValue")))
+        .andExpect(jsonPath("$.programmeTisId").value(is("programmeTisIdValue")))
+        .andExpect(jsonPath("$.programmeName").value(is("programmeNameValue")))
+        .andExpect(jsonPath("$.programmeNumber").value(is("programmeNumberValue")))
+        .andExpect(jsonPath("$.managingDeanery").value(is("managingDeaneryValue")))
+        .andExpect(jsonPath("$.programmeMembershipType").value(is("programmeMembershipTypeValue")))
+        .andExpect(jsonPath("$.startDate").value(is(start.toString())))
+        .andExpect(jsonPath("$.endDate").value(is(end.toString())))
+        .andExpect(jsonPath("$.programmeCompletionDate").value(is(completion.toString())));
+  }
+
+  @Test
+  void shouldUpdateCurriculumMembershipWhenTraineeFound() throws Exception {
+    LocalDate start = LocalDate.now();
+    LocalDate end = start.plusYears(1);
+    LocalDate completion = end.plusYears(1);
+
+    ProgrammeMembership programmeMembership = new ProgrammeMembership();
+    programmeMembership.setTisId("tisIdValue");
+    programmeMembership.setProgrammeTisId("programmeTisIdValue");
+    programmeMembership.setProgrammeName("programmeNameValue");
+    programmeMembership.setProgrammeNumber("programmeNumberValue");
+    programmeMembership.setManagingDeanery("managingDeaneryValue");
+    programmeMembership.setProgrammeMembershipType("programmeMembershipTypeValue");
+    programmeMembership.setStartDate(start);
+    programmeMembership.setEndDate(end);
+    programmeMembership.setProgrammeCompletionDate(completion);
+
+    when(service.updateCurriculumMembershipForTrainee(eq("40"), any(ProgrammeMembership.class)))
+        .thenReturn(Optional.of(programmeMembership));
+
+    ProgrammeMembershipDto dto = new ProgrammeMembershipDto();
+    dto.setTisId("tisIdValue");
+
+    mockMvc.perform(patch("/api/programme-membership/curriculum-membership/{traineeTisId}", 40)
         .contentType(MediaType.APPLICATION_JSON)
         .content(mapper.writeValueAsBytes(dto)))
         .andExpect(status().isOk())

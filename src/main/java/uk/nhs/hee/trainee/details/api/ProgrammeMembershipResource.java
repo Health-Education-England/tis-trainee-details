@@ -71,4 +71,25 @@ public class ProgrammeMembershipResource {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trainee not found."));
     return ResponseEntity.ok(mapper.toDto(entity));
   }
+
+  /**
+   * Update the curriculum membership for the trainee. Creates the parent profile and programme
+   * membership if it does not already exist.
+   *
+   * @param traineeTisId The ID of the trainee to update.
+   * @param dto          The programme membership to update.
+   * @return The updated or created ProgrammeMembership.
+   */
+  @PatchMapping("/curriculum-membership/{traineeTisId}")
+  public ResponseEntity<ProgrammeMembershipDto> patchCurriculumMembership(
+      @PathVariable(name = "traineeTisId") String traineeTisId,
+      @RequestBody @Validated ProgrammeMembershipDto dto) {
+    log.trace("Update programme membership of trainee with TIS ID {}", traineeTisId);
+    ProgrammeMembership entity = mapper.toEntity(dto);
+    Optional<ProgrammeMembership> optionalEntity = service
+        .updateCurriculumMembershipForTrainee(traineeTisId, entity);
+    entity = optionalEntity
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trainee not found."));
+    return ResponseEntity.ok(mapper.toDto(entity));
+  }
 }

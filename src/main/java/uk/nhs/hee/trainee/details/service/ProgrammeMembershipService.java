@@ -73,4 +73,19 @@ public class ProgrammeMembershipService {
     repository.save(traineeProfile);
     return Optional.of(programmeMembership);
   }
+
+  public Optional<ProgrammeMembership> updateCurriculumMembershipForTrainee(String traineeTisId,
+      ProgrammeMembership programmeMembership) {
+
+/*    TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
+    if (traineeProfile == null) {
+      return Optional.empty();
+    }
+
+    List<ProgrammeMembership> existingProgrammeMemberships = traineeProfile
+        .getProgrammeMemberships();
+    ProgrammeMembership programme*/
+
+    return Optional.empty();
+  }
 }

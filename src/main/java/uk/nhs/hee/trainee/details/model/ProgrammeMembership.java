@@ -39,6 +39,9 @@ public class ProgrammeMembership {
   private LocalDate startDate;
   private LocalDate endDate;
   private LocalDate programmeCompletionDate;
+  private List<CurriculumMembership> curriculumMemberships = new ArrayList<>();
+
+  @Deprecated
   private List<Curriculum> curricula = new ArrayList<>();
 
   /**

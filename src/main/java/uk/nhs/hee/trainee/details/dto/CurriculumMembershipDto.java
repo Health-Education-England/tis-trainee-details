@@ -19,17 +19,21 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package uk.nhs.hee.trainee.details.model;
+package uk.nhs.hee.trainee.details.dto;
 
 import java.time.LocalDate;
+import javax.validation.constraints.NotNull;
 import lombok.Data;
 
+/**
+ * A DTO for curriculum membership information.
+ */
 @Data
-public class Curriculum {
+public class CurriculumMembershipDto {
 
-  private String curriculumTisId;
-  private String curriculumName;
-  private String curriculumSubType;
-  @Deprecated
+  @NotNull
+  private String curriculumMembershipTisId;
+  private CurriculumMembershipDto curriculum;
   private LocalDate curriculumStartDate;
+  private LocalDate curriculumEndDate;
 }

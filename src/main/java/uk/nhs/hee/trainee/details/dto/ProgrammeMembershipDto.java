@@ -44,5 +44,7 @@ public class ProgrammeMembershipDto {
   private LocalDate endDate;
   private LocalDate programmeCompletionDate;
   private Status status;
+  private List<CurriculumMembershipDto> curriculumMemberships;
+  @Deprecated
   private List<CurriculumDto> curricula;
 }

@@ -22,6 +22,7 @@
 package uk.nhs.hee.trainee.details.dto;
 
 import java.time.LocalDate;
+import javax.validation.constraints.NotNull;
 import lombok.Data;
 
 /**
@@ -30,8 +31,10 @@ import lombok.Data;
 @Data
 public class CurriculumDto {
 
+  @NotNull
   private String curriculumTisId;
   private String curriculumName;
   private String curriculumSubType;
+  @Deprecated
   private LocalDate curriculumStartDate;
 }
