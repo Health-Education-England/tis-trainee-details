@@ -25,6 +25,7 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -73,11 +74,11 @@ public class ProgrammeMembershipResource {
   }
 
   /**
-   * Update the curriculum membership for the trainee. Creates the parent profile and programme
-   * membership if it does not already exist.
+   * Update the curriculum membership for the trainee. Creates the programme membership if it does
+   * not already exist.
    *
    * @param traineeTisId The ID of the trainee to update.
-   * @param dto          The programme membership to update.
+   * @param dto          The programme membership to create/update.
    * @return The updated or created ProgrammeMembership.
    */
   @PatchMapping("/curriculum-membership/{traineeTisId}")
@@ -85,6 +86,11 @@ public class ProgrammeMembershipResource {
       @PathVariable(name = "traineeTisId") String traineeTisId,
       @RequestBody @Validated ProgrammeMembershipDto dto) {
     log.trace("Update programme membership of trainee with TIS ID {}", traineeTisId);
+    if (CollectionUtils.isEmpty(dto.getCurriculumMemberships()) ||
+        dto.getCurriculumMemberships().size() != 1) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+          "Exactly one curriculum membership must be provided");
+    }
     ProgrammeMembership entity = mapper.toEntity(dto);
     Optional<ProgrammeMembership> optionalEntity = service
         .updateCurriculumMembershipForTrainee(traineeTisId, entity);

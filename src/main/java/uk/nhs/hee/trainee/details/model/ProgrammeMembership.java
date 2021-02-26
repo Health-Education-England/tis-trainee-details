@@ -40,8 +40,11 @@ public class ProgrammeMembership {
   private LocalDate endDate;
   private LocalDate programmeCompletionDate;
   private List<CurriculumMembership> curriculumMemberships = new ArrayList<>();
-
-  @Deprecated
+  /**
+   * @see CurriculumMembership#getCurriculum()
+   * @deprecated (2021-02-26, A Curriculum Membership is required, Use CurriculumMembership)
+   */
+  @Deprecated(forRemoval = true)
   private List<Curriculum> curricula = new ArrayList<>();
 
   /**

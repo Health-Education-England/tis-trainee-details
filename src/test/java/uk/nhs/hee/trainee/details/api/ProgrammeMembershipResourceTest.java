@@ -33,6 +33,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,6 +51,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import uk.nhs.hee.trainee.details.dto.CurriculumMembershipDto;
 import uk.nhs.hee.trainee.details.dto.ProgrammeMembershipDto;
 import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapper;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
@@ -101,6 +104,7 @@ class ProgrammeMembershipResourceTest {
 
     ProgrammeMembershipDto dto = new ProgrammeMembershipDto();
     dto.setTisId("tisIdValue");
+    dto.setCurriculumMemberships(Collections.singletonList(new CurriculumMembershipDto()));
 
     mockMvc.perform(patch(urlTemplate, 40)
         .contentType(MediaType.APPLICATION_JSON)
@@ -131,6 +135,7 @@ class ProgrammeMembershipResourceTest {
 
     ProgrammeMembershipDto dto = new ProgrammeMembershipDto();
     dto.setTisId("tisIdValue");
+    dto.setCurriculumMemberships(Collections.singletonList(new CurriculumMembershipDto()));
 
     mockMvc.perform(patch("/api/programme-membership/{traineeTisId}", 40)
         .contentType(MediaType.APPLICATION_JSON)
@@ -146,6 +151,32 @@ class ProgrammeMembershipResourceTest {
         .andExpect(jsonPath("$.startDate").value(is(start.toString())))
         .andExpect(jsonPath("$.endDate").value(is(end.toString())))
         .andExpect(jsonPath("$.programmeCompletionDate").value(is(completion.toString())));
+  }
+
+  @Test
+  void shouldReturnBadRequestWhenNoCurriculumMembershipIsProvided() throws Exception {
+
+    ProgrammeMembershipDto dto = new ProgrammeMembershipDto();
+    dto.setTisId("tisIdValue");
+
+    mockMvc.perform(patch("/api/programme-membership/curriculum-membership/{traineeTisId}", 40)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(mapper.writeValueAsBytes(dto)))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void shouldReturnBadRequestWhenTooManyCurriculumMembershipsAreProvided() throws Exception {
+
+    ProgrammeMembershipDto dto = new ProgrammeMembershipDto();
+    dto.setTisId("tisIdValue");
+    dto.setCurriculumMemberships(
+        List.of(new CurriculumMembershipDto(), new CurriculumMembershipDto()));
+
+    mockMvc.perform(patch("/api/programme-membership/curriculum-membership/{traineeTisId}", 40)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(mapper.writeValueAsBytes(dto)))
+        .andExpect(status().isBadRequest());
   }
 
   @Test
@@ -170,6 +201,7 @@ class ProgrammeMembershipResourceTest {
 
     ProgrammeMembershipDto dto = new ProgrammeMembershipDto();
     dto.setTisId("tisIdValue");
+    dto.setCurriculumMemberships(Collections.singletonList(new CurriculumMembershipDto()));
 
     mockMvc.perform(patch("/api/programme-membership/curriculum-membership/{traineeTisId}", 40)
         .contentType(MediaType.APPLICATION_JSON)

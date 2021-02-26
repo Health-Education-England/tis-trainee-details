@@ -23,8 +23,10 @@ package uk.nhs.hee.trainee.details.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapper;
+import uk.nhs.hee.trainee.details.model.CurriculumMembership;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
@@ -77,15 +79,56 @@ public class ProgrammeMembershipService {
   public Optional<ProgrammeMembership> updateCurriculumMembershipForTrainee(String traineeTisId,
       ProgrammeMembership programmeMembership) {
 
-/*    TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
+    TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
     if (traineeProfile == null) {
       return Optional.empty();
     }
-
+    ProgrammeMembership updatedProgrammeMembership;
+    String curriculumMembershipTisId = programmeMembership.getCurriculumMemberships().get(0)
+        .getCurriculumMembershipTisId();
+    final Predicate<CurriculumMembership> filterByCurriculumMembershipId =
+        curriculumMembership -> curriculumMembership.getCurriculumMembershipTisId()
+            .equals(curriculumMembershipTisId);
+    final Predicate<? super ProgrammeMembership> filterByCurriculumMembership = pm ->
+      pm.getCurriculumMemberships().parallelStream().anyMatch(filterByCurriculumMembershipId);
+    // Find Programme Membership with existing Curriculum Membership
     List<ProgrammeMembership> existingProgrammeMemberships = traineeProfile
         .getProgrammeMemberships();
-    ProgrammeMembership programme*/
+    Optional<ProgrammeMembership> existingProgrammeOpt = existingProgrammeMemberships
+        .parallelStream()
+        .filter(filterByCurriculumMembership).findFirst();
 
-    return Optional.empty();
+    // Find Programme Membership
+    if (existingProgrammeOpt.isEmpty()) {
+      var programmeMembershipFilter = createProgrammeMembershipFilter(programmeMembership);
+      existingProgrammeOpt = existingProgrammeMemberships.parallelStream()
+          .filter(programmeMembershipFilter).findFirst();
+    }
+
+    // Create or update the Programme Membership
+    if (existingProgrammeOpt.isEmpty()) {
+      existingProgrammeMemberships.add(programmeMembership);
+      updatedProgrammeMembership = programmeMembership;
+    } else {
+      updatedProgrammeMembership = existingProgrammeOpt.get();
+      updatedProgrammeMembership.getCurriculumMemberships()
+          .removeIf(filterByCurriculumMembershipId);
+      programmeMembership.getCurriculumMemberships()
+          .addAll(updatedProgrammeMembership.getCurriculumMemberships());
+      mapper.updateProgrammeMembership(updatedProgrammeMembership, programmeMembership);
+    }
+
+    //Save the updated Programme
+    repository.save(traineeProfile);
+    return Optional.of(updatedProgrammeMembership);
+  }
+
+  private Predicate<? super ProgrammeMembership> createProgrammeMembershipFilter(
+      ProgrammeMembership programmeMembership) {
+    return pm -> programmeMembership.getTisId().equals(pm.getTisId());
+    /*  We should currently be doing something more like this:
+    return pm -> programmeMembership.getProgrammeTisId().equals(pm.getProgrammeTisId())
+        && programmeMembership.getStartDate().equals(pm.getStartDate())
+        && programmeMembership.getEndDate().equals(pm.getEndDate());*/
   }
 }

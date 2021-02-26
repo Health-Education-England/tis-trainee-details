@@ -35,6 +35,10 @@ public class CurriculumDto {
   private String curriculumTisId;
   private String curriculumName;
   private String curriculumSubType;
-  @Deprecated
+  /**
+   * @see CurriculumMembershipDto#getCurriculumStartDate()
+   * @deprecated (2021-02-26, The startdate is trainee specific, Use CurriculumMembershipDto)
+   */
+  @Deprecated(forRemoval = true)
   private LocalDate curriculumStartDate;
 }

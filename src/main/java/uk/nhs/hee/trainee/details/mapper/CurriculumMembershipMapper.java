@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright 2020 Crown Copyright (Health Education England)
+ * Copyright 2021 Crown Copyright (Health Education England)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -19,21 +19,17 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package uk.nhs.hee.trainee.details.model;
+package uk.nhs.hee.trainee.details.mapper;
 
-import java.time.LocalDate;
-import lombok.Data;
+import org.mapstruct.Mapper;
+import uk.nhs.hee.trainee.details.dto.CurriculumMembershipDto;
+import uk.nhs.hee.trainee.details.model.CurriculumMembership;
 
-@Data
-public class Curriculum {
+@Mapper(componentModel = "spring")
+public interface CurriculumMembershipMapper {
 
-  private String curriculumTisId;
-  private String curriculumName;
-  private String curriculumSubType;
-  /**
-   * @see CurriculumMembership#getCurriculumStartDate()
-   * @deprecated (2021-02-26, The start date is trainee specific, Use CurriculumMembership)
-   */
-  @Deprecated(forRemoval = true)
-  private LocalDate curriculumStartDate;
+  CurriculumMembershipDto toDto(CurriculumMembership entity);
+
+  CurriculumMembership toEntity(CurriculumMembershipDto dto);
+
 }

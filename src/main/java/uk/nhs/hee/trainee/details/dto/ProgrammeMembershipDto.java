@@ -23,6 +23,7 @@ package uk.nhs.hee.trainee.details.dto;
 
 import java.time.LocalDate;
 import java.util.List;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import lombok.Data;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
@@ -44,7 +45,12 @@ public class ProgrammeMembershipDto {
   private LocalDate endDate;
   private LocalDate programmeCompletionDate;
   private Status status;
+  @NotEmpty
   private List<CurriculumMembershipDto> curriculumMemberships;
-  @Deprecated
+  /**
+   * @see CurriculumMembershipDto#getCurriculum()
+   * @deprecated (2021-02-26, A Curriculum Membership is required, Use CurriculumMembershipDto)
+   */
+  @Deprecated(forRemoval = true)
   private List<CurriculumDto> curricula;
 }
