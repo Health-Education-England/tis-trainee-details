@@ -26,7 +26,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import uk.nhs.hee.trainee.details.dto.ProgrammeMembershipDto;
 import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapper;
@@ -68,17 +72,20 @@ public class ProgrammeMembershipResource {
     return ResponseEntity.ok(mapper.toDto(entity));
   }
 
+  /**
+   * Delete the programme memberships for the trainee.
+   *
+   * @param traineeTisId The ID of the trainee to update.
+   * @return True if the programme memberships were deleted.
+   */
   @PatchMapping("/{traineeTisId}/delete")
-  public ResponseEntity<ProgrammeMembershipDto> deleteProgrammeMemberships(
-      @PathVariable(name = "traineeTisId") String traineeTisId,
-      @RequestBody @Validated ProgrammeMembershipDto dto) {
+  public ResponseEntity<Boolean> deleteProgrammeMemberships(
+      @PathVariable(name = "traineeTisId") String traineeTisId) {
     log.trace("Delete all programme memberships of trainee with TIS ID {}", traineeTisId);
-    ProgrammeMembership entity = mapper.toEntity(dto);
-    boolean ok = service
-        .deleteProgrammeMembershipsForTrainee(traineeTisId);
+    boolean ok = service.deleteProgrammeMembershipsForTrainee(traineeTisId);
     if (!ok) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Trainee not found.");
     }
-    return ResponseEntity.ok(mapper.toDto(entity));
+    return ResponseEntity.ok(true);
   }
 }

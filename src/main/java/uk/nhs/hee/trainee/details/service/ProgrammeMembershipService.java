@@ -78,7 +78,7 @@ public class ProgrammeMembershipService {
    * Delete the programme memberships for the trainee with the given TIS ID.
    *
    * @param traineeTisId        The TIS id of the trainee.
-   * @return true if the programme memberships were deleted, false if a trainee with the ID was not found.
+   * @return True, or False if a trainee with the ID was not found.
    */
   public boolean deleteProgrammeMembershipsForTrainee(String traineeTisId) {
 
