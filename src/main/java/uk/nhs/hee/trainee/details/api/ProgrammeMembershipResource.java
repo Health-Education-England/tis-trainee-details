@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -78,7 +79,7 @@ public class ProgrammeMembershipResource {
    * @param traineeTisId The ID of the trainee to update.
    * @return True if the programme memberships were deleted.
    */
-  @PatchMapping("/{traineeTisId}/delete")
+  @DeleteMapping("/{traineeTisId}/delete")
   public ResponseEntity<Boolean> deleteProgrammeMemberships(
       @PathVariable(name = "traineeTisId") String traineeTisId) {
     log.trace("Delete all programme memberships of trainee with TIS ID {}", traineeTisId);

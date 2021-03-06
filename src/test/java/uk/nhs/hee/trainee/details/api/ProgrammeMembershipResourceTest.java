@@ -26,6 +26,7 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -154,9 +155,8 @@ class ProgrammeMembershipResourceTest {
     dto.setTisId("tisIdValue");
 
     MvcResult result = mockMvc.perform(
-        patch("/api/programme-membership/{traineeTisId}/delete", 40)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(mapper.writeValueAsBytes(dto)))
+        delete("/api/programme-membership/{traineeTisId}/delete", 40)
+            .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andReturn();
 
@@ -174,9 +174,8 @@ class ProgrammeMembershipResourceTest {
     dto.setTisId("tisIdValue");
 
     mockMvc.perform(
-        patch("/api/programme-membership/{traineeTisId}/delete", 40)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(mapper.writeValueAsBytes(dto)))
+        delete("/api/programme-membership/{traineeTisId}/delete", 40)
+            .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isNotFound());
   }
 }
