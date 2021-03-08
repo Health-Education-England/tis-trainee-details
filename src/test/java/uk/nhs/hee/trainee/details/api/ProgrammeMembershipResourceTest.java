@@ -155,7 +155,7 @@ class ProgrammeMembershipResourceTest {
     dto.setTisId("tisIdValue");
 
     MvcResult result = mockMvc.perform(
-        delete("/api/programme-membership/{traineeTisId}/delete", 40)
+        delete("/api/programme-membership/{traineeTisId}", 40)
             .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andReturn();
@@ -174,7 +174,7 @@ class ProgrammeMembershipResourceTest {
     dto.setTisId("tisIdValue");
 
     mockMvc.perform(
-        delete("/api/programme-membership/{traineeTisId}/delete", 40)
+        delete("/api/programme-membership/{traineeTisId}", 40)
             .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isNotFound());
   }

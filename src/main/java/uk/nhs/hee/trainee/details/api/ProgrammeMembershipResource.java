@@ -79,7 +79,7 @@ public class ProgrammeMembershipResource {
    * @param traineeTisId The ID of the trainee to update.
    * @return True if the programme memberships were deleted.
    */
-  @DeleteMapping("/{traineeTisId}/delete")
+  @DeleteMapping("/{traineeTisId}")
   public ResponseEntity<Boolean> deleteProgrammeMemberships(
       @PathVariable(name = "traineeTisId") String traineeTisId) {
     log.trace("Delete all programme memberships of trainee with TIS ID {}", traineeTisId);
