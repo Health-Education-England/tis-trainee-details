@@ -89,13 +89,9 @@ public class ProgrammeMembershipResource {
       if (!foundTrainee) {
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Trainee not found.");
       }
-    } catch (Exception e) {
-      if (e instanceof IllegalArgumentException
-          || e instanceof InvalidDataAccessApiUsageException) {
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getLocalizedMessage());
-      } else {
-        throw e; // e.g. DataAccessException if MongoDB is down
-      }
+    } catch (IllegalArgumentException | InvalidDataAccessApiUsageException e) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getLocalizedMessage());
+      // other exceptions are possible, e.g. DataAccessException if MongoDB is down
     }
     return ResponseEntity.ok(true);
   }
