@@ -178,4 +178,19 @@ class ProgrammeMembershipResourceTest {
             .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isNotFound());
   }
+
+  @Test
+  void shouldThrowBadRequestWhenDeleteProgrammeMembershipException() throws Exception {
+    when(service
+        .deleteProgrammeMembershipsForTrainee("triggersError"))
+        .thenThrow(new IllegalArgumentException());
+
+    ProgrammeMembershipDto dto = new ProgrammeMembershipDto();
+    dto.setTisId("tisIdValue");
+
+    mockMvc.perform(
+        delete("/api/programme-membership/{traineeTisId}", "triggersError")
+            .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest());
+  }
 }
