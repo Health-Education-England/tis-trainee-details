@@ -23,6 +23,7 @@ package uk.nhs.hee.trainee.details.api;
 
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -83,9 +84,18 @@ public class ProgrammeMembershipResource {
   public ResponseEntity<Boolean> deleteProgrammeMemberships(
       @PathVariable(name = "traineeTisId") String traineeTisId) {
     log.trace("Delete all programme memberships of trainee with TIS ID {}", traineeTisId);
-    boolean ok = service.deleteProgrammeMembershipsForTrainee(traineeTisId);
-    if (!ok) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Trainee not found.");
+    try {
+      boolean foundTrainee = service.deleteProgrammeMembershipsForTrainee(traineeTisId);
+      if (!foundTrainee) {
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Trainee not found.");
+      }
+    } catch (Exception e) {
+      if (e instanceof IllegalArgumentException
+          || e instanceof InvalidDataAccessApiUsageException) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getLocalizedMessage());
+      } else {
+        throw e; // e.g. DataAccessException if MongoDB is down
+      }
     }
     return ResponseEntity.ok(true);
   }
