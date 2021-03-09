@@ -23,9 +23,11 @@ package uk.nhs.hee.trainee.details.api;
 
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -70,5 +72,27 @@ public class ProgrammeMembershipResource {
     entity = optionalEntity
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trainee not found."));
     return ResponseEntity.ok(mapper.toDto(entity));
+  }
+
+  /**
+   * Delete the programme memberships for the trainee.
+   *
+   * @param traineeTisId The ID of the trainee to update.
+   * @return True if the programme memberships were deleted.
+   */
+  @DeleteMapping("/{traineeTisId}")
+  public ResponseEntity<Boolean> deleteProgrammeMemberships(
+      @PathVariable(name = "traineeTisId") String traineeTisId) {
+    log.trace("Delete all programme memberships of trainee with TIS ID {}", traineeTisId);
+    try {
+      boolean foundTrainee = service.deleteProgrammeMembershipsForTrainee(traineeTisId);
+      if (!foundTrainee) {
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Trainee not found.");
+      }
+    } catch (IllegalArgumentException | InvalidDataAccessApiUsageException e) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getLocalizedMessage());
+      // other exceptions are possible, e.g. DataAccessException if MongoDB is down
+    }
+    return ResponseEntity.ok(true);
   }
 }

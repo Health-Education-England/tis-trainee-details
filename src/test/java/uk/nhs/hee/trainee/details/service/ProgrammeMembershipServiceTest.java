@@ -167,6 +167,32 @@ class ProgrammeMembershipServiceTest {
         is(expectedProgrammeMembership));
   }
 
+  @Test
+  void shouldDeleteProgrammeMembershipWhenTraineeFoundAndProgrammeMembershipExists() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.getProgrammeMemberships()
+        .add(createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_ID, ORIGINAL_SUFFIX, 0));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean result = service.deleteProgrammeMembershipsForTrainee(TRAINEE_TIS_ID);
+
+    assertThat("Unexpected result.", result, is(true));
+  }
+
+  @Test
+  void shouldNotDeleteProgrammeMembershipWhenTraineeNotFound() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.getProgrammeMemberships()
+        .add(createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_ID, ORIGINAL_SUFFIX, 0));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(null);
+
+    boolean result = service.deleteProgrammeMembershipsForTrainee(TRAINEE_TIS_ID);
+
+    assertThat("Unexpected result.", result, is(false));
+  }
+
   /**
    * Create an instance of ProgrammeMembership with default dummy values.
    *

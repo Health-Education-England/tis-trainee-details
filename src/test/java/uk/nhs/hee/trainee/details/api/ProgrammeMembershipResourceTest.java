@@ -21,10 +21,12 @@
 
 package uk.nhs.hee.trainee.details.api;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -45,6 +47,7 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import uk.nhs.hee.trainee.details.dto.ProgrammeMembershipDto;
 import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapper;
@@ -139,5 +142,40 @@ class ProgrammeMembershipResourceTest {
         .andExpect(jsonPath("$.startDate").value(is(start.toString())))
         .andExpect(jsonPath("$.endDate").value(is(end.toString())))
         .andExpect(jsonPath("$.programmeCompletionDate").value(is(completion.toString())));
+  }
+
+  @Test
+  void shouldDeleteProgrammeMembershipWhenTraineeFound() throws Exception {
+
+    when(service
+        .deleteProgrammeMembershipsForTrainee("40"))
+        .thenReturn(true);
+
+    ProgrammeMembershipDto dto = new ProgrammeMembershipDto();
+    dto.setTisId("tisIdValue");
+
+    MvcResult result = mockMvc.perform(
+        delete("/api/programme-membership/{traineeTisId}", 40)
+            .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andReturn();
+
+    Boolean resultBoolean = Boolean.parseBoolean(result.getResponse().getContentAsString());
+    assertThat("Unexpected result.", resultBoolean, is(true));
+  }
+
+  @Test
+  void shouldNotDeleteProgrammeMembershipWhenTraineeNotFound() throws Exception {
+    when(service
+        .deleteProgrammeMembershipsForTrainee("40"))
+        .thenReturn(false);
+
+    ProgrammeMembershipDto dto = new ProgrammeMembershipDto();
+    dto.setTisId("tisIdValue");
+
+    mockMvc.perform(
+        delete("/api/programme-membership/{traineeTisId}", 40)
+            .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isNotFound());
   }
 }
