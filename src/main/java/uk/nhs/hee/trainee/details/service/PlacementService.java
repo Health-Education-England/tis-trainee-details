@@ -90,7 +90,6 @@ public class PlacementService {
     hasDeleted = placements.removeIf(p -> p.getTisId().equals(placementTisId));
 
     if (hasDeleted) {
-      traineeProfile.setPlacements(placements);
       repository.save(traineeProfile);
       return true;
     }

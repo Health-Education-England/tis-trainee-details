@@ -93,6 +93,7 @@ public class PlacementResource {
     } catch (IllegalArgumentException | InvalidDataAccessApiUsageException e) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getLocalizedMessage());
       // other exceptions are possible, e.g. DataAccessException if MongoDB is down
+      // TODO: add global exception handlers for these types of exceptions
     }
     return ResponseEntity.ok(true);
   }
