@@ -34,6 +34,4 @@ public interface PlacementMapper {
   Placement toEntity(PlacementDto dto);
 
   void updatePlacement(@MappingTarget Placement target, Placement source);
-
-  // void remove(Placement entity);
 }
