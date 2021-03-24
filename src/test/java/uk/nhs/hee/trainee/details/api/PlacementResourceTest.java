@@ -21,10 +21,12 @@
 
 package uk.nhs.hee.trainee.details.api;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -45,6 +47,7 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import uk.nhs.hee.trainee.details.dto.PlacementDto;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
@@ -137,5 +140,45 @@ class PlacementResourceTest {
         .andExpect(jsonPath("$.specialty").value(is("specialtyValue")))
         .andExpect(jsonPath("$.placementType").value(is("placementTypeValue")))
         .andExpect(jsonPath("$.status").value(is("CURRENT")));
+  }
+
+  @Test
+  void shouldDeletePlacementWhenTraineeFound() throws Exception {
+    when(service
+        .deletePlacementForTrainee("40","1"))
+        .thenReturn(true);
+
+    MvcResult result = mockMvc.perform(
+        delete("/api/placement/{traineeTisId}/{placementTisId}", 40, 1)
+            .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andReturn();
+
+    Boolean resultBoolean = Boolean.parseBoolean(result.getResponse().getContentAsString());
+    assertThat("Unexpected result.", resultBoolean, is(true));
+  }
+
+  @Test
+  void shouldNotDeletePlacementWhenTraineeOrPlacementNotFound() throws Exception {
+    when(service
+        .deletePlacementForTrainee("40", "1"))
+        .thenReturn(false);
+
+    mockMvc.perform(
+        delete("/api/placement/{traineeTisId}/{placementTisId}", 40, 1)
+            .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void shouldThrowBadRequestWhenDeletePlacementException() throws Exception {
+    when(service
+        .deletePlacementForTrainee("triggersError", "1"))
+        .thenThrow(new IllegalArgumentException());
+    
+    mockMvc.perform(
+        delete("/api/placement/{traineeTisId}/{placementTisId}", "triggersError", "1")
+            .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest());
   }
 }

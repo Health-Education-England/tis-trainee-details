@@ -85,7 +85,8 @@ public class PlacementResource {
     log.trace("Delete placement with TIS ID {} of trainee with TIS ID {}",
         placementTisId, traineeTisId);
     try {
-      boolean foundTraineeAndPlacement = service.deletePlacementForTrainee(traineeTisId, placementTisId);
+      boolean foundTraineeAndPlacement =
+          service.deletePlacementForTrainee(traineeTisId, placementTisId);
       if (!foundTraineeAndPlacement) {
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Trainee or placement not found.");
       }

@@ -53,6 +53,7 @@ class PlacementServiceTest {
   private static final String ORIGINAL_SUFFIX = "pre";
   private static final String NEW_PLACEMENT_ID = "1";
   private static final String EXISTING_PLACEMENT_ID = "2";
+  private static final String NOT_EXISTING_PLACEMENT_ID = "3";
 
   private PlacementService service;
   private TraineeProfileRepository repository;
@@ -155,6 +156,45 @@ class PlacementServiceTest {
     expectedPlacement.setStatus(Status.CURRENT);
 
     assertThat("Unexpected placement.", placement.get(), is(expectedPlacement));
+  }
+
+  @Test
+  void shouldDeletePlacementWhenTraineeFoundAndPlacementExists() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.getPlacements()
+        .add(createPlacement(EXISTING_PLACEMENT_ID, ORIGINAL_SUFFIX, 0));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean result = service.deletePlacementForTrainee(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected result.", result, is(true));
+  }
+
+  @Test
+  void shouldNotDeletePlacementWhenTraineeNotFound() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.getPlacements()
+        .add(createPlacement(EXISTING_PLACEMENT_ID, ORIGINAL_SUFFIX, 0));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(null);
+
+    boolean result = service.deletePlacementForTrainee(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected result.", result, is(false));
+  }
+
+  @Test
+  void shouldNotDeletePlacementWhenPlacementNotFound() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.getPlacements()
+        .add(createPlacement(EXISTING_PLACEMENT_ID, ORIGINAL_SUFFIX, 0));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean result = service.deletePlacementForTrainee(TRAINEE_TIS_ID, NOT_EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected result.", result, is(false));
   }
 
   /**
