@@ -23,9 +23,11 @@ package uk.nhs.hee.trainee.details.api;
 
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -67,5 +69,30 @@ public class PlacementResource {
     entity = optionalEntity
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trainee not found."));
     return ResponseEntity.ok(mapper.toDto(entity));
+  }
+
+  /**
+   * Delete the placement for the trainee.
+   *
+   * @param traineeTisId    The ID of the trainee to update.
+   * @param placementTisId  The ID of the placement to delete.
+   * @return True if the placement was deleted.
+   */
+  @DeleteMapping("/{traineeTisId}/{placementTisId}")
+  public ResponseEntity<Boolean> deletePlacement(
+      @PathVariable(name = "traineeTisId") String traineeTisId,
+      @PathVariable(name = "placementTisId") String placementTisId) {
+    log.trace("Delete placement with TIS ID {} of trainee with TIS ID {}",
+        placementTisId, traineeTisId);
+    try {
+      boolean foundTraineeAndPlacement = service.deletePlacementForTrainee(traineeTisId, placementTisId);
+      if (!foundTraineeAndPlacement) {
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Trainee or placement not found.");
+      }
+    } catch (IllegalArgumentException | InvalidDataAccessApiUsageException e) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getLocalizedMessage());
+      // other exceptions are possible, e.g. DataAccessException if MongoDB is down
+    }
+    return ResponseEntity.ok(true);
   }
 }
