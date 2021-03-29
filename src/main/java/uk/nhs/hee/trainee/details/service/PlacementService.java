@@ -70,4 +70,29 @@ public class PlacementService {
     repository.save(traineeProfile);
     return Optional.of(placement);
   }
+
+  /**
+   * Delete the programme memberships for the trainee with the given TIS ID.
+   *
+   * @param traineeTisId        The TIS id of the trainee.
+   * @param placementTisId      The TIS id of the placement
+   * @return True, or False if a trainee with the ID was not found or the placement was not found.
+   */
+  public boolean deletePlacementForTrainee(String traineeTisId, String placementTisId) {
+    boolean hasDeleted = false;
+    TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
+
+    if (traineeProfile == null) {
+      return false;
+    }
+    List<Placement> placements = traineeProfile.getPlacements();
+
+    hasDeleted = placements.removeIf(p -> p.getTisId().equals(placementTisId));
+
+    if (hasDeleted) {
+      repository.save(traineeProfile);
+      return true;
+    }
+    return false;
+  }
 }
