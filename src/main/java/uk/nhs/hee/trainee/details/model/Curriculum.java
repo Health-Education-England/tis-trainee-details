@@ -31,4 +31,5 @@ public class Curriculum {
   private String curriculumName;
   private String curriculumSubType;
   private LocalDate curriculumStartDate;
+  private LocalDate curriculumEndDate;
 }
