@@ -1,0 +1,19 @@
+server:
+  port: 8203
+  servlet:
+    context-path: /trainee
+
+spring:
+  data:
+    mongodb:
+      uri: mongodb://${DB_USER:admin}:${DB_PASSWORD:pwd}@${DB_HOST:localhost}:${DB_PORT:27017}/${DB_NAME:trainee}?authSource=admin
+
+logging:
+  level:
+    root: INFO
+    org.springframework.data: DEBUG
+    uk.nhs.hee.tis.trainee.details: TRACE
+
+sentry:
+  dsn: ${SENTRY_DSN:}
+  environment: ${SENTRY_ENVIRONMENT:local}
