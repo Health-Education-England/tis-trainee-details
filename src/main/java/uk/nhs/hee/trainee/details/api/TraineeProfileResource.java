@@ -74,7 +74,7 @@ public class TraineeProfileResource {
     String tisId;
 
     try {
-      Map payload = objectMapper.readValue(payloadBytes, Map.class);
+      Map<?, ?> payload = objectMapper.readValue(payloadBytes, Map.class);
       tisId = (String) payload.get(TIS_ID_ATTRIBUTE);
     } catch (IOException e) {
       log.warn("Unable to read tisId from token.", e);

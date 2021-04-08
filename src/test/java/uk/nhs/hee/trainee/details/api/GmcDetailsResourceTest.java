@@ -77,7 +77,7 @@ class GmcDetailsResourceTest {
 
   @Test
   void shouldThrowExceptionWhenTraineeNotFound() throws Exception {
-    when(service.updateGmcDetailsByTisId(eq("40"), eq(new PersonalDetails())))
+    when(service.updateGmcDetailsByTisId("40", new PersonalDetails()))
         .thenReturn(Optional.empty());
 
     mockMvc.perform(patch("/api/gmc-details/{tisId}", 40)

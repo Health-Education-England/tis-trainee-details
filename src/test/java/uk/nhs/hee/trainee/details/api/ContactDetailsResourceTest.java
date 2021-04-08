@@ -77,7 +77,7 @@ class ContactDetailsResourceTest {
 
   @Test
   void shouldThrowExceptionWhenTraineeNotFound() throws Exception {
-    when(service.updateContactDetailsByTisId(eq("40"), eq(new PersonalDetails())))
+    when(service.updateContactDetailsByTisId("40", new PersonalDetails()))
         .thenReturn(Optional.empty());
 
     mockMvc.perform(patch("/api/contact-details/{tisId}", 40)

@@ -77,7 +77,7 @@ class PersonOwnerResourceTest {
 
   @Test
   void shouldThrowExceptionWhenTraineeNotFound() throws Exception {
-    when(service.updatePersonOwnerByTisId(eq("40"), eq(new PersonalDetails())))
+    when(service.updatePersonOwnerByTisId("40", new PersonalDetails()))
         .thenReturn(Optional.empty());
 
     mockMvc.perform(patch("/api/person-owner/{tisId}", 40)
