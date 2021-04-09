@@ -78,7 +78,7 @@ class QualificationResourceTest {
 
   @Test
   void shouldReturnBadRequestWhenIdIsNull() throws Exception {
-    when(service.updateQualificationByTisId(eq("40"), eq(new Qualification())))
+    when(service.updateQualificationByTisId("40", new Qualification()))
         .thenReturn(Optional.empty());
 
     mockMvc.perform(patch("/api/qualification/{traineeTisId}", 40)
@@ -89,7 +89,7 @@ class QualificationResourceTest {
 
   @Test
   void shouldReturnNotFoundStatusWhenTraineeNotFound() throws Exception {
-    when(service.updateQualificationByTisId(eq("40"), eq(new Qualification())))
+    when(service.updateQualificationByTisId("40", new Qualification()))
         .thenReturn(Optional.empty());
 
     QualificationDto dto = new QualificationDto();

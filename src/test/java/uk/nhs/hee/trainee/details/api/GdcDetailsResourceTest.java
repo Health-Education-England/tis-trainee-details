@@ -77,7 +77,7 @@ class GdcDetailsResourceTest {
 
   @Test
   void shouldThrowExceptionWhenTraineeNotFound() throws Exception {
-    when(service.updateGdcDetailsByTisId(eq("40"), eq(new PersonalDetails())))
+    when(service.updateGdcDetailsByTisId("40", new PersonalDetails()))
         .thenReturn(Optional.empty());
 
     mockMvc.perform(patch("/api/gdc-details/{tisId}", 40)
