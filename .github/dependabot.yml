@@ -10,7 +10,7 @@ updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: monthly
+      interval: weekly
     reviewers:
       - Health-Education-England/full-stack
       - Health-Education-England/operations
