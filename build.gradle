@@ -2,8 +2,6 @@ plugins {
   id "java"
   id "org.springframework.boot" version "2.5.0"
   id "io.spring.dependency-management" version "1.0.11.RELEASE"
-  // TODO: check if required, can be achieved with config but may not be better.
-  id "net.ltgt.apt" version "0.21"
 
   // Code Quality
   id "checkstyle"
