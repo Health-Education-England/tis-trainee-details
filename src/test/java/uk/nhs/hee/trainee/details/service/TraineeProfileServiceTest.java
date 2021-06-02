@@ -234,6 +234,31 @@ class TraineeProfileServiceTest {
   }
 
   @Test
+  void shouldSortQualificationsWithNullsLast() {
+    Qualification qualification1 = new Qualification();
+    Qualification qualification2 = new Qualification();
+    qualification2.setDateAttained(LocalDate.now().plusDays(100));
+    Qualification qualification3 = new Qualification();
+    qualification3.setDateAttained(LocalDate.now().minusDays(100));
+
+    List<Qualification> qualifications = Arrays
+        .asList(qualification1, qualification2, qualification3);
+    traineeProfile = new TraineeProfile();
+    traineeProfile.setQualifications(qualifications);
+
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+
+    service.getTraineeProfileByTraineeTisId(DEFAULT_TIS_ID_1);
+
+    assertThat("Unexpected qualification, check order is correct.",
+        traineeProfile.getQualifications().get(0), is(qualification2));
+    assertThat("Unexpected qualification, check order is correct.",
+        traineeProfile.getQualifications().get(1), is(qualification3));
+    assertThat("Unexpected qualification, check order is correct.",
+        traineeProfile.getQualifications().get(2), is(qualification1));
+  }
+
+  @Test
   void shouldPopulatePersonalDetailsWithLatestQualification() {
     Qualification qualification1 = new Qualification();
     qualification1.setDateAttained(LocalDate.now());
