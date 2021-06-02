@@ -48,8 +48,9 @@ public class TraineeProfileService {
     TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
 
     if (traineeProfile != null) {
-      traineeProfile.getQualifications()
-          .sort(Comparator.comparing(Qualification::getDateAttained).reversed());
+      traineeProfile.getQualifications().sort(Comparator.comparing(
+          Qualification::getDateAttained, Comparator.nullsLast(Comparator.reverseOrder()))
+      );
 
       // TODO: Remove when FE can handle collection of qualifications directly.
       if (!traineeProfile.getQualifications().isEmpty()) {
