@@ -60,7 +60,7 @@ jobs:
           restore-keys: ${{ runner.os }}-gradle
 
       - name: Build with Gradle
-        run: ./gradlew assemble
+        run: ./gradlew bootJar
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v2
