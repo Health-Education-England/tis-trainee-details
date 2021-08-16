@@ -40,7 +40,7 @@ import uk.nhs.hee.trainee.details.model.TraineeProfile;
 @Disabled("Current requires a local DB instance, ignore until in-memory test DB is set up")
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = TestConfig.class)
-public class TraineeProfileRepositoryTest {
+class TraineeProfileRepositoryTest {
 
   @Autowired
   private TraineeProfileRepository repository;
@@ -67,7 +67,7 @@ public class TraineeProfileRepositoryTest {
 
   @Test
   @Transactional
-  public void findTraineeProfileById() {
+  void findTraineeProfileById() {
     Optional<TraineeProfile> result = repository.findById("1");
     assertThat(result.isPresent(), is(true));
     TraineeProfile traineeProfile = result.get();
@@ -76,7 +76,7 @@ public class TraineeProfileRepositoryTest {
 
   @Test
   @Transactional
-  public void shouldReturnTraineeProfileByTraineeTisId() {
+  void shouldReturnTraineeProfileByTraineeTisId() {
     TraineeProfile traineeProfile = repository.findByTraineeTisId("1111");
     assertThat(traineeProfile.getId(), is("1"));
   }
