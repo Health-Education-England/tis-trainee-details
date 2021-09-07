@@ -16,8 +16,8 @@ jobs:
       - name: Gradle wrapper validation
         uses: gradle/wrapper-validation-action@v1.0.4
 
-  cache-distribution:
-    name: Cache Gradle distribution
+  assemble:
+    name: Assemble JAR
     needs: validate-wrapper
     runs-on: ubuntu-latest
 
@@ -25,39 +25,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Cache Gradle distribution
-        id: cache
-        uses: actions/cache@v2.1.6
+      - name: Set up JDK
+        uses: actions/setup-java@v2.3.0
         with:
-          path: ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
-          restore-keys: ${{ runner.os }}-gradle
-
-      - name: Download Gradle distribution
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: ./gradlew
-
-  assemble:
-    name: Assemble JAR
-    needs: cache-distribution
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Set up JDK 11
-        uses: actions/setup-java@v2.2.0
-        with:
+          cache: gradle
           distribution: adopt
           java-version: 11
-
-      - name: Cache Gradle distribution
-        uses: actions/cache@v2.1.6
-        with:
-          path: ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
-          restore-keys: ${{ runner.os }}-gradle
 
       - name: Build with Gradle
         run: ./gradlew assemble
@@ -70,25 +43,19 @@ jobs:
 
   check:
     name: Perform checks
-    needs: cache-distribution
+    needs: validate-wrapper
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Set up JDK 11
-        uses: actions/setup-java@v2.2.0
+      - name: Set up JDK
+        uses: actions/setup-java@v2.3.0
         with:
+          cache: gradle
           distribution: adopt
           java-version: 11
-
-      - name: Cache Gradle distribution
-        uses: actions/cache@v2.1.6
-        with:
-          path: ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
-          restore-keys: ${{ runner.os }}-gradle
 
       - name: Run Gradle checks
         run: ./gradlew check -x test
@@ -101,25 +68,19 @@ jobs:
 
   test:
     name: Run automated tests
-    needs: cache-distribution
+    needs: validate-wrapper
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Set up JDK 11
-        uses: actions/setup-java@v2.2.0
+      - name: Set up JDK
+        uses: actions/setup-java@v2.3.0
         with:
+          cache: gradle
           distribution: adopt
           java-version: 11
-
-      - name: Cache Gradle distribution
-        uses: actions/cache@v2.1.6
-        with:
-          path: ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
-          restore-keys: ${{ runner.os }}-gradle
 
       - name: Run Gradle tests
         run: ./gradlew test
@@ -145,18 +106,12 @@ jobs:
           name: reports
           path: build/reports
 
-      - name: Set up JDK 11
-        uses: actions/setup-java@v2.2.0
+      - name: Set up JDK
+        uses: actions/setup-java@v2.3.0
         with:
+          cache: gradle
           distribution: adopt
           java-version: 11
-
-      - name: Cache Gradle distribution
-        uses: actions/cache@v2.1.6
-        with:
-          path: ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
-          restore-keys: ${{ runner.os }}-gradle
 
       - name: Run quality analysis
         env:
