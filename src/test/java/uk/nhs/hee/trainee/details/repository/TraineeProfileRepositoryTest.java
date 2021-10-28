@@ -24,6 +24,7 @@ package uk.nhs.hee.trainee.details.repository;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -91,14 +92,15 @@ class TraineeProfileRepositoryTest {
   @Test
   @Transactional
   void shouldReturnTraineeProfileWhenEmailFound() {
-    Optional<TraineeProfile> traineeProfile = repository.findByTraineeEmail(EMAIL);
-    assertThat("Unexpected trainee profile ID.", traineeProfile.get().getId(), is("1"));
+    List<TraineeProfile> traineeProfiles = repository.findAllByTraineeEmail(EMAIL);
+    assertThat("Unexpected trainee profile.", traineeProfiles.size(), is(1));
+    assertThat("Unexpected trainee profile ID.", traineeProfiles.get(0).getId(), is("1"));
   }
 
   @Test
   @Transactional
   void shouldReturnEmptyWhenEmailNotFound() {
-    Optional<TraineeProfile> traineeProfile = repository.findByTraineeEmail("1");
-    assertThat("Unexpected trainee profile.", traineeProfile.isPresent(), is(false));
+    List<TraineeProfile> traineeProfiles = repository.findAllByTraineeEmail("1");
+    assertThat("Unexpected trainee profile.", traineeProfiles.size(), is(0));
   }
 }

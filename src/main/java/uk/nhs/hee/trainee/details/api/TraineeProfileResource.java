@@ -25,8 +25,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -96,14 +96,19 @@ public class TraineeProfileResource {
   }
 
   /**
-   * Get a trainee's ID from an email address.
+   * Get the trainee IDs for an email address.
    *
    * @param email The email to search by.
-   * @return The trainee's ID.
+   * @return The matching trainee IDs.
    */
-  @GetMapping("/trainee-id")
-  public ResponseEntity<String> getTraineeId(@RequestParam String email) {
-    Optional<String> traineeId = service.getTraineeTisIdByByEmail(email);
-    return ResponseEntity.of(traineeId);
+  @GetMapping("/trainee-ids")
+  public ResponseEntity<List<String>> getTraineeIds(@RequestParam String email) {
+    List<String> traineeIds = service.getTraineeTisIdsByByEmail(email);
+
+    if (traineeIds.isEmpty()) {
+      return ResponseEntity.notFound().build();
+    } else {
+      return ResponseEntity.ok(traineeIds);
+    }
   }
 }
