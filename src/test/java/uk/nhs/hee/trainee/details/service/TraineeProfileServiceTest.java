@@ -32,6 +32,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -281,5 +282,23 @@ class TraineeProfileServiceTest {
         personalDetails.getDateAttained(), is(LocalDate.now().plusDays(100)));
     assertThat("Unexpected qualification, check order is correct.",
         personalDetails.getMedicalSchool(), is("medicalSchool2"));
+  }
+
+  @Test
+  void shouldReturnTraineeIdWhenProfileFoundByEmail() {
+    when(repository.findByTraineeEmail(PERSON_EMAIL)).thenReturn(Optional.of(traineeProfile));
+
+    Optional<String> traineeTisId = service.getTraineeTisIdByByEmail(PERSON_EMAIL);
+
+    assertThat("Unexpected trainee TIS ID.", traineeTisId.orElse(null), is(DEFAULT_TIS_ID_1));
+  }
+
+  @Test
+  void shouldReturnEmptyWhenProfileNotFoundByEmail() {
+    when(repository.findByTraineeEmail(PERSON_EMAIL)).thenReturn(Optional.empty());
+
+    Optional<String> traineeTisId = service.getTraineeTisIdByByEmail(PERSON_EMAIL);
+
+    assertThat("Unexpected trainee TIS ID.", traineeTisId.isPresent(), is(false));
   }
 }

@@ -35,12 +35,15 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 import uk.nhs.hee.trainee.details.TestConfig;
+import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 
 @Disabled("Current requires a local DB instance, ignore until in-memory test DB is set up")
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = TestConfig.class)
 class TraineeProfileRepositoryTest {
+
+  private static final String EMAIL = "email@email.com";
 
   @Autowired
   private TraineeProfileRepository repository;
@@ -56,6 +59,10 @@ class TraineeProfileRepositoryTest {
     traineeProfile = new TraineeProfile();
     traineeProfile.setId("1");
     traineeProfile.setTraineeTisId("1111");
+
+    PersonalDetails personalDetails = new PersonalDetails();
+    personalDetails.setEmail(EMAIL);
+    traineeProfile.setPersonalDetails(personalDetails);
     repository.save(traineeProfile);
   }
 
@@ -79,5 +86,19 @@ class TraineeProfileRepositoryTest {
   void shouldReturnTraineeProfileByTraineeTisId() {
     TraineeProfile traineeProfile = repository.findByTraineeTisId("1111");
     assertThat(traineeProfile.getId(), is("1"));
+  }
+
+  @Test
+  @Transactional
+  void shouldReturnTraineeProfileWhenEmailFound() {
+    Optional<TraineeProfile> traineeProfile = repository.findByTraineeEmail(EMAIL);
+    assertThat("Unexpected trainee profile ID.", traineeProfile.get().getId(), is("1"));
+  }
+
+  @Test
+  @Transactional
+  void shouldReturnEmptyWhenEmailNotFound() {
+    Optional<TraineeProfile> traineeProfile = repository.findByTraineeEmail("1");
+    assertThat("Unexpected trainee profile.", traineeProfile.isPresent(), is(false));
   }
 }

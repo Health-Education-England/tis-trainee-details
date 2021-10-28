@@ -26,12 +26,14 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
 import uk.nhs.hee.trainee.details.dto.TraineeProfileDto;
@@ -46,9 +48,9 @@ public class TraineeProfileResource {
 
   private static final String TIS_ID_ATTRIBUTE = "custom:tisId";
 
-  private TraineeProfileService service;
-  private TraineeProfileMapper mapper;
-  private ObjectMapper objectMapper;
+  private final TraineeProfileService service;
+  private final TraineeProfileMapper mapper;
+  private final ObjectMapper objectMapper;
 
   protected TraineeProfileResource(TraineeProfileService service, TraineeProfileMapper mapper,
       ObjectMapper objectMapper) {
@@ -91,5 +93,17 @@ public class TraineeProfileResource {
     traineeProfile = service.hidePastProgrammes(traineeProfile);
     traineeProfile = service.hidePastPlacements(traineeProfile);
     return ResponseEntity.ok(mapper.toDto(traineeProfile));
+  }
+
+  /**
+   * Get a trainee's ID from an email address.
+   *
+   * @param email The email to search by.
+   * @return The trainee's ID.
+   */
+  @GetMapping("/trainee-id")
+  public ResponseEntity<String> getTraineeId(@RequestParam String email) {
+    Optional<String> traineeId = service.getTraineeTisIdByByEmail(email);
+    return ResponseEntity.of(traineeId);
   }
 }

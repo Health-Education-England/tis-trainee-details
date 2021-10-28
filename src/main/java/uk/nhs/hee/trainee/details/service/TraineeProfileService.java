@@ -22,6 +22,7 @@
 package uk.nhs.hee.trainee.details.service;
 
 import java.util.Comparator;
+import java.util.Optional;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
@@ -69,6 +70,17 @@ public class TraineeProfileService {
     }
 
     return traineeProfile;
+  }
+
+  /**
+   * Get the trainee ID associated with the given email.
+   *
+   * @param email The email address of the trainee.
+   * @return The trainee's TIS ID.
+   */
+  public Optional<String> getTraineeTisIdByByEmail(String email) {
+    Optional<TraineeProfile> traineeProfile = repository.findByTraineeEmail(email);
+    return traineeProfile.map(TraineeProfile::getTraineeTisId);
   }
 
   /**
