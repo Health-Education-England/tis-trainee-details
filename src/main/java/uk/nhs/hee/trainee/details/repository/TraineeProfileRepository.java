@@ -21,7 +21,9 @@
 
 package uk.nhs.hee.trainee.details.repository;
 
+import java.util.List;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 
@@ -29,4 +31,7 @@ import uk.nhs.hee.trainee.details.model.TraineeProfile;
 public interface TraineeProfileRepository extends MongoRepository<TraineeProfile, String> {
 
   TraineeProfile findByTraineeTisId(String traineeTisId);
+
+  @Query("{ 'personalDetails.email' : ?0 }")
+  List<TraineeProfile> findAllByTraineeEmail(String email);
 }

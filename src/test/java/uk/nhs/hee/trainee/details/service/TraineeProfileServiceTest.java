@@ -22,6 +22,7 @@
 package uk.nhs.hee.trainee.details.service;
 
 import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -31,6 +32,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -281,5 +283,28 @@ class TraineeProfileServiceTest {
         personalDetails.getDateAttained(), is(LocalDate.now().plusDays(100)));
     assertThat("Unexpected qualification, check order is correct.",
         personalDetails.getMedicalSchool(), is("medicalSchool2"));
+  }
+
+  @Test
+  void shouldReturnTraineeIdsWhenProfileFoundByEmail() {
+    TraineeProfile traineeProfile2 = new TraineeProfile();
+    traineeProfile2.setTraineeTisId("id2");
+
+    when(repository.findAllByTraineeEmail(PERSON_EMAIL))
+        .thenReturn(List.of(traineeProfile, traineeProfile2));
+
+    List<String> traineeTisIds = service.getTraineeTisIdsByByEmail(PERSON_EMAIL);
+
+    assertThat("Unexpected number of trainee TIS IDs.", traineeTisIds.size(), is(2));
+    assertThat("Unexpected trainee TIS IDs.", traineeTisIds, hasItems(DEFAULT_TIS_ID_1, "id2"));
+  }
+
+  @Test
+  void shouldReturnEmptyWhenProfileNotFoundByEmail() {
+    when(repository.findAllByTraineeEmail(PERSON_EMAIL)).thenReturn(Collections.emptyList());
+
+    List<String> traineeTisIds = service.getTraineeTisIdsByByEmail(PERSON_EMAIL);
+
+    assertThat("Unexpected number of trainee TIS IDs.", traineeTisIds.size(), is(0));
   }
 }

@@ -32,6 +32,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -303,5 +304,30 @@ class TraineeProfileResourceTest {
         .andExpect(jsonPath("$.placements[*].tisId").value(PLACEMENT_TISID))
         .andExpect(jsonPath("$.placements[*].site").value(PLACEMENT_SITE))
         .andExpect(jsonPath("$.placements[*].status").value(PLACEMENT_STATUS.toString()));
+  }
+
+  @Test
+  void shouldReturnTraineeIdWhenProfileFoundByEmail() throws Exception {
+    when(service.getTraineeTisIdsByByEmail(PERSON_EMAIL))
+        .thenReturn(List.of(DEFAULT_TIS_ID_1, "id2"));
+
+    mockMvc.perform(get("/api/trainee-profile/trainee-ids")
+        .param("email", PERSON_EMAIL)
+        .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$[0]").value(DEFAULT_TIS_ID_1))
+        .andExpect(jsonPath("$[1]").value("id2"));
+  }
+
+  @Test
+  void shouldReturnNotFoundWhenProfileNotFoundByEmail() throws Exception {
+    when(service.getTraineeTisIdsByByEmail(PERSON_EMAIL)).thenReturn(Collections.emptyList());
+
+    mockMvc.perform(get("/api/trainee-profile/trainee-ids")
+        .param("email", PERSON_EMAIL)
+        .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$").doesNotExist());
   }
 }
