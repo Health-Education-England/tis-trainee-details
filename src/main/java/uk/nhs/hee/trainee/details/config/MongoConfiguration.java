@@ -45,5 +45,6 @@ public class MongoConfiguration {
   public void initIndexes() {
     IndexOperations traineeProfileIndexOps = template.indexOps(TraineeProfile.class);
     traineeProfileIndexOps.ensureIndex(new Index().on("traineeTisId", Direction.ASC));
+    traineeProfileIndexOps.ensureIndex(new Index().on("personalDetails.email", Direction.ASC));
   }
 }
