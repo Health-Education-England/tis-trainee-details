@@ -25,6 +25,7 @@ import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
 
@@ -189,6 +190,14 @@ class TraineeProfileServiceTest {
   }
 
   @Test
+  void getTraineeProfileByTraineeTisIdShouldReturnNullWhenNotFound() {
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(null);
+    TraineeProfile returnedTraineeProfile = service
+        .getTraineeProfileByTraineeTisId(DEFAULT_TIS_ID_1);
+    assertThat(returnedTraineeProfile, nullValue());
+  }
+
+  @Test
   void getTraineeProfileByTraineeTisIdShouldReturnTraineeProfile() {
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
     TraineeProfile returnedTraineeProfile = service
@@ -198,8 +207,16 @@ class TraineeProfileServiceTest {
 
   @Test
   void hidePastProgrammesShouldHidePastProgrammes() {
+    var programmeMembership2 = new ProgrammeMembership();
+    programmeMembership2.setStartDate(LocalDate.now().minusYears(2));
+    programmeMembership2.setEndDate(LocalDate.now().minusYears(1));
+
+    List<ProgrammeMembership> programmeMemberships = traineeProfile.getProgrammeMemberships();
+    programmeMemberships.add(programmeMembership2);
+
     TraineeProfile returnedTraineeProfile = service.hidePastProgrammes(traineeProfile);
-    assertThat(returnedTraineeProfile, is(traineeProfile));
+    assertThat(returnedTraineeProfile.getProgrammeMemberships().size(), is(1));
+    assertThat(returnedTraineeProfile.getProgrammeMemberships(), hasItem(programmeMembership));
   }
 
   @Test
