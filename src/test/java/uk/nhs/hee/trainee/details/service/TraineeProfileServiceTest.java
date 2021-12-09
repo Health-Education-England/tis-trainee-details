@@ -38,6 +38,7 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -323,5 +324,17 @@ class TraineeProfileServiceTest {
     List<String> traineeTisIds = service.getTraineeTisIdsByByEmail(PERSON_EMAIL);
 
     assertThat("Unexpected number of trainee TIS IDs.", traineeTisIds.size(), is(0));
+  }
+
+  @Test
+  void shouldFindProfilesByLowerCaseEmail() {
+    ArgumentCaptor<String> emailCaptor = ArgumentCaptor.forClass(String.class);
+    when(repository.findAllByTraineeEmail(emailCaptor.capture()))
+        .thenReturn(Collections.emptyList());
+
+    service.getTraineeTisIdsByByEmail("UPPER.lower@UpperCamel.lowerCamel");
+
+    String email = emailCaptor.getValue();
+    assertThat("Unexpected email.", email, is("upper.lower@uppercamel.lowercamel"));
   }
 }

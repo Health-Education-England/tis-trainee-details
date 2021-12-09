@@ -21,8 +21,10 @@
 
 package uk.nhs.hee.trainee.details.dto;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import java.time.LocalDate;
 import lombok.Data;
+import uk.nhs.hee.trainee.details.dto.deserializer.LowerCaseDeserializer;
 
 /**
  * A DTO for PersonalDetails entity, holds the fields for personal information of the trainee.
@@ -43,6 +45,7 @@ public class PersonalDetailsDto {
   private String medicalSchool;
   private String telephoneNumber;
   private String mobileNumber;
+  @JsonDeserialize(using = LowerCaseDeserializer.class)
   private String email;
   private String address1;
   private String address2;
