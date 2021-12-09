@@ -92,6 +92,7 @@ class ContactDetailsResourceTest {
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setForenames("John");
     personalDetails.setSurname("Doe");
+    personalDetails.setEmail("email@email.com");
 
     when(service.updateContactDetailsByTisId(eq("40"), any(PersonalDetails.class)))
         .thenReturn(Optional.of(personalDetails));
@@ -102,6 +103,7 @@ class ContactDetailsResourceTest {
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.forenames").value(is("John")))
-        .andExpect(jsonPath("$.surname").value(is("Doe")));
+        .andExpect(jsonPath("$.surname").value(is("Doe")))
+        .andExpect(jsonPath("$.email").value(is("email@email.com")));
   }
 }

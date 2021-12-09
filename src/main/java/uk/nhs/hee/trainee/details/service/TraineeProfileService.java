@@ -80,7 +80,7 @@ public class TraineeProfileService {
    * @return The trainee TIS IDs.
    */
   public List<String> getTraineeTisIdsByByEmail(String email) {
-    List<TraineeProfile> traineeProfile = repository.findAllByTraineeEmail(email);
+    List<TraineeProfile> traineeProfile = repository.findAllByTraineeEmail(email.toLowerCase());
     return traineeProfile.stream()
         .map(TraineeProfile::getTraineeTisId)
         .collect(Collectors.toList());
