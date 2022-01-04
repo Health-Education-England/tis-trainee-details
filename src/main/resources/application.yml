@@ -11,8 +11,6 @@ spring:
 logging:
   level:
     root: INFO
-    org.springframework.data: DEBUG
-    uk.nhs.hee.tis.trainee.details: TRACE
 
 sentry:
   dsn: ${SENTRY_DSN:}
