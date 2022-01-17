@@ -23,7 +23,9 @@ package uk.nhs.hee.trainee.details.service;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -135,6 +137,42 @@ class QualificationServiceTest {
     expectedQualification.setMedicalSchool(MEDICAL_SCHOOL + MODIFIED_SUFFIX);
 
     assertThat("Unexpected qualification.", qualification.get(), is(expectedQualification));
+  }
+
+  @Test
+  void shouldNotDeleteQualificationWhenTraineeNotFound() {
+    boolean deleted = service.deleteQualification("traineeNotFound", "qualificationNotFound");
+
+    assertThat("Unexpected deleted state.", deleted, is(false));
+    verify(repository, never()).save(any());
+  }
+
+  @Test
+  void shouldNotDeleteQualificationWhenQualificationNotFound() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.getQualifications()
+        .add(createQualification(EXISTING_QUALIFICATION_ID, ORIGINAL_SUFFIX, 0));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean deleted = service.deleteQualification(TRAINEE_TIS_ID, NEW_QUALIFICATION_ID);
+
+    assertThat("Unexpected deleted state.", deleted, is(false));
+    verify(repository, never()).save(any());
+  }
+
+  @Test
+  void shouldDeleteQualificationWhenTraineeAndQualificationFound() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.getQualifications()
+        .add(createQualification(EXISTING_QUALIFICATION_ID, ORIGINAL_SUFFIX, 0));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean deleted = service.deleteQualification(TRAINEE_TIS_ID, EXISTING_QUALIFICATION_ID);
+
+    assertThat("Unexpected deleted state.", deleted, is(true));
+    verify(repository).save(any());
   }
 
   /**
