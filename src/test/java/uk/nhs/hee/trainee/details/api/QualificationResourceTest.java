@@ -25,6 +25,7 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -127,5 +128,23 @@ class QualificationResourceTest {
         .andExpect(jsonPath("$.qualification").value(is("qualificationValue")))
         .andExpect(jsonPath("$.dateAttained").value(is(dateAttained.toString())))
         .andExpect(jsonPath("$.medicalSchool").value(is("medicalSchoolValue")));
+  }
+
+  @Test
+  void shouldReturnNoContentWhenQualificationDeleted() throws Exception {
+    when(service.deleteQualification("40", "140")).thenReturn(true);
+
+    mockMvc.perform(delete("/api/qualification/{traineeTisId}/{qualificationId}", 40, 140)
+        .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isNoContent());
+  }
+
+  @Test
+  void shouldReturnNotFoundWhenQualificationNotFound() throws Exception {
+    when(service.deleteQualification("40", "140")).thenReturn(false);
+
+    mockMvc.perform(delete("/api/qualification/{traineeTisId}/{qualificationId}", 40, 140)
+        .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isNotFound());
   }
 }

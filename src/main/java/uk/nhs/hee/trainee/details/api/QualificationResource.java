@@ -25,7 +25,9 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.ResponseEntity.HeadersBuilder;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -42,8 +44,8 @@ import uk.nhs.hee.trainee.details.service.QualificationService;
 @RequestMapping("/api/qualification")
 public class QualificationResource {
 
-  private QualificationService service;
-  private QualificationMapper mapper;
+  private final QualificationService service;
+  private final QualificationMapper mapper;
 
   public QualificationResource(QualificationService service, QualificationMapper mapper) {
     this.service = service;
@@ -62,12 +64,30 @@ public class QualificationResource {
   public ResponseEntity<QualificationDto> updateQualification(
       @PathVariable(name = "traineeTisId") String traineeTisId,
       @RequestBody @Validated QualificationDto dto) {
-    log.trace("Update basic details of trainee with TIS ID {}", traineeTisId);
+    log.trace("Update qualifications of trainee with TIS ID {}", traineeTisId);
     Qualification entity = mapper.toEntity(dto);
     Optional<Qualification> optionalEntity = service
         .updateQualificationByTisId(traineeTisId, entity);
     entity = optionalEntity
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trainee not found."));
     return ResponseEntity.ok(mapper.toDto(entity));
+  }
+
+  /**
+   * Delete the qualification for the given trainee and qualification IDs.
+   *
+   * @param traineeTisId    The trainee ID to delete the qualification of.
+   * @param qualificationId The qualification ID to delete from the trainee.
+   * @return A 204 if successful, else a 404.
+   */
+  @DeleteMapping("/{traineeTisId}/{qualificationId}")
+  public ResponseEntity<Void> deleteQualification(@PathVariable String traineeTisId,
+      @PathVariable String qualificationId) {
+    log.trace("Delete qualification {} from trainee {}.", qualificationId, traineeTisId);
+    boolean updated = service.deleteQualification(traineeTisId, qualificationId);
+
+    HeadersBuilder<? extends HeadersBuilder<?>> response =
+        updated ? ResponseEntity.noContent() : ResponseEntity.notFound();
+    return response.build();
   }
 }
