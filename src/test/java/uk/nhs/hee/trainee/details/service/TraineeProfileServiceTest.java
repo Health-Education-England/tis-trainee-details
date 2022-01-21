@@ -27,6 +27,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
@@ -336,5 +337,11 @@ class TraineeProfileServiceTest {
 
     String email = emailCaptor.getValue();
     assertThat("Unexpected email.", email, is("upper.lower@uppercamel.lowercamel"));
+  }
+
+  @Test
+  void shouldDeleteProfileById() {
+    service.deleteTraineeProfileByTraineeTisId("1");
+    verify(repository).deleteById("1");
   }
 }

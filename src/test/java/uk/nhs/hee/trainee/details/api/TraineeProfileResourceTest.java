@@ -22,6 +22,7 @@
 package uk.nhs.hee.trainee.details.api;
 
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -328,6 +329,14 @@ class TraineeProfileResourceTest {
         .param("email", PERSON_EMAIL)
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$").doesNotExist());
+  }
+
+  @Test
+  void shouldReturnNoContentWhenDeletingProfile() throws Exception {
+    mockMvc.perform(delete("/api/trainee-profile/{tisId}", "1")
+        .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isNoContent())
         .andExpect(jsonPath("$").doesNotExist());
   }
 }

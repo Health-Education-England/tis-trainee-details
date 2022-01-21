@@ -30,7 +30,9 @@ import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -110,5 +112,17 @@ public class TraineeProfileResource {
     } else {
       return ResponseEntity.ok(traineeIds);
     }
+  }
+
+  /**
+   * Delete a trainee profile.
+   *
+   * @param tisId The TIS ID of the trainee to delete the profile for.
+   * @return Response code 204 if successful.
+   */
+  @DeleteMapping("/{tisId}")
+  public ResponseEntity<Void> deleteTraineeProfile(@PathVariable String tisId) {
+    service.deleteTraineeProfileByTraineeTisId(tisId);
+    return ResponseEntity.noContent().build();
   }
 }
