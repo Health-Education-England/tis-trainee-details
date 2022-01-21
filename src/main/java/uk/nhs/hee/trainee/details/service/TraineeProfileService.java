@@ -107,4 +107,13 @@ public class TraineeProfileService {
     traineeProfile.getPlacements().removeIf(c -> c.getStatus() == Status.PAST);
     return traineeProfile;
   }
+
+  /**
+   * Delete a trainee profile.
+   *
+   * @param traineeTisId The TIS ID of the trainee to delete the profile for.
+   */
+  public void deleteTraineeProfileByTraineeTisId(String traineeTisId) {
+    repository.deleteById(traineeTisId);
+  }
 }
