@@ -114,6 +114,6 @@ public class TraineeProfileService {
    * @param traineeTisId The TIS ID of the trainee to delete the profile for.
    */
   public void deleteTraineeProfileByTraineeTisId(String traineeTisId) {
-    repository.deleteById(traineeTisId);
+    repository.deleteByTraineeTisId(traineeTisId);
   }
 }
