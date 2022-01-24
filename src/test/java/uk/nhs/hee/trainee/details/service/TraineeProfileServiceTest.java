@@ -342,6 +342,6 @@ class TraineeProfileServiceTest {
   @Test
   void shouldDeleteProfileById() {
     service.deleteTraineeProfileByTraineeTisId("1");
-    verify(repository).deleteById("1");
+    verify(repository).deleteByTraineeTisId("1");
   }
 }
