@@ -25,7 +25,6 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.ResponseEntity.HeadersBuilder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -78,16 +77,13 @@ public class QualificationResource {
    *
    * @param traineeTisId    The trainee ID to delete the qualification of.
    * @param qualificationId The qualification ID to delete from the trainee.
-   * @return A 204 if successful, else a 404.
+   * @return Response code 204 if successful.
    */
   @DeleteMapping("/{traineeTisId}/{qualificationId}")
   public ResponseEntity<Void> deleteQualification(@PathVariable String traineeTisId,
       @PathVariable String qualificationId) {
     log.trace("Delete qualification {} from trainee {}.", qualificationId, traineeTisId);
-    boolean updated = service.deleteQualification(traineeTisId, qualificationId);
-
-    HeadersBuilder<? extends HeadersBuilder<?>> response =
-        updated ? ResponseEntity.noContent() : ResponseEntity.notFound();
-    return response.build();
+    service.deleteQualification(traineeTisId, qualificationId);
+    return ResponseEntity.noContent().build();
   }
 }

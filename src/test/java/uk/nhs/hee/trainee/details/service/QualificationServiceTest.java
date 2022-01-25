@@ -141,9 +141,8 @@ class QualificationServiceTest {
 
   @Test
   void shouldNotDeleteQualificationWhenTraineeNotFound() {
-    boolean deleted = service.deleteQualification("traineeNotFound", "qualificationNotFound");
+    service.deleteQualification("traineeNotFound", "qualificationNotFound");
 
-    assertThat("Unexpected deleted state.", deleted, is(false));
     verify(repository, never()).save(any());
   }
 
@@ -155,9 +154,8 @@ class QualificationServiceTest {
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
-    boolean deleted = service.deleteQualification(TRAINEE_TIS_ID, NEW_QUALIFICATION_ID);
+    service.deleteQualification(TRAINEE_TIS_ID, NEW_QUALIFICATION_ID);
 
-    assertThat("Unexpected deleted state.", deleted, is(false));
     verify(repository, never()).save(any());
   }
 
@@ -169,9 +167,8 @@ class QualificationServiceTest {
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
-    boolean deleted = service.deleteQualification(TRAINEE_TIS_ID, EXISTING_QUALIFICATION_ID);
+    service.deleteQualification(TRAINEE_TIS_ID, EXISTING_QUALIFICATION_ID);
 
-    assertThat("Unexpected deleted state.", deleted, is(true));
     verify(repository).save(any());
   }
 
