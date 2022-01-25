@@ -77,22 +77,17 @@ public class QualificationService {
    *
    * @param traineeTisId    The trainee ID to delete the qualification of.
    * @param qualificationId The qualification ID to delete from the trainee.
-   * @return true if a deletion occurred, else false.
    */
-  public boolean deleteQualification(String traineeTisId, String qualificationId) {
+  public void deleteQualification(String traineeTisId, String qualificationId) {
     TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
 
-    if (traineeProfile == null) {
-      return false;
+    if (traineeProfile != null) {
+      List<Qualification> qualifications = traineeProfile.getQualifications();
+      boolean updated = qualifications.removeIf(q -> q.getTisId().equals(qualificationId));
+
+      if (updated) {
+        repository.save(traineeProfile);
+      }
     }
-
-    List<Qualification> qualifications = traineeProfile.getQualifications();
-    boolean updated = qualifications.removeIf(q -> q.getTisId().equals(qualificationId));
-
-    if (updated) {
-      repository.save(traineeProfile);
-    }
-
-    return updated;
   }
 }
