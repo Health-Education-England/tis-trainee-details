@@ -16,9 +16,5 @@ You can run this project without going through the build with
 
 To run the tests use: `./gradlew clean test`
 
-## Accessing Swagger API 
-
-Paste this URI to the browser http://localhost:8203/swagger-ui.html
-
 ## License
 This project is license under [The MIT License (MIT)](LICENSE)

@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "uk.nhs.hee.trainee.details"
-version = "0.11.2"
+version = "0.11.3"
 sourceCompatibility = "11"
 
 configurations {
@@ -42,10 +42,6 @@ dependencies {
   // Mapstruct
   implementation "org.mapstruct:mapstruct:1.4.2.Final"
   annotationProcessor "org.mapstruct:mapstruct-processor:1.4.2.Final"
-
-  // Swagger
-  implementation "io.springfox:springfox-swagger2:3.0.0"
-  implementation "io.springfox:springfox-swagger-ui:3.0.0"
 
   // Sentry reporting
   implementation "io.sentry:sentry-spring-boot-starter:5.6.0"
