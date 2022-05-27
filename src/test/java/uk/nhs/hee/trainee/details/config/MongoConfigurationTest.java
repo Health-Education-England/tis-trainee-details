@@ -24,6 +24,7 @@ package uk.nhs.hee.trainee.details.config;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -81,8 +82,9 @@ class MongoConfigurationTest {
 
   @Test
   void shouldReplaceNonUniqueIndexForTraineeTisIdWithUniqueIndex() {
+    String NON_UNIQUE_INDEX_NAME = "traineeTisId_notUnique";
     IndexField indexField = IndexField.create("traineeTisId", Sort.Direction.ASC);
-    IndexInfo indexInfo = new IndexInfo(List.of(indexField), "traineeTisId_1", false, false, "");
+    IndexInfo indexInfo = new IndexInfo(List.of(indexField), NON_UNIQUE_INDEX_NAME, false, false, "");
 
     IndexOperations indexOperations = mock(IndexOperations.class);
     when(template.indexOps(TraineeProfile.class)).thenReturn(indexOperations);
@@ -92,13 +94,16 @@ class MongoConfigurationTest {
 
     ArgumentCaptor<IndexDefinition> indexCaptor = ArgumentCaptor.forClass(IndexDefinition.class);
     verify(indexOperations, atLeastOnce()).ensureIndex(indexCaptor.capture());
+    ArgumentCaptor<String> indexCaptorDel = ArgumentCaptor.forClass(String.class);
+    verify(indexOperations, atLeastOnce()).dropIndex(indexCaptorDel.capture());
 
     List<IndexDefinition> indexes = indexCaptor.getAllValues();
+    String indexDeleted = indexCaptorDel.getValue();
 
     Optional<IndexDefinition> idxTraineeTisId = indexes.stream()
         .filter(i -> i.getIndexKeys().containsKey("traineeTisId")).findFirst();
-    assertThat("traineeTisId index is missing", idxTraineeTisId.isPresent(), is(true));
-    assertThat("traineeTisId index is not unique",
-        idxTraineeTisId.get().getIndexOptions().getBoolean("unique"), is(true));
+    assertTrue(idxTraineeTisId.isPresent());
+    assertTrue(idxTraineeTisId.get().getIndexOptions().getBoolean("unique"));
+    assertThat("Unexpected index deleted", indexDeleted, is(NON_UNIQUE_INDEX_NAME));
   }
 }
