@@ -30,6 +30,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -73,5 +74,11 @@ class MongoConfigurationTest {
         .flatMap(i -> i.getIndexKeys().keySet().stream())
         .collect(Collectors.toList());
     assertThat("Unexpected index.", indexKeys, hasItems("traineeTisId", "personalDetails.email"));
+
+    Optional<IndexDefinition> idxTraineeTisId = indexes.stream()
+        .filter(i -> i.getIndexKeys().containsKey("traineeTisId")).findFirst();
+    assertThat("traineeTisId index is missing", idxTraineeTisId.isPresent(), is(true));
+    assertThat("traineeTisId index is not unique",
+        idxTraineeTisId.get().getIndexOptions().getBoolean("unique"), is(true));
   }
 }
