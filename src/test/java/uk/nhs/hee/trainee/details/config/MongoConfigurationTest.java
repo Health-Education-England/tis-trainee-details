@@ -46,6 +46,7 @@ import org.springframework.data.mongodb.core.index.IndexOperations;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 
 class MongoConfigurationTest {
+  private static final String NON_UNIQUE_INDEX_NAME = "traineeTisId_notUnique";
 
   private MongoConfiguration configuration;
 
@@ -82,9 +83,9 @@ class MongoConfigurationTest {
 
   @Test
   void shouldReplaceNonUniqueIndexForTraineeTisIdWithUniqueIndex() {
-    String NON_UNIQUE_INDEX_NAME = "traineeTisId_notUnique";
     IndexField indexField = IndexField.create("traineeTisId", Sort.Direction.ASC);
-    IndexInfo indexInfo = new IndexInfo(List.of(indexField), NON_UNIQUE_INDEX_NAME, false, false, "");
+    IndexInfo indexInfo = new IndexInfo(List.of(indexField),
+        NON_UNIQUE_INDEX_NAME, false, false, "");
 
     IndexOperations indexOperations = mock(IndexOperations.class);
     when(template.indexOps(TraineeProfile.class)).thenReturn(indexOperations);
