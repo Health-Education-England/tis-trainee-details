@@ -26,6 +26,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.index.Index;
+import org.springframework.data.mongodb.core.index.IndexInfo;
 import org.springframework.data.mongodb.core.index.IndexOperations;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 
@@ -44,7 +45,15 @@ public class MongoConfiguration {
   @PostConstruct
   public void initIndexes() {
     IndexOperations traineeProfileIndexOps = template.indexOps(TraineeProfile.class);
-    traineeProfileIndexOps.ensureIndex(new Index().on("traineeTisId", Direction.ASC));
     traineeProfileIndexOps.ensureIndex(new Index().on("personalDetails.email", Direction.ASC));
+
+    //ensure unique index on traineeTisId
+    for (IndexInfo idx : traineeProfileIndexOps.getIndexInfo()) {
+      if (idx.getIndexFields().stream().anyMatch(i -> i.getKey().equals("traineeTisId"))
+          && !idx.isUnique()) {
+        traineeProfileIndexOps.dropIndex(idx.getName());
+      }
+    }
+    traineeProfileIndexOps.ensureIndex(new Index().on("traineeTisId", Direction.ASC).unique());
   }
 }

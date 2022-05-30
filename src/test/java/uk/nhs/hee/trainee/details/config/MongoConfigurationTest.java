@@ -24,23 +24,29 @@ package uk.nhs.hee.trainee.details.config;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.index.IndexDefinition;
+import org.springframework.data.mongodb.core.index.IndexField;
+import org.springframework.data.mongodb.core.index.IndexInfo;
 import org.springframework.data.mongodb.core.index.IndexOperations;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 
 class MongoConfigurationTest {
+  private static final String NON_UNIQUE_INDEX_NAME = "traineeTisId_notUnique";
 
   private MongoConfiguration configuration;
 
@@ -73,5 +79,32 @@ class MongoConfigurationTest {
         .flatMap(i -> i.getIndexKeys().keySet().stream())
         .collect(Collectors.toList());
     assertThat("Unexpected index.", indexKeys, hasItems("traineeTisId", "personalDetails.email"));
+  }
+
+  @Test
+  void shouldReplaceNonUniqueIndexForTraineeTisIdWithUniqueIndex() {
+    IndexField indexField = IndexField.create("traineeTisId", Sort.Direction.ASC);
+    IndexInfo indexInfo = new IndexInfo(List.of(indexField),
+        NON_UNIQUE_INDEX_NAME, false, false, "");
+
+    IndexOperations indexOperations = mock(IndexOperations.class);
+    when(template.indexOps(TraineeProfile.class)).thenReturn(indexOperations);
+    when(indexOperations.getIndexInfo()).thenReturn(List.of(indexInfo));
+
+    configuration.initIndexes();
+
+    ArgumentCaptor<IndexDefinition> indexCaptor = ArgumentCaptor.forClass(IndexDefinition.class);
+    verify(indexOperations, atLeastOnce()).ensureIndex(indexCaptor.capture());
+    ArgumentCaptor<String> indexCaptorDel = ArgumentCaptor.forClass(String.class);
+    verify(indexOperations, atLeastOnce()).dropIndex(indexCaptorDel.capture());
+
+    List<IndexDefinition> indexes = indexCaptor.getAllValues();
+    String indexDeleted = indexCaptorDel.getValue();
+
+    Optional<IndexDefinition> idxTraineeTisId = indexes.stream()
+        .filter(i -> i.getIndexKeys().containsKey("traineeTisId")).findFirst();
+    assertTrue(idxTraineeTisId.isPresent());
+    assertTrue(idxTraineeTisId.get().getIndexOptions().getBoolean("unique"));
+    assertThat("Unexpected index deleted", indexDeleted, is(NON_UNIQUE_INDEX_NAME));
   }
 }
