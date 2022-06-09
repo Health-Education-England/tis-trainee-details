@@ -34,10 +34,13 @@ public class PersonalDetailsService {
 
   private final TraineeProfileRepository repository;
   private final TraineeProfileMapper mapper;
+  private final EventPublishService eventService;
 
-  PersonalDetailsService(TraineeProfileRepository repository, TraineeProfileMapper mapper) {
+  PersonalDetailsService(TraineeProfileRepository repository, TraineeProfileMapper mapper,
+      EventPublishService eventService) {
     this.repository = repository;
     this.mapper = mapper;
+    this.eventService = eventService;
   }
 
   /**
@@ -58,6 +61,8 @@ public class PersonalDetailsService {
       traineeProfile.setTraineeTisId(tisId);
       mapper.updateBasicDetails(traineeProfile, personalDetails);
       TraineeProfile savedProfile = repository.save(traineeProfile);
+
+      eventService.publishProfileCreateEvent(savedProfile);
       return savedProfile.getPersonalDetails();
     }
 
