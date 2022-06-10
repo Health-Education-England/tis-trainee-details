@@ -80,8 +80,12 @@ public class TraineeProfileService {
    * @return The trainee TIS IDs.
    */
   public List<String> getTraineeTisIdsByByEmail(String email) {
-    List<TraineeProfile> traineeProfile = repository.findAllByTraineeEmail(email.toLowerCase());
-    return traineeProfile.stream()
+    List<TraineeProfile> traineeProfiles = repository.findAllByTraineeEmail(email.toLowerCase());
+
+    return traineeProfiles.stream()
+        .filter(traineeProfile ->
+            (isValidGmcGdc(traineeProfile.getPersonalDetails().getGmcNumber())
+            || isValidGmcGdc(traineeProfile.getPersonalDetails().getGdcNumber())))
         .map(TraineeProfile::getTraineeTisId)
         .collect(Collectors.toList());
   }
@@ -115,5 +119,23 @@ public class TraineeProfileService {
    */
   public void deleteTraineeProfileByTraineeTisId(String traineeTisId) {
     repository.deleteByTraineeTisId(traineeTisId);
+  }
+
+  /**
+   * Check if the GMC or GDC number is valid.
+   *
+   * @param GmcGdcNumber The GMC or GDC number for checking.
+   * @return boolean "true" if the number is valid; "false" if not valid.
+   */
+  private Boolean isValidGmcGdc(String GmcGdcNumber) {
+    if (GmcGdcNumber == null) {
+      return false;
+    }
+
+    return !GmcGdcNumber.isEmpty()
+        && !GmcGdcNumber.equalsIgnoreCase("unknown")
+        && !GmcGdcNumber.equalsIgnoreCase("n/a")
+        && !GmcGdcNumber.equalsIgnoreCase("na")
+        && !GmcGdcNumber.toLowerCase().startsWith("delete");
   }
 }
