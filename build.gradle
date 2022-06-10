@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "uk.nhs.hee.trainee.details"
-version = "0.11.3"
+version = "0.12.0"
 sourceCompatibility = "11"
 
 configurations {
@@ -21,6 +21,12 @@ configurations {
 
 repositories {
   mavenCentral()
+}
+
+dependencyManagement {
+  imports {
+    mavenBom("io.awspring.cloud:spring-cloud-aws-dependencies:2.4.1")
+  }
 }
 
 dependencies {
@@ -45,6 +51,9 @@ dependencies {
 
   // Sentry reporting
   implementation "io.sentry:sentry-spring-boot-starter:5.7.4"
+
+  // Amazon SQS
+  implementation "io.awspring.cloud:spring-cloud-starter-aws-messaging"
 }
 
 checkstyle {

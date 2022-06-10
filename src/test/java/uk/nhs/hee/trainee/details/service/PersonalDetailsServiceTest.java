@@ -23,8 +23,10 @@ package uk.nhs.hee.trainee.details.service;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -35,9 +37,8 @@ import java.time.LocalDate;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mapstruct.factory.Mappers;
 import org.mockito.ArgumentCaptor;
-import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapper;
+import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapperImpl;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
@@ -79,12 +80,13 @@ class PersonalDetailsServiceTest {
 
   private PersonalDetailsService service;
   private TraineeProfileRepository repository;
+  private EventPublishService eventService;
 
   @BeforeEach
   void setUp() {
     repository = mock(TraineeProfileRepository.class);
-    service = new PersonalDetailsService(repository,
-        Mappers.getMapper(TraineeProfileMapper.class));
+    eventService = mock(EventPublishService.class);
+    service = new PersonalDetailsService(repository, new TraineeProfileMapperImpl(), eventService);
   }
 
   @Test
@@ -104,6 +106,36 @@ class PersonalDetailsServiceTest {
     TraineeProfile traineeProfile = profileCaptor.getValue();
     assertThat("Unexpected id.", traineeProfile.getId(), nullValue());
     assertThat("Unexpected trainee TIS id.", traineeProfile.getTraineeTisId(), is("notFound"));
+  }
+
+  @Test
+  void shouldPublishEventWhenTraineeProfileCreated() {
+    TraineeProfile savedTraineeProfile = new TraineeProfile();
+    savedTraineeProfile.setTraineeTisId(TRAINEE_TIS_ID);
+    when(repository.save(any())).thenReturn(savedTraineeProfile);
+
+    service.createProfileOrUpdateBasicDetailsByTisId("notFound",
+        createPersonalDetails(MODIFIED_SUFFIX, 0));
+
+    ArgumentCaptor<TraineeProfile> profileCaptor = ArgumentCaptor.forClass(TraineeProfile.class);
+    verify(eventService).publishProfileCreateEvent(profileCaptor.capture());
+
+    TraineeProfile eventTraineeProfile = profileCaptor.getValue();
+    assertThat("Unexpected profile.", eventTraineeProfile, sameInstance(savedTraineeProfile));
+  }
+
+  @Test
+  void shouldNotPublishEventWhenTraineeProfileUpdated() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPersonalDetails(createPersonalDetails(ORIGINAL_SUFFIX, 0));
+
+    when(repository.findByTraineeTisId("40")).thenReturn(traineeProfile);
+    when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
+
+    service.createProfileOrUpdateBasicDetailsByTisId("40",
+        createPersonalDetails(MODIFIED_SUFFIX, 100));
+
+    verifyNoInteractions(eventService);
   }
 
   @Test
