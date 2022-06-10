@@ -63,7 +63,7 @@ public class PlacementResource {
   public ResponseEntity<PlacementDto> updateQualification(
       @PathVariable(name = "traineeTisId") String traineeTisId,
       @RequestBody @Validated PlacementDto dto) {
-    log.trace("Update placement of trainee with TIS ID {}", traineeTisId);
+    log.info("Update placement of trainee with TIS ID {}", traineeTisId);
     Placement entity = mapper.toEntity(dto);
     Optional<Placement> optionalEntity = service.updatePlacementForTrainee(traineeTisId, entity);
     entity = optionalEntity
@@ -82,7 +82,7 @@ public class PlacementResource {
   public ResponseEntity<Boolean> deletePlacement(
       @PathVariable(name = "traineeTisId") String traineeTisId,
       @PathVariable(name = "placementTisId") String placementTisId) {
-    log.trace("Delete placement with TIS ID {} of trainee with TIS ID {}",
+    log.info("Delete placement with TIS ID {} of trainee with TIS ID {}",
         placementTisId, traineeTisId);
     try {
       boolean foundTraineeAndPlacement =

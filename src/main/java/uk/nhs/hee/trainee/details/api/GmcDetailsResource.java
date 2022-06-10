@@ -59,7 +59,7 @@ public class GmcDetailsResource {
   @PatchMapping("/{tisId}")
   public ResponseEntity<PersonalDetailsDto> updateGmcDetails(
       @PathVariable(name = "tisId") String tisId, @RequestBody PersonalDetailsDto dto) {
-    log.trace("Update GMC details of trainee with TIS ID {}", tisId);
+    log.info("Update GMC details of trainee with TIS ID {}", tisId);
     PersonalDetails entity = mapper.toEntity(dto);
     Optional<PersonalDetails> optionalEntity = service.updateGmcDetailsByTisId(tisId, entity);
     entity = optionalEntity

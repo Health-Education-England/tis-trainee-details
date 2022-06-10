@@ -57,7 +57,7 @@ public class BasicDetailsResource {
   @PatchMapping("/{tisId}")
   public ResponseEntity<PersonalDetailsDto> updateBasicDetails(
       @PathVariable(name = "tisId") String tisId, @RequestBody PersonalDetailsDto dto) {
-    log.trace("Update basic details of trainee with TIS ID {}", tisId);
+    log.info("Update basic details of trainee with TIS ID {}", tisId);
     PersonalDetails entity = mapper.toEntity(dto);
     entity = service.createProfileOrUpdateBasicDetailsByTisId(tisId, entity);
     return ResponseEntity.ok(mapper.toDto(entity));

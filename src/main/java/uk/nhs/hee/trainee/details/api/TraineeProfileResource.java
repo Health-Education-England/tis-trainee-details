@@ -70,7 +70,7 @@ public class TraineeProfileResource {
   @GetMapping
   public ResponseEntity<TraineeProfileDto> getTraineeProfile(
       @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
-    log.trace("Trainee Profile of authenticated user.");
+    log.info("Trainee Profile of authenticated user.");
 
     String[] tokenSections = token.split("\\.");
     byte[] payloadBytes = Base64.getDecoder()

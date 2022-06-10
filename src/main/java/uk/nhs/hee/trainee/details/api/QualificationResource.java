@@ -63,7 +63,7 @@ public class QualificationResource {
   public ResponseEntity<QualificationDto> updateQualification(
       @PathVariable(name = "traineeTisId") String traineeTisId,
       @RequestBody @Validated QualificationDto dto) {
-    log.trace("Update qualifications of trainee with TIS ID {}", traineeTisId);
+    log.info("Update qualifications of trainee with TIS ID {}", traineeTisId);
     Qualification entity = mapper.toEntity(dto);
     Optional<Qualification> optionalEntity = service
         .updateQualificationByTisId(traineeTisId, entity);
@@ -82,7 +82,7 @@ public class QualificationResource {
   @DeleteMapping("/{traineeTisId}/{qualificationId}")
   public ResponseEntity<Void> deleteQualification(@PathVariable String traineeTisId,
       @PathVariable String qualificationId) {
-    log.trace("Delete qualification {} from trainee {}.", qualificationId, traineeTisId);
+    log.info("Delete qualification {} from trainee {}.", qualificationId, traineeTisId);
     service.deleteQualification(traineeTisId, qualificationId);
     return ResponseEntity.noContent().build();
   }
