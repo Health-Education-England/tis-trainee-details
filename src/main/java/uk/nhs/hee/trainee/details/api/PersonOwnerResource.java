@@ -59,7 +59,7 @@ public class PersonOwnerResource {
   @PatchMapping("/{tisId}")
   public ResponseEntity<PersonalDetailsDto> updatePersonOwner(
       @PathVariable(name = "tisId") String tisId, @RequestBody PersonalDetailsDto dto) {
-    log.trace("Update person owner of trainee with TIS ID {}", tisId);
+    log.info("Update person owner of trainee with TIS ID {}", tisId);
     PersonalDetails entity = mapper.toEntity(dto);
     Optional<PersonalDetails> optionalEntity = service.updatePersonOwnerByTisId(tisId, entity);
     entity = optionalEntity

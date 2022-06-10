@@ -65,7 +65,7 @@ public class ProgrammeMembershipResource {
   public ResponseEntity<ProgrammeMembershipDto> updateQualification(
       @PathVariable(name = "traineeTisId") String traineeTisId,
       @RequestBody @Validated ProgrammeMembershipDto dto) {
-    log.trace("Update programme membership of trainee with TIS ID {}", traineeTisId);
+    log.info("Update programme membership of trainee with TIS ID {}", traineeTisId);
     ProgrammeMembership entity = mapper.toEntity(dto);
     Optional<ProgrammeMembership> optionalEntity = service
         .updateProgrammeMembershipForTrainee(traineeTisId, entity);
@@ -83,7 +83,7 @@ public class ProgrammeMembershipResource {
   @DeleteMapping("/{traineeTisId}")
   public ResponseEntity<Boolean> deleteProgrammeMemberships(
       @PathVariable(name = "traineeTisId") String traineeTisId) {
-    log.trace("Delete all programme memberships of trainee with TIS ID {}", traineeTisId);
+    log.info("Delete all programme memberships of trainee with TIS ID {}", traineeTisId);
     try {
       boolean foundTrainee = service.deleteProgrammeMembershipsForTrainee(traineeTisId);
       if (!foundTrainee) {

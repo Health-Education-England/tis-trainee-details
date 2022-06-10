@@ -60,7 +60,7 @@ public class ContactDetailsResource {
   public ResponseEntity<PersonalDetailsDto> updateContactDetails(
       @PathVariable(name = "tisId") String tisId,
       @RequestBody PersonalDetailsDto dto) {
-    log.trace("Update contact details of trainee with TIS ID {}", tisId);
+    log.info("Update contact details of trainee with TIS ID {}", tisId);
     PersonalDetails entity = mapper.toEntity(dto);
     Optional<PersonalDetails> optionalEntity = service.updateContactDetailsByTisId(tisId, entity);
     entity = optionalEntity
