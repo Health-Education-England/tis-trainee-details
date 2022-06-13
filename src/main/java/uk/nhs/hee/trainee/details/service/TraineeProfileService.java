@@ -128,14 +128,8 @@ public class TraineeProfileService {
    * @return boolean "true" if the number is valid; "false" if not valid.
    */
   private Boolean isValidGmcGdc(String gmcGdcNumber) {
-    if (gmcGdcNumber == null) {
-      return false;
-    }
-
-    return !gmcGdcNumber.isEmpty()
-        && !gmcGdcNumber.equalsIgnoreCase("unknown")
-        && !gmcGdcNumber.equalsIgnoreCase("n/a")
-        && !gmcGdcNumber.equalsIgnoreCase("na")
-        && !gmcGdcNumber.toLowerCase().startsWith("delete");
+    return gmcGdcNumber != null
+        && !gmcGdcNumber.isEmpty()
+        && gmcGdcNumber.matches("\\d+");
   }
 }

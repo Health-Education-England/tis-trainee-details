@@ -375,7 +375,7 @@ class TraineeProfileServiceTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"unknown", "UNKNOWN", "Delete4", "delete2", "N/A", "na", ""})
+  @ValueSource(strings = {"unknown", "UNKNOWN", "Delete4", "delete2", "N/A", "na", "p123456", ""})
   void shouldFilterOutInvalidGmcGdcWhenProfileFoundByEmail(String arg) {
     PersonalDetails personalDetails2 = new PersonalDetails();
     personalDetails2.setGmcNumber(arg);
