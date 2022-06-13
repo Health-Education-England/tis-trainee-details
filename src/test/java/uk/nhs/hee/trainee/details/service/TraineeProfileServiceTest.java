@@ -39,6 +39,8 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -358,70 +360,29 @@ class TraineeProfileServiceTest {
   }
 
   @Test
-  void shouldFilterOutUnknownGmcGdcWhenProfileFoundByEmail() {
-    PersonalDetails personalDetails2 = new PersonalDetails();
-    personalDetails2.setGmcNumber("unknown");
-    traineeProfile2.setPersonalDetails(personalDetails2);
-
-    PersonalDetails personalDetails3 = new PersonalDetails();
-    personalDetails3.setGdcNumber("UNKNOWN");
-    traineeProfile3.setPersonalDetails(personalDetails3);
-
-    when(repository.findAllByTraineeEmail(PERSON_EMAIL))
-        .thenReturn(List.of(traineeProfile, traineeProfile2, traineeProfile3));
-
-    List<String> traineeTisIds = service.getTraineeTisIdsByByEmail(PERSON_EMAIL);
-
-    assertThat("Unexpected number of trainee TIS IDs.", traineeTisIds.size(), is(1));
-    assertThat("Unexpected trainee TIS IDs.", traineeTisIds, hasItems(DEFAULT_TIS_ID_1));
-  }
-
-  @Test
-  void shouldFilterOutDeletedGmcGdcWhenProfileFoundByEmail() {
-    PersonalDetails personalDetails2 = new PersonalDetails();
-    personalDetails2.setGmcNumber("Delete4");
-    traineeProfile2.setPersonalDetails(personalDetails2);
-
-    PersonalDetails personalDetails3 = new PersonalDetails();
-    personalDetails3.setGdcNumber("delete2");
-    traineeProfile3.setPersonalDetails(personalDetails3);
-
-    when(repository.findAllByTraineeEmail(PERSON_EMAIL))
-        .thenReturn(List.of(traineeProfile, traineeProfile2, traineeProfile3));
-
-    List<String> traineeTisIds = service.getTraineeTisIdsByByEmail(PERSON_EMAIL);
-
-    assertThat("Unexpected number of trainee TIS IDs.", traineeTisIds.size(), is(1));
-    assertThat("Unexpected trainee TIS IDs.", traineeTisIds, hasItems(DEFAULT_TIS_ID_1));
-  }
-
-  @Test
-  void shouldFilterOutNaGmcGdcWhenProfileFoundByEmail() {
-    PersonalDetails personalDetails2 = new PersonalDetails();
-    personalDetails2.setGmcNumber("N/A");
-    traineeProfile2.setPersonalDetails(personalDetails2);
-
-    PersonalDetails personalDetails3 = new PersonalDetails();
-    personalDetails3.setGdcNumber("na");
-    traineeProfile3.setPersonalDetails(personalDetails3);
-
-    when(repository.findAllByTraineeEmail(PERSON_EMAIL))
-        .thenReturn(List.of(traineeProfile, traineeProfile2, traineeProfile3));
-
-    List<String> traineeTisIds = service.getTraineeTisIdsByByEmail(PERSON_EMAIL);
-
-    assertThat("Unexpected number of trainee TIS IDs.", traineeTisIds.size(), is(1));
-    assertThat("Unexpected trainee TIS IDs.", traineeTisIds, hasItems(DEFAULT_TIS_ID_1));
-  }
-
-  @Test
-  void shouldFilterOutNullOrEmptyGmcGdcWhenProfileFoundByEmail() {
+  void shouldFilterOutNullGmcGdcWhenProfileFoundByEmail() {
     PersonalDetails personalDetails2 = new PersonalDetails();
     personalDetails2.setGmcNumber(null);
     traineeProfile2.setPersonalDetails(personalDetails2);
 
+    when(repository.findAllByTraineeEmail(PERSON_EMAIL))
+        .thenReturn(List.of(traineeProfile, traineeProfile2));
+
+    List<String> traineeTisIds = service.getTraineeTisIdsByByEmail(PERSON_EMAIL);
+
+    assertThat("Unexpected number of trainee TIS IDs.", traineeTisIds.size(), is(1));
+    assertThat("Unexpected trainee TIS IDs.", traineeTisIds, hasItems(DEFAULT_TIS_ID_1));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"unknown", "UNKNOWN", "Delete4", "delete2", "N/A", "na", ""})
+  void shouldFilterOutInvalidGmcGdcWhenProfileFoundByEmail(String arg) {
+    PersonalDetails personalDetails2 = new PersonalDetails();
+    personalDetails2.setGmcNumber(arg);
+    traineeProfile2.setPersonalDetails(personalDetails2);
+
     PersonalDetails personalDetails3 = new PersonalDetails();
-    personalDetails3.setGdcNumber("");
+    personalDetails3.setGdcNumber(arg);
     traineeProfile3.setPersonalDetails(personalDetails3);
 
     when(repository.findAllByTraineeEmail(PERSON_EMAIL))
