@@ -332,7 +332,8 @@ class TraineeProfileServiceTest {
     List<String> traineeTisIds = service.getTraineeTisIdsByByEmail(PERSON_EMAIL);
 
     assertThat("Unexpected number of trainee TIS IDs.", traineeTisIds.size(), is(3));
-    assertThat("Unexpected trainee TIS IDs.", traineeTisIds, hasItems(DEFAULT_TIS_ID_1, DEFAULT_TIS_ID_2, DEFAULT_TIS_ID_3));
+    assertThat("Unexpected trainee TIS IDs.", traineeTisIds,
+        hasItems(DEFAULT_TIS_ID_1, DEFAULT_TIS_ID_2, DEFAULT_TIS_ID_3));
   }
 
   @Test
@@ -450,7 +451,8 @@ class TraineeProfileServiceTest {
     List<String> traineeTisIds = service.getTraineeTisIdsByByEmail(PERSON_EMAIL);
 
     assertThat("Unexpected number of trainee TIS IDs.", traineeTisIds.size(), is(2));
-    assertThat("Unexpected trainee TIS IDs.", traineeTisIds, hasItems(DEFAULT_TIS_ID_1, DEFAULT_TIS_ID_3));
+    assertThat("Unexpected trainee TIS IDs.", traineeTisIds,
+        hasItems(DEFAULT_TIS_ID_1, DEFAULT_TIS_ID_3));
   }
 
   @Test

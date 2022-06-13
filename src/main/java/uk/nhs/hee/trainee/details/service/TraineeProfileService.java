@@ -124,18 +124,18 @@ public class TraineeProfileService {
   /**
    * Check if the GMC or GDC number is valid.
    *
-   * @param GmcGdcNumber The GMC or GDC number for checking.
+   * @param gmcGdcNumber The GMC or GDC number for checking.
    * @return boolean "true" if the number is valid; "false" if not valid.
    */
-  private Boolean isValidGmcGdc(String GmcGdcNumber) {
-    if (GmcGdcNumber == null) {
+  private Boolean isValidGmcGdc(String gmcGdcNumber) {
+    if (gmcGdcNumber == null) {
       return false;
     }
 
-    return !GmcGdcNumber.isEmpty()
-        && !GmcGdcNumber.equalsIgnoreCase("unknown")
-        && !GmcGdcNumber.equalsIgnoreCase("n/a")
-        && !GmcGdcNumber.equalsIgnoreCase("na")
-        && !GmcGdcNumber.toLowerCase().startsWith("delete");
+    return !gmcGdcNumber.isEmpty()
+        && !gmcGdcNumber.equalsIgnoreCase("unknown")
+        && !gmcGdcNumber.equalsIgnoreCase("n/a")
+        && !gmcGdcNumber.equalsIgnoreCase("na")
+        && !gmcGdcNumber.toLowerCase().startsWith("delete");
   }
 }
