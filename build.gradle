@@ -50,7 +50,7 @@ dependencies {
   annotationProcessor "org.mapstruct:mapstruct-processor:1.4.2.Final"
 
   // Sentry reporting
-  implementation "io.sentry:sentry-spring-boot-starter:5.7.4"
+  implementation "io.sentry:sentry-spring-boot-starter:6.0.0"
 
   // Amazon SQS
   implementation "io.awspring.cloud:spring-cloud-starter-aws-messaging"
