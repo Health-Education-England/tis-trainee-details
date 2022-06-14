@@ -309,7 +309,7 @@ class TraineeProfileResourceTest {
 
   @Test
   void shouldReturnTraineeIdWhenProfileFoundByEmail() throws Exception {
-    when(service.getTraineeTisIdsByByEmail(PERSON_EMAIL))
+    when(service.getTraineeTisIdsByEmail(PERSON_EMAIL))
         .thenReturn(List.of(DEFAULT_TIS_ID_1, "id2"));
 
     mockMvc.perform(get("/api/trainee-profile/trainee-ids")
@@ -323,7 +323,7 @@ class TraineeProfileResourceTest {
 
   @Test
   void shouldReturnNotFoundWhenProfileNotFoundByEmail() throws Exception {
-    when(service.getTraineeTisIdsByByEmail(PERSON_EMAIL)).thenReturn(Collections.emptyList());
+    when(service.getTraineeTisIdsByEmail(PERSON_EMAIL)).thenReturn(Collections.emptyList());
 
     mockMvc.perform(get("/api/trainee-profile/trainee-ids")
         .param("email", PERSON_EMAIL)

@@ -317,11 +317,11 @@ class TraineeProfileServiceTest {
   }
 
   @Test
-  void shouldReturnMultipleTraineeIdsWhenProfileFoundByEmail() {
+  void shouldReturnMultipleTraineeIdsWhenMultipleValidProfileFoundByEmail() {
     when(repository.findAllByTraineeEmail(PERSON_EMAIL))
         .thenReturn(List.of(traineeProfile, traineeProfile2));
 
-    List<String> traineeTisIds = service.getTraineeTisIdsByByEmail(PERSON_EMAIL);
+    List<String> traineeTisIds = service.getTraineeTisIdsByEmail(PERSON_EMAIL);
 
     assertThat("Unexpected number of trainee TIS IDs.", traineeTisIds.size(), is(2));
     assertThat("Unexpected trainee TIS IDs.", traineeTisIds,
@@ -332,7 +332,7 @@ class TraineeProfileServiceTest {
   void shouldReturnEmptyWhenProfileNotFoundByEmail() {
     when(repository.findAllByTraineeEmail(PERSON_EMAIL)).thenReturn(Collections.emptyList());
 
-    List<String> traineeTisIds = service.getTraineeTisIdsByByEmail(PERSON_EMAIL);
+    List<String> traineeTisIds = service.getTraineeTisIdsByEmail(PERSON_EMAIL);
 
     assertThat("Unexpected number of trainee TIS IDs.", traineeTisIds.size(), is(0));
   }
@@ -343,14 +343,14 @@ class TraineeProfileServiceTest {
     when(repository.findAllByTraineeEmail(emailCaptor.capture()))
         .thenReturn(Collections.emptyList());
 
-    service.getTraineeTisIdsByByEmail("UPPER.lower@UpperCamel.lowerCamel");
+    service.getTraineeTisIdsByEmail("UPPER.lower@UpperCamel.lowerCamel");
 
     String email = emailCaptor.getValue();
     assertThat("Unexpected email.", email, is("upper.lower@uppercamel.lowercamel"));
   }
 
   @Test
-  void shouldFilterOutNullGmcWhenProfileFoundByEmail() {
+  void shouldReturnSingleTraineeIdWhenSingleInvalidProfileFoundByEmail() {
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(null);
     traineeProfile.setPersonalDetails(personalDetails);
@@ -358,44 +358,63 @@ class TraineeProfileServiceTest {
     when(repository.findAllByTraineeEmail(PERSON_EMAIL))
         .thenReturn(List.of(traineeProfile));
 
-    List<String> traineeTisIds = service.getTraineeTisIdsByByEmail(PERSON_EMAIL);
+    List<String> traineeTisIds = service.getTraineeTisIdsByEmail(PERSON_EMAIL);
 
-    assertThat("Unexpected number of trainee TIS IDs.", traineeTisIds.size(), is(0));
+    assertThat("Unexpected number of trainee TIS IDs.", traineeTisIds.size(), is(1));
+    assertThat("Unexpected trainee TIS IDs.", traineeTisIds,
+        hasItems(DEFAULT_TIS_ID_1));
   }
 
-  @ParameterizedTest
-  @ValueSource(strings = {"UNKNOWN", "Delete4", "N/A", "p123456", "L1234567", "123456"})
-  void shouldFilterOutInvalidGmcWhenProfileFoundByEmail(String arg) {
-    PersonalDetails personalDetails = new PersonalDetails();
-    personalDetails.setGmcNumber(arg);
-    traineeProfile.setPersonalDetails(personalDetails);
+  @Test
+  void shouldFilterOutNullGmcWhenMultipleProfileFoundByEmail() {
+    PersonalDetails personalDetails2 = new PersonalDetails();
+    personalDetails2.setGmcNumber(null);
+    traineeProfile2.setPersonalDetails(personalDetails2);
 
     when(repository.findAllByTraineeEmail(PERSON_EMAIL))
-        .thenReturn(List.of(traineeProfile));
+        .thenReturn(List.of(traineeProfile, traineeProfile2));
 
-    List<String> traineeTisIds = service.getTraineeTisIdsByByEmail(PERSON_EMAIL);
-
-    assertThat("Unexpected number of trainee TIS IDs.", traineeTisIds.size(), is(0));
-  }
-
-  @ParameterizedTest
-  @ValueSource(strings = {"L123456", "1234567"})
-  void shouldReturnValidGmcWhenProfileFoundByEmail(String arg) {
-    PersonalDetails personalDetails = new PersonalDetails();
-    personalDetails.setGmcNumber(arg);
-    traineeProfile.setPersonalDetails(personalDetails);
-
-    when(repository.findAllByTraineeEmail(PERSON_EMAIL))
-        .thenReturn(List.of(traineeProfile));
-
-    List<String> traineeTisIds = service.getTraineeTisIdsByByEmail(PERSON_EMAIL);
+    List<String> traineeTisIds = service.getTraineeTisIdsByEmail(PERSON_EMAIL);
 
     assertThat("Unexpected number of trainee TIS IDs.", traineeTisIds.size(), is(1));
     assertThat("Unexpected trainee TIS IDs.", traineeTisIds, hasItems(DEFAULT_TIS_ID_1));
   }
 
+  @ParameterizedTest
+  @ValueSource(strings = {"UNKNOWN", "Delete4", "N/A", "p123456", "L1234567", "123456"})
+  void shouldFilterOutInvalidGmcWhenMultipleProfileFoundByEmail(String arg) {
+    PersonalDetails personalDetails2 = new PersonalDetails();
+    personalDetails2.setGmcNumber(arg);
+    traineeProfile2.setPersonalDetails(personalDetails2);
+
+    when(repository.findAllByTraineeEmail(PERSON_EMAIL))
+        .thenReturn(List.of(traineeProfile, traineeProfile2));
+
+    List<String> traineeTisIds = service.getTraineeTisIdsByEmail(PERSON_EMAIL);
+
+    assertThat("Unexpected number of trainee TIS IDs.", traineeTisIds.size(), is(1));
+    assertThat("Unexpected trainee TIS IDs.", traineeTisIds, hasItems(DEFAULT_TIS_ID_1));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"L123456", "1234567"})
+  void shouldReturnValidGmcWhenMultipleProfileFoundByEmail(String arg) {
+    PersonalDetails personalDetails2 = new PersonalDetails();
+    personalDetails2.setGmcNumber(arg);
+    traineeProfile2.setPersonalDetails(personalDetails2);
+
+    when(repository.findAllByTraineeEmail(PERSON_EMAIL))
+        .thenReturn(List.of(traineeProfile, traineeProfile2));
+
+    List<String> traineeTisIds = service.getTraineeTisIdsByEmail(PERSON_EMAIL);
+
+    assertThat("Unexpected number of trainee TIS IDs.", traineeTisIds.size(), is(2));
+    assertThat("Unexpected trainee TIS IDs.", traineeTisIds,
+        hasItems(DEFAULT_TIS_ID_1, DEFAULT_TIS_ID_2));
+  }
+
   @Test
-  void shouldNotReturnRecordWhenProfileFoundByEmailWithNullGmcButValidGdc() {
+  void shouldReturnAllRecordWhenProfileFoundByEmailWithoutValidGmc() {
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(null);
     personalDetails.setGdcNumber("UNKNOWN");
@@ -409,9 +428,11 @@ class TraineeProfileServiceTest {
     when(repository.findAllByTraineeEmail(PERSON_EMAIL))
         .thenReturn(List.of(traineeProfile, traineeProfile2));
 
-    List<String> traineeTisIds = service.getTraineeTisIdsByByEmail(PERSON_EMAIL);
+    List<String> traineeTisIds = service.getTraineeTisIdsByEmail(PERSON_EMAIL);
 
-    assertThat("Unexpected number of trainee TIS IDs.", traineeTisIds.size(), is(0));
+    assertThat("Unexpected number of trainee TIS IDs.", traineeTisIds.size(), is(2));
+    assertThat("Unexpected trainee TIS IDs.", traineeTisIds,
+        hasItems(DEFAULT_TIS_ID_1, DEFAULT_TIS_ID_2));
   }
 
   @Test

@@ -105,7 +105,7 @@ public class TraineeProfileResource {
    */
   @GetMapping("/trainee-ids")
   public ResponseEntity<List<String>> getTraineeIds(@RequestParam String email) {
-    List<String> traineeIds = service.getTraineeTisIdsByByEmail(email);
+    List<String> traineeIds = service.getTraineeTisIdsByEmail(email);
 
     if (traineeIds.isEmpty()) {
       return ResponseEntity.notFound().build();

@@ -79,11 +79,24 @@ public class TraineeProfileService {
    * @param email The email address of the trainee.
    * @return The trainee TIS IDs.
    */
-  public List<String> getTraineeTisIdsByByEmail(String email) {
+  public List<String> getTraineeTisIdsByEmail(String email) {
     List<TraineeProfile> traineeProfiles = repository.findAllByTraineeEmail(email.toLowerCase());
 
+    // if there are multiple profiles found by email,
+    // do filtering to find the best profile with the valid GMC
+    if (traineeProfiles.size() > 1) {
+      List<TraineeProfile> filteredProfiles =  traineeProfiles.stream()
+          .filter(traineeProfile -> isValidGmc(traineeProfile.getPersonalDetails().getGmcNumber()))
+          .collect(Collectors.toList());
+
+      // return all filtered valid profile if there are one or more
+      // otherwise, return all profiles found by email
+      if (!filteredProfiles.isEmpty()) {
+        traineeProfiles = filteredProfiles;
+      }
+    }
+
     return traineeProfiles.stream()
-        .filter(traineeProfile -> isValidGmc(traineeProfile.getPersonalDetails().getGmcNumber()))
         .map(TraineeProfile::getTraineeTisId)
         .collect(Collectors.toList());
   }
