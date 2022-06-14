@@ -83,9 +83,7 @@ public class TraineeProfileService {
     List<TraineeProfile> traineeProfiles = repository.findAllByTraineeEmail(email.toLowerCase());
 
     return traineeProfiles.stream()
-        .filter(traineeProfile ->
-            (isValidGmcGdc(traineeProfile.getPersonalDetails().getGmcNumber())
-            || isValidGmcGdc(traineeProfile.getPersonalDetails().getGdcNumber())))
+        .filter(traineeProfile -> isValidGmc(traineeProfile.getPersonalDetails().getGmcNumber()))
         .map(TraineeProfile::getTraineeTisId)
         .collect(Collectors.toList());
   }
@@ -122,14 +120,17 @@ public class TraineeProfileService {
   }
 
   /**
-   * Check if the GMC or GDC number is valid.
+   * Check if the GMC number is valid.
    *
-   * @param gmcGdcNumber The GMC or GDC number for checking.
+   * @param gmcNumber The GMC number for checking.
    * @return boolean "true" if the number is valid; "false" if not valid.
    */
-  private Boolean isValidGmcGdc(String gmcGdcNumber) {
-    return gmcGdcNumber != null
-        && !gmcGdcNumber.isEmpty()
-        && gmcGdcNumber.matches("\\d+");
+  private Boolean isValidGmc(String gmcNumber) {
+    if (gmcNumber == null) {
+      return false;
+    }
+
+    // A valid GMC number can consist of 7 numeric or L + 6 numeric
+    return gmcNumber.matches("^(\\d{7}|L\\d{6})$");
   }
 }
