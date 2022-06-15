@@ -79,9 +79,24 @@ public class TraineeProfileService {
    * @param email The email address of the trainee.
    * @return The trainee TIS IDs.
    */
-  public List<String> getTraineeTisIdsByByEmail(String email) {
-    List<TraineeProfile> traineeProfile = repository.findAllByTraineeEmail(email.toLowerCase());
-    return traineeProfile.stream()
+  public List<String> getTraineeTisIdsByEmail(String email) {
+    List<TraineeProfile> traineeProfiles = repository.findAllByTraineeEmail(email.toLowerCase());
+
+    // if there are multiple profiles found by email,
+    // do filtering to find the best profile with the valid GMC
+    if (traineeProfiles.size() > 1) {
+      List<TraineeProfile> filteredProfiles =  traineeProfiles.stream()
+          .filter(traineeProfile -> isValidGmc(traineeProfile.getPersonalDetails().getGmcNumber()))
+          .collect(Collectors.toList());
+
+      // return all filtered valid profile if there are one or more
+      // otherwise, return all profiles found by email
+      if (!filteredProfiles.isEmpty()) {
+        traineeProfiles = filteredProfiles;
+      }
+    }
+
+    return traineeProfiles.stream()
         .map(TraineeProfile::getTraineeTisId)
         .collect(Collectors.toList());
   }
@@ -115,5 +130,20 @@ public class TraineeProfileService {
    */
   public void deleteTraineeProfileByTraineeTisId(String traineeTisId) {
     repository.deleteByTraineeTisId(traineeTisId);
+  }
+
+  /**
+   * Check if the GMC number is valid.
+   *
+   * @param gmcNumber The GMC number for checking.
+   * @return boolean "true" if the number is valid; "false" if not valid.
+   */
+  private Boolean isValidGmc(String gmcNumber) {
+    if (gmcNumber == null) {
+      return false;
+    }
+
+    // A valid GMC number can consist of 7 numeric or L + 6 numeric
+    return gmcNumber.matches("^(\\d{7}|L\\d{6})$");
   }
 }

@@ -39,6 +39,8 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -57,6 +59,8 @@ class TraineeProfileServiceTest {
 
   private static final String DEFAULT_ID_1 = "DEFAULT_ID_1";
   private static final String DEFAULT_TIS_ID_1 = "123";
+  private static final String DEFAULT_ID_2 = "DEFAULT_ID_2";
+  private static final String DEFAULT_TIS_ID_2 = "456";
 
   private static final String PERSON_SURNAME = "Gilliam";
   private static final String PERSON_FORENAME = "Anthony Mara";
@@ -80,7 +84,7 @@ class TraineeProfileServiceTest {
   private static final String PERSON_ADDRESS3 = "London";
   private static final String PERSON_ADDRESS4 = "UK";
   private static final String PERSON_POSTCODE = "SW1A1AA";
-  private static final String PERSON_GMC = "11111111";
+  private static final String PERSON_GMC = "1111111";
 
   private static final String PROGRAMME_TISID = "1";
   private static final String PROGRAMME_NAME = "General Practice";
@@ -104,6 +108,7 @@ class TraineeProfileServiceTest {
   private TraineeProfileRepository repository;
 
   private TraineeProfile traineeProfile = new TraineeProfile();
+  private TraineeProfile traineeProfile2 = new TraineeProfile();
   private PersonalDetails personalDetails;
   private ProgrammeMembership programmeMembership;
   private Curriculum curriculum;
@@ -126,6 +131,13 @@ class TraineeProfileServiceTest {
     traineeProfile.setPersonalDetails(personalDetails);
     traineeProfile.setProgrammeMemberships(new ArrayList<>(List.of(programmeMembership)));
     traineeProfile.setPlacements(new ArrayList<>(List.of(placement1, placement2)));
+
+    traineeProfile2 = new TraineeProfile();
+    traineeProfile2.setId(DEFAULT_ID_2);
+    traineeProfile2.setTraineeTisId(DEFAULT_TIS_ID_2);
+    traineeProfile2.setPersonalDetails(personalDetails);
+    traineeProfile2.setProgrammeMemberships(new ArrayList<>(List.of(programmeMembership)));
+    traineeProfile2.setPlacements(new ArrayList<>(List.of(placement1, placement2)));
   }
 
   /**
@@ -305,24 +317,22 @@ class TraineeProfileServiceTest {
   }
 
   @Test
-  void shouldReturnTraineeIdsWhenProfileFoundByEmail() {
-    TraineeProfile traineeProfile2 = new TraineeProfile();
-    traineeProfile2.setTraineeTisId("id2");
-
+  void shouldReturnMultipleTraineeIdsWhenMultipleValidProfileFoundByEmail() {
     when(repository.findAllByTraineeEmail(PERSON_EMAIL))
         .thenReturn(List.of(traineeProfile, traineeProfile2));
 
-    List<String> traineeTisIds = service.getTraineeTisIdsByByEmail(PERSON_EMAIL);
+    List<String> traineeTisIds = service.getTraineeTisIdsByEmail(PERSON_EMAIL);
 
     assertThat("Unexpected number of trainee TIS IDs.", traineeTisIds.size(), is(2));
-    assertThat("Unexpected trainee TIS IDs.", traineeTisIds, hasItems(DEFAULT_TIS_ID_1, "id2"));
+    assertThat("Unexpected trainee TIS IDs.", traineeTisIds,
+        hasItems(DEFAULT_TIS_ID_1, DEFAULT_TIS_ID_2));
   }
 
   @Test
   void shouldReturnEmptyWhenProfileNotFoundByEmail() {
     when(repository.findAllByTraineeEmail(PERSON_EMAIL)).thenReturn(Collections.emptyList());
 
-    List<String> traineeTisIds = service.getTraineeTisIdsByByEmail(PERSON_EMAIL);
+    List<String> traineeTisIds = service.getTraineeTisIdsByEmail(PERSON_EMAIL);
 
     assertThat("Unexpected number of trainee TIS IDs.", traineeTisIds.size(), is(0));
   }
@@ -333,10 +343,96 @@ class TraineeProfileServiceTest {
     when(repository.findAllByTraineeEmail(emailCaptor.capture()))
         .thenReturn(Collections.emptyList());
 
-    service.getTraineeTisIdsByByEmail("UPPER.lower@UpperCamel.lowerCamel");
+    service.getTraineeTisIdsByEmail("UPPER.lower@UpperCamel.lowerCamel");
 
     String email = emailCaptor.getValue();
     assertThat("Unexpected email.", email, is("upper.lower@uppercamel.lowercamel"));
+  }
+
+  @Test
+  void shouldReturnSingleTraineeIdWhenSingleInvalidProfileFoundByEmail() {
+    PersonalDetails personalDetails = new PersonalDetails();
+    personalDetails.setGmcNumber(null);
+    traineeProfile.setPersonalDetails(personalDetails);
+
+    when(repository.findAllByTraineeEmail(PERSON_EMAIL))
+        .thenReturn(List.of(traineeProfile));
+
+    List<String> traineeTisIds = service.getTraineeTisIdsByEmail(PERSON_EMAIL);
+
+    assertThat("Unexpected number of trainee TIS IDs.", traineeTisIds.size(), is(1));
+    assertThat("Unexpected trainee TIS IDs.", traineeTisIds,
+        hasItems(DEFAULT_TIS_ID_1));
+  }
+
+  @Test
+  void shouldFilterOutNullGmcWhenMultipleProfileFoundByEmail() {
+    PersonalDetails personalDetails2 = new PersonalDetails();
+    personalDetails2.setGmcNumber(null);
+    traineeProfile2.setPersonalDetails(personalDetails2);
+
+    when(repository.findAllByTraineeEmail(PERSON_EMAIL))
+        .thenReturn(List.of(traineeProfile, traineeProfile2));
+
+    List<String> traineeTisIds = service.getTraineeTisIdsByEmail(PERSON_EMAIL);
+
+    assertThat("Unexpected number of trainee TIS IDs.", traineeTisIds.size(), is(1));
+    assertThat("Unexpected trainee TIS IDs.", traineeTisIds, hasItems(DEFAULT_TIS_ID_1));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"UNKNOWN", "Delete4", "N/A", "p123456", "L1234567", "123456"})
+  void shouldFilterOutInvalidGmcWhenMultipleProfileFoundByEmail(String arg) {
+    PersonalDetails personalDetails2 = new PersonalDetails();
+    personalDetails2.setGmcNumber(arg);
+    traineeProfile2.setPersonalDetails(personalDetails2);
+
+    when(repository.findAllByTraineeEmail(PERSON_EMAIL))
+        .thenReturn(List.of(traineeProfile, traineeProfile2));
+
+    List<String> traineeTisIds = service.getTraineeTisIdsByEmail(PERSON_EMAIL);
+
+    assertThat("Unexpected number of trainee TIS IDs.", traineeTisIds.size(), is(1));
+    assertThat("Unexpected trainee TIS IDs.", traineeTisIds, hasItems(DEFAULT_TIS_ID_1));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"L123456", "1234567"})
+  void shouldReturnValidGmcWhenMultipleProfileFoundByEmail(String arg) {
+    PersonalDetails personalDetails2 = new PersonalDetails();
+    personalDetails2.setGmcNumber(arg);
+    traineeProfile2.setPersonalDetails(personalDetails2);
+
+    when(repository.findAllByTraineeEmail(PERSON_EMAIL))
+        .thenReturn(List.of(traineeProfile, traineeProfile2));
+
+    List<String> traineeTisIds = service.getTraineeTisIdsByEmail(PERSON_EMAIL);
+
+    assertThat("Unexpected number of trainee TIS IDs.", traineeTisIds.size(), is(2));
+    assertThat("Unexpected trainee TIS IDs.", traineeTisIds,
+        hasItems(DEFAULT_TIS_ID_1, DEFAULT_TIS_ID_2));
+  }
+
+  @Test
+  void shouldReturnAllRecordWhenProfileFoundByEmailWithoutValidGmc() {
+    PersonalDetails personalDetails = new PersonalDetails();
+    personalDetails.setGmcNumber(null);
+    personalDetails.setGdcNumber("UNKNOWN");
+    traineeProfile.setPersonalDetails(personalDetails);
+
+    PersonalDetails personalDetails2 = new PersonalDetails();
+    personalDetails2.setGmcNumber(null);
+    personalDetails2.setGdcNumber("111111");
+    traineeProfile2.setPersonalDetails(personalDetails2);
+
+    when(repository.findAllByTraineeEmail(PERSON_EMAIL))
+        .thenReturn(List.of(traineeProfile, traineeProfile2));
+
+    List<String> traineeTisIds = service.getTraineeTisIdsByEmail(PERSON_EMAIL);
+
+    assertThat("Unexpected number of trainee TIS IDs.", traineeTisIds.size(), is(2));
+    assertThat("Unexpected trainee TIS IDs.", traineeTisIds,
+        hasItems(DEFAULT_TIS_ID_1, DEFAULT_TIS_ID_2));
   }
 
   @Test
