@@ -22,22 +22,14 @@
 package uk.nhs.hee.trainee.details.migration;
 
 import com.mongodb.MongoException;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.UpdateResult;
 import io.mongock.api.annotations.ChangeUnit;
 import io.mongock.api.annotations.Execution;
 import io.mongock.api.annotations.RollbackExecution;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.bson.BsonDocument;
-import org.bson.Document;
-import org.bson.conversions.Bson;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
-import org.springframework.data.mongodb.core.query.UpdateDefinition;
-import uk.nhs.hee.trainee.details.model.TraineeProfile;
 
 /**
  * Add version field to TraineeProfile to support optimistic locking.
