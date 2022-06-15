@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "uk.nhs.hee.trainee.details"
-version = "0.12.2"
+version = "0.13.0"
 sourceCompatibility = "11"
 
 configurations {
@@ -48,6 +48,10 @@ dependencies {
   // Mapstruct
   implementation "org.mapstruct:mapstruct:1.4.2.Final"
   annotationProcessor "org.mapstruct:mapstruct-processor:1.4.2.Final"
+
+  ext.mongockVersion = "5.1.0"
+  implementation "io.mongock:mongock-springboot:${mongockVersion}"
+  implementation "io.mongock:mongodb-springdata-v3-driver:${mongockVersion}"
 
   // Sentry reporting
   implementation "io.sentry:sentry-spring-boot-starter:5.7.4"
