@@ -21,8 +21,10 @@
 
 package uk.nhs.hee.trainee.details.repository;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.springframework.test.util.AssertionErrors.assertTrue;
 
 import java.util.List;
 import java.util.Optional;
@@ -33,6 +35,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 import uk.nhs.hee.trainee.details.TestConfig;
@@ -60,6 +63,7 @@ class TraineeProfileRepositoryTest {
     traineeProfile = new TraineeProfile();
     traineeProfile.setId("1");
     traineeProfile.setTraineeTisId("1111");
+    traineeProfile.setVersion(1L);
 
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setEmail(EMAIL);
@@ -102,5 +106,30 @@ class TraineeProfileRepositoryTest {
   void shouldReturnEmptyWhenEmailNotFound() {
     List<TraineeProfile> traineeProfiles = repository.findAllByTraineeEmail("1");
     assertThat("Unexpected trainee profile.", traineeProfiles.size(), is(0));
+  }
+
+  @Test
+  @Transactional
+  void shouldFailToSaveStaleProfile() {
+    PersonalDetails personalDetails = new PersonalDetails();
+    personalDetails.setEmail("other email");
+
+    Optional<TraineeProfile> firstCopy = repository.findById("1");
+    Optional<TraineeProfile> secondCopy = repository.findById("1");
+    assertTrue("Trainee record should be found",
+        firstCopy.isPresent() && secondCopy.isPresent());
+
+    if (firstCopy.isPresent() && secondCopy.isPresent()) {
+      firstCopy.get().setTraineeTisId("new ID");
+      secondCopy.get().setPersonalDetails(personalDetails);
+
+      TraineeProfile savedOk = repository.save(firstCopy.get());
+      assertThat("Unexpected save error", savedOk.getTraineeTisId(), is("new ID"));
+      assertThat("Unexpected entity version", savedOk.getVersion(), is(2L));
+
+      //saving stale profile should fail
+      assertThatThrownBy(() -> repository.save(secondCopy.get()))
+          .isInstanceOf(OptimisticLockingFailureException.class);
+    }
   }
 }
