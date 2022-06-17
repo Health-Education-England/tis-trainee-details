@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
@@ -43,4 +44,7 @@ public class TraineeProfile {
   private List<Qualification> qualifications = new ArrayList<>();
   private List<ProgrammeMembership> programmeMemberships = new ArrayList<>();
   private List<Placement> placements = new ArrayList<>();
+
+  @Version
+  Long version;
 }
