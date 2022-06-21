@@ -41,8 +41,8 @@ import uk.nhs.hee.trainee.details.service.PersonalDetailsService;
 @RequestMapping("/api/gdc-details")
 public class GdcDetailsResource {
 
-  private PersonalDetailsService service;
-  private PersonalDetailsMapper mapper;
+  private final PersonalDetailsService service;
+  private final PersonalDetailsMapper mapper;
 
   public GdcDetailsResource(PersonalDetailsService service, PersonalDetailsMapper mapper) {
     this.service = service;

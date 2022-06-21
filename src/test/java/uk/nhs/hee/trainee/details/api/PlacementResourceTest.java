@@ -145,7 +145,7 @@ class PlacementResourceTest {
   @Test
   void shouldDeletePlacementWhenTraineeFound() throws Exception {
     when(service
-        .deletePlacementForTrainee("40","1"))
+        .deletePlacementForTrainee("40", "1"))
         .thenReturn(true);
 
     MvcResult result = mockMvc.perform(
@@ -175,7 +175,7 @@ class PlacementResourceTest {
     when(service
         .deletePlacementForTrainee("triggersError", "1"))
         .thenThrow(new IllegalArgumentException());
-    
+
     mockMvc.perform(
         delete("/api/placement/{traineeTisId}/{placementTisId}", "triggersError", "1")
             .contentType(MediaType.APPLICATION_JSON))

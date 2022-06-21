@@ -34,6 +34,7 @@ public interface TraineeProfileMapper {
 
   TraineeProfileDto toDto(TraineeProfile traineeProfile);
 
+  @Mapping(target = "version", ignore = true)
   TraineeProfile toEntity(TraineeProfileDto traineeProfileDto);
 
   @BeanMapping(ignoreByDefault = true)

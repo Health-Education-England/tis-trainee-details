@@ -1,6 +1,6 @@
 plugins {
   id "java"
-  id "org.springframework.boot" version "2.6.7"
+  id "org.springframework.boot" version "2.7.0"
   id "io.spring.dependency-management" version "1.0.11.RELEASE"
 
   // Code Quality
@@ -10,8 +10,7 @@ plugins {
 }
 
 group = "uk.nhs.hee.trainee.details"
-version = "0.13.0"
-sourceCompatibility = "11"
+version = "0.13.1"
 
 configurations {
   compileOnly {
@@ -55,21 +54,27 @@ dependencies {
   implementation "io.mongock:mongodb-springdata-v3-driver:${mongockVersion}"
 
   // Sentry reporting
-  implementation "io.sentry:sentry-spring-boot-starter:5.7.4"
+  implementation "io.sentry:sentry-spring-boot-starter:6.1.2"
 
   // Amazon SQS
   implementation "io.awspring.cloud:spring-cloud-starter-aws-messaging"
 }
 
 checkstyle {
-  toolVersion = "8.26"
   config = resources.text.fromArchiveEntry(configurations.checkstyle[0], "google_checks.xml")
 }
 
 jacocoTestReport {
   reports {
-    html.enabled true
-    xml.enabled true
+    html.required = true
+    xml.required = true
+  }
+}
+
+java {
+  toolchain {
+    languageVersion = JavaLanguageVersion.of(17)
+    vendor = JvmVendorSpec.ADOPTIUM
   }
 }
 
