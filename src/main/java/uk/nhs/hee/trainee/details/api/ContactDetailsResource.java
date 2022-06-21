@@ -41,8 +41,8 @@ import uk.nhs.hee.trainee.details.service.PersonalDetailsService;
 @RequestMapping("/api/contact-details")
 public class ContactDetailsResource {
 
-  private PersonalDetailsService service;
-  private PersonalDetailsMapper mapper;
+  private final PersonalDetailsService service;
+  private final PersonalDetailsMapper mapper;
 
   public ContactDetailsResource(PersonalDetailsService service, PersonalDetailsMapper mapper) {
     this.service = service;

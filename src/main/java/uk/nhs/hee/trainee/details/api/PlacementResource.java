@@ -44,8 +44,8 @@ import uk.nhs.hee.trainee.details.service.PlacementService;
 @RequestMapping("/api/placement")
 public class PlacementResource {
 
-  private PlacementService service;
-  private PlacementMapper mapper;
+  private final PlacementService service;
+  private final PlacementMapper mapper;
 
   public PlacementResource(PlacementService service, PlacementMapper mapper) {
     this.service = service;

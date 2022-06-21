@@ -44,8 +44,8 @@ import uk.nhs.hee.trainee.details.service.ProgrammeMembershipService;
 @RequestMapping("/api/programme-membership")
 public class ProgrammeMembershipResource {
 
-  private ProgrammeMembershipService service;
-  private ProgrammeMembershipMapper mapper;
+  private final ProgrammeMembershipService service;
+  private final ProgrammeMembershipMapper mapper;
 
   public ProgrammeMembershipResource(ProgrammeMembershipService service,
       ProgrammeMembershipMapper mapper) {
