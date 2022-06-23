@@ -21,19 +21,22 @@ gradlew bootRun
 #### Pre-Requisites
 
 - A MongoDB instance.
+- A running instance of localstack with the appropriate SQS queue set up
+  or permission to push messages onto an AWS SQS queue
+  (reference to the queue url set to the environmental variable `EVENT_QUEUE_URL`)
 
 #### Environmental Variables
 
 | Name               | Description                                   | Default   |
-| ------------------ | --------------------------------------------- |-----------|
+|--------------------|-----------------------------------------------|-----------|
 | DB_HOST            | The MongoDB host to connect to.               | localhost |
 | DB_PORT            | The port to connect to MongoDB on.            | 27017     |
 | DB_NAME            | The name of the MongoDB database.             | trainee   |
 | DB_USER            | The username to access the MongoDB instance.  | admin     |
 | DB_PASSWORD        | The password to access the MongoDB instance.  | pwd       |
-| AUTH_SOURCE        | The authentication database.                  | admin     |
 | SENTRY_DSN         | A Sentry error monitoring Data Source Name.   |           |
 | SENTRY_ENVIRONMENT | The environment to log Sentry events against. | local     |
+| EVENT_QUEUE_URL    | The URL of the SQS event queue.               |           |
 
 #### Usage Examples
 
@@ -47,16 +50,14 @@ GET /trainee/api/trainee-profile
 
 ##### Get Trainee IDs by Email
 
-This endpoint requires request parameter `email` as a String.
-
 ```
-GET /trainee/api/trainee-profile/trainee-ids
+GET /trainee/api/trainee-profile/trainee-ids?email={email}
 ```
 
 ##### Update Trainee Details
 
 These PATCH endpoints apply to the following trainee details types:
-- Basic details: `basic-details`
+- Basic details*: `basic-details`
 - Contact details: `contact-details`
 - GDC details: `gdc-details`
 - GMC details: `gmc-details`
@@ -69,6 +70,9 @@ These PATCH endpoints apply to the following trainee details types:
 ```
 PATCH /trainee/api/{details_type}/{tisId}
 ```
+
+*The PATCH endpoint for Basic details would publish an event to the SQS queue (`EVENT_QUEUE_URL`)
+when a trainee profile is first created, to trigger a full data refresh of the trainee.
 
 ##### Delete Trainee Details
 
