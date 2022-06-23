@@ -37,7 +37,58 @@ gradlew bootRun
 
 #### Usage Examples
 
-##### (More to add)
+##### Get a Trainee Profile
+
+This endpoint requires request header `token` as a String.
+
+```
+GET /trainee/api/trainee-profile
+```
+
+##### Get Trainee IDs by Email
+
+This endpoint requires request parameter `email` as a String.
+
+```
+GET /trainee/api/trainee-profile/trainee-ids
+```
+
+##### Update Trainee Details
+
+These PATCH endpoints apply to the following trainee details types:
+- Basic details: `basic-details`
+- Contact details: `contact-details`
+- GDC details: `gdc-details`
+- GMC details: `gmc-details`
+- Personal information: `personal-info`
+- Person owner: `person-owner`
+- Placement: `placement`
+- Programme membership: `programme-membership`
+- Qualification: `qualification`
+
+```
+PATCH /trainee/api/{details_type}/{tisId}
+```
+
+##### Delete Trainee Details
+
+These DELETE endpoints apply to the following trainee details types:
+- Trainee profile: `trainee-profile`
+- Programme membership: `programme-membership`
+
+```
+DELETE /trainee/api/{details_type}/{tisId}/
+```
+
+##### Delete Particular Trainee Details
+
+These DELETE endpoints apply to the following trainee details types:
+- Placement: `placement`
+- Qualification: `qualification`
+
+```
+DELETE /trainee/api/{details_type}/{tisId}/{details_type_id}
+```
 
 ### Testing
 
