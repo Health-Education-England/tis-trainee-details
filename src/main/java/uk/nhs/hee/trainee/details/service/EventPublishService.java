@@ -45,7 +45,7 @@ public class EventPublishService {
   }
 
   /**
-   * Public a Profile Create event.
+   * Publish a Profile Create event.
    *
    * @param profile The created {@link TraineeProfile}.
    */
