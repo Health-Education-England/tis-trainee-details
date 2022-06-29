@@ -21,14 +21,18 @@
 
 package uk.nhs.hee.trainee.details.migration;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.util.AssertionErrors.assertTrue;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.MongoException;
 import com.mongodb.client.result.UpdateResult;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -66,9 +70,16 @@ class DeleteDuplicateTraineeProfilePlacementsTest {
     migration.migrate();
 
     Query queryUsed = queryCaptor.getValue();
-    assertTrue("Unexpected query.", queryUsed.getQueryObject().isEmpty());
+    assertThat("Unexpected query.", queryUsed, is(new Query()));
     Update updateUsed = updateCaptor.getValue();
-    assertTrue("Unexpected placement deletion", updateUsed.equals(update));
+    assertThat("Unexpected placement deletion", updateUsed, is(update));
+  }
+
+  @Test
+  void shouldCatchMongoExceptionNotThrowIt() {
+    when(template.updateMulti(any(), any(), (String) any()))
+        .thenThrow(new MongoException("exception"));
+    Assertions.assertDoesNotThrow(() -> migration.migrate());
   }
 
   @Test
