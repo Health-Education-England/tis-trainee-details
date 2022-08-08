@@ -352,7 +352,29 @@ class PersonalDetailsServiceTest {
   }
 
   @Test
-  void shouldUpdatePersonOwnerDetailsWhenTraineeIdFound() {
+  void shouldNotUpdatePersonOwnerDetailsWhenTraineeIdFoundAndNewOwnerNull() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPersonalDetails(createPersonalDetails(ORIGINAL_SUFFIX, 0));
+
+    when(repository.findByTraineeTisId("40")).thenReturn(traineeProfile);
+    when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
+
+    PersonalDetails newPersonalDetails = createPersonalDetails(MODIFIED_SUFFIX, 100);
+    newPersonalDetails.setPersonOwner(null);
+
+    Optional<PersonalDetails> personalDetails = service
+        .updatePersonOwnerByTisId("40", newPersonalDetails);
+
+    assertThat("Unexpected optional isEmpty flag.", personalDetails.isEmpty(), is(false));
+
+    PersonalDetails expectedPersonalDetails = createPersonalDetails(ORIGINAL_SUFFIX, 0);
+    expectedPersonalDetails.setPersonOwner(PERSON_OWNER + ORIGINAL_SUFFIX);
+
+    assertThat("Unexpected personal details.", personalDetails.get(), is(expectedPersonalDetails));
+  }
+
+  @Test
+  void shouldUpdatePersonOwnerDetailsWhenTraineeIdFoundAndNewOwnerNotNull() {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setPersonalDetails(createPersonalDetails(ORIGINAL_SUFFIX, 0));
 
