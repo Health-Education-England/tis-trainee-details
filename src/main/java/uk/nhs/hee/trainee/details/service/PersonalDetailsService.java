@@ -23,12 +23,14 @@ package uk.nhs.hee.trainee.details.service;
 
 import java.util.Optional;
 import java.util.function.BiConsumer;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapper;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 
+@Slf4j
 @Service
 public class PersonalDetailsService {
 
@@ -102,7 +104,16 @@ public class PersonalDetailsService {
    */
   public Optional<PersonalDetails> updatePersonOwnerByTisId(String tisId,
       PersonalDetails personalDetails) {
-    return updatePersonalDetailsByTisId(tisId, personalDetails, mapper::updatePersonOwner);
+    BiConsumer<TraineeProfile, PersonalDetails> updateFunction;
+
+    if (personalDetails.getPersonOwner() == null) {
+      log.info("Person owner null for profile ID '{}', retaining existing owner.", tisId);
+      updateFunction = (profile, details) -> {};
+    } else {
+      updateFunction = mapper::updatePersonOwner;
+    }
+
+    return updatePersonalDetailsByTisId(tisId, personalDetails, updateFunction);
   }
 
   /**
