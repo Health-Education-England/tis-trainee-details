@@ -21,6 +21,7 @@
 
 package uk.nhs.hee.trainee.details.api;
 
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -214,53 +215,53 @@ class TraineeProfileResourceTest {
   @Test
   void getShouldReturnBadRequestWhenTokenNotFound() throws Exception {
     this.mockMvc.perform(get("/api/trainee-profile")
-        .contentType(MediaType.APPLICATION_JSON))
+            .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isBadRequest());
   }
 
   @Test
   void getShouldReturnBadRequestWhenPayloadNotMap() throws Exception {
     String payload = "[]";
-    String encodedPayload = Base64.getEncoder()
+    String encodedPayload = Base64.getUrlEncoder()
         .encodeToString(payload.getBytes(StandardCharsets.UTF_8));
     String token = String.format("aGVhZGVy.%s.c2lnbmF0dXJl", encodedPayload);
 
     this.mockMvc.perform(get("/api/trainee-profile")
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, token))
+            .contentType(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isBadRequest());
   }
 
   @Test
   void getShouldReturnNotFoundWhenTisIdNotInToken() throws Exception {
     String payload = "{}";
-    String encodedPayload = Base64.getEncoder()
+    String encodedPayload = Base64.getUrlEncoder()
         .encodeToString(payload.getBytes(StandardCharsets.UTF_8));
     String token = String.format("aGVhZGVy.%s.c2lnbmF0dXJl", encodedPayload);
 
     this.mockMvc.perform(get("/api/trainee-profile")
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, token))
+            .contentType(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isNotFound());
   }
 
   @Test
   void getShouldReturnNotFoundWhenTisIdNotExists() throws Exception {
     String payload = String.format("{\"%s\":\"40\"}", TIS_ID_ATTRIBUTE);
-    String encodedPayload = Base64.getEncoder()
+    String encodedPayload = Base64.getUrlEncoder()
         .encodeToString(payload.getBytes(StandardCharsets.UTF_8));
     String token = String.format("aGVhZGVy.%s.c2lnbmF0dXJl", encodedPayload);
 
     this.mockMvc.perform(get("/api/trainee-profile")
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, token))
+            .contentType(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isNotFound());
   }
 
   @Test
   void getShouldReturnTraineeProfileWhenTisIdExists() throws Exception {
     String payload = String.format("{\"%s\":\"%s\"}", TIS_ID_ATTRIBUTE, DEFAULT_TIS_ID_1);
-    String encodedPayload = Base64.getEncoder()
+    String encodedPayload = Base64.getUrlEncoder()
         .encodeToString(payload.getBytes(StandardCharsets.UTF_8));
     String token = String.format("aGVhZGVy.%s.c2lnbmF0dXJl", encodedPayload);
 
@@ -268,8 +269,8 @@ class TraineeProfileResourceTest {
     when(service.hidePastProgrammes(traineeProfile)).thenReturn(traineeProfile);
     when(service.hidePastPlacements(traineeProfile)).thenReturn(traineeProfile);
     this.mockMvc.perform(get("/api/trainee-profile")
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, token))
+            .contentType(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.id").value(DEFAULT_ID_1))
@@ -308,13 +309,25 @@ class TraineeProfileResourceTest {
   }
 
   @Test
+  void getShouldHandleUrlCharactersInToken() throws Exception {
+    // The payload is specifically crafted to include an underscore.
+    String token = "aGVhZGVy.eyJjdXN0b206dGlzSWQiOiAiMTIiLCJuYW1lIjogIkpvaG4gRG_DqyJ9.c2lnbmF0dXJl";
+
+    this.mockMvc.perform(get("/api/trainee-profile")
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, token));
+
+    verify(service).getTraineeProfileByTraineeTisId("12");
+  }
+
+  @Test
   void shouldReturnTraineeIdWhenProfileFoundByEmail() throws Exception {
     when(service.getTraineeTisIdsByEmail(PERSON_EMAIL))
         .thenReturn(List.of(DEFAULT_TIS_ID_1, "id2"));
 
     mockMvc.perform(get("/api/trainee-profile/trainee-ids")
-        .param("email", PERSON_EMAIL)
-        .contentType(MediaType.APPLICATION_JSON))
+            .param("email", PERSON_EMAIL)
+            .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$[0]").value(DEFAULT_TIS_ID_1))
@@ -326,8 +339,8 @@ class TraineeProfileResourceTest {
     when(service.getTraineeTisIdsByEmail(PERSON_EMAIL)).thenReturn(Collections.emptyList());
 
     mockMvc.perform(get("/api/trainee-profile/trainee-ids")
-        .param("email", PERSON_EMAIL)
-        .contentType(MediaType.APPLICATION_JSON))
+            .param("email", PERSON_EMAIL)
+            .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$").doesNotExist());
   }
@@ -335,7 +348,7 @@ class TraineeProfileResourceTest {
   @Test
   void shouldReturnNoContentWhenDeletingProfile() throws Exception {
     mockMvc.perform(delete("/api/trainee-profile/{tisId}", "1")
-        .contentType(MediaType.APPLICATION_JSON))
+            .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isNoContent())
         .andExpect(jsonPath("$").doesNotExist());
   }
