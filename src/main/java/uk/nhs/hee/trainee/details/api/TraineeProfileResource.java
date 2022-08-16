@@ -73,7 +73,7 @@ public class TraineeProfileResource {
     log.info("Trainee Profile of authenticated user.");
 
     String[] tokenSections = token.split("\\.");
-    byte[] payloadBytes = Base64.getDecoder()
+    byte[] payloadBytes = Base64.getUrlDecoder()
         .decode(tokenSections[1].getBytes(StandardCharsets.UTF_8));
     String tisId;
 
