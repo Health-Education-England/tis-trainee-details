@@ -49,7 +49,7 @@ dependencies {
   implementation "org.mapstruct:mapstruct:${mapstructVersion}"
   annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
 
-  ext.mongockVersion = "5.1.3"
+  ext.mongockVersion = "5.1.5"
   implementation "io.mongock:mongock-springboot:${mongockVersion}"
   implementation "io.mongock:mongodb-springdata-v3-driver:${mongockVersion}"
 
