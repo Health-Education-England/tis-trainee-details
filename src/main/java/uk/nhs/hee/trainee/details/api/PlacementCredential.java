@@ -65,7 +65,7 @@ public class PlacementCredential {
 
     String client_id = "TODO";
     String client_secret = "TODO";
-    String redirect_uri = "/???";
+    String redirect_uri = "/credentialissued/" + placementTisId;
     String scope = "issue.Placement"; //TODO confirm
     String nonce = "";
     String state = "";
@@ -75,9 +75,9 @@ public class PlacementCredential {
 
     return response.requestUri;
     //Now Front-end / Sitekit makes Authorize request with requestUri - QR code shown to user for approval, etc.
-
+    //the authorize response then redirects to /credentialissued/123?code=xxx&state=yyy
+    //This page would need to call the API below to get the actual details of the token
   }
-  
 
   /**
    * Get the ID token for an authorized / issued placement credential.
@@ -99,11 +99,11 @@ public class PlacementCredential {
     String grant_type = "authorization_code";
     String client_id = "TODO";
     String client_secret = "TODO";
-    String redirect_uri = "/???";
+    String redirect_uri = "/credentialissued/" + placementTisId; //must match one in PAR request
     JSONObject id_token = POST ISSUING_TOKEN(grant_type, client_id, client_secret, redirect_uri, code);
-    //I don't follow how the redirect to /??? should work here. I'm presuming the actual
-    //call to /issuing/authorize needs to happen from the back-end, since it contains the client_secret,
-    //but how does the redirect work then?
+    //I don't know if the redirect_uri is actually used to redirect the browser, or if it's just a
+    // check field. I'm presuming the actual call to /issuing/authorize needs to happen from the
+    // back-end, since it contains the client_secret.
 
     return id_token.toString();
   }
