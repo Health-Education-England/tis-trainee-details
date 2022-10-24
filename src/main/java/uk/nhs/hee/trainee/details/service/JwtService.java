@@ -21,15 +21,21 @@
 
 package uk.nhs.hee.trainee.details.service;
 
+import static io.jsonwebtoken.SignatureAlgorithm.HS256;
+
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.impl.crypto.DefaultJwtSignatureValidator;
+import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import javax.crypto.spec.SecretKeySpec;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.model.Placement;
+import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 
 @Slf4j
 @Service
@@ -48,6 +54,12 @@ public class JwtService {
     this.tokenSigningKey = tokenSigningKey;
   }
 
+  /**
+   * Generate a JWT token for a placement object.
+   *
+   * @param placement the placement to include in the JWT
+   * @return the JWT token string
+   */
   public String generatePlacementToken(Placement placement) {
     //TODO real values
     Map<String, Object> claims = new HashMap<>();
@@ -55,10 +67,32 @@ public class JwtService {
     claims.put("familyName", "Bloggs");
     claims.put("birthDate", "1980-08-21");
 
-    return doGenerateToken(claims);
+    return generateToken(claims);
   }
 
-  private String doGenerateToken(Map<String, Object> claims) {
+  /**
+   * Generate a JWT token for a programme membership object.
+   *
+   * @param programmeMembership the programme membership to include in the JWT
+   * @return the JWT token string
+   */
+  public String generateProgrammeMembershipToken(ProgrammeMembership programmeMembership) {
+    //TODO real values
+    Map<String, Object> claims = new HashMap<>();
+    claims.put("givenName", "Joe");
+    claims.put("familyName", "Bloggs");
+    claims.put("birthDate", "1980-08-21");
+
+    return generateToken(claims);
+  }
+
+  /**
+   * Generate a JWT token containing the provided claims, using the standard header and signature.
+   *
+   * @param claims the claims to include in the JWT
+   * @return the JWT token string
+   */
+  private String generateToken(Map<String, Object> claims) {
 
     return Jwts.builder()
         .setClaims(claims)
@@ -67,8 +101,43 @@ public class JwtService {
         .setIssuedAt(new Date(System.currentTimeMillis()))
         .setExpiration(new Date(System.currentTimeMillis() + JWT_EXPIRATION_MS))
         .setNotBefore(new Date(System.currentTimeMillis()))
-        .signWith(SignatureAlgorithm.HS256, this.tokenSigningKey)
+        .signWith(HS256, this.tokenSigningKey)
         .compact();
   }
 
+  /**
+   * Retrieve the payload from a JWT token.
+   *
+   * @param jwtToken the JWT token to process
+   * @return the payload JSON string
+   * @throws Exception if the token can not be verified
+   */
+  private String getTokenPayload(String jwtToken) throws Exception {
+    if (!canVerifyToken(jwtToken)) {
+      throw new Exception("Could not verify JWT token integrity!");
+    }
+
+    String[] chunks = jwtToken.split("\\.");
+    Base64.Decoder decoder = Base64.getUrlDecoder();
+
+    return new String(decoder.decode(chunks[1]));
+  }
+
+  /**
+   * Verify the integrity of a signed JWT token.
+   *
+   * @param jwtToken the JWT token to verify
+   * @return true if the token can be verified, otherwise false
+   */
+  private boolean canVerifyToken(String jwtToken) {
+    String[] chunks = jwtToken.split("\\.");
+
+    String tokenWithoutSignature = chunks[0] + "." + chunks[1];
+    String signature = chunks[2];
+    SignatureAlgorithm sa = HS256; //hardcoded here, but could be retrieved from header.alg
+    SecretKeySpec secretKeySpec = new SecretKeySpec(this.tokenSigningKey.getBytes(), sa.getJcaName());
+    DefaultJwtSignatureValidator validator = new DefaultJwtSignatureValidator(sa, secretKeySpec);
+
+    return validator.isValid(tokenWithoutSignature, signature);
+  }
 }

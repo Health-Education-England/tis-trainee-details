@@ -36,8 +36,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -84,14 +84,18 @@ public class PlacementCredential {
   }
 
   /**
-   * Get the PAR request URI. We assume the trainee has been verified. This would be called by the
-   * front-end when the user clicks on the 'Add placement to wallet' button.
+   * Get the PAR response, including the request URI. We assume the trainee has been verified.
+   * This would be called by the front-end when the user clicks on the 'Add placement to wallet'
+   * button.
+   *
+   * TODO: the placement that is passed from the front-end will be a JWT not a DTO so that we can
+   * verify that it has not been tampered with.
    *
    * @param placementTisId The ID of the placement.
    * @param dto          The placement details to issue as a credential.
-   * @return The Request URI, or error code.
+   * @return The PAR response, or server 500 error if the request times out
    */
-  @GetMapping("/par/{placementTisId}")
+  @PostMapping("/par/{placementTisId}")
   public ParResponse getCredentialParUri(
       @PathVariable(name = "placementTisId") String placementTisId,
       @RequestBody @Validated PlacementDto dto) {
@@ -133,9 +137,10 @@ public class PlacementCredential {
       return null;
     }
 
-    //Now Front-end / Sitekit makes Authorize request with requestUri - QR code shown to user for approval, etc.
-    //the authorize response then redirects to /profile/123?code=xxx&state=yyy
-    //This page would need to call the API below to get the actual details of the token
+    //Now Front-end makes Authorize request with request_uri - QR code shown to user for approval, etc.
+    //the authorize response then redirects to e.g. /profile?code=xxx&state=yyy
+    //That page would in turn need to call the API below to get the actual details of the token,
+    //if desired
   }
 
   /**
