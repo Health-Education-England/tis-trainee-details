@@ -114,7 +114,7 @@ public class JwtService {
    * @throws SignatureException if the token can not be verified
    */
   public String getTokenPayload(String jwtToken) throws SignatureException {
-    //TODO
+    //TODO: need public key I think
 //    if (!canVerifyToken(jwtToken)) {
 //      throw new SignatureException("Could not verify JWT token integrity!");
 //    }
@@ -137,6 +137,7 @@ public class JwtService {
     String tokenWithoutSignature = chunks[0] + "." + chunks[1];
     String signature = chunks[2];
     SignatureAlgorithm sa = HS256; //hardcoded here, but could be retrieved from header.alg
+    //We need a 'public' key for this, instead of the private one used below I think
     SecretKeySpec secretKeySpec = new SecretKeySpec(this.tokenSigningKey.getBytes(), sa.getJcaName());
     DefaultJwtSignatureValidator validator = new DefaultJwtSignatureValidator(sa, secretKeySpec);
 

@@ -212,7 +212,9 @@ public class PlacementCredential {
 
     HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(bodyPair, headers);
 
-    ResponseEntity<IssueTokenResponse> tokenResponse = restTemplate.postForEntity(tokenUri, tokenRequest, IssueTokenResponse.class);
+    ResponseEntity<IssueTokenResponse> tokenResponse
+        = restTemplate.postForEntity(tokenUri, tokenRequest, IssueTokenResponse.class);
+
     if (tokenResponse.getStatusCode() == HttpStatus.OK && tokenResponse.getBody() != null) {
       IssueTokenResponse token = tokenResponse.getBody();
       return ResponseEntity.ok(jwtService.getTokenPayload(token.getIdToken()));
