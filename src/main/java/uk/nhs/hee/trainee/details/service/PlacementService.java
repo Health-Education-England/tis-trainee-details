@@ -57,7 +57,7 @@ public class PlacementService {
     }
 
     return traineeProfile.getPlacements().stream()
-        .filter(p -> p.getTisId().equals(placementTisId))
+        .filter(p -> Objects.equals(p.getTisId(), placementTisId))
         .findFirst();
   }
 
@@ -114,23 +114,5 @@ public class PlacementService {
       return true;
     }
     return false;
-  }
-
-  /**
-   * Get a particular placement for a particular trainee.
-   *
-   * @param traineeTisId  The TIS id of the trainee
-   * @param placementTisId      The TIS id of the placement
-   * @return The placement or empty if a trainee or placement with the given ID was not found.
-   */
-  public Optional<Placement> getPlacementForTrainee(String traineeTisId, String placementTisId) {
-    TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
-
-    if (traineeProfile == null) {
-      return Optional.empty();
-    }
-    List<Placement> placements = traineeProfile.getPlacements();
-
-    return placements.stream().filter(p -> Objects.equals(p.getTisId(), placementTisId)).findFirst();
   }
 }
