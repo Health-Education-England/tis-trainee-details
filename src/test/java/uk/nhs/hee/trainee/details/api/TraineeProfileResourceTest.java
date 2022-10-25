@@ -30,10 +30,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,6 +48,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import uk.nhs.hee.trainee.details.TestJwtUtil;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapper;
 import uk.nhs.hee.trainee.details.model.Curriculum;
@@ -63,8 +62,6 @@ import uk.nhs.hee.trainee.details.service.TraineeProfileService;
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(controllers = TraineeProfileResource.class)
 class TraineeProfileResourceTest {
-
-  private static final String TIS_ID_ATTRIBUTE = "custom:tisId";
 
   private static final String DEFAULT_ID_1 = "DEFAULT_ID_1";
   private static final String DEFAULT_TIS_ID_1 = "123";
@@ -221,10 +218,7 @@ class TraineeProfileResourceTest {
 
   @Test
   void getShouldReturnBadRequestWhenPayloadNotMap() throws Exception {
-    String payload = "[]";
-    String encodedPayload = Base64.getUrlEncoder()
-        .encodeToString(payload.getBytes(StandardCharsets.UTF_8));
-    String token = String.format("aGVhZGVy.%s.c2lnbmF0dXJl", encodedPayload);
+    String token = TestJwtUtil.generateToken("[]");
 
     this.mockMvc.perform(get("/api/trainee-profile")
             .contentType(MediaType.APPLICATION_JSON)
@@ -234,10 +228,7 @@ class TraineeProfileResourceTest {
 
   @Test
   void getShouldReturnNotFoundWhenTisIdNotInToken() throws Exception {
-    String payload = "{}";
-    String encodedPayload = Base64.getUrlEncoder()
-        .encodeToString(payload.getBytes(StandardCharsets.UTF_8));
-    String token = String.format("aGVhZGVy.%s.c2lnbmF0dXJl", encodedPayload);
+    String token = TestJwtUtil.generateToken("{}");
 
     this.mockMvc.perform(get("/api/trainee-profile")
             .contentType(MediaType.APPLICATION_JSON)
@@ -247,10 +238,7 @@ class TraineeProfileResourceTest {
 
   @Test
   void getShouldReturnNotFoundWhenTisIdNotExists() throws Exception {
-    String payload = String.format("{\"%s\":\"40\"}", TIS_ID_ATTRIBUTE);
-    String encodedPayload = Base64.getUrlEncoder()
-        .encodeToString(payload.getBytes(StandardCharsets.UTF_8));
-    String token = String.format("aGVhZGVy.%s.c2lnbmF0dXJl", encodedPayload);
+    String token = TestJwtUtil.generateTokenForTisId("40");
 
     this.mockMvc.perform(get("/api/trainee-profile")
             .contentType(MediaType.APPLICATION_JSON)
@@ -260,10 +248,7 @@ class TraineeProfileResourceTest {
 
   @Test
   void getShouldReturnTraineeProfileWhenTisIdExists() throws Exception {
-    String payload = String.format("{\"%s\":\"%s\"}", TIS_ID_ATTRIBUTE, DEFAULT_TIS_ID_1);
-    String encodedPayload = Base64.getUrlEncoder()
-        .encodeToString(payload.getBytes(StandardCharsets.UTF_8));
-    String token = String.format("aGVhZGVy.%s.c2lnbmF0dXJl", encodedPayload);
+    String token = TestJwtUtil.generateTokenForTisId(DEFAULT_TIS_ID_1);
 
     when(service.getTraineeProfileByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
     when(service.hidePastProgrammes(traineeProfile)).thenReturn(traineeProfile);

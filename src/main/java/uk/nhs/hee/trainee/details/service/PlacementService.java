@@ -22,6 +22,7 @@
 package uk.nhs.hee.trainee.details.service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.mapper.PlacementMapper;
@@ -56,7 +57,7 @@ public class PlacementService {
     }
 
     return traineeProfile.getPlacements().stream()
-        .filter(p -> p.getTisId().equals(placementTisId))
+        .filter(p -> Objects.equals(p.getTisId(), placementTisId))
         .findFirst();
   }
 
@@ -68,6 +69,7 @@ public class PlacementService {
    * @return The updated placement or empty if a trainee with the ID was not found.
    */
   public Optional<Placement> updatePlacementForTrainee(String traineeTisId, Placement placement) {
+
     TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
 
     if (traineeProfile == null) {
