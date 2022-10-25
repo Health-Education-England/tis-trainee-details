@@ -21,9 +21,16 @@
 
 package uk.nhs.hee.trainee.details.api;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.jsonwebtoken.SignatureException;
+import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Base64;
 import java.util.Collections;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,18 +42,18 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
-import uk.nhs.hee.trainee.details.dto.PlacementDto;
-import uk.nhs.hee.trainee.details.mapper.PlacementMapper;
-import uk.nhs.hee.trainee.details.model.ParResponse;
+import uk.nhs.hee.trainee.details.model.dsp.IssueTokenResponse;
+import uk.nhs.hee.trainee.details.model.dsp.ParResponse;
 import uk.nhs.hee.trainee.details.model.Placement;
 import uk.nhs.hee.trainee.details.service.JwtService;
+import uk.nhs.hee.trainee.details.service.PlacementService;
 
 @Slf4j
 @RestController
@@ -55,30 +62,36 @@ public class PlacementCredential {
 
   private static final Integer CONNECT_TIMEOUT = 2000;
   private static final Integer READ_TIMEOUT = 5000;
+  private static final String STATE = "someString"; //TODO consider this
+  private static final String TIS_ID_ATTRIBUTE = "custom:tisId";
 
-  private final PlacementMapper mapper;
-
+  private final ObjectMapper objectMapper;
+  private final PlacementService service;
   private final String clientId;
   private final String clientSecret;
   private final String redirectUri;
   private final String parEndpoint;
-
+  private final String tokenEndpoint;
   private final RestTemplateBuilder restTemplateBuilder;
   private final JwtService jwtService;
 
 
-  public PlacementCredential(PlacementMapper mapper,
+  public PlacementCredential(PlacementService placementService,
+                             ObjectMapper objectMapper,
                              @Value("${dsp.client-id}") String clientId,
                              @Value("${dsp.client-secret}") String clientSecret,
                              @Value("${dsp.redirect-uri}") String redirectUri,
                              @Value("${dsp.par-endpoint}") String parEndpoint,
+                             @Value("${dsp.token.issue-endpoint}") String tokenEndpoint,
                              RestTemplateBuilder restTemplateBuilder,
                              JwtService jwtService) {
-    this.mapper = mapper;
+    this.service = placementService;
+    this.objectMapper = objectMapper;
     this.clientId = clientId;
     this.clientSecret = clientSecret;
     this.redirectUri = redirectUri;
     this.parEndpoint = parEndpoint;
+    this.tokenEndpoint = tokenEndpoint;
     this.restTemplateBuilder = restTemplateBuilder;
     this.jwtService = jwtService;
   }
@@ -87,21 +100,39 @@ public class PlacementCredential {
    * Get the PAR response, including the request URI. We assume the trainee has been verified.
    * This would be called by the front-end when the user clicks on the 'Add placement to wallet'
    * button.
-   *
-   * TODO: the placement that is passed from the front-end will be a JWT not a DTO so that we can
-   * verify that it has not been tampered with.
+   * <p>
+   * TODO: pass the placement from the front-end (as a JWT so that we can verify that it has not
+   * been tampered with).
    *
    * @param placementTisId The ID of the placement.
-   * @param dto          The placement details to issue as a credential.
    * @return The PAR response, or server 500 error if the request times out
    */
-  @PostMapping("/par/{placementTisId}")
-  public ParResponse getCredentialParUri(
+  @GetMapping("/par/{placementTisId}")
+  public ResponseEntity<ParResponse> getCredentialParUri(
       @PathVariable(name = "placementTisId") String placementTisId,
-      @RequestBody @Validated PlacementDto dto) {
-    log.info("Get placement credential request URI for placement with TIS ID {}", placementTisId);
+      @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
+    String traineeTisId;
+    log.info("Get credential request URI for placement with TIS ID {}", placementTisId);
 
-    Placement entity = mapper.toEntity(dto);
+    String[] tokenSections = token.split("\\.");
+    byte[] payloadBytes = Base64.getUrlDecoder()
+        .decode(tokenSections[1].getBytes(StandardCharsets.UTF_8));
+    //TODO: should we verify the token signature hash? We'd need the Cognito JWK for the userpool I think.
+    // But the endpoint is not publicly accessible so maybe this is ok.
+    try {
+      Map<?, ?> payload = objectMapper.readValue(payloadBytes, Map.class);
+      traineeTisId = (String) payload.get(TIS_ID_ATTRIBUTE);
+    } catch (IOException e) {
+      log.warn("Unable to read tisId from token.", e);
+      return ResponseEntity.badRequest().build();
+    }
+
+    Optional<Placement> placement = service.getPlacementForTrainee(traineeTisId, placementTisId);
+    if (placement.isEmpty()) {
+      log.warn("Unable to find placement with ID {} for trainee with ID {}",
+          placementTisId, traineeTisId);
+      return ResponseEntity.unprocessableEntity().build();
+    }
 
     RestTemplate restTemplate = this.restTemplateBuilder
         .setConnectTimeout(Duration.ofMillis(CONNECT_TIMEOUT))
@@ -112,8 +143,7 @@ public class PlacementCredential {
 
     String scope = "issue.TestCredential"; //TODO set up issue.Placement
     String nonce = UUID.randomUUID().toString();
-    String state = ""; //TODO
-    String idTokenHint = jwtService.generatePlacementToken(entity);
+    String idTokenHint = jwtService.generatePlacementToken(placement.get());
 
     HttpHeaders headers = new HttpHeaders();
     headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
@@ -126,31 +156,68 @@ public class PlacementCredential {
     bodyPair.add("scope", scope);
     bodyPair.add("id_token_hint", idTokenHint);
     bodyPair.add("nonce", nonce);
-    bodyPair.add("state", state);
+    bodyPair.add("state", STATE);
 
     HttpEntity<MultiValueMap<String, String>> parRequest = new HttpEntity<>(bodyPair, headers);
 
     ResponseEntity<ParResponse> parResponse = restTemplate.postForEntity(parUri, parRequest, ParResponse.class);
-    if(parResponse.getStatusCode() == HttpStatus.CREATED && parResponse.getBody() != null) {
-      return parResponse.getBody();
+    if (parResponse.getStatusCode() == HttpStatus.CREATED && parResponse.getBody() != null) {
+      return ResponseEntity.ok(parResponse.getBody());
     } else {
-      return null;
+      return ResponseEntity.internalServerError().build();
     }
 
     //Now Front-end makes Authorize request with request_uri - QR code shown to user for approval, etc.
-    //the authorize response then redirects to e.g. /profile?code=xxx&state=yyy
+    //the 'authorize' response then redirects to e.g. /profile?code=xxx&state=yyy
     //That page would in turn need to call the API below to get the actual details of the token,
     //if desired
   }
 
   /**
-   * Get the ID token for an authorized / issued placement credential.
+   * Get the credential content from an issued placement credential.
    *
-   * @param placementTisId The ID of the placement.
-   * @param code         The auth code
-   * @param state        state
-   * @return The token for the credential
+   * @param code  The auth code
+   * @param state The state used in the original PAR call
+   * @return The credential contents JSON
+   * @throws SignatureException if the JWT token signature is invalid
    */
-//TODO
+  @GetMapping("/credential")
+  public ResponseEntity<String> getCredentialContent(@RequestParam String code,
+                                                     @RequestParam String state)
+      throws SignatureException {
+    log.info("Get details for issued credential with code {}", code);
 
+    if (!STATE.equals(state)) {
+      log.warn("State does not match that of original PAR request");
+      return ResponseEntity.badRequest().build();
+    }
+
+    RestTemplate restTemplate = this.restTemplateBuilder
+        .setConnectTimeout(Duration.ofMillis(CONNECT_TIMEOUT))
+        .setReadTimeout(Duration.ofMillis(READ_TIMEOUT))
+        .build();
+
+    URI tokenUri = URI.create(this.tokenEndpoint);
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+    headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+    MultiValueMap<String, String> bodyPair = new LinkedMultiValueMap<>();
+    bodyPair.add("grant_type", "authorization_code");
+    bodyPair.add("client_id", this.clientId);
+    bodyPair.add("client_secret", this.clientSecret);
+    bodyPair.add("redirect_uri", this.redirectUri);
+    bodyPair.add("code", code);
+
+    HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(bodyPair, headers);
+
+    ResponseEntity<IssueTokenResponse> tokenResponse = restTemplate.postForEntity(tokenUri, tokenRequest, IssueTokenResponse.class);
+    if (tokenResponse.getStatusCode() == HttpStatus.OK && tokenResponse.getBody() != null) {
+      IssueTokenResponse token = tokenResponse.getBody();
+      return ResponseEntity.ok(jwtService.getTokenPayload(token.getIdToken()));
+    } else {
+      return ResponseEntity.internalServerError().build();
+    }
+  }
 }
