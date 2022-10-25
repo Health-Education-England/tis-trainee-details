@@ -41,6 +41,26 @@ public class PlacementService {
   }
 
   /**
+   * Get the placement with the given placement ID from the trainee profile with the given trainee
+   * ID.
+   *
+   * @param traineeTisId   The ID of the trainee profile.
+   * @param placementTisId The ID of the placement within the profile.
+   * @return The found placement, else empty.
+   */
+  public Optional<Placement> getPlacementForTrainee(String traineeTisId, String placementTisId) {
+    TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
+
+    if (traineeProfile == null) {
+      return Optional.empty();
+    }
+
+    return traineeProfile.getPlacements().stream()
+        .filter(p -> p.getTisId().equals(placementTisId))
+        .findFirst();
+  }
+
+  /**
    * Update the placement for the trainee with the given TIS ID.
    *
    * @param traineeTisId The TIS id of the trainee.
@@ -48,7 +68,6 @@ public class PlacementService {
    * @return The updated placement or empty if a trainee with the ID was not found.
    */
   public Optional<Placement> updatePlacementForTrainee(String traineeTisId, Placement placement) {
-
     TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
 
     if (traineeProfile == null) {
@@ -74,8 +93,8 @@ public class PlacementService {
   /**
    * Delete the programme memberships for the trainee with the given TIS ID.
    *
-   * @param traineeTisId        The TIS id of the trainee.
-   * @param placementTisId      The TIS id of the placement
+   * @param traineeTisId   The TIS id of the trainee.
+   * @param placementTisId The TIS id of the placement
    * @return True, or False if a trainee with the ID was not found or the placement was not found.
    */
   public boolean deletePlacementForTrainee(String traineeTisId, String placementTisId) {
