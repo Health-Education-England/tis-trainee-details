@@ -49,9 +49,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
+import uk.nhs.hee.trainee.details.model.Placement;
 import uk.nhs.hee.trainee.details.model.dsp.IssueTokenResponse;
 import uk.nhs.hee.trainee.details.model.dsp.ParResponse;
-import uk.nhs.hee.trainee.details.model.Placement;
 import uk.nhs.hee.trainee.details.service.JwtService;
 import uk.nhs.hee.trainee.details.service.PlacementService;
 
@@ -77,14 +77,14 @@ public class PlacementCredential {
 
 
   public PlacementCredential(PlacementService placementService,
-                             ObjectMapper objectMapper,
-                             @Value("${dsp.client-id}") String clientId,
-                             @Value("${dsp.client-secret}") String clientSecret,
-                             @Value("${dsp.redirect-uri}") String redirectUri,
-                             @Value("${dsp.par-endpoint}") String parEndpoint,
-                             @Value("${dsp.token.issue-endpoint}") String tokenEndpoint,
-                             RestTemplateBuilder restTemplateBuilder,
-                             JwtService jwtService) {
+      ObjectMapper objectMapper,
+      @Value("${dsp.client-id}") String clientId,
+      @Value("${dsp.client-secret}") String clientSecret,
+      @Value("${dsp.redirect-uri}") String redirectUri,
+      @Value("${dsp.par-endpoint}") String parEndpoint,
+      @Value("${dsp.token.issue-endpoint}") String tokenEndpoint,
+      RestTemplateBuilder restTemplateBuilder,
+      JwtService jwtService) {
     this.service = placementService;
     this.objectMapper = objectMapper;
     this.clientId = clientId;
@@ -97,9 +97,8 @@ public class PlacementCredential {
   }
 
   /**
-   * Get the PAR response, including the request URI. We assume the trainee has been verified.
-   * This would be called by the front-end when the user clicks on the 'Add placement to wallet'
-   * button.
+   * Get the PAR response, including the request URI. We assume the trainee has been verified. This
+   * would be called by the front-end when the user clicks on the 'Add placement to wallet' button.
    * <p>
    * TODO: pass the placement from the front-end (as a JWT so that we can verify that it has not
    * been tampered with).
@@ -160,9 +159,12 @@ public class PlacementCredential {
 
     HttpEntity<MultiValueMap<String, String>> parRequest = new HttpEntity<>(bodyPair, headers);
 
-    ResponseEntity<ParResponse> parResponse = restTemplate.postForEntity(parUri, parRequest, ParResponse.class);
+    ResponseEntity<ParResponse> parResponse = restTemplate.postForEntity(parUri, parRequest,
+        ParResponse.class);
     if (parResponse.getStatusCode() == HttpStatus.CREATED && parResponse.getBody() != null) {
-      return ResponseEntity.ok(parResponse.getBody());
+      String location = String.format("%s?client_id=%s&request_uri=%s", tokenEndpoint, clientId,
+          parResponse.getBody().getRequestUri());
+      return ResponseEntity.created(URI.create(location)).build();
     } else {
       return ResponseEntity.internalServerError().build();
     }
@@ -183,7 +185,7 @@ public class PlacementCredential {
    */
   @GetMapping("/credential")
   public ResponseEntity<String> getCredentialContent(@RequestParam String code,
-                                                     @RequestParam String state)
+      @RequestParam String state)
       throws SignatureException {
     log.info("Get details for issued credential with code {}", code);
 
