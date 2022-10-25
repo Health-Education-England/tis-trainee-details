@@ -29,6 +29,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -63,6 +64,62 @@ class PlacementServiceTest {
     repository = mock(TraineeProfileRepository.class);
     service = new PlacementService(repository,
         Mappers.getMapper(PlacementMapper.class));
+  }
+
+  @Test
+  void shouldNotGetPlacementWhenTraineeIdNotFound() {
+    Optional<Placement> placement = service.getPlacementForTrainee("notFound",
+        EXISTING_PLACEMENT_ID);
+    when(repository.findByTraineeTisId("notFound")).thenReturn(null);
+
+    assertThat("Unexpected optional isEmpty flag.", placement.isEmpty(), is(true));
+  }
+
+  @Test
+  void shouldNotGetPlacementWhenTraineeFoundAndPlacementNotExists() {
+    Placement placement = new Placement();
+    placement.setTisId(EXISTING_PLACEMENT_ID);
+    placement.setStartDate(START_DATE.plusDays(100));
+    placement.setEndDate(END_DATE.plusDays(100));
+    placement.setSite(SITE + MODIFIED_SUFFIX);
+    placement.setSiteLocation(SITE_LOCATION + MODIFIED_SUFFIX);
+    placement.setGrade(GRADE);
+    placement.setSpecialty(SPECIALTY);
+    placement.setPlacementType(PLACEMENT_TYPE);
+    placement.setStatus(Status.CURRENT);
+
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPlacements(List.of(placement));
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    Optional<Placement> optionalPlacement = service.getPlacementForTrainee(TRAINEE_TIS_ID,
+        NOT_EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected optional isEmpty flag.", optionalPlacement.isEmpty(), is(true));
+  }
+
+  @Test
+  void shouldGetPlacementWhenTraineeFoundAndPlacementExists() {
+    Placement placement = new Placement();
+    placement.setTisId(EXISTING_PLACEMENT_ID);
+    placement.setStartDate(START_DATE.plusDays(100));
+    placement.setEndDate(END_DATE.plusDays(100));
+    placement.setSite(SITE + MODIFIED_SUFFIX);
+    placement.setSiteLocation(SITE_LOCATION + MODIFIED_SUFFIX);
+    placement.setGrade(GRADE);
+    placement.setSpecialty(SPECIALTY);
+    placement.setPlacementType(PLACEMENT_TYPE);
+    placement.setStatus(Status.CURRENT);
+
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPlacements(List.of(placement));
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    Optional<Placement> optionalPlacement = service.getPlacementForTrainee(TRAINEE_TIS_ID,
+        EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected optional isEmpty flag.", optionalPlacement.isEmpty(), is(false));
+    assertThat("Unexpected placement.", optionalPlacement.get(), is(placement));
   }
 
   @Test
