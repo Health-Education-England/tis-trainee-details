@@ -71,6 +71,7 @@ public class PlacementCredential {
   private final String clientSecret;
   private final String redirectUri;
   private final String parEndpoint;
+  private final String issueEndpoint;
   private final String tokenEndpoint;
   private final RestTemplateBuilder restTemplateBuilder;
   private final JwtService jwtService;
@@ -82,6 +83,7 @@ public class PlacementCredential {
       @Value("${dsp.client-secret}") String clientSecret,
       @Value("${dsp.redirect-uri}") String redirectUri,
       @Value("${dsp.par-endpoint}") String parEndpoint,
+      @Value("${dsp.issue-endpoint}") String issueEndpoint,
       @Value("${dsp.token.issue-endpoint}") String tokenEndpoint,
       RestTemplateBuilder restTemplateBuilder,
       JwtService jwtService) {
@@ -91,6 +93,7 @@ public class PlacementCredential {
     this.clientSecret = clientSecret;
     this.redirectUri = redirectUri;
     this.parEndpoint = parEndpoint;
+    this.issueEndpoint = issueEndpoint;
     this.tokenEndpoint = tokenEndpoint;
     this.restTemplateBuilder = restTemplateBuilder;
     this.jwtService = jwtService;
@@ -162,7 +165,7 @@ public class PlacementCredential {
     ResponseEntity<ParResponse> parResponse = restTemplate.postForEntity(parUri, parRequest,
         ParResponse.class);
     if (parResponse.getStatusCode() == HttpStatus.CREATED && parResponse.getBody() != null) {
-      String location = String.format("%s?client_id=%s&request_uri=%s", tokenEndpoint, clientId,
+      String location = String.format("%s?client_id=%s&request_uri=%s", issueEndpoint, clientId,
           parResponse.getBody().getRequestUri());
       return ResponseEntity.created(URI.create(location)).build();
     } else {

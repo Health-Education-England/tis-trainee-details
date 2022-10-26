@@ -29,6 +29,7 @@ dsp:
   client-secret: ${DSP_CLIENT_SECRET:}
   redirect-uri: ${DSP_REDIRECT_URI:}
   par-endpoint: ${DSP_PAR_ENDPOINT:}
+  issue-endpoint: ${DSP_ISSUE_ENDPOINT:}
   token:
     issuer: ${DSP_TOKEN_ISSUER:}
     audience: ${DSP_TOKEN_AUDIENCE:}
