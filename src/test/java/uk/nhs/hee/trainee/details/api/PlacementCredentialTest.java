@@ -90,7 +90,8 @@ class PlacementCredentialTest {
 
     PlacementCredential resource = new PlacementCredential(placementService, objectMapper,
         CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, "https://test/issuing/par",
-        "https://test/issuing/authorize", restTemplateBuilder, jwtService);
+        "https://test/issuing/authorize", "https://test/issuing/token",
+        restTemplateBuilder, jwtService);
     mockMvc = MockMvcBuilders.standaloneSetup(resource)
         .build();
   }
