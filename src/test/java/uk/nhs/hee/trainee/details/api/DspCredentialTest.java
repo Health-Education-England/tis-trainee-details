@@ -58,10 +58,11 @@ import uk.nhs.hee.trainee.details.model.Placement;
 import uk.nhs.hee.trainee.details.model.dsp.ParResponse;
 import uk.nhs.hee.trainee.details.service.JwtService;
 import uk.nhs.hee.trainee.details.service.PlacementService;
+import uk.nhs.hee.trainee.details.service.ProgrammeMembershipService;
 
 @ContextConfiguration(classes = {PlacementMapper.class})
-@WebMvcTest(PlacementCredential.class)
-class PlacementCredentialTest {
+@WebMvcTest(DspCredential.class)
+class DspCredentialTest {
 
   private static final String CLIENT_ID = "11111111-2222-3333-4444-555555555555";
   private static final String CLIENT_SECRET = "636c69656e745f736563726574";
@@ -77,6 +78,8 @@ class PlacementCredentialTest {
   private JwtService jwtService;
   @MockBean
   private PlacementService placementService;
+  @MockBean
+  private ProgrammeMembershipService programmeMembershipService;
   private RestTemplate restTemplate;
 
   @BeforeEach
@@ -88,8 +91,8 @@ class PlacementCredentialTest {
     when(restTemplateBuilder.setReadTimeout(any())).thenReturn(restTemplateBuilder);
     when(restTemplateBuilder.build()).thenReturn(restTemplate);
 
-    PlacementCredential resource = new PlacementCredential(placementService, objectMapper,
-        CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, "https://test/issuing/par",
+    DspCredential resource = new DspCredential(placementService, programmeMembershipService,
+        objectMapper, CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, "https://test/issuing/par",
         "https://test/issuing/authorize", "https://test/issuing/token",
         restTemplateBuilder, jwtService);
     mockMvc = MockMvcBuilders.standaloneSetup(resource)
@@ -100,7 +103,7 @@ class PlacementCredentialTest {
   void shouldReturnErrorWhenTokenPayloadNotMap() throws Exception {
     String token = TestJwtUtil.generateToken("[]");
 
-    mockMvc.perform(get("/api/placementcredential/par/{placementTisId}", 140)
+    mockMvc.perform(get("/api/credential/par/placement/{placementTisId}", 140)
             .contentType(MediaType.APPLICATION_JSON)
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isBadRequest());
@@ -114,7 +117,7 @@ class PlacementCredentialTest {
 
     String token = TestJwtUtil.generateTokenForTisId("40");
 
-    mockMvc.perform(get("/api/placementcredential/par/{placementTisId}", 140)
+    mockMvc.perform(get("/api/credential/par/placement/{placementTisId}", 140)
             .contentType(MediaType.APPLICATION_JSON)
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isUnprocessableEntity());
@@ -136,7 +139,7 @@ class PlacementCredentialTest {
 
     String token = TestJwtUtil.generateTokenForTisId("40");
 
-    mockMvc.perform(get("/api/placementcredential/par/{placementTisId}", 140)
+    mockMvc.perform(get("/api/credential/par/placement/{placementTisId}", 140)
         .contentType(MediaType.APPLICATION_JSON)
         .header(HttpHeaders.AUTHORIZATION, token));
 
@@ -163,7 +166,7 @@ class PlacementCredentialTest {
 
     String token = TestJwtUtil.generateTokenForTisId("40");
 
-    mockMvc.perform(get("/api/placementcredential/par/{placementTisId}", 140)
+    mockMvc.perform(get("/api/credential/par/placement/{placementTisId}", 140)
             .contentType(MediaType.APPLICATION_JSON)
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isInternalServerError());
@@ -181,7 +184,7 @@ class PlacementCredentialTest {
 
     String token = TestJwtUtil.generateTokenForTisId("40");
 
-    mockMvc.perform(get("/api/placementcredential/par/{placementTisId}", 140)
+    mockMvc.perform(get("/api/credential/par/placement/{placementTisId}", 140)
             .contentType(MediaType.APPLICATION_JSON)
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isInternalServerError());
@@ -202,7 +205,7 @@ class PlacementCredentialTest {
 
     String token = TestJwtUtil.generateTokenForTisId("40");
 
-    mockMvc.perform(get("/api/placementcredential/par/{placementTisId}", 140)
+    mockMvc.perform(get("/api/credential/par/placement/{placementTisId}", 140)
             .contentType(MediaType.APPLICATION_JSON)
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isCreated())

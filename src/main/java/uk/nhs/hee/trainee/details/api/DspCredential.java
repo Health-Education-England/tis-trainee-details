@@ -50,15 +50,17 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 import uk.nhs.hee.trainee.details.model.Placement;
+import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.dsp.IssueTokenResponse;
 import uk.nhs.hee.trainee.details.model.dsp.ParResponse;
 import uk.nhs.hee.trainee.details.service.JwtService;
 import uk.nhs.hee.trainee.details.service.PlacementService;
+import uk.nhs.hee.trainee.details.service.ProgrammeMembershipService;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/placementcredential")
-public class PlacementCredential {
+@RequestMapping("/api/credential")
+public class DspCredential {
 
   private static final Integer CONNECT_TIMEOUT = 2000;
   private static final Integer READ_TIMEOUT = 5000;
@@ -66,7 +68,8 @@ public class PlacementCredential {
   private static final String TIS_ID_ATTRIBUTE = "custom:tisId";
 
   private final ObjectMapper objectMapper;
-  private final PlacementService service;
+  private final PlacementService placementService;
+  private final ProgrammeMembershipService programmeMembershipService;
   private final String clientId;
   private final String clientSecret;
   private final String redirectUri;
@@ -77,17 +80,19 @@ public class PlacementCredential {
   private final JwtService jwtService;
 
 
-  public PlacementCredential(PlacementService placementService,
-      ObjectMapper objectMapper,
-      @Value("${dsp.client-id}") String clientId,
-      @Value("${dsp.client-secret}") String clientSecret,
-      @Value("${dsp.redirect-uri}") String redirectUri,
-      @Value("${dsp.par-endpoint}") String parEndpoint,
-      @Value("${dsp.issue-endpoint}") String issueEndpoint,
-      @Value("${dsp.token.issue-endpoint}") String tokenEndpoint,
-      RestTemplateBuilder restTemplateBuilder,
-      JwtService jwtService) {
-    this.service = placementService;
+  public DspCredential(PlacementService placementService,
+                       ProgrammeMembershipService programmeMembershipService,
+                       ObjectMapper objectMapper,
+                       @Value("${dsp.client-id}") String clientId,
+                       @Value("${dsp.client-secret}") String clientSecret,
+                       @Value("${dsp.redirect-uri}") String redirectUri,
+                       @Value("${dsp.par-endpoint}") String parEndpoint,
+                       @Value("${dsp.issue-endpoint}") String issueEndpoint,
+                       @Value("${dsp.token.issue-endpoint}") String tokenEndpoint,
+                       RestTemplateBuilder restTemplateBuilder,
+                       JwtService jwtService) {
+    this.placementService = placementService;
+    this.programmeMembershipService = programmeMembershipService;
     this.objectMapper = objectMapper;
     this.clientId = clientId;
     this.clientSecret = clientSecret;
@@ -101,20 +106,24 @@ public class PlacementCredential {
 
   /**
    * Get the PAR response, including the request URI. We assume the trainee has been verified. This
-   * would be called by the front-end when the user clicks on the 'Add placement to wallet' button.
+   * would be called by the front-end when the user clicks on the 'Add to wallet' button for a
+   * placement or programme membership.
    * <p>
-   * TODO: pass the placement from the front-end (as a JWT so that we can verify that it has not
+   * TODO: pass the content from the front-end (as a JWT so that we can verify that it has not
    * been tampered with).
    *
-   * @param placementTisId The ID of the placement.
+   * @param credentialType 'placement' or 'programmemembership'
+   * @param tisId The ID of the placement / programme membership.
    * @return The PAR response, or server 500 error if the request times out
    */
-  @GetMapping("/par/{placementTisId}")
+  @GetMapping(value = "/par/{credentialType:placement|programmemembership}/{tisId}")
   public ResponseEntity<ParResponse> getCredentialParUri(
-      @PathVariable(name = "placementTisId") String placementTisId,
+      @PathVariable(name = "credentialType") String credentialType,
+      @PathVariable(name = "tisId") String tisId,
       @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
     String traineeTisId;
-    log.info("Get credential request URI for placement with TIS ID {}", placementTisId);
+    //TODO sanitise to prevent log injection
+    log.info("Get credential request URI for {} with TIS ID {}", credentialType, tisId);
 
     String[] tokenSections = token.split("\\.");
     byte[] payloadBytes = Base64.getUrlDecoder()
@@ -125,15 +134,33 @@ public class PlacementCredential {
       Map<?, ?> payload = objectMapper.readValue(payloadBytes, Map.class);
       traineeTisId = (String) payload.get(TIS_ID_ATTRIBUTE);
     } catch (IOException e) {
-      log.warn("Unable to read tisId from token.", e);
+      log.warn("Unable to read trainee tisId from token.", e);
       return ResponseEntity.badRequest().build();
     }
 
-    Optional<Placement> placement = service.getPlacementForTrainee(traineeTisId, placementTisId);
-    if (placement.isEmpty()) {
-      log.warn("Unable to find placement with ID {} for trainee with ID {}",
-          placementTisId, traineeTisId);
-      return ResponseEntity.unprocessableEntity().build();
+    String idTokenHint = "";
+    String scope = "";
+
+    if (credentialType.equalsIgnoreCase("placement")) {
+      Optional<Placement> placement = placementService.getPlacementForTrainee(traineeTisId, tisId);
+      if (placement.isEmpty()) {
+        log.warn("Unable to find placement with ID {} for trainee with ID {}",
+            tisId, traineeTisId);
+        return ResponseEntity.unprocessableEntity().build();
+      }
+      idTokenHint = jwtService.generatePlacementToken(placement.get());
+      scope = "issue.TestCredential"; //TODO set up issue.Placement
+
+    } else if (credentialType.equalsIgnoreCase("programmemembership")) {
+      Optional<ProgrammeMembership> programmeMembership
+          = programmeMembershipService.getProgrammeMembershipForTrainee(traineeTisId, tisId);
+      if (programmeMembership.isEmpty()) {
+        log.warn("Unable to find programme membership with ID {} for trainee with ID {}",
+            tisId, traineeTisId);
+        return ResponseEntity.unprocessableEntity().build();
+      }
+      idTokenHint = jwtService.generateProgrammeMembershipToken(programmeMembership.get());
+      scope = "issue.TestCredential"; //TODO set up issue.ProgrammeMembership
     }
 
     RestTemplate restTemplate = this.restTemplateBuilder
@@ -142,11 +169,7 @@ public class PlacementCredential {
         .build();
 
     URI parUri = URI.create(this.parEndpoint);
-
-    String scope = "issue.TestCredential"; //TODO set up issue.Placement
     String nonce = UUID.randomUUID().toString();
-    String idTokenHint = jwtService.generatePlacementToken(placement.get());
-
     HttpHeaders headers = new HttpHeaders();
     headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
     headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
@@ -179,15 +202,15 @@ public class PlacementCredential {
   }
 
   /**
-   * Get the credential content from an issued placement credential.
+   * Get the credential content from an issued credential.
    *
    * @param code  The auth code
    * @param state The state used in the original PAR call
    * @return The credential contents JSON
    * @throws SignatureException if the JWT token signature is invalid
    */
-  @GetMapping("/credential")
-  public ResponseEntity<String> getCredentialContent(@RequestParam String code,
+  @GetMapping("/payload")
+  public ResponseEntity<String> getCredentialPayload(@RequestParam String code,
       @RequestParam String state)
       throws SignatureException {
     log.info("Get details for issued credential with code {}", code);
