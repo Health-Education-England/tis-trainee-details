@@ -72,6 +72,9 @@ class DspCredentialResourceTest {
   private static final String REDIRECT_URI = "https://redirect.uri";
   private static final String PAR_RESPONSE_REQUEST_URI = "https://par-response/request-uri";
 
+  private static final String STATE = "someString"; //TODO consider this
+  private static final String INVALID_STATE = "anotherString";
+
   @Autowired
   private ObjectMapper objectMapper;
 
@@ -239,5 +242,15 @@ class DspCredentialResourceTest {
         .andExpect(header().string(HttpHeaders.LOCATION,
             String.format("https://test/issuing/authorize?client_id=%s&request_uri=%s", CLIENT_ID,
                 PAR_RESPONSE_REQUEST_URI)));
+  }
+
+  @Test
+  void shouldReturnBadRequestForPayloadWithInvalidState() throws Exception {
+    String token = TestJwtUtil.generateTokenForTisId("40");
+
+    mockMvc.perform(get("/api/credential/payload/?code=abc&state={INVALID_STATE}", INVALID_STATE)
+            .contentType(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isBadRequest());
   }
 }

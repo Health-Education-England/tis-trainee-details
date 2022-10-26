@@ -75,6 +75,20 @@ class JwtServiceTest {
   }
 
   @Test
+  void generateProgrammeMembershipTokenHasCorrectDetails() throws JsonProcessingException {
+    ObjectMapper mapper = new ObjectMapper();
+
+    JsonNode payloadNode = mapper.readTree(payload);
+    //TODO rework when real data in payload:
+    assertThat("Payload givenName is incorrect",
+        payloadNode.get("givenName").asText("missing"), is("Joe"));
+    assertThat("Payload familyName is incorrect",
+        payloadNode.get("familyName").asText("missing"), is("Bloggs"));
+    assertThat("Payload birthDate is incorrect",
+        payloadNode.get("birthDate").asText("missing"), is("1980-08-21"));
+  }
+
+  @Test
   void canVerifyValidToken() {
     assertThat("Token could not be verified", service.canVerifyToken(token), is (true));
   }

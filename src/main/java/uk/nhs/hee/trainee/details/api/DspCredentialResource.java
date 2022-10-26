@@ -213,6 +213,8 @@ public class DspCredentialResource {
   public ResponseEntity<String> getCredentialPayload(@RequestParam String code,
       @RequestParam String state)
       throws SignatureException {
+    //I wonder if we need @RequestHeader(HttpHeaders.AUTHORIZATION) String token just to be safer
+    //TODO sanitise to prevent log injection
     log.info("Get details for issued credential with code {}", code);
 
     if (!STATE.equals(state)) {
