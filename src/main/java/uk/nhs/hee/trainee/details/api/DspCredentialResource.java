@@ -60,7 +60,7 @@ import uk.nhs.hee.trainee.details.service.ProgrammeMembershipService;
 @Slf4j
 @RestController
 @RequestMapping("/api/credential")
-public class DspCredential {
+public class DspCredentialResource {
 
   private static final Integer CONNECT_TIMEOUT = 2000;
   private static final Integer READ_TIMEOUT = 5000;
@@ -80,17 +80,17 @@ public class DspCredential {
   private final JwtService jwtService;
 
 
-  public DspCredential(PlacementService placementService,
-                       ProgrammeMembershipService programmeMembershipService,
-                       ObjectMapper objectMapper,
-                       @Value("${dsp.client-id}") String clientId,
-                       @Value("${dsp.client-secret}") String clientSecret,
-                       @Value("${dsp.redirect-uri}") String redirectUri,
-                       @Value("${dsp.par-endpoint}") String parEndpoint,
-                       @Value("${dsp.issue-endpoint}") String issueEndpoint,
-                       @Value("${dsp.token.issue-endpoint}") String tokenEndpoint,
-                       RestTemplateBuilder restTemplateBuilder,
-                       JwtService jwtService) {
+  public DspCredentialResource(PlacementService placementService,
+                               ProgrammeMembershipService programmeMembershipService,
+                               ObjectMapper objectMapper,
+                               @Value("${dsp.client-id}") String clientId,
+                               @Value("${dsp.client-secret}") String clientSecret,
+                               @Value("${dsp.redirect-uri}") String redirectUri,
+                               @Value("${dsp.par-endpoint}") String parEndpoint,
+                               @Value("${dsp.issue-endpoint}") String issueEndpoint,
+                               @Value("${dsp.token.issue-endpoint}") String tokenEndpoint,
+                               RestTemplateBuilder restTemplateBuilder,
+                               JwtService jwtService) {
     this.placementService = placementService;
     this.programmeMembershipService = programmeMembershipService;
     this.objectMapper = objectMapper;

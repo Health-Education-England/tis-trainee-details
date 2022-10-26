@@ -37,6 +37,8 @@ import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,14 +57,15 @@ import org.springframework.web.client.RestTemplate;
 import uk.nhs.hee.trainee.details.TestJwtUtil;
 import uk.nhs.hee.trainee.details.mapper.PlacementMapper;
 import uk.nhs.hee.trainee.details.model.Placement;
+import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.dsp.ParResponse;
 import uk.nhs.hee.trainee.details.service.JwtService;
 import uk.nhs.hee.trainee.details.service.PlacementService;
 import uk.nhs.hee.trainee.details.service.ProgrammeMembershipService;
 
-@ContextConfiguration(classes = {PlacementMapper.class})
-@WebMvcTest(DspCredential.class)
-class DspCredentialTest {
+@ContextConfiguration(classes = {PlacementMapper.class, ProgrammeMembership.class})
+@WebMvcTest(DspCredentialResource.class)
+class DspCredentialResourceTest {
 
   private static final String CLIENT_ID = "11111111-2222-3333-4444-555555555555";
   private static final String CLIENT_SECRET = "636c69656e745f736563726574";
@@ -91,7 +94,7 @@ class DspCredentialTest {
     when(restTemplateBuilder.setReadTimeout(any())).thenReturn(restTemplateBuilder);
     when(restTemplateBuilder.build()).thenReturn(restTemplate);
 
-    DspCredential resource = new DspCredential(placementService, programmeMembershipService,
+    DspCredentialResource resource = new DspCredentialResource(placementService, programmeMembershipService,
         objectMapper, CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, "https://test/issuing/par",
         "https://test/issuing/authorize", "https://test/issuing/token",
         restTemplateBuilder, jwtService);
@@ -111,13 +114,16 @@ class DspCredentialTest {
     Mockito.verifyNoInteractions(restTemplate);
   }
 
-  @Test
-  void shouldReturnErrorWhenTraineePlacementNotFound() throws Exception {
-    when(placementService.getPlacementForTrainee("40", "140")).thenReturn(Optional.empty());
-
+  @ParameterizedTest
+  @ValueSource(strings = {"placement", "programmemembership"})
+  void shouldReturnErrorWhenTraineeDataNotFound(String credentialType) throws Exception {
+    when(placementService.getPlacementForTrainee("40", "140"))
+        .thenReturn(Optional.empty());
+    when(programmeMembershipService.getProgrammeMembershipForTrainee("40", "140"))
+        .thenReturn(Optional.empty());
     String token = TestJwtUtil.generateTokenForTisId("40");
 
-    mockMvc.perform(get("/api/credential/par/placement/{placementTisId}", 140)
+    mockMvc.perform(get("/api/credential/par/{credentialType}/{placementTisId}", credentialType, 140)
             .contentType(MediaType.APPLICATION_JSON)
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isUnprocessableEntity());
@@ -125,12 +131,19 @@ class DspCredentialTest {
     Mockito.verifyNoInteractions(restTemplate);
   }
 
-  @Test
-  void shouldPostSuitableParRequestWhenTraineePlacementFound() throws Exception {
+  @ParameterizedTest
+  @ValueSource(strings = {"placement", "programmemembership"})
+  void shouldPostSuitableParRequestWhenTraineeDataFound(String credentialType) throws Exception {
     Placement placement = new Placement();
     placement.setTisId("140");
     // TODO: add fields to be used in token
-    when(placementService.getPlacementForTrainee("40", "140")).thenReturn(Optional.of(placement));
+    ProgrammeMembership programmeMembership = new ProgrammeMembership();
+    programmeMembership.setTisId("140");
+    // TODO: add fields to be used in token
+    when(placementService.getPlacementForTrainee("40", "140"))
+        .thenReturn(Optional.of(placement));
+    when(programmeMembershipService.getProgrammeMembershipForTrainee("40", "140"))
+        .thenReturn(Optional.of(programmeMembership));
 
     ArgumentCaptor<HttpEntity<MultiValueMap<String, String>>> httpEntityCaptor = ArgumentCaptor.forClass(
         HttpEntity.class);
@@ -139,7 +152,7 @@ class DspCredentialTest {
 
     String token = TestJwtUtil.generateTokenForTisId("40");
 
-    mockMvc.perform(get("/api/credential/par/placement/{placementTisId}", 140)
+    mockMvc.perform(get("/api/credential/par/{credentialType}/{placementTisId}", credentialType, 140)
         .contentType(MediaType.APPLICATION_JSON)
         .header(HttpHeaders.AUTHORIZATION, token));
 
@@ -150,12 +163,19 @@ class DspCredentialTest {
     assertThat("Unexpected redirect uri.", requestBody.get("redirect_uri"), is(REDIRECT_URI));
     assertThat("Unexpected scope.", requestBody.get("scope"), is("issue.TestCredential"));
 
-    String placementJwt = jwtService.generatePlacementToken(placement);
-    assertThat("Unexpected placement data.", requestBody.get("id_token_hint"), is(placementJwt));
+    if (credentialType.equals("placement")) {
+      String placementJwt = jwtService.generatePlacementToken(placement);
+      assertThat("Unexpected placement data.",
+          requestBody.get("id_token_hint"), is(placementJwt));
+    } else if (credentialType.equals("programmemembership")) {
+      String programmeMembershipJwt = jwtService.generateProgrammeMembershipToken(programmeMembership);
+      assertThat("Unexpected programme membership data.",
+          requestBody.get("id_token_hint"), is(programmeMembershipJwt));
+    }
   }
 
   @Test
-  void shouldReturnErrorWhenTraineePlacementFoundAndGatewayErrors() throws Exception {
+  void shouldReturnErrorWhenGatewayErrors() throws Exception {
     Placement placement = new Placement();
     placement.setTisId("140");
     when(placementService.getPlacementForTrainee("40", "140")).thenReturn(Optional.of(placement));
@@ -173,7 +193,7 @@ class DspCredentialTest {
   }
 
   @Test
-  void shouldReturnErrorWhenTraineePlacementFoundAndGatewayReturnsEmptyBody() throws Exception {
+  void shouldReturnErrorWhenGatewayReturnsEmptyBody() throws Exception {
     Placement placement = new Placement();
     placement.setTisId("140");
     when(placementService.getPlacementForTrainee("40", "140")).thenReturn(Optional.of(placement));
@@ -190,11 +210,18 @@ class DspCredentialTest {
         .andExpect(status().isInternalServerError());
   }
 
-  @Test
-  void shouldReturnAuthorizeRequestUriWhenTraineePlacementFound() throws Exception {
+  @ParameterizedTest
+  @ValueSource(strings = {"placement", "programmemembership"})
+  void shouldReturnAuthorizeRequestUriWhenTraineeDataFound(String credentialType) throws Exception {
     Placement placement = new Placement();
     placement.setTisId("140");
-    when(placementService.getPlacementForTrainee("40", "140")).thenReturn(Optional.of(placement));
+    when(placementService.getPlacementForTrainee("40", "140"))
+        .thenReturn(Optional.of(placement));
+
+    ProgrammeMembership programmeMembership = new ProgrammeMembership();
+    programmeMembership.setTisId("140");
+    when(programmeMembershipService.getProgrammeMembershipForTrainee("40", "140"))
+        .thenReturn(Optional.of(programmeMembership));
 
     ParResponse parResponse = new ParResponse();
     parResponse.setRequestUri(PAR_RESPONSE_REQUEST_URI);
@@ -205,7 +232,7 @@ class DspCredentialTest {
 
     String token = TestJwtUtil.generateTokenForTisId("40");
 
-    mockMvc.perform(get("/api/credential/par/placement/{placementTisId}", 140)
+    mockMvc.perform(get("/api/credential/par/{credentialType}/{placementTisId}", credentialType, 140)
             .contentType(MediaType.APPLICATION_JSON)
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isCreated())
