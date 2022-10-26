@@ -26,6 +26,7 @@ import static io.jsonwebtoken.SignatureAlgorithm.HS256;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.SignatureException;
+import io.jsonwebtoken.impl.TextCodec;
 import io.jsonwebtoken.impl.crypto.DefaultJwtSignatureValidator;
 import java.util.Base64;
 import java.util.Date;
@@ -114,10 +115,9 @@ public class JwtService {
    * @throws SignatureException if the token can not be verified
    */
   public String getTokenPayload(String jwtToken) throws SignatureException {
-    //TODO: need public key I think
-//    if (!canVerifyToken(jwtToken)) {
-//      throw new SignatureException("Could not verify JWT token integrity!");
-//    }
+    if (!canVerifyToken(jwtToken)) {
+      throw new SignatureException("Could not verify JWT token integrity!");
+    }
 
     String[] chunks = jwtToken.split("\\.");
     Base64.Decoder decoder = Base64.getUrlDecoder();
@@ -131,16 +131,17 @@ public class JwtService {
    * @param jwtToken the JWT token to verify
    * @return true if the token can be verified, otherwise false
    */
-  private boolean canVerifyToken(String jwtToken) {
+  public boolean canVerifyToken(String jwtToken) {
     String[] chunks = jwtToken.split("\\.");
 
     String tokenWithoutSignature = chunks[0] + "." + chunks[1];
     String signature = chunks[2];
     SignatureAlgorithm sa = HS256; //hardcoded here, but could be retrieved from header.alg
-    //We need a 'public' key for this, instead of the private one used below I think
-    SecretKeySpec secretKeySpec = new SecretKeySpec(this.tokenSigningKey.getBytes(), sa.getJcaName());
-    DefaultJwtSignatureValidator validator = new DefaultJwtSignatureValidator(sa, secretKeySpec);
 
+    byte[] keyBytes = TextCodec.BASE64.decode(this.tokenSigningKey);
+    SecretKeySpec secretKeySpec = new SecretKeySpec(keyBytes, sa.getJcaName());
+
+    DefaultJwtSignatureValidator validator = new DefaultJwtSignatureValidator(sa, secretKeySpec);
     return validator.isValid(tokenWithoutSignature, signature);
   }
 }
