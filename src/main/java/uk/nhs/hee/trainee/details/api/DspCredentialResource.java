@@ -203,18 +203,18 @@ public class DspCredentialResource {
    *
    * @param code  The auth code
    * @param state The state used in the original PAR call
-   * @return The credential contents JSON or InternalServerError if the response is invalid.
-   * @throws HttpClientErrorException.BadRequest if the code has expired.
+   * @return The credential contents JSON or Bad Request if the code or state are invalid / expired,
+   * or InternalServerError if the gateway response is invalid.
    */
   @GetMapping("/payload")
   public ResponseEntity<String> getCredentialPayload(@RequestParam String code,
-      @RequestParam String state) throws HttpClientErrorException.BadRequest {
+      @RequestParam String state) {
     //I wonder if we need @RequestHeader(HttpHeaders.AUTHORIZATION) String token just to be safer
     //TODO sanitise to prevent log injection
     log.info("Get details for issued credential with code {}", code);
 
     if (!STATE.equals(state)) {
-      log.warn("State does not match that of original PAR request");
+      log.info("State does not match that of original PAR request");
       return ResponseEntity.badRequest().build();
     }
 
@@ -238,8 +238,13 @@ public class DspCredentialResource {
 
     HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(bodyPair, headers);
 
-    ResponseEntity<IssueTokenResponse> tokenResponse
-        = restTemplate.postForEntity(tokenUri, tokenRequest, IssueTokenResponse.class);
+    ResponseEntity<IssueTokenResponse> tokenResponse;
+    try {
+      tokenResponse = restTemplate.postForEntity(tokenUri, tokenRequest, IssueTokenResponse.class);
+    } catch (HttpClientErrorException e) {
+      log.info("Authorization code is invalid or expired");
+      return ResponseEntity.badRequest().build();
+    }
 
     if (tokenResponse.getStatusCode() == HttpStatus.OK) {
       IssueTokenResponse token = tokenResponse.getBody();

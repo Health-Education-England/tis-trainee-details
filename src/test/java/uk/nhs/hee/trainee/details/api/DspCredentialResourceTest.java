@@ -47,17 +47,20 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import uk.nhs.hee.trainee.details.TestJwtUtil;
 import uk.nhs.hee.trainee.details.mapper.PlacementMapper;
 import uk.nhs.hee.trainee.details.model.Placement;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
+import uk.nhs.hee.trainee.details.model.dsp.IssueTokenResponse;
 import uk.nhs.hee.trainee.details.model.dsp.ParResponse;
 import uk.nhs.hee.trainee.details.service.JwtService;
 import uk.nhs.hee.trainee.details.service.PlacementService;
@@ -74,6 +77,7 @@ class DspCredentialResourceTest {
 
   private static final String STATE = "someString"; //TODO consider this
   private static final String INVALID_STATE = "anotherString";
+  private static final String INVALID_CODE = "123ABC";
 
   @Autowired
   private ObjectMapper objectMapper;
@@ -249,6 +253,21 @@ class DspCredentialResourceTest {
     String token = TestJwtUtil.generateTokenForTisId("40");
 
     mockMvc.perform(get("/api/credential/payload/?code=abc&state={INVALID_STATE}", INVALID_STATE)
+            .contentType(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void shouldThrowBadRequestWhenInvalidOrExpiredCodeUsed() throws Exception {
+    String token = TestJwtUtil.generateTokenForTisId("40");
+
+    ArgumentCaptor<HttpEntity<MultiValueMap<String, String>>> httpEntityCaptor = ArgumentCaptor.forClass(
+        HttpEntity.class);
+    when(restTemplate.postForEntity(any(URI.class), httpEntityCaptor.capture(),
+        eq(IssueTokenResponse.class))).thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
+
+    mockMvc.perform(get("/api/credential/payload/?code={INVALID_CODE}&state={STATE}", INVALID_CODE, STATE)
             .contentType(MediaType.APPLICATION_JSON)
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isBadRequest());
