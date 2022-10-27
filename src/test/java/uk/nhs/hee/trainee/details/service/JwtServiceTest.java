@@ -23,7 +23,6 @@ class JwtServiceTest {
   private String token;
   private String header;
   private String payload;
-  private String signature;
 
   @BeforeEach
   void setup() {
@@ -36,7 +35,6 @@ class JwtServiceTest {
 
     header = new String(decoder.decode(chunks[0]));
     payload = new String(decoder.decode(chunks[1]));
-    signature = new String(decoder.decode(chunks[2]));
   }
 
   @Test
@@ -95,7 +93,7 @@ class JwtServiceTest {
 
   @Test
   void canGetTokenPayload() throws JsonProcessingException {
-    String payload = service.getTokenPayload(token);
+    String payload = service.getTokenPayload(token, false);
     ObjectMapper mapper = new ObjectMapper();
     JsonNode payloadNode = mapper.readTree(payload);
     //TODO rework when real data in payload:

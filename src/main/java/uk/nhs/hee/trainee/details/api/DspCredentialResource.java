@@ -22,7 +22,6 @@
 package uk.nhs.hee.trainee.details.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.jsonwebtoken.SignatureException;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -48,6 +47,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import uk.nhs.hee.trainee.details.model.Placement;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
@@ -114,7 +114,7 @@ public class DspCredentialResource {
    *
    * @param credentialType 'placement' or 'programmemembership'
    * @param tisId The ID of the placement / programme membership.
-   * @return The PAR response, or server 500 error if the request times out
+   * @return The PAR response, or Internal Server Error if the request times out
    */
   @GetMapping(value = "/par/{credentialType:placement|programmemembership}/{tisId}")
   public ResponseEntity<ParResponse> getCredentialParUri(
@@ -185,34 +185,30 @@ public class DspCredentialResource {
 
     HttpEntity<MultiValueMap<String, String>> parRequest = new HttpEntity<>(bodyPair, headers);
 
-    ResponseEntity<ParResponse> parResponse = restTemplate.postForEntity(parUri, parRequest,
+    ResponseEntity<ParResponse> parResponseEntity = restTemplate.postForEntity(parUri, parRequest,
         ParResponse.class);
-    if (parResponse.getStatusCode() == HttpStatus.CREATED && parResponse.getBody() != null) {
-      String location = String.format("%s?client_id=%s&request_uri=%s", issueEndpoint, clientId,
-          parResponse.getBody().getRequestUri());
-      return ResponseEntity.created(URI.create(location)).build();
-    } else {
-      return ResponseEntity.internalServerError().build();
+    if (parResponseEntity.getStatusCode() == HttpStatus.CREATED) {
+      ParResponse parResponse = parResponseEntity.getBody();
+      if (parResponse != null) {
+        String location = String.format("%s?client_id=%s&request_uri=%s", issueEndpoint, clientId,
+            parResponse.getRequestUri());
+        return ResponseEntity.created(URI.create(location)).build();
+      }
     }
-
-    //Now Front-end makes Authorize request with request_uri - QR code shown to user for approval, etc.
-    //the 'authorize' response then redirects to e.g. /profile?code=xxx&state=yyy
-    //That page would in turn need to call the API below to get the actual details of the token,
-    //if desired
+    return ResponseEntity.internalServerError().build();
   }
 
   /**
-   * Get the credential content from an issued credential.
+   * Get the credential content from a (recently) issued credential.
    *
    * @param code  The auth code
    * @param state The state used in the original PAR call
-   * @return The credential contents JSON
-   * @throws SignatureException if the JWT token signature is invalid
+   * @return The credential contents JSON or InternalServerError if the response is invalid.
+   * @throws HttpClientErrorException.BadRequest if the code has expired.
    */
   @GetMapping("/payload")
   public ResponseEntity<String> getCredentialPayload(@RequestParam String code,
-      @RequestParam String state)
-      throws SignatureException {
+      @RequestParam String state) throws HttpClientErrorException.BadRequest {
     //I wonder if we need @RequestHeader(HttpHeaders.AUTHORIZATION) String token just to be safer
     //TODO sanitise to prevent log injection
     log.info("Get details for issued credential with code {}", code);
@@ -245,11 +241,13 @@ public class DspCredentialResource {
     ResponseEntity<IssueTokenResponse> tokenResponse
         = restTemplate.postForEntity(tokenUri, tokenRequest, IssueTokenResponse.class);
 
-    if (tokenResponse.getStatusCode() == HttpStatus.OK && tokenResponse.getBody() != null) {
+    if (tokenResponse.getStatusCode() == HttpStatus.OK) {
       IssueTokenResponse token = tokenResponse.getBody();
-      return ResponseEntity.ok(jwtService.getTokenPayload(token.getIdToken()));
-    } else {
-      return ResponseEntity.internalServerError().build();
+      if (token != null) {
+        //we did not sign the credential token, so we currently cannot verify the signature
+        return ResponseEntity.ok(jwtService.getTokenPayload(token.getIdToken(), false));
+      }
     }
+    return ResponseEntity.internalServerError().build();
   }
 }

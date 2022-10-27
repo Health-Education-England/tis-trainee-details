@@ -43,7 +43,7 @@ import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 @Service
 public class JwtService {
 
-  private final Long JWT_EXPIRATION_MS = 31556926000L; //1 year in milliseconds
+  private static final Long JWT_EXPIRATION_MS = 31556926000L; //1 year in milliseconds
   private final String tokenIssuer;
   private final String tokenAudience;
   private final String tokenSigningKey;
@@ -111,11 +111,12 @@ public class JwtService {
    * Retrieve the payload from a JWT token.
    *
    * @param jwtToken the JWT token to process
+   * @param verifySignature whether to verify the signature using our signing key
    * @return the payload JSON string
    * @throws SignatureException if the token can not be verified
    */
-  public String getTokenPayload(String jwtToken) throws SignatureException {
-    if (!canVerifyToken(jwtToken)) {
+  public String getTokenPayload(String jwtToken, boolean verifySignature) throws SignatureException {
+    if (verifySignature && !canVerifyToken(jwtToken)) {
       throw new SignatureException("Could not verify JWT token integrity!");
     }
 
@@ -126,7 +127,7 @@ public class JwtService {
   }
 
   /**
-   * Verify the integrity of a signed JWT token.
+   * Verify the integrity of a signed JWT token using our signing key.
    *
    * @param jwtToken the JWT token to verify
    * @return true if the token can be verified, otherwise false
