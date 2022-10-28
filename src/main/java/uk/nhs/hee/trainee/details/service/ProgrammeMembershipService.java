@@ -26,7 +26,6 @@ import java.util.Objects;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapper;
-import uk.nhs.hee.trainee.details.model.Placement;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
