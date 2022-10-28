@@ -29,6 +29,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -53,6 +54,7 @@ class ProgrammeMembershipServiceTest {
   private static final String ORIGINAL_SUFFIX = "pre";
   private static final String NEW_PROGRAMME_MEMBERSHIP_ID = "1";
   private static final String EXISTING_PROGRAMME_MEMBERSHIP_ID = "2";
+  private static final String NOT_EXISTING_PROGRAMME_MEMBERSHIP_ID = "3";
 
   private ProgrammeMembershipService service;
   private TraineeProfileRepository repository;
@@ -62,6 +64,70 @@ class ProgrammeMembershipServiceTest {
     repository = mock(TraineeProfileRepository.class);
     service = new ProgrammeMembershipService(repository,
         Mappers.getMapper(ProgrammeMembershipMapper.class));
+  }
+
+  @Test
+  void shouldNotGetProgrammeMembershipWhenTraineeIdNotFound() {
+    Optional<ProgrammeMembership> programmeMembership = service
+        .getProgrammeMembershipForTrainee("notFound", EXISTING_PROGRAMME_MEMBERSHIP_ID);
+    when(repository.findByTraineeTisId("notFound")).thenReturn(null);
+
+    assertThat("Unexpected optional isEmpty flag.",
+        programmeMembership.isEmpty(), is(true));
+  }
+
+  @Test
+  void shouldNotGetProgrammeMembershipWhenTraineeFoundAndProgrammeMembershipNotExists() {
+    ProgrammeMembership programmeMembership = new ProgrammeMembership();
+    programmeMembership.setTisId(EXISTING_PROGRAMME_MEMBERSHIP_ID);
+    programmeMembership.setStartDate(START_DATE.plusDays(100));
+    programmeMembership.setEndDate(END_DATE.plusDays(100));
+    programmeMembership.setProgrammeName(PROGRAMME_NAME);
+    programmeMembership.setProgrammeNumber(PROGRAMME_NUMBER);
+    programmeMembership.setProgrammeMembershipType(PROGRAMME_MEMBERSHIP_TYPE);
+    programmeMembership.setProgrammeCompletionDate(COMPLETION_DATE);
+    programmeMembership.setProgrammeTisId(PROGRAMME_TIS_ID);
+    programmeMembership.setEndDate(END_DATE);
+    programmeMembership.setManagingDeanery(MANAGING_DEANERY);
+    programmeMembership.setProgrammeCompletionDate(COMPLETION_DATE);
+
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(List.of(programmeMembership));
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    Optional<ProgrammeMembership> optionalProgrammeMembership = service
+        .getProgrammeMembershipForTrainee(TRAINEE_TIS_ID, NOT_EXISTING_PROGRAMME_MEMBERSHIP_ID);
+
+    assertThat("Unexpected optional isEmpty flag.",
+        optionalProgrammeMembership.isEmpty(), is(true));
+  }
+
+  @Test
+  void shouldGetProgrammeMembershipWhenTraineeFoundAndProgrammeMembershipExists() {
+    ProgrammeMembership programmeMembership = new ProgrammeMembership();
+    programmeMembership.setTisId(EXISTING_PROGRAMME_MEMBERSHIP_ID);
+    programmeMembership.setStartDate(START_DATE.plusDays(100));
+    programmeMembership.setEndDate(END_DATE.plusDays(100));
+    programmeMembership.setProgrammeName(PROGRAMME_NAME);
+    programmeMembership.setProgrammeNumber(PROGRAMME_NUMBER);
+    programmeMembership.setProgrammeMembershipType(PROGRAMME_MEMBERSHIP_TYPE);
+    programmeMembership.setProgrammeCompletionDate(COMPLETION_DATE);
+    programmeMembership.setProgrammeTisId(PROGRAMME_TIS_ID);
+    programmeMembership.setEndDate(END_DATE);
+    programmeMembership.setManagingDeanery(MANAGING_DEANERY);
+    programmeMembership.setProgrammeCompletionDate(COMPLETION_DATE);
+
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(List.of(programmeMembership));
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    Optional<ProgrammeMembership> optionalProgrammeMembership = service
+        .getProgrammeMembershipForTrainee(TRAINEE_TIS_ID, EXISTING_PROGRAMME_MEMBERSHIP_ID);
+
+    assertThat("Unexpected optional isEmpty flag.",
+        optionalProgrammeMembership.isEmpty(), is(false));
+    assertThat("Unexpected programmeMembership.",
+        optionalProgrammeMembership.get(), is(programmeMembership));
   }
 
   @Test

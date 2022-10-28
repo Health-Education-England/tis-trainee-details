@@ -23,3 +23,15 @@ application:
 
 mongock:
   migration-scan-package: uk.nhs.hee.trainee.details.migration
+
+dsp:
+  client-id: ${DSP_CLIENT_ID:}
+  client-secret: ${DSP_CLIENT_SECRET:}
+  redirect-uri: ${DSP_REDIRECT_URI:}
+  par-endpoint: ${DSP_PAR_ENDPOINT:}
+  authorize-endpoint: ${DSP_AUTHORIZE_ENDPOINT:}
+  token:
+    issuer: ${DSP_TOKEN_ISSUER:}
+    audience: ${DSP_TOKEN_AUDIENCE:}
+    signing-key: ${DSP_TOKEN_SIGNING_KEY:}
+    issue-endpoint: ${DSP_TOKEN_ISSUE_ENDPOINT:}
