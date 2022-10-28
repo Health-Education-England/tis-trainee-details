@@ -28,6 +28,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -75,9 +76,12 @@ class DspCredentialResourceTest {
   private static final String REDIRECT_URI = "https://redirect.uri";
   private static final String PAR_RESPONSE_REQUEST_URI = "https://par-response/request-uri";
 
-  private static final String STATE = "someString"; //TODO consider this
-  private static final String INVALID_STATE = "anotherString";
-  private static final String INVALID_CODE = "123ABC";
+  private static final String VALID_STATE = "someString";
+  private static final String INVALID_STATE = "invalid state";
+  private static final String VALID_CODE = "valid code";
+  private static final String INVALID_CODE = "invalid code";
+  private static final String VALID_TOKEN = "valid token";
+  private static final String PAYLOAD = "payload";
 
   @Autowired
   private ObjectMapper objectMapper;
@@ -101,7 +105,8 @@ class DspCredentialResourceTest {
     when(restTemplateBuilder.setReadTimeout(any())).thenReturn(restTemplateBuilder);
     when(restTemplateBuilder.build()).thenReturn(restTemplate);
 
-    DspCredentialResource resource = new DspCredentialResource(placementService, programmeMembershipService,
+    DspCredentialResource resource
+        = new DspCredentialResource(placementService, programmeMembershipService,
         objectMapper, CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, "https://test/issuing/par",
         "https://test/issuing/authorize", "https://test/issuing/token",
         restTemplateBuilder, jwtService);
@@ -130,7 +135,8 @@ class DspCredentialResourceTest {
         .thenReturn(Optional.empty());
     String token = TestJwtUtil.generateTokenForTisId("40");
 
-    mockMvc.perform(get("/api/credential/par/{credentialType}/{placementTisId}", credentialType, 140)
+    mockMvc.perform(
+        get("/api/credential/par/{credentialType}/{placementTisId}", credentialType, 140)
             .contentType(MediaType.APPLICATION_JSON)
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isUnprocessableEntity());
@@ -152,14 +158,15 @@ class DspCredentialResourceTest {
     when(programmeMembershipService.getProgrammeMembershipForTrainee("40", "140"))
         .thenReturn(Optional.of(programmeMembership));
 
-    ArgumentCaptor<HttpEntity<MultiValueMap<String, String>>> httpEntityCaptor = ArgumentCaptor.forClass(
-        HttpEntity.class);
+    ArgumentCaptor<HttpEntity<MultiValueMap<String, String>>> httpEntityCaptor
+        = ArgumentCaptor.forClass(HttpEntity.class);
     when(restTemplate.postForEntity(any(URI.class), httpEntityCaptor.capture(),
         eq(ParResponse.class))).thenReturn(ResponseEntity.ok(new ParResponse()));
 
     String token = TestJwtUtil.generateTokenForTisId("40");
 
-    mockMvc.perform(get("/api/credential/par/{credentialType}/{placementTisId}", credentialType, 140)
+    mockMvc.perform(
+        get("/api/credential/par/{credentialType}/{placementTisId}", credentialType, 140)
         .contentType(MediaType.APPLICATION_JSON)
         .header(HttpHeaders.AUTHORIZATION, token));
 
@@ -175,7 +182,8 @@ class DspCredentialResourceTest {
       assertThat("Unexpected placement data.",
           requestBody.get("id_token_hint"), is(placementJwt));
     } else if (credentialType.equals("programmemembership")) {
-      String programmeMembershipJwt = jwtService.generateProgrammeMembershipToken(programmeMembership);
+      String programmeMembershipJwt
+          = jwtService.generateProgrammeMembershipToken(programmeMembership);
       assertThat("Unexpected programme membership data.",
           requestBody.get("id_token_hint"), is(programmeMembershipJwt));
     }
@@ -185,7 +193,8 @@ class DspCredentialResourceTest {
   void shouldReturnErrorWhenGatewayErrors() throws Exception {
     Placement placement = new Placement();
     placement.setTisId("140");
-    when(placementService.getPlacementForTrainee("40", "140")).thenReturn(Optional.of(placement));
+    when(placementService.getPlacementForTrainee("40", "140"))
+        .thenReturn(Optional.of(placement));
 
     ResponseEntity<ParResponse> parResponseEntity = ResponseEntity.badRequest().build();
     when(restTemplate.postForEntity(any(URI.class), any(HttpEntity.class),
@@ -203,7 +212,8 @@ class DspCredentialResourceTest {
   void shouldReturnErrorWhenGatewayReturnsEmptyBody() throws Exception {
     Placement placement = new Placement();
     placement.setTisId("140");
-    when(placementService.getPlacementForTrainee("40", "140")).thenReturn(Optional.of(placement));
+    when(placementService.getPlacementForTrainee("40", "140"))
+        .thenReturn(Optional.of(placement));
 
     ResponseEntity<ParResponse> parResponseEntity = ResponseEntity.created(URI.create("")).build();
     when(restTemplate.postForEntity(any(URI.class), any(HttpEntity.class),
@@ -239,7 +249,8 @@ class DspCredentialResourceTest {
 
     String token = TestJwtUtil.generateTokenForTisId("40");
 
-    mockMvc.perform(get("/api/credential/par/{credentialType}/{placementTisId}", credentialType, 140)
+    mockMvc.perform(
+        get("/api/credential/par/{credentialType}/{placementTisId}", credentialType, 140)
             .contentType(MediaType.APPLICATION_JSON)
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isCreated())
@@ -250,26 +261,73 @@ class DspCredentialResourceTest {
 
   @Test
   void shouldReturnBadRequestForPayloadWithInvalidState() throws Exception {
-    String token = TestJwtUtil.generateTokenForTisId("40");
+    String authToken = TestJwtUtil.generateTokenForTisId("40");
 
-    mockMvc.perform(get("/api/credential/payload/?code=abc&state={INVALID_STATE}", INVALID_STATE)
+    mockMvc.perform(
+        get("/api/credential/payload/?code={VALID_CODE}&state={INVALID_STATE}",
+            VALID_CODE, INVALID_STATE)
             .contentType(MediaType.APPLICATION_JSON)
-            .header(HttpHeaders.AUTHORIZATION, token))
+            .header(HttpHeaders.AUTHORIZATION, authToken))
         .andExpect(status().isBadRequest());
   }
 
   @Test
   void shouldThrowBadRequestWhenInvalidOrExpiredCodeUsed() throws Exception {
-    String token = TestJwtUtil.generateTokenForTisId("40");
+    String authToken = TestJwtUtil.generateTokenForTisId("40");
 
-    ArgumentCaptor<HttpEntity<MultiValueMap<String, String>>> httpEntityCaptor = ArgumentCaptor.forClass(
-        HttpEntity.class);
+    ArgumentCaptor<HttpEntity<MultiValueMap<String, String>>> httpEntityCaptor
+        = ArgumentCaptor.forClass(HttpEntity.class);
     when(restTemplate.postForEntity(any(URI.class), httpEntityCaptor.capture(),
-        eq(IssueTokenResponse.class))).thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
+        eq(IssueTokenResponse.class)))
+        .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
 
-    mockMvc.perform(get("/api/credential/payload/?code={INVALID_CODE}&state={STATE}", INVALID_CODE, STATE)
+    mockMvc.perform(
+        get("/api/credential/payload/?code={INVALID_CODE}&state={VALID_STATE}",
+            INVALID_CODE, VALID_STATE)
             .contentType(MediaType.APPLICATION_JSON)
-            .header(HttpHeaders.AUTHORIZATION, token))
+            .header(HttpHeaders.AUTHORIZATION, authToken))
         .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void shouldThrowInternalServerErrorWhenValidRequestButIdTokenIsNull() throws Exception {
+    String authToken = TestJwtUtil.generateTokenForTisId("40");
+    IssueTokenResponse credentialToken = new IssueTokenResponse();
+
+    ArgumentCaptor<HttpEntity<MultiValueMap<String, String>>> httpEntityCaptor
+        = ArgumentCaptor.forClass(HttpEntity.class);
+    when(restTemplate.postForEntity(any(URI.class), httpEntityCaptor.capture(),
+        eq(IssueTokenResponse.class)))
+        .thenReturn(ResponseEntity.ok(credentialToken));
+
+    mockMvc.perform(
+        get("/api/credential/payload/?code={VALID_CODE}&state={VALID_STATE}",
+            VALID_CODE, VALID_STATE)
+            .contentType(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, authToken))
+        .andExpect(status().isInternalServerError());
+  }
+
+  @Test
+  void shouldReturnPayloadWhenValidRequestWithIdToken() throws Exception {
+    String authToken = TestJwtUtil.generateTokenForTisId("40");
+    IssueTokenResponse credentialToken = new IssueTokenResponse();
+    credentialToken.setIdToken(VALID_TOKEN);
+
+    ArgumentCaptor<HttpEntity<MultiValueMap<String, String>>> httpEntityCaptor
+        = ArgumentCaptor.forClass(HttpEntity.class);
+    when(restTemplate.postForEntity(any(URI.class), httpEntityCaptor.capture(),
+        eq(IssueTokenResponse.class)))
+        .thenReturn(ResponseEntity.ok(credentialToken));
+
+    when(jwtService.getTokenPayload(VALID_TOKEN, false)).thenReturn(PAYLOAD);
+
+    mockMvc.perform(
+        get("/api/credential/payload/?code={VALID_CODE}&state={VALID_STATE}",
+            VALID_CODE, VALID_STATE)
+            .contentType(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, authToken))
+        .andExpect(status().isOk())
+        .andExpect(content().string(PAYLOAD));
   }
 }

@@ -52,12 +52,13 @@ class JwtServiceTest {
         payloadNode.get("iss").asText("missing"), is(TOKEN_ISSUER));
     //TODO: could check that nbf and iat are in the recent past, and exp is in the future?
     assertThat("Payload nbf is incorrect",
-        payloadNode.get("nbf").asLong(0)>0, is(true));
+        payloadNode.get("nbf").asLong(0) > 0, is(true));
     assertThat("Payload exp is incorrect",
-        payloadNode.get("exp").asLong(0)>0, is(true));
+        payloadNode.get("exp").asLong(0) > 0, is(true));
     assertThat("Payload iat is incorrect",
-        payloadNode.get("iat").asLong(0)>0, is(true));
+        payloadNode.get("iat").asLong(0) > 0, is(true));
   }
+
   @Test
   void generatePlacementTokenHasCorrectDetails() throws JsonProcessingException {
     ObjectMapper mapper = new ObjectMapper();
@@ -88,7 +89,7 @@ class JwtServiceTest {
 
   @Test
   void canVerifyValidToken() {
-    assertThat("Token could not be verified", service.canVerifyToken(token), is (true));
+    assertThat("Token could not be verified", service.canVerifyToken(token), is(true));
   }
 
   @Test

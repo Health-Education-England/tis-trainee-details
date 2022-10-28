@@ -79,7 +79,21 @@ public class DspCredentialResource {
   private final RestTemplateBuilder restTemplateBuilder;
   private final JwtService jwtService;
 
-
+  /**
+   * Instantiate the DSP Credential Resource.
+   *
+   * @param placementService the Placement service
+   * @param programmeMembershipService the Programme membership service
+   * @param objectMapper the Object mapper
+   * @param clientId the DSP client ID
+   * @param clientSecret the DSP client secret
+   * @param redirectUri the DSP redirect URI
+   * @param parEndpoint the DSP Pushed Authorization Request (PAR) endpoint
+   * @param authorizeEndpoint the DSP credential Authorize Request endpoint
+   * @param tokenEndpoint the DSP Token Request endpoint
+   * @param restTemplateBuilder the REST template builder
+   * @param jwtService the JWT service
+   */
   public DspCredentialResource(PlacementService placementService,
                                ProgrammeMembershipService programmeMembershipService,
                                ObjectMapper objectMapper,
@@ -87,7 +101,7 @@ public class DspCredentialResource {
                                @Value("${dsp.client-secret}") String clientSecret,
                                @Value("${dsp.redirect-uri}") String redirectUri,
                                @Value("${dsp.par-endpoint}") String parEndpoint,
-                               @Value("${dsp.issue-endpoint}") String issueEndpoint,
+                               @Value("${dsp.authorize-endpoint}") String authorizeEndpoint,
                                @Value("${dsp.token.issue-endpoint}") String tokenEndpoint,
                                RestTemplateBuilder restTemplateBuilder,
                                JwtService jwtService) {
@@ -98,7 +112,7 @@ public class DspCredentialResource {
     this.clientSecret = clientSecret;
     this.redirectUri = redirectUri;
     this.parEndpoint = parEndpoint;
-    this.issueEndpoint = issueEndpoint;
+    this.issueEndpoint = authorizeEndpoint;
     this.tokenEndpoint = tokenEndpoint;
     this.restTemplateBuilder = restTemplateBuilder;
     this.jwtService = jwtService;
@@ -108,8 +122,8 @@ public class DspCredentialResource {
    * Get the PAR response, including the request URI. We assume the trainee has been verified. This
    * would be called by the front-end when the user clicks on the 'Add to wallet' button for a
    * placement or programme membership.
-   * <p>
-   * TODO: pass the content from the front-end (as a JWT so that we can verify that it has not
+   *
+   * <p>TODO: pass the content from the front-end (as a JWT so that we can verify that it has not
    * been tampered with).
    *
    * @param credentialType 'placement' or 'programmemembership'
@@ -128,7 +142,8 @@ public class DspCredentialResource {
     String[] tokenSections = token.split("\\.");
     byte[] payloadBytes = Base64.getUrlDecoder()
         .decode(tokenSections[1].getBytes(StandardCharsets.UTF_8));
-    //TODO: should we verify the token signature hash? We'd need the Cognito JWK for the userpool I think.
+    //TODO: should we verify the token signature hash?
+    // We'd need the Cognito JWK for the userpool I think.
     // But the endpoint is not publicly accessible so maybe this is ok.
     try {
       Map<?, ?> payload = objectMapper.readValue(payloadBytes, Map.class);
@@ -163,17 +178,7 @@ public class DspCredentialResource {
       scope = "issue.TestCredential"; //TODO set up issue.ProgrammeMembership
     }
 
-    RestTemplate restTemplate = this.restTemplateBuilder
-        .setConnectTimeout(Duration.ofMillis(CONNECT_TIMEOUT))
-        .setReadTimeout(Duration.ofMillis(READ_TIMEOUT))
-        .build();
-
-    URI parUri = URI.create(this.parEndpoint);
     String nonce = UUID.randomUUID().toString();
-    HttpHeaders headers = new HttpHeaders();
-    headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-    headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-
     MultiValueMap<String, String> bodyPair = new LinkedMultiValueMap<>();
     bodyPair.add("client_id", this.clientId);
     bodyPair.add("client_secret", this.clientSecret);
@@ -183,7 +188,15 @@ public class DspCredentialResource {
     bodyPair.add("nonce", nonce);
     bodyPair.add("state", STATE);
 
+    HttpHeaders headers = new HttpHeaders();
+    headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+    headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
     HttpEntity<MultiValueMap<String, String>> parRequest = new HttpEntity<>(bodyPair, headers);
+    RestTemplate restTemplate = this.restTemplateBuilder
+        .setConnectTimeout(Duration.ofMillis(CONNECT_TIMEOUT))
+        .setReadTimeout(Duration.ofMillis(READ_TIMEOUT))
+        .build();
+    URI parUri = URI.create(this.parEndpoint);
 
     ResponseEntity<ParResponse> parResponseEntity = restTemplate.postForEntity(parUri, parRequest,
         ParResponse.class);
@@ -204,7 +217,7 @@ public class DspCredentialResource {
    * @param code  The auth code
    * @param state The state used in the original PAR call
    * @return The credential contents JSON or Bad Request if the code or state are invalid / expired,
-   * or InternalServerError if the gateway response is invalid.
+   *         or InternalServerError if the gateway response is invalid.
    */
   @GetMapping("/payload")
   public ResponseEntity<String> getCredentialPayload(@RequestParam String code,
@@ -248,7 +261,7 @@ public class DspCredentialResource {
 
     if (tokenResponse.getStatusCode() == HttpStatus.OK) {
       IssueTokenResponse token = tokenResponse.getBody();
-      if (token != null) {
+      if (token != null && token.getIdToken() != null) {
         //we did not sign the credential token, so we currently cannot verify the signature
         return ResponseEntity.ok(jwtService.getTokenPayload(token.getIdToken(), false));
       }

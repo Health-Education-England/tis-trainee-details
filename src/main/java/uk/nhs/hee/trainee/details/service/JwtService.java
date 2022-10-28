@@ -115,7 +115,8 @@ public class JwtService {
    * @return the payload JSON string
    * @throws SignatureException if the token can not be verified
    */
-  public String getTokenPayload(String jwtToken, boolean verifySignature) throws SignatureException {
+  public String getTokenPayload(String jwtToken, boolean verifySignature)
+      throws SignatureException {
     if (verifySignature && !canVerifyToken(jwtToken)) {
       throw new SignatureException("Could not verify JWT token integrity!");
     }
