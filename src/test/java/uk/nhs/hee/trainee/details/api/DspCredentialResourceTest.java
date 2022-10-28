@@ -310,9 +310,9 @@ class DspCredentialResourceTest {
 
   @Test
   void shouldReturnPayloadWhenValidRequestWithIdToken() throws Exception {
-    String authToken = TestJwtUtil.generateTokenForTisId("40");
     IssueTokenResponse credentialToken = new IssueTokenResponse();
     credentialToken.setIdToken(VALID_TOKEN);
+    String authToken = TestJwtUtil.generateTokenForTisId("40");
 
     ArgumentCaptor<HttpEntity<MultiValueMap<String, String>>> httpEntityCaptor
         = ArgumentCaptor.forClass(HttpEntity.class);

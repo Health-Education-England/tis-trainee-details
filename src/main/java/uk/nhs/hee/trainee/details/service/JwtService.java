@@ -63,7 +63,6 @@ public class JwtService {
    * @return the JWT token string
    */
   public String generatePlacementToken(Placement placement) {
-    //TODO real values
     Map<String, Object> claims = new HashMap<>();
     claims.put("givenName", "Joe");
     claims.put("familyName", "Bloggs");
@@ -79,7 +78,6 @@ public class JwtService {
    * @return the JWT token string
    */
   public String generateProgrammeMembershipToken(ProgrammeMembership programmeMembership) {
-    //TODO real values
     Map<String, Object> claims = new HashMap<>();
     claims.put("givenName", "Joe");
     claims.put("familyName", "Bloggs");
@@ -110,10 +108,10 @@ public class JwtService {
   /**
    * Retrieve the payload from a JWT token.
    *
-   * @param jwtToken the JWT token to process
+   * @param jwtToken        the JWT token to process
    * @param verifySignature whether to verify the signature using our signing key
    * @return the payload JSON string
-   * @throws SignatureException if the token can not be verified
+   * @throws SignatureException if the token cannot be verified
    */
   public String getTokenPayload(String jwtToken, boolean verifySignature)
       throws SignatureException {

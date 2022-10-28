@@ -82,17 +82,17 @@ public class DspCredentialResource {
   /**
    * Instantiate the DSP Credential Resource.
    *
-   * @param placementService the Placement service
+   * @param placementService           the Placement service
    * @param programmeMembershipService the Programme membership service
-   * @param objectMapper the Object mapper
-   * @param clientId the DSP client ID
-   * @param clientSecret the DSP client secret
-   * @param redirectUri the DSP redirect URI
-   * @param parEndpoint the DSP Pushed Authorization Request (PAR) endpoint
-   * @param authorizeEndpoint the DSP credential Authorize Request endpoint
-   * @param tokenEndpoint the DSP Token Request endpoint
-   * @param restTemplateBuilder the REST template builder
-   * @param jwtService the JWT service
+   * @param objectMapper               the Object mapper
+   * @param clientId                   the DSP client ID
+   * @param clientSecret               the DSP client secret
+   * @param redirectUri                the DSP redirect URI
+   * @param parEndpoint                the DSP Pushed Authorization Request (PAR) endpoint
+   * @param authorizeEndpoint          the DSP credential Authorize Request endpoint
+   * @param tokenEndpoint              the DSP Token Request endpoint
+   * @param restTemplateBuilder        the REST template builder
+   * @param jwtService                 the JWT service
    */
   public DspCredentialResource(PlacementService placementService,
                                ProgrammeMembershipService programmeMembershipService,
@@ -123,8 +123,8 @@ public class DspCredentialResource {
    * would be called by the front-end when the user clicks on the 'Add to wallet' button for a
    * placement or programme membership.
    *
-   * <p>TODO: pass the content from the front-end (as a JWT so that we can verify that it has not
-   * been tampered with).
+   * <p>NOTE: in future we will pass the content from the front-end as a JWT so that we can verify
+   * that it has not been tampered with.
    *
    * @param credentialType 'placement' or 'programmemembership'
    * @param tisId The ID of the placement / programme membership.
@@ -136,15 +136,12 @@ public class DspCredentialResource {
       @PathVariable(name = "tisId") String tisId,
       @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
     String traineeTisId;
-    //TODO sanitise to prevent log injection
     log.info("Get credential request URI for {} with TIS ID {}", credentialType, tisId);
 
     String[] tokenSections = token.split("\\.");
     byte[] payloadBytes = Base64.getUrlDecoder()
         .decode(tokenSections[1].getBytes(StandardCharsets.UTF_8));
-    //TODO: should we verify the token signature hash?
-    // We'd need the Cognito JWK for the userpool I think.
-    // But the endpoint is not publicly accessible so maybe this is ok.
+
     try {
       Map<?, ?> payload = objectMapper.readValue(payloadBytes, Map.class);
       traineeTisId = (String) payload.get(TIS_ID_ATTRIBUTE);
@@ -222,8 +219,7 @@ public class DspCredentialResource {
   @GetMapping("/payload")
   public ResponseEntity<String> getCredentialPayload(@RequestParam String code,
       @RequestParam String state) {
-    //I wonder if we need @RequestHeader(HttpHeaders.AUTHORIZATION) String token just to be safer
-    //TODO sanitise to prevent log injection
+    //I wonder if we need @RequestHeader(HttpHeaders.AUTHORIZATION) String token just to be safer?
     log.info("Get details for issued credential with code {}", code);
 
     if (!STATE.equals(state)) {
@@ -262,7 +258,7 @@ public class DspCredentialResource {
     if (tokenResponse.getStatusCode() == HttpStatus.OK) {
       IssueTokenResponse token = tokenResponse.getBody();
       if (token != null && token.getIdToken() != null) {
-        //we did not sign the credential token, so we currently cannot verify the signature
+        //we did not sign the credential token: we would need the public key to verify the signature
         return ResponseEntity.ok(jwtService.getTokenPayload(token.getIdToken(), false));
       }
     }
