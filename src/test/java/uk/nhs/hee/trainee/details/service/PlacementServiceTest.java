@@ -21,23 +21,25 @@
 
 package uk.nhs.hee.trainee.details.service;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
-
-import java.time.LocalDate;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
+import uk.nhs.hee.trainee.details.dto.DataDeltaDto;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 import uk.nhs.hee.trainee.details.mapper.PlacementMapper;
 import uk.nhs.hee.trainee.details.model.Placement;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
+
+import java.time.LocalDate;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.Optional;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 class PlacementServiceTest {
 
@@ -57,12 +59,14 @@ class PlacementServiceTest {
 
   private PlacementService service;
   private TraineeProfileRepository repository;
+  private DataDeltaService dataDeltaService;
 
   @BeforeEach
   void setUp() {
     repository = mock(TraineeProfileRepository.class);
+    dataDeltaService = mock(DataDeltaService.class);
     service = new PlacementService(repository,
-        Mappers.getMapper(PlacementMapper.class));
+        Mappers.getMapper(PlacementMapper.class), dataDeltaService);
   }
 
   @Test
@@ -159,6 +163,40 @@ class PlacementServiceTest {
   }
 
   @Test
+  void shouldSendDeltaMessage() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.getPlacements()
+        .add(createPlacement(EXISTING_PLACEMENT_ID, ORIGINAL_SUFFIX, 0));
+
+    DataDeltaDto delta = new DataDeltaDto();
+    delta.getChangedFields().put("test", new SimpleEntry<>("test", "test"));
+    when(dataDeltaService.getObjectDelta(any(Placement.class), any(Placement.class), eq(Placement.class))).thenReturn(delta);
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    service.updatePlacementForTrainee(TRAINEE_TIS_ID, createPlacement(EXISTING_PLACEMENT_ID, MODIFIED_SUFFIX, 100));
+
+    verify(dataDeltaService).publishObjectDelta(any());
+  }
+
+  @Test
+  void shouldNotSendEmptyDeltaMessage() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.getPlacements()
+        .add(createPlacement(EXISTING_PLACEMENT_ID, ORIGINAL_SUFFIX, 0));
+
+    DataDeltaDto delta = new DataDeltaDto();
+    when(dataDeltaService.getObjectDelta(any(Placement.class), any(Placement.class), eq(Placement.class))).thenReturn(delta);
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    service.updatePlacementForTrainee(TRAINEE_TIS_ID, createPlacement(EXISTING_PLACEMENT_ID, MODIFIED_SUFFIX, 100));
+
+    verify(dataDeltaService).getObjectDelta(any(Placement.class), any(Placement.class), eq(Placement.class));
+    verifyNoMoreInteractions(dataDeltaService);
+  }
+
+  @Test
   void shouldDeletePlacementWhenTraineeFoundAndPlacementExists() {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.getPlacements()
@@ -206,7 +244,7 @@ class PlacementServiceTest {
    * @return The dummy entity.
    */
   private Placement createPlacement(String tisId, String stringSuffix,
-      int dateAdjustmentDays) {
+                                    int dateAdjustmentDays) {
     Placement placement = new Placement();
     placement.setTisId(tisId);
     placement.setStartDate(START_DATE.plusDays(dateAdjustmentDays));

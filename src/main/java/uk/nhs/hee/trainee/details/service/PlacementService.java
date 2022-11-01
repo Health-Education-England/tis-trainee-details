@@ -21,13 +21,15 @@
 
 package uk.nhs.hee.trainee.details.service;
 
-import java.util.List;
-import java.util.Optional;
 import org.springframework.stereotype.Service;
+import uk.nhs.hee.trainee.details.dto.DataDeltaDto;
 import uk.nhs.hee.trainee.details.mapper.PlacementMapper;
 import uk.nhs.hee.trainee.details.model.Placement;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
+
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class PlacementService {
@@ -35,9 +37,12 @@ public class PlacementService {
   private final TraineeProfileRepository repository;
   private final PlacementMapper mapper;
 
-  PlacementService(TraineeProfileRepository repository, PlacementMapper mapper) {
+  private final DataDeltaService dataDeltaService;
+
+  PlacementService(TraineeProfileRepository repository, PlacementMapper mapper, DataDeltaService dataDeltaService) {
     this.repository = repository;
     this.mapper = mapper;
+    this.dataDeltaService = dataDeltaService;
   }
 
   /**
@@ -60,8 +65,14 @@ public class PlacementService {
     for (Placement existingPlacement : existingPlacements) {
 
       if (existingPlacement.getTisId().equals(placement.getTisId())) {
+        DataDeltaDto placementDelta = dataDeltaService.getObjectDelta(existingPlacement, placement, Placement.class);
         mapper.updatePlacement(existingPlacement, placement);
         repository.save(traineeProfile);
+
+        if (placementDelta != null && placementDelta.getChangedFields().size() > 0) {
+          dataDeltaService.publishObjectDelta(placementDelta);
+        }
+
         return Optional.of(existingPlacement);
       }
     }
@@ -74,8 +85,8 @@ public class PlacementService {
   /**
    * Delete the programme memberships for the trainee with the given TIS ID.
    *
-   * @param traineeTisId        The TIS id of the trainee.
-   * @param placementTisId      The TIS id of the placement
+   * @param traineeTisId   The TIS id of the trainee.
+   * @param placementTisId The TIS id of the placement
    * @return True, or False if a trainee with the ID was not found or the placement was not found.
    */
   public boolean deletePlacementForTrainee(String traineeTisId, String placementTisId) {
