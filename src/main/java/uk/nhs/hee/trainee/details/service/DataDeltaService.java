@@ -19,9 +19,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
 package uk.nhs.hee.trainee.details.service;
 
+import io.awspring.cloud.messaging.core.QueueMessagingTemplate;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ReflectionUtils;
 import uk.nhs.hee.trainee.details.dto.DataDeltaDto;
@@ -33,8 +35,18 @@ import java.util.Objects;
 /**
  * A service to find the delta between two data objects of the same type.
  */
+@Slf4j
 @Service
 public class DataDeltaService {
+
+  private final QueueMessagingTemplate messagingTemplate;
+  private final String queueUrl;
+
+  DataDeltaService(QueueMessagingTemplate messagingTemplate,
+                   @Value("${application.aws.sqs.delta}") String queueUrl) {
+    this.messagingTemplate = messagingTemplate;
+    this.queueUrl = queueUrl;
+  }
 
   public <T> DataDeltaDto getObjectDelta(T original, T latest, Class<T> objectClass) {
     DataDeltaDto delta = new DataDeltaDto();
@@ -55,5 +67,10 @@ public class DataDeltaService {
     });
 
     return delta;
+  }
+
+  public void publishObjectDelta(DataDeltaDto objectDelta) {
+    log.info("Sending object delta for {} id '{}'", objectDelta.getDataClass().getName(), objectDelta.getTisId());
+    messagingTemplate.convertAndSend(queueUrl, objectDelta);
   }
 }

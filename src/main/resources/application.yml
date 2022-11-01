@@ -20,6 +20,7 @@ application:
   aws:
     sqs:
       event: ${EVENT_QUEUE_URL:}
+      delta: ${DELTA_QUEUE_URL:}
 
 mongock:
   migration-scan-package: uk.nhs.hee.trainee.details.migration

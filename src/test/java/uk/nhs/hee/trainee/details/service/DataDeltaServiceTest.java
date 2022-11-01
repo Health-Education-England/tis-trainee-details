@@ -21,8 +21,10 @@
 
 package uk.nhs.hee.trainee.details.service;
 
+import io.awspring.cloud.messaging.core.QueueMessagingTemplate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import uk.nhs.hee.trainee.details.dto.DataDeltaDto;
 import uk.nhs.hee.trainee.details.model.Placement;
 
@@ -32,14 +34,21 @@ import java.util.Map;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 class DataDeltaServiceTest {
 
+  private static final String QUEUE_URL = "queue.url";
+
   private DataDeltaService service;
+  private QueueMessagingTemplate messagingTemplate;
 
   @BeforeEach
   void setUp() {
-    service = new DataDeltaService();
+    messagingTemplate = mock(QueueMessagingTemplate.class);
+    service = new DataDeltaService(messagingTemplate, QUEUE_URL);
   }
 
   @Test
@@ -81,5 +90,21 @@ class DataDeltaServiceTest {
     SimpleEntry<Object, Object> fieldChange = changedFields.get("site");
     assertThat("Unexpected delta original value.", fieldChange.getKey(), is("site1"));
     assertThat("Unexpected delta latest value.", fieldChange.getValue(), is("site2"));
+  }
+
+  @Test
+  void shouldPublishObjectDelta() {
+    DataDeltaDto delta = new DataDeltaDto();
+    delta.setDataClass(Placement.class);
+    delta.setTisId("40");
+
+    service.publishObjectDelta(delta);
+
+    ArgumentCaptor<DataDeltaDto> eventCaptor = ArgumentCaptor.forClass(DataDeltaDto.class);
+    verify(messagingTemplate).convertAndSend(eq(QUEUE_URL), eventCaptor.capture());
+
+    DataDeltaDto event = eventCaptor.getValue();
+    assertThat("Unexpected data class.", event.getDataClass(), is(Placement.class));
+    assertThat("Unexpected tis ID.", event.getTisId(), is("40"));
   }
 }
