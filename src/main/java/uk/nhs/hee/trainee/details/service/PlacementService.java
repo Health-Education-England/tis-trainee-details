@@ -21,15 +21,14 @@
 
 package uk.nhs.hee.trainee.details.service;
 
+import java.util.List;
+import java.util.Optional;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.dto.DataDeltaDto;
 import uk.nhs.hee.trainee.details.mapper.PlacementMapper;
 import uk.nhs.hee.trainee.details.model.Placement;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
-
-import java.util.List;
-import java.util.Optional;
 
 @Service
 public class PlacementService {
@@ -39,7 +38,8 @@ public class PlacementService {
 
   private final DataDeltaService dataDeltaService;
 
-  PlacementService(TraineeProfileRepository repository, PlacementMapper mapper, DataDeltaService dataDeltaService) {
+  PlacementService(TraineeProfileRepository repository, PlacementMapper mapper,
+      DataDeltaService dataDeltaService) {
     this.repository = repository;
     this.mapper = mapper;
     this.dataDeltaService = dataDeltaService;
@@ -65,7 +65,8 @@ public class PlacementService {
     for (Placement existingPlacement : existingPlacements) {
 
       if (existingPlacement.getTisId().equals(placement.getTisId())) {
-        DataDeltaDto placementDelta = dataDeltaService.getObjectDelta(existingPlacement, placement, Placement.class);
+        DataDeltaDto placementDelta = dataDeltaService.getObjectDelta(traineeProfile,
+            existingPlacement, placement, Placement.class);
         mapper.updatePlacement(existingPlacement, placement);
         repository.save(traineeProfile);
 

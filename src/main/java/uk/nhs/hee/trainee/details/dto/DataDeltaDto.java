@@ -31,5 +31,6 @@ public class DataDeltaDto {
 
   private Class<?> dataClass;
   private String tisId;
+  private String notificationEmail;
   private List<FieldDeltaDto> changedFields = new ArrayList<>();
 }

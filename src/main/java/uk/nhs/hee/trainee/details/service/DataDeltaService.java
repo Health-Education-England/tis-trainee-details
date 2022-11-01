@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.ReflectionUtils;
 import uk.nhs.hee.trainee.details.dto.DataDeltaDto;
 import uk.nhs.hee.trainee.details.dto.FieldDeltaDto;
+import uk.nhs.hee.trainee.details.model.TraineeProfile;
 
 import java.util.List;
 import java.util.Objects;
@@ -48,9 +49,10 @@ public class DataDeltaService {
     this.queueUrl = queueUrl;
   }
 
-  public <T> DataDeltaDto getObjectDelta(T original, T latest, Class<T> objectClass) {
+  public <T> DataDeltaDto getObjectDelta(TraineeProfile traineeProfile, T original, T latest, Class<T> objectClass) {
     DataDeltaDto delta = new DataDeltaDto();
     delta.setDataClass(objectClass);
+    delta.setNotificationEmail(traineeProfile.getPersonalDetails().getEmail());
     List<FieldDeltaDto> changedFields = delta.getChangedFields();
 
     ReflectionUtils.doWithFields(objectClass, field -> {

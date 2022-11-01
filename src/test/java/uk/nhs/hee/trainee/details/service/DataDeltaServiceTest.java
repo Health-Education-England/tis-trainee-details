@@ -21,21 +21,22 @@
 
 package uk.nhs.hee.trainee.details.service;
 
-import io.awspring.cloud.messaging.core.QueueMessagingTemplate;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import uk.nhs.hee.trainee.details.dto.DataDeltaDto;
-import uk.nhs.hee.trainee.details.dto.FieldDeltaDto;
-import uk.nhs.hee.trainee.details.model.Placement;
-
-import java.util.List;
-
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+
+import io.awspring.cloud.messaging.core.QueueMessagingTemplate;
+import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import uk.nhs.hee.trainee.details.dto.DataDeltaDto;
+import uk.nhs.hee.trainee.details.dto.FieldDeltaDto;
+import uk.nhs.hee.trainee.details.model.PersonalDetails;
+import uk.nhs.hee.trainee.details.model.Placement;
+import uk.nhs.hee.trainee.details.model.TraineeProfile;
 
 class DataDeltaServiceTest {
 
@@ -52,16 +53,23 @@ class DataDeltaServiceTest {
 
   @Test
   void shouldNotFindTisIdDelta() {
+    PersonalDetails personalDetails = new PersonalDetails();
+    personalDetails.setEmail("test@tis.nhs.uk");
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPersonalDetails(personalDetails);
+
     Placement original = new Placement();
     original.setTisId("40");
 
     Placement latest = new Placement();
     latest.setTisId("140");
 
-    DataDeltaDto delta = service.getObjectDelta(original, latest, Placement.class);
+    DataDeltaDto delta = service.getObjectDelta(traineeProfile, original, latest, Placement.class);
 
     assertThat("Unexpected delta class.", delta.getDataClass(), is(Placement.class));
     assertThat("Unexpected delta id.", delta.getTisId(), is("40"));
+    assertThat("Unexpected delta notification email.", delta.getNotificationEmail(),
+        is("test@tis.nhs.uk"));
 
     List<FieldDeltaDto> changedFields = delta.getChangedFields();
     assertThat("Unexpected delta size.", changedFields.size(), is(0));
@@ -69,6 +77,11 @@ class DataDeltaServiceTest {
 
   @Test
   void shouldFindNonTisIdDelta() {
+    PersonalDetails personalDetails = new PersonalDetails();
+    personalDetails.setEmail("test@tis.nhs.uk");
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPersonalDetails(personalDetails);
+
     Placement original = new Placement();
     original.setTisId("40");
     original.setSite("site1");
@@ -77,10 +90,12 @@ class DataDeltaServiceTest {
     latest.setTisId("40");
     latest.setSite("site2");
 
-    DataDeltaDto delta = service.getObjectDelta(original, latest, Placement.class);
+    DataDeltaDto delta = service.getObjectDelta(traineeProfile, original, latest, Placement.class);
 
     assertThat("Unexpected delta class.", delta.getDataClass(), is(Placement.class));
     assertThat("Unexpected delta id.", delta.getTisId(), is("40"));
+    assertThat("Unexpected delta notification email.", delta.getNotificationEmail(),
+        is("test@tis.nhs.uk"));
 
     List<FieldDeltaDto> changedFields = delta.getChangedFields();
     assertThat("Unexpected delta size.", changedFields.size(), is(1));
