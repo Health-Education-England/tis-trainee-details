@@ -66,7 +66,7 @@ class DataDeltaServiceTest {
 
     DataDeltaDto delta = service.getObjectDelta(traineeProfile, original, latest, Placement.class);
 
-    assertThat("Unexpected delta class.", delta.getDataClass(), is(Placement.class));
+    assertThat("Unexpected delta class.", delta.getDataClass(), is("Placement"));
     assertThat("Unexpected delta id.", delta.getTisId(), is("40"));
     assertThat("Unexpected delta notification email.", delta.getNotificationEmail(),
         is("test@tis.nhs.uk"));
@@ -92,7 +92,7 @@ class DataDeltaServiceTest {
 
     DataDeltaDto delta = service.getObjectDelta(traineeProfile, original, latest, Placement.class);
 
-    assertThat("Unexpected delta class.", delta.getDataClass(), is(Placement.class));
+    assertThat("Unexpected delta class.", delta.getDataClass(), is("Placement"));
     assertThat("Unexpected delta id.", delta.getTisId(), is("40"));
     assertThat("Unexpected delta notification email.", delta.getNotificationEmail(),
         is("test@tis.nhs.uk"));
@@ -109,7 +109,7 @@ class DataDeltaServiceTest {
   @Test
   void shouldPublishObjectDelta() {
     DataDeltaDto delta = new DataDeltaDto();
-    delta.setDataClass(Placement.class);
+    delta.setDataClass("Placement");
     delta.setTisId("40");
 
     service.publishObjectDelta(delta);
@@ -118,7 +118,7 @@ class DataDeltaServiceTest {
     verify(messagingTemplate).convertAndSend(eq(QUEUE_URL), eventCaptor.capture());
 
     DataDeltaDto event = eventCaptor.getValue();
-    assertThat("Unexpected data class.", event.getDataClass(), is(Placement.class));
+    assertThat("Unexpected data class.", event.getDataClass(), is("Placement"));
     assertThat("Unexpected tis ID.", event.getTisId(), is("40"));
   }
 }

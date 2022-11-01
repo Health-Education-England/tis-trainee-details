@@ -29,7 +29,7 @@ import java.util.List;
 @Data
 public class DataDeltaDto {
 
-  private Class<?> dataClass;
+  private String dataClass;
   private String tisId;
   private String notificationEmail;
   private List<FieldDeltaDto> changedFields = new ArrayList<>();

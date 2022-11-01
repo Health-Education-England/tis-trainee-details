@@ -51,7 +51,7 @@ public class DataDeltaService {
 
   public <T> DataDeltaDto getObjectDelta(TraineeProfile traineeProfile, T original, T latest, Class<T> objectClass) {
     DataDeltaDto delta = new DataDeltaDto();
-    delta.setDataClass(objectClass);
+    delta.setDataClass(objectClass.getSimpleName());
     delta.setNotificationEmail(traineeProfile.getPersonalDetails().getEmail());
     List<FieldDeltaDto> changedFields = delta.getChangedFields();
 
@@ -72,7 +72,7 @@ public class DataDeltaService {
   }
 
   public void publishObjectDelta(DataDeltaDto objectDelta) {
-    log.info("Sending object delta for {} id '{}'", objectDelta.getDataClass().getName(), objectDelta.getTisId());
+    log.info("Sending object delta for {} id '{}'", objectDelta.getDataClass(), objectDelta.getTisId());
     messagingTemplate.convertAndSend(queueUrl, objectDelta);
   }
 }
