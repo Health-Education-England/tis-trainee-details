@@ -25,6 +25,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 import uk.nhs.hee.trainee.details.dto.DataDeltaDto;
+import uk.nhs.hee.trainee.details.dto.FieldDeltaDto;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 import uk.nhs.hee.trainee.details.mapper.PlacementMapper;
 import uk.nhs.hee.trainee.details.model.Placement;
@@ -32,7 +33,6 @@ import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 
 import java.time.LocalDate;
-import java.util.AbstractMap.SimpleEntry;
 import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -169,7 +169,8 @@ class PlacementServiceTest {
         .add(createPlacement(EXISTING_PLACEMENT_ID, ORIGINAL_SUFFIX, 0));
 
     DataDeltaDto delta = new DataDeltaDto();
-    delta.getChangedFields().put("test", new SimpleEntry<>("test", "test"));
+    FieldDeltaDto fieldDelta = new FieldDeltaDto("test", "test", "test");
+    delta.getChangedFields().add(fieldDelta);
     when(dataDeltaService.getObjectDelta(any(Placement.class), any(Placement.class), eq(Placement.class))).thenReturn(delta);
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);

@@ -26,12 +26,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import uk.nhs.hee.trainee.details.dto.DataDeltaDto;
+import uk.nhs.hee.trainee.details.dto.FieldDeltaDto;
 import uk.nhs.hee.trainee.details.model.Placement;
 
-import java.util.AbstractMap.SimpleEntry;
-import java.util.Map;
+import java.util.List;
 
-import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -64,7 +63,7 @@ class DataDeltaServiceTest {
     assertThat("Unexpected delta class.", delta.getDataClass(), is(Placement.class));
     assertThat("Unexpected delta id.", delta.getTisId(), is("40"));
 
-    Map<String, SimpleEntry<Object, Object>> changedFields = delta.getChangedFields();
+    List<FieldDeltaDto> changedFields = delta.getChangedFields();
     assertThat("Unexpected delta size.", changedFields.size(), is(0));
   }
 
@@ -83,13 +82,13 @@ class DataDeltaServiceTest {
     assertThat("Unexpected delta class.", delta.getDataClass(), is(Placement.class));
     assertThat("Unexpected delta id.", delta.getTisId(), is("40"));
 
-    Map<String, SimpleEntry<Object, Object>> changedFields = delta.getChangedFields();
+    List<FieldDeltaDto> changedFields = delta.getChangedFields();
     assertThat("Unexpected delta size.", changedFields.size(), is(1));
-    assertThat("Unexpected delta fields.", changedFields.keySet(), hasItem("site"));
 
-    SimpleEntry<Object, Object> fieldChange = changedFields.get("site");
-    assertThat("Unexpected delta original value.", fieldChange.getKey(), is("site1"));
-    assertThat("Unexpected delta latest value.", fieldChange.getValue(), is("site2"));
+    FieldDeltaDto changedField = changedFields.get(0);
+    assertThat("Unexpected delta field.", changedField.getField(), is("site"));
+    assertThat("Unexpected delta original value.", changedField.getOriginal(), is("site1"));
+    assertThat("Unexpected delta modified value.", changedField.getModified(), is("site2"));
   }
 
   @Test

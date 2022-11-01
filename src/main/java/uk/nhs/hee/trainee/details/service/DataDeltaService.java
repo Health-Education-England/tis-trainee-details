@@ -27,9 +27,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ReflectionUtils;
 import uk.nhs.hee.trainee.details.dto.DataDeltaDto;
+import uk.nhs.hee.trainee.details.dto.FieldDeltaDto;
 
-import java.util.AbstractMap.SimpleEntry;
-import java.util.Map;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -51,7 +51,7 @@ public class DataDeltaService {
   public <T> DataDeltaDto getObjectDelta(T original, T latest, Class<T> objectClass) {
     DataDeltaDto delta = new DataDeltaDto();
     delta.setDataClass(objectClass);
-    Map<String, SimpleEntry<Object, Object>> changedFields = delta.getChangedFields();
+    List<FieldDeltaDto> changedFields = delta.getChangedFields();
 
     ReflectionUtils.doWithFields(objectClass, field -> {
       field.setAccessible(true);
@@ -61,8 +61,8 @@ public class DataDeltaService {
       if (field.getName().equals("tisId")) {
         delta.setTisId(originalField.toString());
       } else if (!Objects.equals(originalField, latestField)) {
-        SimpleEntry<Object, Object> fieldChange = new SimpleEntry<>(originalField, latestField);
-        changedFields.put(field.getName(), fieldChange);
+        FieldDeltaDto changedField = new FieldDeltaDto(field.getName(), originalField, latestField);
+        changedFields.add(changedField);
       }
     });
 

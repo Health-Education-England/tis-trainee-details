@@ -23,13 +23,9 @@ package uk.nhs.hee.trainee.details.dto;
 
 import lombok.Data;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Data
-public class DataDeltaDto {
-
-  private Class<?> dataClass;
-  private String tisId;
-  private List<FieldDeltaDto> changedFields = new ArrayList<>();
+public class FieldDeltaDto {
+  private final String field;
+  private final Object original;
+  private final Object modified;
 }
