@@ -229,7 +229,8 @@ class DspCredentialResourceTest {
 
   @ParameterizedTest
   @ValueSource(strings = {"placement", "programmemembership"})
-  void shouldReturnAuthorizeRequestUriWhenTraineeDataFound(String credentialType) throws Exception {
+  void shouldReturnAuthorizeRequestUriAsRedirectWhenTraineeDataFound(String credentialType)
+      throws Exception {
     Placement placement = new Placement();
     placement.setTisId("140");
     when(placementService.getPlacementForTrainee("40", "140"))
@@ -253,7 +254,7 @@ class DspCredentialResourceTest {
         get("/api/credential/par/{credentialType}/{placementTisId}", credentialType, 140)
             .contentType(MediaType.APPLICATION_JSON)
             .header(HttpHeaders.AUTHORIZATION, token))
-        .andExpect(status().isCreated())
+        .andExpect(status().isFound())
         .andExpect(header().string(HttpHeaders.LOCATION,
             String.format("https://test/issuing/authorize?client_id=%s&request_uri=%s", CLIENT_ID,
                 PAR_RESPONSE_REQUEST_URI)));

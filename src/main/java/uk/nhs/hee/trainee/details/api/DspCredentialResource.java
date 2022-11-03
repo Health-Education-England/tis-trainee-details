@@ -131,7 +131,7 @@ public class DspCredentialResource {
    * @return The PAR response, or Internal Server Error if the request times out
    */
   @GetMapping(value = "/par/{credentialType:placement|programmemembership}/{tisId}")
-  public ResponseEntity<ParResponse> getCredentialParUri(
+  public ResponseEntity<String> getCredentialParUri(
       @PathVariable(name = "credentialType") String credentialType,
       @PathVariable(name = "tisId") String tisId,
       @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
@@ -202,7 +202,9 @@ public class DspCredentialResource {
       if (parResponse != null) {
         String location = String.format("%s?client_id=%s&request_uri=%s", issueEndpoint, clientId,
             parResponse.getRequestUri());
-        return ResponseEntity.created(URI.create(location)).build();
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.add("Location", location);
+        return new ResponseEntity<>(responseHeaders,HttpStatus.FOUND);
       }
     }
     return ResponseEntity.internalServerError().build();
