@@ -185,7 +185,7 @@ public class DspCredentialResource {
             parResponse.getRequestUri());
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.add("Location", location);
-        return new ResponseEntity<>(responseHeaders,HttpStatus.FOUND);
+        return new ResponseEntity<>(responseHeaders, HttpStatus.FOUND);
       }
     }
     return ResponseEntity.internalServerError().build();
