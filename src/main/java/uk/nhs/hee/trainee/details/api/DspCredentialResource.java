@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -49,6 +48,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import uk.nhs.hee.trainee.details.config.DspConfigurationProperties;
 import uk.nhs.hee.trainee.details.model.Placement;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.dsp.IssueTokenResponse;
@@ -70,14 +70,9 @@ public class DspCredentialResource {
   private final ObjectMapper objectMapper;
   private final PlacementService placementService;
   private final ProgrammeMembershipService programmeMembershipService;
-  private final String clientId;
-  private final String clientSecret;
-  private final String redirectUri;
-  private final String parEndpoint;
-  private final String issueEndpoint;
-  private final String tokenEndpoint;
   private final RestTemplateBuilder restTemplateBuilder;
   private final JwtService jwtService;
+  private final DspConfigurationProperties dspConfigurationProperties;
 
   /**
    * Instantiate the DSP Credential Resource.
@@ -85,50 +80,34 @@ public class DspCredentialResource {
    * @param placementService           the Placement service
    * @param programmeMembershipService the Programme membership service
    * @param objectMapper               the Object mapper
-   * @param clientId                   the DSP client ID
-   * @param clientSecret               the DSP client secret
-   * @param redirectUri                the DSP redirect URI
-   * @param parEndpoint                the DSP Pushed Authorization Request (PAR) endpoint
-   * @param authorizeEndpoint          the DSP credential Authorize Request endpoint
-   * @param tokenEndpoint              the DSP Token Request endpoint
    * @param restTemplateBuilder        the REST template builder
    * @param jwtService                 the JWT service
    */
   public DspCredentialResource(PlacementService placementService,
                                ProgrammeMembershipService programmeMembershipService,
                                ObjectMapper objectMapper,
-                               @Value("${dsp.client-id}") String clientId,
-                               @Value("${dsp.client-secret}") String clientSecret,
-                               @Value("${dsp.redirect-uri}") String redirectUri,
-                               @Value("${dsp.par-endpoint}") String parEndpoint,
-                               @Value("${dsp.authorize-endpoint}") String authorizeEndpoint,
-                               @Value("${dsp.token.issue-endpoint}") String tokenEndpoint,
                                RestTemplateBuilder restTemplateBuilder,
-                               JwtService jwtService) {
+                               JwtService jwtService,
+                               DspConfigurationProperties dspConfigurationProperties) {
     this.placementService = placementService;
     this.programmeMembershipService = programmeMembershipService;
     this.objectMapper = objectMapper;
-    this.clientId = clientId;
-    this.clientSecret = clientSecret;
-    this.redirectUri = redirectUri;
-    this.parEndpoint = parEndpoint;
-    this.issueEndpoint = authorizeEndpoint;
-    this.tokenEndpoint = tokenEndpoint;
     this.restTemplateBuilder = restTemplateBuilder;
     this.jwtService = jwtService;
+    this.dspConfigurationProperties = dspConfigurationProperties;
   }
 
   /**
-   * Get the PAR response, including the request URI. We assume the trainee has been verified. This
-   * would be called by the front-end when the user clicks on the 'Add to wallet' button for a
-   * placement or programme membership.
+   * Get the PAR response, including the request URI, as a redirect. We assume the trainee has been
+   * verified. This would be called by the front-end when the user clicks on the 'Add to wallet'
+   * button for a placement or programme membership.
    *
    * <p>NOTE: in future we will pass the content from the front-end as a JWT so that we can verify
    * that it has not been tampered with.
    *
    * @param credentialType 'placement' or 'programmemembership'
    * @param tisId The ID of the placement / programme membership.
-   * @return The PAR response, or Internal Server Error if the request times out
+   * @return The PAR response redirect, or Internal Server Error if the request times out
    */
   @GetMapping(value = "/par/{credentialType:placement|programmemembership}/{tisId}")
   public ResponseEntity<String> getCredentialParUri(
@@ -177,9 +156,9 @@ public class DspCredentialResource {
 
     String nonce = UUID.randomUUID().toString();
     MultiValueMap<String, String> bodyPair = new LinkedMultiValueMap<>();
-    bodyPair.add("client_id", this.clientId);
-    bodyPair.add("client_secret", this.clientSecret);
-    bodyPair.add("redirect_uri", this.redirectUri);
+    bodyPair.add("client_id", dspConfigurationProperties.getClientId());
+    bodyPair.add("client_secret", dspConfigurationProperties.getClientSecret());
+    bodyPair.add("redirect_uri", dspConfigurationProperties.getRedirectUri());
     bodyPair.add("scope", scope);
     bodyPair.add("id_token_hint", idTokenHint);
     bodyPair.add("nonce", nonce);
@@ -189,18 +168,20 @@ public class DspCredentialResource {
     headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
     headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
     HttpEntity<MultiValueMap<String, String>> parRequest = new HttpEntity<>(bodyPair, headers);
-    RestTemplate restTemplate = this.restTemplateBuilder
+    RestTemplate restTemplate = restTemplateBuilder
         .setConnectTimeout(Duration.ofMillis(CONNECT_TIMEOUT))
         .setReadTimeout(Duration.ofMillis(READ_TIMEOUT))
         .build();
-    URI parUri = URI.create(this.parEndpoint);
+    URI parUri = URI.create(dspConfigurationProperties.getParEndpoint());
 
     ResponseEntity<ParResponse> parResponseEntity = restTemplate.postForEntity(parUri, parRequest,
         ParResponse.class);
     if (parResponseEntity.getStatusCode() == HttpStatus.CREATED) {
       ParResponse parResponse = parResponseEntity.getBody();
       if (parResponse != null) {
-        String location = String.format("%s?client_id=%s&request_uri=%s", issueEndpoint, clientId,
+        String location = String.format("%s?client_id=%s&request_uri=%s",
+            dspConfigurationProperties.getAuthorizeEndpoint(),
+            dspConfigurationProperties.getClientId(),
             parResponse.getRequestUri());
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.add("Location", location);
@@ -229,12 +210,12 @@ public class DspCredentialResource {
       return ResponseEntity.badRequest().build();
     }
 
-    RestTemplate restTemplate = this.restTemplateBuilder
+    RestTemplate restTemplate = restTemplateBuilder
         .setConnectTimeout(Duration.ofMillis(CONNECT_TIMEOUT))
         .setReadTimeout(Duration.ofMillis(READ_TIMEOUT))
         .build();
 
-    URI tokenUri = URI.create(this.tokenEndpoint);
+    URI tokenUri = URI.create(dspConfigurationProperties.getTokenIssueEndpoint());
 
     HttpHeaders headers = new HttpHeaders();
     headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
@@ -242,9 +223,9 @@ public class DspCredentialResource {
 
     MultiValueMap<String, String> bodyPair = new LinkedMultiValueMap<>();
     bodyPair.add("grant_type", "authorization_code");
-    bodyPair.add("client_id", this.clientId);
-    bodyPair.add("client_secret", this.clientSecret);
-    bodyPair.add("redirect_uri", this.redirectUri);
+    bodyPair.add("client_id", dspConfigurationProperties.getClientId());
+    bodyPair.add("client_secret", dspConfigurationProperties.getClientSecret());
+    bodyPair.add("redirect_uri", dspConfigurationProperties.getRedirectUri());
     bodyPair.add("code", code);
 
     HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(bodyPair, headers);

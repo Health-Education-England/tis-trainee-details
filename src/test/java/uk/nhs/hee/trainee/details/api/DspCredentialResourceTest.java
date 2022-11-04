@@ -58,6 +58,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import uk.nhs.hee.trainee.details.TestJwtUtil;
+import uk.nhs.hee.trainee.details.config.DspConfigurationProperties;
 import uk.nhs.hee.trainee.details.mapper.PlacementMapper;
 import uk.nhs.hee.trainee.details.model.Placement;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
@@ -96,6 +97,8 @@ class DspCredentialResourceTest {
   private ProgrammeMembershipService programmeMembershipService;
   private RestTemplate restTemplate;
 
+  private DspConfigurationProperties dspConfigurationProperties;
+
   @BeforeEach
   void setUp() {
     RestTemplateBuilder restTemplateBuilder = mock(RestTemplateBuilder.class);
@@ -105,11 +108,20 @@ class DspCredentialResourceTest {
     when(restTemplateBuilder.setReadTimeout(any())).thenReturn(restTemplateBuilder);
     when(restTemplateBuilder.build()).thenReturn(restTemplate);
 
+    dspConfigurationProperties = new DspConfigurationProperties();
+    dspConfigurationProperties.setClientId(CLIENT_ID);
+    dspConfigurationProperties.setClientSecret(CLIENT_SECRET);
+    dspConfigurationProperties.setRedirectUri(REDIRECT_URI);
+    dspConfigurationProperties.setParEndpoint("https://test/issuing/par");
+    dspConfigurationProperties.setAuthorizeEndpoint("https://test/issuing/authorize");
+    dspConfigurationProperties.setTokenAudience("");
+    dspConfigurationProperties.setTokenIssuer("");
+    dspConfigurationProperties.setTokenSigningKey("");
+    dspConfigurationProperties.setTokenIssueEndpoint("https://test/issuing/token");
+
     DspCredentialResource resource
         = new DspCredentialResource(placementService, programmeMembershipService,
-        objectMapper, CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, "https://test/issuing/par",
-        "https://test/issuing/authorize", "https://test/issuing/token",
-        restTemplateBuilder, jwtService);
+        objectMapper, restTemplateBuilder, jwtService, dspConfigurationProperties);
     mockMvc = MockMvcBuilders.standaloneSetup(resource)
         .build();
   }
@@ -172,10 +184,14 @@ class DspCredentialResourceTest {
 
     HttpEntity<MultiValueMap<String, String>> httpEntity = httpEntityCaptor.getValue();
     Map<String, String> requestBody = httpEntity.getBody().toSingleValueMap();
-    assertThat("Unexpected client id.", requestBody.get("client_id"), is(CLIENT_ID));
-    assertThat("Unexpected client secret.", requestBody.get("client_secret"), is(CLIENT_SECRET));
-    assertThat("Unexpected redirect uri.", requestBody.get("redirect_uri"), is(REDIRECT_URI));
-    assertThat("Unexpected scope.", requestBody.get("scope"), is("issue.TestCredential"));
+    assertThat("Unexpected client id.", requestBody.get("client_id"),
+        is(dspConfigurationProperties.getClientId()));
+    assertThat("Unexpected client secret.", requestBody.get("client_secret"),
+        is(dspConfigurationProperties.getClientSecret()));
+    assertThat("Unexpected redirect uri.", requestBody.get("redirect_uri"),
+        is(dspConfigurationProperties.getRedirectUri()));
+    assertThat("Unexpected scope.", requestBody.get("scope"),
+        is("issue.TestCredential"));
 
     if (credentialType.equals("placement")) {
       String placementJwt = jwtService.generatePlacementToken(placement);
@@ -242,7 +258,7 @@ class DspCredentialResourceTest {
         .thenReturn(Optional.of(programmeMembership));
 
     ParResponse parResponse = new ParResponse();
-    parResponse.setRequestUri(PAR_RESPONSE_REQUEST_URI);
+    parResponse.setRequestUri(dspConfigurationProperties.getParEndpoint());
     ResponseEntity<ParResponse> parResponseEntity = ResponseEntity.created(URI.create(""))
         .body(parResponse);
     when(restTemplate.postForEntity(any(URI.class), any(HttpEntity.class),
@@ -256,8 +272,9 @@ class DspCredentialResourceTest {
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isFound())
         .andExpect(header().string(HttpHeaders.LOCATION,
-            String.format("https://test/issuing/authorize?client_id=%s&request_uri=%s", CLIENT_ID,
-                PAR_RESPONSE_REQUEST_URI)));
+            String.format("https://test/issuing/authorize?client_id=%s&request_uri=%s",
+                dspConfigurationProperties.getClientId(),
+                dspConfigurationProperties.getParEndpoint())));
   }
 
   @Test
