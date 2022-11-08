@@ -183,9 +183,7 @@ public class DspCredentialResource {
             dspConfigurationProperties.getAuthorizeEndpoint(),
             dspConfigurationProperties.getClientId(),
             parResponse.getRequestUri());
-        HttpHeaders responseHeaders = new HttpHeaders();
-        responseHeaders.add("Location", location);
-        return new ResponseEntity<>(responseHeaders, HttpStatus.FOUND);
+        return ResponseEntity.created(URI.create(location)).build();
       }
     }
     return ResponseEntity.internalServerError().build();

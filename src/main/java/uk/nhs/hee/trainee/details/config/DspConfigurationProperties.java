@@ -21,91 +21,22 @@
 
 package uk.nhs.hee.trainee.details.config;
 
+import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+@Data
 @ConfigurationProperties(prefix = "dsp")
 @Configuration
 public class DspConfigurationProperties {
-  private  String clientId;
-  private  String clientSecret;
-  private  String redirectUri;
-  private  String parEndpoint;
-  private  String authorizeEndpoint;
-  private  String tokenIssuer;
-  private  String tokenAudience;
-  private  String tokenSigningKey;
-  private  String tokenIssueEndpoint;
 
-  public String getClientId() {
-    return clientId;
-  }
-
-  public String getClientSecret() {
-    return clientSecret;
-  }
-
-  public String getRedirectUri() {
-    return redirectUri;
-  }
-
-  public String getParEndpoint() {
-    return parEndpoint;
-  }
-
-  public String getAuthorizeEndpoint() {
-    return authorizeEndpoint;
-  }
-
-  public String getTokenIssuer() {
-    return tokenIssuer;
-  }
-
-  public String getTokenAudience() {
-    return tokenAudience;
-  }
-
-  public String getTokenSigningKey() {
-    return tokenSigningKey;
-  }
-
-  public String getTokenIssueEndpoint() {
-    return tokenIssueEndpoint;
-  }
-
-  public void setClientId(String clientId) {
-    this.clientId = clientId;
-  }
-
-  public void setClientSecret(String clientSecret) {
-    this.clientSecret = clientSecret;
-  }
-
-  public void setRedirectUri(String redirectUri) {
-    this.redirectUri = redirectUri;
-  }
-
-  public void setParEndpoint(String parEndpoint) {
-    this.parEndpoint = parEndpoint;
-  }
-
-  public void setAuthorizeEndpoint(String authorizeEndpoint) {
-    this.authorizeEndpoint = authorizeEndpoint;
-  }
-
-  public void setTokenIssuer(String tokenIssuer) {
-    this.tokenIssuer = tokenIssuer;
-  }
-
-  public void setTokenAudience(String tokenAudience) {
-    this.tokenAudience = tokenAudience;
-  }
-
-  public void setTokenSigningKey(String tokenSigningKey) {
-    this.tokenSigningKey = tokenSigningKey;
-  }
-
-  public void setTokenIssueEndpoint(String tokenIssueEndpoint) {
-    this.tokenIssueEndpoint = tokenIssueEndpoint;
-  }
+  private String clientId;
+  private String clientSecret;
+  private String redirectUri;
+  private String parEndpoint;
+  private String authorizeEndpoint;
+  private String tokenIssuer;
+  private String tokenAudience;
+  private String tokenSigningKey;
+  private String tokenIssueEndpoint;
 }
