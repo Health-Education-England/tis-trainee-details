@@ -270,7 +270,7 @@ class DspCredentialResourceTest {
         get("/api/credential/par/{credentialType}/{placementTisId}", credentialType, 140)
             .contentType(MediaType.APPLICATION_JSON)
             .header(HttpHeaders.AUTHORIZATION, token))
-        .andExpect(status().isFound())
+        .andExpect(status().isCreated())
         .andExpect(header().string(HttpHeaders.LOCATION,
             String.format("https://test/issuing/authorize?client_id=%s&request_uri=%s",
                 dspConfigurationProperties.getClientId(),
