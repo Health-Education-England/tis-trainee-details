@@ -22,6 +22,7 @@
 package uk.nhs.hee.trainee.details.service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapper;
@@ -39,6 +40,27 @@ public class ProgrammeMembershipService {
       ProgrammeMembershipMapper mapper) {
     this.repository = repository;
     this.mapper = mapper;
+  }
+
+  /**
+   * Get the programme membership with the given programme membership ID from the trainee profile
+   * with the given trainee ID.
+   *
+   * @param traineeTisId   The ID of the trainee profile.
+   * @param programmeMembershipTisId The ID of the programme membership within the profile.
+   * @return The found programme membership, else empty.
+   */
+  public Optional<ProgrammeMembership> getProgrammeMembershipForTrainee(String traineeTisId,
+                                                              String programmeMembershipTisId) {
+    TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
+
+    if (traineeProfile == null) {
+      return Optional.empty();
+    }
+
+    return traineeProfile.getProgrammeMemberships().stream()
+        .filter(p -> Objects.equals(p.getTisId(), programmeMembershipTisId))
+        .findFirst();
   }
 
   /**
