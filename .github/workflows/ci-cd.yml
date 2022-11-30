@@ -1,0 +1,15 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  ci-cd:
+    name: Build and deploy
+    uses: health-education-england/.github/.github/workflows/ci-cd.yml@main
+    secrets:
+      ecr-username: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      ecr-password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      sonar-token: ${{ secrets.SONAR_TOKEN }}
