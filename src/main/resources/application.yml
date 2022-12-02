@@ -6,7 +6,7 @@ server:
 spring:
   data:
     mongodb:
-      uri: mongodb://${DB_USER:admin}:${DB_PASSWORD:pwd}@${DB_HOST:localhost}:${DB_PORT:27017}/${DB_NAME:trainee}?authSource=admin
+      uri: mongodb://${DB_USER:admin}:${DB_PASSWORD:pwd}@${DB_HOST:localhost}:${DB_PORT:27017}/${DB_NAME:trainee}?authSource=admin&replicaSet=rs0&readPreference=secondaryPreferred
 
 logging:
   level:
