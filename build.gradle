@@ -51,7 +51,7 @@ dependencies {
   implementation "io.mongock:mongodb-springdata-v3-driver:${mongockVersion}"
 
   // Sentry reporting
-  implementation "io.sentry:sentry-spring-boot-starter:6.8.0"
+  implementation "io.sentry:sentry-spring-boot-starter:6.9.1"
 
   // Amazon SQS
   implementation "io.awspring.cloud:spring-cloud-starter-aws-messaging"
