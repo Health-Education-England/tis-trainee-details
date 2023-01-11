@@ -37,7 +37,6 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mapstruct.factory.Mappers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -50,7 +49,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import uk.nhs.hee.trainee.details.TestJwtUtil;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
+import uk.nhs.hee.trainee.details.mapper.PlacementMapperImpl;
+import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapperImpl;
 import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapper;
+import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapperImpl;
 import uk.nhs.hee.trainee.details.model.Curriculum;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.model.Placement;
@@ -58,7 +60,8 @@ import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.service.TraineeProfileService;
 
-@ContextConfiguration(classes = TraineeProfileMapper.class)
+@ContextConfiguration(classes = {TraineeProfileMapperImpl.class, PlacementMapperImpl.class,
+    ProgrammeMembershipMapperImpl.class})
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(controllers = TraineeProfileResource.class)
 class TraineeProfileResourceTest {
@@ -108,6 +111,9 @@ class TraineeProfileResourceTest {
   @Autowired
   private ObjectMapper objectMapper;
 
+  @Autowired
+  private TraineeProfileMapper traineeProfileMapper;
+
   private MockMvc mockMvc;
 
   @MockBean
@@ -124,9 +130,8 @@ class TraineeProfileResourceTest {
    */
   @BeforeEach
   void setup() {
-    TraineeProfileMapper mapper = Mappers.getMapper(TraineeProfileMapper.class);
-    TraineeProfileResource traineeProfileResource = new TraineeProfileResource(service, mapper,
-        objectMapper);
+    TraineeProfileResource traineeProfileResource = new TraineeProfileResource(service,
+        traineeProfileMapper, objectMapper);
     this.mockMvc = MockMvcBuilders.standaloneSetup(traineeProfileResource)
         .setMessageConverters(jacksonMessageConverter)
         .build();
