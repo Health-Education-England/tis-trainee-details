@@ -22,6 +22,7 @@
 package uk.nhs.hee.trainee.details.mapper;
 
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import uk.nhs.hee.trainee.details.dto.ProgrammeMembershipDto;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
@@ -29,6 +30,7 @@ import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 @Mapper(componentModel = "spring")
 public interface ProgrammeMembershipMapper {
 
+  @Mapping(target = "signature", ignore = true)
   ProgrammeMembershipDto toDto(ProgrammeMembership entity);
 
   ProgrammeMembership toEntity(ProgrammeMembershipDto dto);

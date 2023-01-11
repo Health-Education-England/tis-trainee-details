@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright 2021 Crown Copyright (Health Education England)
+ * Copyright 2023 Crown Copyright (Health Education England)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -19,21 +19,24 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package uk.nhs.hee.trainee.details.mapper;
+package uk.nhs.hee.trainee.details.dto.signature;
 
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
-import uk.nhs.hee.trainee.details.dto.PlacementDto;
-import uk.nhs.hee.trainee.details.model.Placement;
+/**
+ * An interface representing a DTO with a verification signature.
+ */
+public interface SignedDto {
 
-@Mapper(componentModel = "spring")
-public interface PlacementMapper {
+  /**
+   * Get the DTOs signature.
+   *
+   * @return The DTOs signature.
+   */
+  Signature getSignature();
 
-  @Mapping(target = "signature", ignore = true)
-  PlacementDto toDto(Placement entity);
-
-  Placement toEntity(PlacementDto dto);
-
-  void updatePlacement(@MappingTarget Placement target, Placement source);
+  /**
+   * Set the DTO signature.
+   *
+   * @param signature The signature to set.
+   */
+  void setSignature(Signature signature);
 }

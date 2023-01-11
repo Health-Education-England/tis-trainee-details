@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright 2021 Crown Copyright (Health Education England)
+ * Copyright 2023 Crown Copyright (Health Education England)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -19,21 +19,33 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package uk.nhs.hee.trainee.details.mapper;
+package uk.nhs.hee.trainee.details.dto.signature;
 
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
-import uk.nhs.hee.trainee.details.dto.PlacementDto;
-import uk.nhs.hee.trainee.details.model.Placement;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import java.time.Instant;
+import java.time.temporal.TemporalAmount;
+import lombok.Data;
 
-@Mapper(componentModel = "spring")
-public interface PlacementMapper {
+/**
+ * A signature object to be included on {@link SignedDto} implementations.
+ */
+@Data
+public class Signature {
 
-  @Mapping(target = "signature", ignore = true)
-  PlacementDto toDto(Placement entity);
+  private final Instant signedAt;
+  private final Instant validUntil;
 
-  Placement toEntity(PlacementDto dto);
+  @JsonInclude(Include.NON_NULL)
+  private String hmac;
 
-  void updatePlacement(@MappingTarget Placement target, Placement source);
+  /**
+   * Create a signature which is valid for a given length of time.
+   *
+   * @param validFor How long the signature is valid for.
+   */
+  public Signature(TemporalAmount validFor) {
+    signedAt = Instant.now();
+    validUntil = signedAt.plus(validFor);
+  }
 }
