@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright 2021 Crown Copyright (Health Education England)
+ * Copyright 2023 Crown Copyright (Health Education England)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -21,19 +21,34 @@
 
 package uk.nhs.hee.trainee.details.mapper;
 
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.nhs.hee.trainee.details.dto.PlacementDto;
-import uk.nhs.hee.trainee.details.model.Placement;
+import uk.nhs.hee.trainee.details.service.SignatureService;
 
-@Mapper(componentModel = "spring", uses = SignatureMapper.class)
-public interface PlacementMapper {
+@ContextConfiguration(classes = SignatureMapperImpl.class)
+@ExtendWith(SpringExtension.class)
+class SignatureMapperTest {
 
-  @Mapping(target = "signature", ignore = true)
-  PlacementDto toDto(Placement entity);
+  @Autowired
+  private SignatureMapper mapper;
 
-  Placement toEntity(PlacementDto dto);
+  @MockBean
+  private SignatureService service;
 
-  void updatePlacement(@MappingTarget Placement target, Placement source);
+  @Test
+  void shouldThrowRuntimeExceptionWhenServiceFails() throws JsonProcessingException {
+    Mockito.doThrow(JsonProcessingException.class).when(service).signDto(any());
+
+    assertThrows(RuntimeException.class, () -> mapper.signDto(new PlacementDto()));
+  }
 }

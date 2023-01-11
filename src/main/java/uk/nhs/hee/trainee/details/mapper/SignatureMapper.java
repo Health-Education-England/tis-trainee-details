@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright 2021 Crown Copyright (Health Education England)
+ * Copyright 2023 Crown Copyright (Health Education England)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -21,19 +21,38 @@
 
 package uk.nhs.hee.trainee.details.mapper;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import lombok.extern.slf4j.Slf4j;
+import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
-import uk.nhs.hee.trainee.details.dto.PlacementDto;
-import uk.nhs.hee.trainee.details.model.Placement;
+import org.springframework.beans.factory.annotation.Autowired;
+import uk.nhs.hee.trainee.details.dto.signature.SignedDto;
+import uk.nhs.hee.trainee.details.service.SignatureService;
 
-@Mapper(componentModel = "spring", uses = SignatureMapper.class)
-public interface PlacementMapper {
+/**
+ * A mapper for Signature to be used with {@link SignedDto}s.
+ */
+@Slf4j
+@Mapper(componentModel = "spring")
+public abstract class SignatureMapper {
 
-  @Mapping(target = "signature", ignore = true)
-  PlacementDto toDto(Placement entity);
+  @Autowired
+  private SignatureService service;
 
-  Placement toEntity(PlacementDto dto);
-
-  void updatePlacement(@MappingTarget Placement target, Placement source);
+  /**
+   * Sign the given DTO.
+   *
+   * @param dto The DTO to sign.
+   */
+  @AfterMapping
+  void signDto(@MappingTarget SignedDto dto) {
+    try {
+      service.signDto(dto);
+    } catch (JsonProcessingException e) {
+      // Convert to a runtime exception because the mapper can't bubble up checked exceptions.
+      log.error("Unable to sign {} dto.", dto.getClass().getSimpleName());
+      throw new RuntimeException(e);
+    }
+  }
 }

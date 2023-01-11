@@ -27,7 +27,7 @@ import org.mapstruct.MappingTarget;
 import uk.nhs.hee.trainee.details.dto.ProgrammeMembershipDto;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = SignatureMapper.class)
 public interface ProgrammeMembershipMapper {
 
   @Mapping(target = "signature", ignore = true)
