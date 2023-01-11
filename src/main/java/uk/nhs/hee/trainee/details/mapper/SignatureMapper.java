@@ -52,7 +52,7 @@ public abstract class SignatureMapper {
     } catch (JsonProcessingException e) {
       // Convert to a runtime exception because the mapper can't bubble up checked exceptions.
       log.error("Unable to sign {} dto.", dto.getClass().getSimpleName());
-      throw new RuntimeException(e);
+      throw new IllegalArgumentException(e);
     }
   }
 }

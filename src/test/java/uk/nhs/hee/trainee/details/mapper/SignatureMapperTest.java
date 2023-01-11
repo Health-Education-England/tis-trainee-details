@@ -49,6 +49,7 @@ class SignatureMapperTest {
   void shouldThrowRuntimeExceptionWhenServiceFails() throws JsonProcessingException {
     Mockito.doThrow(JsonProcessingException.class).when(service).signDto(any());
 
-    assertThrows(RuntimeException.class, () -> mapper.signDto(new PlacementDto()));
+    PlacementDto dto = new PlacementDto();
+    assertThrows(RuntimeException.class, () -> mapper.signDto(dto));
   }
 }

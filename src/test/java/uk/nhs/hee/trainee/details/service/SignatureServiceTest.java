@@ -33,6 +33,7 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
@@ -73,13 +74,9 @@ class SignatureServiceTest {
   void shouldSignDto() throws JsonProcessingException, InterruptedException {
     PlacementDto dto = new PlacementDto();
 
-    Instant start = Instant.now();
-    Thread.sleep(0, 1);
-
+    final Instant start = Instant.now().minus(Duration.ofNanos(1));
     service.signDto(dto);
-
-    Thread.sleep(0, 1);
-    Instant end = Instant.now();
+    final Instant end = Instant.now().plus(Duration.ofNanos(1));
 
     Signature signature = dto.getSignature();
     assertThat("Unexpected signature.", signature, notNullValue());

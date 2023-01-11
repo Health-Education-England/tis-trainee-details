@@ -263,8 +263,6 @@ class TraineeProfileResourceTest {
 
   @Test
   void getShouldReturnTraineeProfileWhenTisIdExists() throws Exception {
-    String token = TestJwtUtil.generateTokenForTisId(DEFAULT_TIS_ID_1);
-
     when(service.getTraineeProfileByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
     when(service.hidePastProgrammes(traineeProfile)).thenReturn(traineeProfile);
     when(service.hidePastPlacements(traineeProfile)).thenReturn(traineeProfile);
@@ -277,6 +275,7 @@ class TraineeProfileResourceTest {
       return null;
     }).when(signatureService).signDto(any());
 
+    String token = TestJwtUtil.generateTokenForTisId(DEFAULT_TIS_ID_1);
     this.mockMvc.perform(get("/api/trainee-profile")
             .contentType(MediaType.APPLICATION_JSON)
             .header(HttpHeaders.AUTHORIZATION, token))

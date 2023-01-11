@@ -58,8 +58,7 @@ public final class SignatureConfigurationProperties {
    * Get the duration after which to expire a signature for the given DTO type.
    *
    * @param dto The type of DTO to get the expiry for.
-   * @return The configured expiration for the DTO type, or the default expiry if the DTO is not
-   * configured.
+   * @return The expiration for the DTO type, or the default expiry if the DTO is not configured.
    */
   public Duration getExpireAfter(SignedDto dto) {
     return expireAfter.getOrDefault(dto.getClass().getName(), expireAfter.get("default"));
