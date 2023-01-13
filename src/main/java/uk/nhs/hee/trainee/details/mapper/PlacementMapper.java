@@ -22,15 +22,13 @@
 package uk.nhs.hee.trainee.details.mapper;
 
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import uk.nhs.hee.trainee.details.dto.PlacementDto;
 import uk.nhs.hee.trainee.details.model.Placement;
 
-@Mapper(componentModel = "spring", uses = SignatureMapper.class)
+@Mapper(componentModel = "spring")
 public interface PlacementMapper {
 
-  @Mapping(target = "signature", ignore = true)
   PlacementDto toDto(Placement entity);
 
   Placement toEntity(PlacementDto dto);

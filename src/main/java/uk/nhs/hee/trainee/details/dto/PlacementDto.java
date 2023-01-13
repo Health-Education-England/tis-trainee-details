@@ -25,14 +25,12 @@ import java.time.LocalDate;
 import javax.validation.constraints.NotNull;
 import lombok.Data;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
-import uk.nhs.hee.trainee.details.dto.signature.Signature;
-import uk.nhs.hee.trainee.details.dto.signature.SignedDto;
 
 /**
  * A DTO for placement information.
  */
 @Data
-public class PlacementDto implements SignedDto {
+public class PlacementDto {
 
   @NotNull
   private String tisId;
@@ -47,5 +45,4 @@ public class PlacementDto implements SignedDto {
   private String trainingBody;
   private String wholeTimeEquivalent;
   private Status status;
-  private Signature signature;
 }
