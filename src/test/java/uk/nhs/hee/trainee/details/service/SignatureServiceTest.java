@@ -94,7 +94,7 @@ class SignatureServiceTest {
   }
 
   @Test
-  void shouldNotValidateWhenHmacIncluded() throws JsonProcessingException, InterruptedException {
+  void shouldNotValidateWhenHmacIncludedInHmacGeneration() throws JsonProcessingException {
     PlacementDto dto = new PlacementDto();
     dto.setTisId("123");
 
@@ -109,7 +109,7 @@ class SignatureServiceTest {
   }
 
   @Test
-  void shouldValidateWhenHmacExcluded() throws JsonProcessingException, InterruptedException {
+  void shouldValidateWhenHmacExcludedFromHmacGeneration() throws JsonProcessingException {
     PlacementDto dto = new PlacementDto();
     dto.setTisId("123");
 
