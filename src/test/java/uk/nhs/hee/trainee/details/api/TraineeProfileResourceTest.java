@@ -21,8 +21,6 @@
 
 package uk.nhs.hee.trainee.details.api;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -32,7 +30,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
@@ -40,6 +37,7 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mapstruct.factory.Mappers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -52,23 +50,15 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import uk.nhs.hee.trainee.details.TestJwtUtil;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
-import uk.nhs.hee.trainee.details.dto.signature.Signature;
-import uk.nhs.hee.trainee.details.dto.signature.SignedDto;
-import uk.nhs.hee.trainee.details.mapper.PlacementMapperImpl;
-import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapperImpl;
-import uk.nhs.hee.trainee.details.mapper.SignatureMapperImpl;
 import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapper;
-import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapperImpl;
 import uk.nhs.hee.trainee.details.model.Curriculum;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.model.Placement;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
-import uk.nhs.hee.trainee.details.service.SignatureService;
 import uk.nhs.hee.trainee.details.service.TraineeProfileService;
 
-@ContextConfiguration(classes = {TraineeProfileMapperImpl.class, PlacementMapperImpl.class,
-    ProgrammeMembershipMapperImpl.class, SignatureMapperImpl.class})
+@ContextConfiguration(classes = TraineeProfileMapper.class)
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(controllers = TraineeProfileResource.class)
 class TraineeProfileResourceTest {
@@ -118,16 +108,10 @@ class TraineeProfileResourceTest {
   @Autowired
   private ObjectMapper objectMapper;
 
-  @Autowired
-  private TraineeProfileMapper traineeProfileMapper;
-
   private MockMvc mockMvc;
 
   @MockBean
   private TraineeProfileService service;
-
-  @MockBean
-  private SignatureService signatureService;
 
   private TraineeProfile traineeProfile;
   private PersonalDetails personalDetails;
@@ -140,8 +124,9 @@ class TraineeProfileResourceTest {
    */
   @BeforeEach
   void setup() {
-    TraineeProfileResource traineeProfileResource = new TraineeProfileResource(service,
-        traineeProfileMapper, objectMapper);
+    TraineeProfileMapper mapper = Mappers.getMapper(TraineeProfileMapper.class);
+    TraineeProfileResource traineeProfileResource = new TraineeProfileResource(service, mapper,
+        objectMapper);
     this.mockMvc = MockMvcBuilders.standaloneSetup(traineeProfileResource)
         .setMessageConverters(jacksonMessageConverter)
         .build();
@@ -263,19 +248,11 @@ class TraineeProfileResourceTest {
 
   @Test
   void getShouldReturnTraineeProfileWhenTisIdExists() throws Exception {
+    String token = TestJwtUtil.generateTokenForTisId(DEFAULT_TIS_ID_1);
+
     when(service.getTraineeProfileByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
     when(service.hidePastProgrammes(traineeProfile)).thenReturn(traineeProfile);
     when(service.hidePastPlacements(traineeProfile)).thenReturn(traineeProfile);
-
-    Signature signature = new Signature(Duration.ofMinutes(60));
-    signature.setHmac("not-really-a-hmac");
-    doAnswer(inv -> {
-      SignedDto dto = inv.getArgument(0);
-      dto.setSignature(signature);
-      return null;
-    }).when(signatureService).signDto(any());
-
-    String token = TestJwtUtil.generateTokenForTisId(DEFAULT_TIS_ID_1);
     this.mockMvc.perform(get("/api/trainee-profile")
             .contentType(MediaType.APPLICATION_JSON)
             .header(HttpHeaders.AUTHORIZATION, token))
@@ -311,19 +288,9 @@ class TraineeProfileResourceTest {
             .value(CURRICULUM_NAME))
         .andExpect(jsonPath("$.programmeMemberships[*].curricula[*].curriculumSubType")
             .value(CURRICULUM_SUBTYPE))
-        .andExpect(jsonPath("$.programmeMemberships[*].signature.hmac").value(signature.getHmac()))
-        .andExpect(jsonPath("$.programmeMemberships[*].signature.signedAt")
-            .value(signature.getSignedAt().toString()))
-        .andExpect(jsonPath("$.programmeMemberships[*].signature.validUntil")
-            .value(signature.getValidUntil().toString()))
         .andExpect(jsonPath("$.placements[*].tisId").value(PLACEMENT_TISID))
         .andExpect(jsonPath("$.placements[*].site").value(PLACEMENT_SITE))
-        .andExpect(jsonPath("$.placements[*].status").value(PLACEMENT_STATUS.toString()))
-        .andExpect(jsonPath("$.placements[*].signature.hmac").value(signature.getHmac()))
-        .andExpect(jsonPath("$.placements[*].signature.signedAt")
-            .value(signature.getSignedAt().toString()))
-        .andExpect(jsonPath("$.placements[*].signature.validUntil")
-            .value(signature.getValidUntil().toString()));
+        .andExpect(jsonPath("$.placements[*].status").value(PLACEMENT_STATUS.toString()));
   }
 
   @Test

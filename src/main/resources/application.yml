@@ -20,12 +20,6 @@ application:
   aws:
     sqs:
       event: ${EVENT_QUEUE_URL:}
-  signature:
-    secret-key: ${SIGNATURE_SECRET_KEY}
-    expire-after:  # Minutes
-      default: 1440
-      uk.nhs.hee.trainee.details.dto.PlacementDto: ${ SIGNATURE_PLACEMENT_EXPIRY:1440 }
-      uk.nhs.hee.trainee.details.dto.ProgrammeMembershipDto: ${ SIGNATURE_PROGRAMME_MEMBERSHIP_EXPIRY:1440 }
 
 mongock:
   migration-scan-package: uk.nhs.hee.trainee.details.migration

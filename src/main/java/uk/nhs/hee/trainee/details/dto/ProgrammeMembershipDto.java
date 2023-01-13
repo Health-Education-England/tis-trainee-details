@@ -26,14 +26,12 @@ import java.util.List;
 import javax.validation.constraints.NotNull;
 import lombok.Data;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
-import uk.nhs.hee.trainee.details.dto.signature.Signature;
-import uk.nhs.hee.trainee.details.dto.signature.SignedDto;
 
 /**
  * A DTO for programme membership information.
  */
 @Data
-public class ProgrammeMembershipDto implements SignedDto {
+public class ProgrammeMembershipDto {
 
   @NotNull
   private String tisId;
@@ -47,5 +45,4 @@ public class ProgrammeMembershipDto implements SignedDto {
   private LocalDate programmeCompletionDate;
   private Status status;
   private List<CurriculumDto> curricula;
-  private Signature signature;
 }
