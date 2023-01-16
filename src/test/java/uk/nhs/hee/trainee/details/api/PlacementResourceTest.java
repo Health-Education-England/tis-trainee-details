@@ -25,6 +25,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -33,12 +34,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mapstruct.factory.Mappers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -51,11 +52,16 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import uk.nhs.hee.trainee.details.dto.PlacementDto;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
+import uk.nhs.hee.trainee.details.dto.signature.Signature;
+import uk.nhs.hee.trainee.details.dto.signature.SignedDto;
 import uk.nhs.hee.trainee.details.mapper.PlacementMapper;
+import uk.nhs.hee.trainee.details.mapper.PlacementMapperImpl;
+import uk.nhs.hee.trainee.details.mapper.SignatureMapperImpl;
 import uk.nhs.hee.trainee.details.model.Placement;
 import uk.nhs.hee.trainee.details.service.PlacementService;
+import uk.nhs.hee.trainee.details.service.SignatureService;
 
-@ContextConfiguration(classes = {PlacementMapper.class})
+@ContextConfiguration(classes = {PlacementMapperImpl.class, SignatureMapperImpl.class})
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(PlacementResource.class)
 class PlacementResourceTest {
@@ -66,15 +72,20 @@ class PlacementResourceTest {
   @Autowired
   private ObjectMapper mapper;
 
+  @Autowired
+  private PlacementMapper placementMapper;
+
   private MockMvc mockMvc;
 
   @MockBean
   private PlacementService service;
 
+  @MockBean
+  private SignatureService signatureService;
+
   @BeforeEach
   void setUp() {
-    PlacementMapper mapper = Mappers.getMapper(PlacementMapper.class);
-    PlacementResource resource = new PlacementResource(service, mapper);
+    PlacementResource resource = new PlacementResource(service, placementMapper);
     mockMvc = MockMvcBuilders.standaloneSetup(resource)
         .setMessageConverters(jacksonMessageConverter)
         .build();
@@ -85,8 +96,8 @@ class PlacementResourceTest {
     when(service.updatePlacementForTrainee("40", new Placement())).thenReturn(Optional.empty());
 
     mockMvc.perform(patch("/api/placement/{traineeTisId}", 40)
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(mapper.writeValueAsBytes(new PlacementDto())))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(mapper.writeValueAsBytes(new PlacementDto())))
         .andExpect(status().isBadRequest());
   }
 
@@ -98,8 +109,8 @@ class PlacementResourceTest {
     dto.setTisId("tisIdValue");
 
     mockMvc.perform(patch("/api/placement/{traineeTisId}", 40)
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(mapper.writeValueAsBytes(dto)))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(mapper.writeValueAsBytes(dto)))
         .andExpect(status().isNotFound())
         .andExpect(status().reason("Trainee not found."));
   }
@@ -123,12 +134,20 @@ class PlacementResourceTest {
     when(service.updatePlacementForTrainee(eq("40"), any(Placement.class)))
         .thenReturn(Optional.of(placement));
 
+    Signature signature = new Signature(Duration.ofMinutes(60));
+    signature.setHmac("not-really-a-hmac");
+    doAnswer(inv -> {
+      SignedDto dto = inv.getArgument(0);
+      dto.setSignature(signature);
+      return null;
+    }).when(signatureService).signDto(any());
+
     PlacementDto dto = new PlacementDto();
     dto.setTisId("tisIdValue");
 
     mockMvc.perform(patch("/api/placement/{traineeTisId}", 40)
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(mapper.writeValueAsBytes(dto)))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(mapper.writeValueAsBytes(dto)))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.tisId").value(is("tisIdValue")))
@@ -139,7 +158,11 @@ class PlacementResourceTest {
         .andExpect(jsonPath("$.grade").value(is("gradeValue")))
         .andExpect(jsonPath("$.specialty").value(is("specialtyValue")))
         .andExpect(jsonPath("$.placementType").value(is("placementTypeValue")))
-        .andExpect(jsonPath("$.status").value(is("CURRENT")));
+        .andExpect(jsonPath("$.status").value(is("CURRENT")))
+        .andExpect(jsonPath("$.signature.hmac").value(signature.getHmac()))
+        .andExpect(jsonPath("$.signature.signedAt").value(signature.getSignedAt().toString()))
+        .andExpect(jsonPath("$.signature.validUntil").value(signature.getValidUntil().toString()));
+    ;
   }
 
   @Test
@@ -149,8 +172,8 @@ class PlacementResourceTest {
         .thenReturn(true);
 
     MvcResult result = mockMvc.perform(
-        delete("/api/placement/{traineeTisId}/{placementTisId}", 40, 1)
-            .contentType(MediaType.APPLICATION_JSON))
+            delete("/api/placement/{traineeTisId}/{placementTisId}", 40, 1)
+                .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andReturn();
 
@@ -165,8 +188,8 @@ class PlacementResourceTest {
         .thenReturn(false);
 
     mockMvc.perform(
-        delete("/api/placement/{traineeTisId}/{placementTisId}", 40, 1)
-            .contentType(MediaType.APPLICATION_JSON))
+            delete("/api/placement/{traineeTisId}/{placementTisId}", 40, 1)
+                .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isNotFound());
   }
 
@@ -177,8 +200,8 @@ class PlacementResourceTest {
         .thenThrow(new IllegalArgumentException());
 
     mockMvc.perform(
-        delete("/api/placement/{traineeTisId}/{placementTisId}", "triggersError", "1")
-            .contentType(MediaType.APPLICATION_JSON))
+            delete("/api/placement/{traineeTisId}/{placementTisId}", "triggersError", "1")
+                .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isBadRequest());
   }
 }
