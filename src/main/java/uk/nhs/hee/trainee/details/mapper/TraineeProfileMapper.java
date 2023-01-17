@@ -29,7 +29,7 @@ import uk.nhs.hee.trainee.details.dto.TraineeProfileDto;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = {PlacementMapper.class, ProgrammeMembershipMapper.class})
 public interface TraineeProfileMapper {
 
   TraineeProfileDto toDto(TraineeProfile traineeProfile);
