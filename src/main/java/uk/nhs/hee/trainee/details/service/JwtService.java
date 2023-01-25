@@ -34,8 +34,8 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.crypto.spec.SecretKeySpec;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import uk.nhs.hee.trainee.details.config.DspConfigurationProperties;
 import uk.nhs.hee.trainee.details.model.Placement;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 
@@ -48,12 +48,10 @@ public class JwtService {
   private final String tokenAudience;
   private final String tokenSigningKey;
 
-  JwtService(@Value("${dsp.token.issuer}") String tokenIssuer,
-             @Value("${dsp.token.audience}") String tokenAudience,
-             @Value("${dsp.token.signing-key}") String tokenSigningKey) {
-    this.tokenIssuer = tokenIssuer;
-    this.tokenAudience = tokenAudience;
-    this.tokenSigningKey = tokenSigningKey;
+  JwtService(DspConfigurationProperties dspConfigurationProperties) {
+    this.tokenIssuer = dspConfigurationProperties.getTokenIssuer();
+    this.tokenAudience = dspConfigurationProperties.getTokenAudience();
+    this.tokenSigningKey = dspConfigurationProperties.getTokenSigningKey();
   }
 
   /**
