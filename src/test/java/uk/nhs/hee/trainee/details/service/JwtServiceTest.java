@@ -32,9 +32,11 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import java.util.Base64;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import uk.nhs.hee.trainee.details.config.DspConfigurationProperties;
 import uk.nhs.hee.trainee.details.model.Placement;
 
 class JwtServiceTest {
+
   private static final String TOKEN_ISSUER = "issuer";
   private static final String TOKEN_AUDIENCE = "audience";
   private static final String TOKEN_SIGNING_KEY = "signing key";
@@ -47,7 +49,12 @@ class JwtServiceTest {
 
   @BeforeEach
   void setup() {
-    service = new JwtService(TOKEN_ISSUER, TOKEN_AUDIENCE, TOKEN_SIGNING_KEY);
+    DspConfigurationProperties properties = new DspConfigurationProperties();
+    properties.setTokenAudience(TOKEN_AUDIENCE);
+    properties.setTokenIssuer(TOKEN_ISSUER);
+    properties.setTokenSigningKey(TOKEN_SIGNING_KEY);
+
+    service = new JwtService(properties);
     placement = new Placement();
     placement.setTisId("test");
     token = service.generatePlacementToken(placement);
