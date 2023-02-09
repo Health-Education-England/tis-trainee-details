@@ -25,12 +25,14 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import java.time.LocalDate;
 import lombok.Data;
 import uk.nhs.hee.trainee.details.dto.deserializer.LowerCaseDeserializer;
+import uk.nhs.hee.trainee.details.dto.signature.Signature;
+import uk.nhs.hee.trainee.details.dto.signature.SignedDto;
 
 /**
  * A DTO for PersonalDetails entity, holds the fields for personal information of the trainee.
  */
 @Data
-public class PersonalDetailsDto {
+public class PersonalDetailsDto implements SignedDto {
 
   private String surname;
   private String forenames;
@@ -65,4 +67,5 @@ public class PersonalDetailsDto {
   private String prevRevalBody;
   private LocalDate currRevalDate;
   private LocalDate prevRevalDate;
+  private Signature signature;
 }

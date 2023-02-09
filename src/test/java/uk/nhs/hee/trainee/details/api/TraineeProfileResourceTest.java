@@ -54,6 +54,7 @@ import uk.nhs.hee.trainee.details.TestJwtUtil;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 import uk.nhs.hee.trainee.details.dto.signature.Signature;
 import uk.nhs.hee.trainee.details.dto.signature.SignedDto;
+import uk.nhs.hee.trainee.details.mapper.PersonalDetailsMapperImpl;
 import uk.nhs.hee.trainee.details.mapper.PlacementMapperImpl;
 import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapperImpl;
 import uk.nhs.hee.trainee.details.mapper.SignatureMapperImpl;
@@ -67,8 +68,8 @@ import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.service.SignatureService;
 import uk.nhs.hee.trainee.details.service.TraineeProfileService;
 
-@ContextConfiguration(classes = {TraineeProfileMapperImpl.class, PlacementMapperImpl.class,
-    ProgrammeMembershipMapperImpl.class, SignatureMapperImpl.class})
+@ContextConfiguration(classes = {TraineeProfileMapperImpl.class, PersonalDetailsMapperImpl.class,
+    PlacementMapperImpl.class, ProgrammeMembershipMapperImpl.class, SignatureMapperImpl.class})
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(controllers = TraineeProfileResource.class)
 class TraineeProfileResourceTest {
@@ -302,6 +303,11 @@ class TraineeProfileResourceTest {
         .andExpect(jsonPath("$.personalDetails.address4").value(PERSON_ADDRESS4))
         .andExpect(jsonPath("$.personalDetails.postCode").value(PERSON_POSTCODE))
         .andExpect(jsonPath("$.personalDetails.gmcNumber").value(PERSON_GMC))
+        .andExpect(jsonPath("$.personalDetails.signature.hmac").value(signature.getHmac()))
+        .andExpect(jsonPath("$.personalDetails.signature.signedAt").value(
+            signature.getSignedAt().toString()))
+        .andExpect(jsonPath("$.personalDetails.signature.validUntil").value(
+            signature.getValidUntil().toString()))
         .andExpect(jsonPath("$.programmeMemberships[*].programmeTisId").value(PROGRAMME_TISID))
         .andExpect(jsonPath("$.programmeMemberships[*].programmeName").value(PROGRAMME_NAME))
         .andExpect(jsonPath("$.programmeMemberships[*].programmeNumber").value(PROGRAMME_NUMBER))

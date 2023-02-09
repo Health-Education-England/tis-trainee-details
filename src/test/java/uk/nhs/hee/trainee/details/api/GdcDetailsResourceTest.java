@@ -35,7 +35,6 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mapstruct.factory.Mappers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -47,10 +46,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
 import uk.nhs.hee.trainee.details.mapper.PersonalDetailsMapper;
+import uk.nhs.hee.trainee.details.mapper.PersonalDetailsMapperImpl;
+import uk.nhs.hee.trainee.details.mapper.SignatureMapperImpl;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.service.PersonalDetailsService;
+import uk.nhs.hee.trainee.details.service.SignatureService;
 
-@ContextConfiguration(classes = {PersonalDetailsMapper.class})
+@ContextConfiguration(classes = {PersonalDetailsMapperImpl.class, SignatureMapperImpl.class})
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(GdcDetailsResource.class)
 class GdcDetailsResourceTest {
@@ -61,15 +63,20 @@ class GdcDetailsResourceTest {
   @Autowired
   private ObjectMapper mapper;
 
+  @Autowired
+  private PersonalDetailsMapper personalDetailsMapper;
+
   private MockMvc mockMvc;
 
   @MockBean
   private PersonalDetailsService service;
 
+  @MockBean
+  private SignatureService signatureService;
+
   @BeforeEach
   void setUp() {
-    PersonalDetailsMapper mapper = Mappers.getMapper(PersonalDetailsMapper.class);
-    GdcDetailsResource collegeResource = new GdcDetailsResource(service, mapper);
+    GdcDetailsResource collegeResource = new GdcDetailsResource(service, personalDetailsMapper);
     mockMvc = MockMvcBuilders.standaloneSetup(collegeResource)
         .setMessageConverters(jacksonMessageConverter)
         .build();
@@ -81,8 +88,8 @@ class GdcDetailsResourceTest {
         .thenReturn(Optional.empty());
 
     mockMvc.perform(patch("/api/gdc-details/{tisId}", 40)
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(mapper.writeValueAsBytes(new PersonalDetailsDto())))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(mapper.writeValueAsBytes(new PersonalDetailsDto())))
         .andExpect(status().isNotFound())
         .andExpect(status().reason("Trainee not found."));
   }
@@ -97,8 +104,8 @@ class GdcDetailsResourceTest {
         .thenReturn(Optional.of(personalDetails));
 
     mockMvc.perform(patch("/api/gdc-details/{tisId}", 40)
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(mapper.writeValueAsBytes(new PersonalDetailsDto())))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(mapper.writeValueAsBytes(new PersonalDetailsDto())))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.gdcNumber").value(is("A number")))

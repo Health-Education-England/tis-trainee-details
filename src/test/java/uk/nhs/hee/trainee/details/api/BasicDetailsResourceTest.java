@@ -34,7 +34,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mapstruct.factory.Mappers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -46,10 +45,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
 import uk.nhs.hee.trainee.details.mapper.PersonalDetailsMapper;
+import uk.nhs.hee.trainee.details.mapper.PersonalDetailsMapperImpl;
+import uk.nhs.hee.trainee.details.mapper.SignatureMapperImpl;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.service.PersonalDetailsService;
+import uk.nhs.hee.trainee.details.service.SignatureService;
 
-@ContextConfiguration(classes = {PersonalDetailsMapper.class})
+@ContextConfiguration(classes = {PersonalDetailsMapperImpl.class, SignatureMapperImpl.class})
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(ContactDetailsResource.class)
 class BasicDetailsResourceTest {
@@ -60,15 +62,21 @@ class BasicDetailsResourceTest {
   @Autowired
   private ObjectMapper mapper;
 
+  @Autowired
+  private PersonalDetailsMapper personalDetailsMapper;
+
+
   private MockMvc mockMvc;
 
   @MockBean
   private PersonalDetailsService service;
 
+  @MockBean
+  private SignatureService signatureService;
+
   @BeforeEach
   void setUp() {
-    PersonalDetailsMapper mapper = Mappers.getMapper(PersonalDetailsMapper.class);
-    BasicDetailsResource resource = new BasicDetailsResource(service, mapper);
+    BasicDetailsResource resource = new BasicDetailsResource(service, personalDetailsMapper);
     mockMvc = MockMvcBuilders.standaloneSetup(resource)
         .setMessageConverters(jacksonMessageConverter)
         .build();
@@ -83,8 +91,8 @@ class BasicDetailsResourceTest {
         .thenReturn(personalDetails);
 
     mockMvc.perform(patch("/api/basic-details/{tisId}", 40)
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(mapper.writeValueAsBytes(new PersonalDetailsDto())))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(mapper.writeValueAsBytes(new PersonalDetailsDto())))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.publicHealthNumber").value(is("phnValue")));

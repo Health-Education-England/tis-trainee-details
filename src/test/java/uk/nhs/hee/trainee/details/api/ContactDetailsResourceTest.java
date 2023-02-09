@@ -24,6 +24,7 @@ package uk.nhs.hee.trainee.details.api;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -31,11 +32,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Duration;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mapstruct.factory.Mappers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -46,11 +47,16 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
+import uk.nhs.hee.trainee.details.dto.signature.Signature;
+import uk.nhs.hee.trainee.details.dto.signature.SignedDto;
 import uk.nhs.hee.trainee.details.mapper.PersonalDetailsMapper;
+import uk.nhs.hee.trainee.details.mapper.PersonalDetailsMapperImpl;
+import uk.nhs.hee.trainee.details.mapper.SignatureMapperImpl;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.service.PersonalDetailsService;
+import uk.nhs.hee.trainee.details.service.SignatureService;
 
-@ContextConfiguration(classes = {PersonalDetailsMapper.class})
+@ContextConfiguration(classes = {PersonalDetailsMapperImpl.class, SignatureMapperImpl.class})
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(ContactDetailsResource.class)
 class ContactDetailsResourceTest {
@@ -61,15 +67,20 @@ class ContactDetailsResourceTest {
   @Autowired
   private ObjectMapper mapper;
 
+  @Autowired
+  private PersonalDetailsMapper personalDetailsMapper;
+
   private MockMvc mockMvc;
 
   @MockBean
   private PersonalDetailsService service;
 
+  @MockBean
+  private SignatureService signatureService;
+
   @BeforeEach
   void setUp() {
-    PersonalDetailsMapper mapper = Mappers.getMapper(PersonalDetailsMapper.class);
-    ContactDetailsResource collegeResource = new ContactDetailsResource(service, mapper);
+    var collegeResource = new ContactDetailsResource(service, personalDetailsMapper);
     mockMvc = MockMvcBuilders.standaloneSetup(collegeResource)
         .setMessageConverters(jacksonMessageConverter)
         .build();
@@ -81,8 +92,8 @@ class ContactDetailsResourceTest {
         .thenReturn(Optional.empty());
 
     mockMvc.perform(patch("/api/contact-details/{tisId}", 40)
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(mapper.writeValueAsBytes(new PersonalDetailsDto())))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(mapper.writeValueAsBytes(new PersonalDetailsDto())))
         .andExpect(status().isNotFound())
         .andExpect(status().reason("Trainee not found."));
   }
@@ -97,13 +108,24 @@ class ContactDetailsResourceTest {
     when(service.updateContactDetailsByTisId(eq("40"), any(PersonalDetails.class)))
         .thenReturn(Optional.of(personalDetails));
 
+    Signature signature = new Signature(Duration.ofMinutes(60));
+    signature.setHmac("not-really-a-hmac");
+    doAnswer(inv -> {
+      SignedDto dto = inv.getArgument(0);
+      dto.setSignature(signature);
+      return null;
+    }).when(signatureService).signDto(any());
+
     mockMvc.perform(patch("/api/contact-details/{tisId}", 40)
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(mapper.writeValueAsBytes(new PersonalDetailsDto())))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(mapper.writeValueAsBytes(new PersonalDetailsDto())))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.forenames").value(is("John")))
         .andExpect(jsonPath("$.surname").value(is("Doe")))
-        .andExpect(jsonPath("$.email").value(is("email@email.com")));
+        .andExpect(jsonPath("$.email").value(is("email@email.com")))
+        .andExpect(jsonPath("$.signature.hmac").value(signature.getHmac()))
+        .andExpect(jsonPath("$.signature.signedAt").value(signature.getSignedAt().toString()))
+        .andExpect(jsonPath("$.signature.validUntil").value(signature.getValidUntil().toString()));
   }
 }
