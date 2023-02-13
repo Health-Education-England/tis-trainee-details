@@ -36,7 +36,6 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mapstruct.factory.Mappers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,10 +49,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
 import uk.nhs.hee.trainee.details.mapper.PersonalDetailsMapper;
+import uk.nhs.hee.trainee.details.mapper.PersonalDetailsMapperImpl;
+import uk.nhs.hee.trainee.details.mapper.SignatureMapperImpl;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.service.PersonalDetailsService;
+import uk.nhs.hee.trainee.details.service.SignatureService;
 
-@ContextConfiguration(classes = {PersonalDetailsMapper.class})
+@ContextConfiguration(classes = {PersonalDetailsMapperImpl.class, SignatureMapperImpl.class})
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(ContactDetailsResource.class)
 class PersonalInfoResourceTest {
@@ -69,14 +71,18 @@ class PersonalInfoResourceTest {
   private MappingJackson2HttpMessageConverter jacksonMessageConverter;
   @Autowired
   private ObjectMapper mapper;
+  @Autowired
+  private PersonalDetailsMapper personalDetailsMapper;
   private MockMvc mockMvc;
   @MockBean
   private PersonalDetailsService service;
 
+  @MockBean
+  private SignatureService signatureService;
+
   @BeforeEach
   void setUp() {
-    PersonalDetailsMapper mapper = Mappers.getMapper(PersonalDetailsMapper.class);
-    PersonalInfoResource personalInfoResource = new PersonalInfoResource(service, mapper);
+    var personalInfoResource = new PersonalInfoResource(service, personalDetailsMapper);
     mockMvc = MockMvcBuilders.standaloneSetup(personalInfoResource)
         .setMessageConverters(jacksonMessageConverter)
         .build();

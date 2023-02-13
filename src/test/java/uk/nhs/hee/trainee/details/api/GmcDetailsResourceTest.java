@@ -47,10 +47,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
 import uk.nhs.hee.trainee.details.mapper.PersonalDetailsMapper;
+import uk.nhs.hee.trainee.details.mapper.PersonalDetailsMapperImpl;
+import uk.nhs.hee.trainee.details.mapper.SignatureMapperImpl;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.service.PersonalDetailsService;
+import uk.nhs.hee.trainee.details.service.SignatureService;
 
-@ContextConfiguration(classes = {PersonalDetailsMapper.class})
+@ContextConfiguration(classes = {PersonalDetailsMapperImpl.class, SignatureMapperImpl.class})
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(GmcDetailsResource.class)
 class GmcDetailsResourceTest {
@@ -61,15 +64,20 @@ class GmcDetailsResourceTest {
   @Autowired
   private ObjectMapper mapper;
 
+  @Autowired
+  private PersonalDetailsMapper personalDetailsMapper;
+
   private MockMvc mockMvc;
 
   @MockBean
   private PersonalDetailsService service;
 
+  @MockBean
+  private SignatureService signatureService;
+
   @BeforeEach
   void setUp() {
-    PersonalDetailsMapper mapper = Mappers.getMapper(PersonalDetailsMapper.class);
-    GmcDetailsResource collegeResource = new GmcDetailsResource(service, mapper);
+    GmcDetailsResource collegeResource = new GmcDetailsResource(service, personalDetailsMapper);
     mockMvc = MockMvcBuilders.standaloneSetup(collegeResource)
         .setMessageConverters(jacksonMessageConverter)
         .build();
