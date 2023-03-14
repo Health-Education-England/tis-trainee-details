@@ -57,10 +57,10 @@ public class PlacementResource {
    *
    * @param traineeTisId The ID of the trainee to update.
    * @param dto          The person details to update with.
-   * @return The updated or created Qualification.
+   * @return The updated or created Placement.
    */
   @PatchMapping("/{traineeTisId}")
-  public ResponseEntity<PlacementDto> updateQualification(
+  public ResponseEntity<PlacementDto> updatePlacement(
       @PathVariable(name = "traineeTisId") String traineeTisId,
       @RequestBody @Validated PlacementDto dto) {
     log.info("Update placement of trainee with TIS ID {}", traineeTisId);
