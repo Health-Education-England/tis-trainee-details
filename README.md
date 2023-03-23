@@ -27,16 +27,17 @@ gradlew bootRun
 
 #### Environmental Variables
 
-| Name               | Description                                   | Default   |
-|--------------------|-----------------------------------------------|-----------|
-| DB_HOST            | The MongoDB host to connect to.               | localhost |
-| DB_PORT            | The port to connect to MongoDB on.            | 27017     |
-| DB_NAME            | The name of the MongoDB database.             | trainee   |
-| DB_USER            | The username to access the MongoDB instance.  | admin     |
-| DB_PASSWORD        | The password to access the MongoDB instance.  | pwd       |
-| SENTRY_DSN         | A Sentry error monitoring Data Source Name.   |           |
-| SENTRY_ENVIRONMENT | The environment to log Sentry events against. | local     |
-| EVENT_QUEUE_URL    | The URL of the SQS event queue.               |           |
+| Name                    | Description                                  | Default   |
+|-------------------------|----------------------------------------------|-----------|
+| AWS_XRAY_DAEMON_ADDRESS | The AWS XRay daemon host.                    |           |
+| DB_HOST                 | The MongoDB host to connect to.              | localhost |
+| DB_PORT                 | The port to connect to MongoDB on.           | 27017     |
+| DB_NAME                 | The name of the MongoDB database.            | trainee   |
+| DB_USER                 | The username to access the MongoDB instance. | admin     |
+| DB_PASSWORD             | The password to access the MongoDB instance. | pwd       |
+| ENVIRONMENT             | The environment to log events against.       | local     |
+| EVENT_QUEUE_URL         | The URL of the SQS event queue.              |           |
+| SENTRY_DSN              | A Sentry error monitoring Data Source Name.  |           |
 
 #### Usage Examples
 

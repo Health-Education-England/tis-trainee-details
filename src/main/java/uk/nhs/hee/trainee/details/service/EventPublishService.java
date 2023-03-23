@@ -21,6 +21,7 @@
 
 package uk.nhs.hee.trainee.details.service;
 
+import com.amazonaws.xray.spring.aop.XRayEnabled;
 import io.awspring.cloud.messaging.core.QueueMessagingTemplate;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,6 +34,7 @@ import uk.nhs.hee.trainee.details.model.TraineeProfile;
  */
 @Slf4j
 @Service
+@XRayEnabled
 public class EventPublishService {
 
   private final QueueMessagingTemplate messagingTemplate;

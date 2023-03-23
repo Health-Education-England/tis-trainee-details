@@ -23,6 +23,7 @@ package uk.nhs.hee.trainee.details.service;
 
 import static io.jsonwebtoken.SignatureAlgorithm.HS256;
 
+import com.amazonaws.xray.spring.aop.XRayEnabled;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.SignatureException;
@@ -41,6 +42,7 @@ import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 
 @Slf4j
 @Service
+@XRayEnabled
 public class JwtService {
 
   private static final Long JWT_EXPIRATION_MS = 31556926000L; //1 year in milliseconds

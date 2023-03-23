@@ -21,6 +21,7 @@
 
 package uk.nhs.hee.trainee.details.service;
 
+import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,6 +33,7 @@ import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 
 @Service
+@XRayEnabled
 public class TraineeProfileService {
 
   private final TraineeProfileRepository repository;
