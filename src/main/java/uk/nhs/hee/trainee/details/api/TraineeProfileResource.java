@@ -21,6 +21,7 @@
 
 package uk.nhs.hee.trainee.details.api;
 
+import com.amazonaws.xray.spring.aop.XRayEnabled;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -46,6 +47,7 @@ import uk.nhs.hee.trainee.details.service.TraineeProfileService;
 @Slf4j
 @RestController
 @RequestMapping("/api/trainee-profile")
+@XRayEnabled
 public class TraineeProfileResource {
 
   private static final String TIS_ID_ATTRIBUTE = "custom:tisId";

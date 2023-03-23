@@ -21,6 +21,7 @@
 
 package uk.nhs.hee.trainee.details.api;
 
+import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
@@ -42,6 +43,7 @@ import uk.nhs.hee.trainee.details.service.PlacementService;
 @Slf4j
 @RestController
 @RequestMapping("/api/placement")
+@XRayEnabled
 public class PlacementResource {
 
   private final PlacementService service;

@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "uk.nhs.hee.trainee.details"
-version = "0.15.0"
+version = "0.16.0"
 
 configurations {
   compileOnly {
@@ -53,8 +53,9 @@ dependencies {
   // Sentry reporting
   implementation "io.sentry:sentry-spring-boot-starter:6.16.0"
 
-  // Amazon SQS
+  // Amazon AWS
   implementation "io.awspring.cloud:spring-cloud-starter-aws-messaging"
+  implementation "com.amazonaws:aws-xray-recorder-sdk-spring:2.13.0"
 
   // JWT
   implementation "io.jsonwebtoken:jjwt:0.9.1"

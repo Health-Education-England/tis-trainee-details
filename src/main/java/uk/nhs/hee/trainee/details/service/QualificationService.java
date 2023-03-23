@@ -21,6 +21,7 @@
 
 package uk.nhs.hee.trainee.details.service;
 
+import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,7 @@ import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 
 @Service
+@XRayEnabled
 public class QualificationService {
 
   private final TraineeProfileRepository repository;

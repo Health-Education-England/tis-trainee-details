@@ -21,6 +21,7 @@
 
 package uk.nhs.hee.trainee.details.service;
 
+import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +33,7 @@ import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 
 @Slf4j
 @Service
+@XRayEnabled
 public class PersonalDetailsService {
 
   private final TraineeProfileRepository repository;
