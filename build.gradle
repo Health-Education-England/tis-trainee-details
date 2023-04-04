@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "uk.nhs.hee.trainee.details"
-version = "0.16.0"
+version = "0.16.1"
 
 configurations {
   compileOnly {
@@ -57,9 +57,6 @@ dependencies {
   implementation "io.awspring.cloud:spring-cloud-starter-aws-messaging"
   implementation "com.amazonaws:aws-xray-recorder-sdk-spring:2.13.0"
 
-  // JWT
-  implementation "io.jsonwebtoken:jjwt:0.9.1"
-  implementation 'javax.xml.bind:jaxb-api:2.3.1'
 }
 
 checkstyle {

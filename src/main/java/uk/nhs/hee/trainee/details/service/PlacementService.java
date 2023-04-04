@@ -23,7 +23,6 @@ package uk.nhs.hee.trainee.details.service;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.mapper.PlacementMapper;
@@ -41,26 +40,6 @@ public class PlacementService {
   PlacementService(TraineeProfileRepository repository, PlacementMapper mapper) {
     this.repository = repository;
     this.mapper = mapper;
-  }
-
-  /**
-   * Get the placement with the given placement ID from the trainee profile with the given trainee
-   * ID.
-   *
-   * @param traineeTisId   The ID of the trainee profile.
-   * @param placementTisId The ID of the placement within the profile.
-   * @return The found placement, else empty.
-   */
-  public Optional<Placement> getPlacementForTrainee(String traineeTisId, String placementTisId) {
-    TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
-
-    if (traineeProfile == null) {
-      return Optional.empty();
-    }
-
-    return traineeProfile.getPlacements().stream()
-        .filter(p -> Objects.equals(p.getTisId(), placementTisId))
-        .findFirst();
   }
 
   /**
