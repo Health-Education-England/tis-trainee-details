@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright 2020 Crown Copyright (Health Education England)
+ * Copyright 2023 Crown Copyright (Health Education England)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -19,27 +19,16 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package uk.nhs.hee.trainee.details;
+package uk.nhs.hee.trainee.details.config;
 
-import io.mongock.runner.springboot.EnableMongock;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
-import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.context.annotation.Bean;
-import org.springframework.web.client.RestTemplate;
+import io.sentry.Sentry;
+import org.springframework.context.annotation.Configuration;
+import uk.nhs.hee.trainee.details.config.AwsXrayConfiguration.EcsMetadata;
 
-@EnableMongock
-@SpringBootApplication
-@ConfigurationPropertiesScan
-public class TisTraineeDetailsApplication {
+@Configuration
+public class SentryConfig {
 
-  public static void main(String[] args) {
-    SpringApplication.run(TisTraineeDetailsApplication.class);
-  }
-
-  @Bean
-  RestTemplate restTemplate(RestTemplateBuilder builder) {
-    return builder.build();
+  SentryConfig(EcsMetadata ecsMetadata) {
+    Sentry.configureScope(scope -> scope.setContexts("EcsMetadata", ecsMetadata));
   }
 }

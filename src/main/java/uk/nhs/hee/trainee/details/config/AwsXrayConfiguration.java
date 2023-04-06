@@ -22,11 +22,15 @@
 package uk.nhs.hee.trainee.details.config;
 
 import com.amazonaws.xray.javax.servlet.AWSXRayServletFilter;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import javax.servlet.Filter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestTemplate;
+import uk.nhs.hee.trainee.details.config.AwsXrayConfiguration.EcsMetadata.ContainerMetadata;
+import uk.nhs.hee.trainee.details.config.AwsXrayConfiguration.EcsMetadata.TaskMetadata;
 
 @Configuration
 @ConditionalOnExpression("!T(org.springframework.util.StringUtils)"
@@ -36,5 +40,60 @@ public class AwsXrayConfiguration {
   @Bean
   public Filter tracingFilter(@Value("${application.environment}") String environment) {
     return new AWSXRayServletFilter("tis-trainee-details-" + environment);
+  }
+
+  @Bean
+  public EcsMetadata ecsMetadata(RestTemplate restTemplate,
+      @Value("${ecs.container.metadata.uri.v4}") String metadataEndpoint) {
+    ContainerMetadata containerMetadata = restTemplate.getForObject(metadataEndpoint,
+        ContainerMetadata.class);
+    TaskMetadata taskMetadata = restTemplate.getForObject(metadataEndpoint + "/task",
+        TaskMetadata.class);
+
+    return new EcsMetadata(taskMetadata, containerMetadata);
+  }
+
+  public record EcsMetadata(
+      @JsonProperty("TaskMetadata")
+      TaskMetadata taskMetadata,
+
+      @JsonProperty("ContainerMetadata")
+      ContainerMetadata containerMetadata) {
+
+    record TaskMetadata(
+        @JsonProperty("Cluster")
+        String cluster,
+
+        @JsonProperty("TaskARN")
+        String taskArn,
+
+        @JsonProperty("Family")
+        String family,
+
+        @JsonProperty("Revision")
+        String revision) {
+
+    }
+
+    record ContainerMetadata(
+
+        @JsonProperty("ContainerARN")
+        String containerArn,
+
+        @JsonProperty("LogOptions")
+        LogOptions logOptions) {
+
+      record LogOptions(
+          @JsonProperty("awslogs-group")
+          String logGroup,
+
+          @JsonProperty("awslogs-region")
+          String region,
+
+          @JsonProperty("awslogs-stream")
+          String logStream) {
+
+      }
+    }
   }
 }
