@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright 2020 Crown Copyright (Health Education England)
+ * Copyright 2023 Crown Copyright (Health Education England)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -19,34 +19,15 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package uk.nhs.hee.trainee.details.dto;
-
-import java.time.LocalDate;
-import java.util.List;
-import javax.validation.constraints.NotNull;
-import lombok.Data;
-import uk.nhs.hee.trainee.details.dto.enumeration.Status;
-import uk.nhs.hee.trainee.details.dto.signature.Signature;
-import uk.nhs.hee.trainee.details.dto.signature.SignedDto;
+package uk.nhs.hee.trainee.details.dto.enumeration;
 
 /**
- * A DTO for programme membership information.
+ * An enumeration of supported Gold Guide versions.
  */
-@Data
-public class ProgrammeMembershipDto implements SignedDto {
+public enum GoldGuideVersion {
+  GG9;
 
-  @NotNull
-  private String tisId;
-  private String programmeTisId;
-  private String programmeName;
-  private String programmeNumber;
-  private String managingDeanery;
-  private String programmeMembershipType;
-  private LocalDate startDate;
-  private LocalDate endDate;
-  private LocalDate programmeCompletionDate;
-  private Status status;
-  private List<CurriculumDto> curricula;
-  private ConditionsOfJoiningDto conditionsOfJoining;
-  private Signature signature;
+  public static GoldGuideVersion getLatest() {
+    return GG9;
+  }
 }

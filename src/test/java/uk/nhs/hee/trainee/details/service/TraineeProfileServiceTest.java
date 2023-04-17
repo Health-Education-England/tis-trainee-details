@@ -25,11 +25,14 @@ import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion.GG9;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -46,6 +49,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
+import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
 import uk.nhs.hee.trainee.details.model.Curriculum;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.model.Placement;
@@ -314,6 +318,51 @@ class TraineeProfileServiceTest {
         personalDetails.getDateAttained(), is(LocalDate.now().plusDays(100)));
     assertThat("Unexpected qualification, check order is correct.",
         personalDetails.getMedicalSchool(), is("medicalSchool2"));
+  }
+
+  @Test
+  void shouldUseLatestCojVersionWhenNoCoj() {
+    programmeMembership.setConditionsOfJoining(null);
+
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(this.traineeProfile);
+
+    service.getTraineeProfileByTraineeTisId(DEFAULT_TIS_ID_1);
+
+    ConditionsOfJoining coj = programmeMembership.getConditionsOfJoining();
+    assertThat("Unexpected Conditions of Joining", coj, notNullValue());
+    assertThat("Unexpected CoJ signed at timestamp", coj.signedAt(), nullValue());
+    assertThat("Unexpected CoJ version", coj.version(), is(GG9));
+  }
+
+  @Test
+  void shouldUseLatestCojVersionWhenCojNotSigned() {
+    // Currently only GG9 is available, so latest and unsigned PM version are the same.
+    programmeMembership.setConditionsOfJoining(new ConditionsOfJoining(null, GG9));
+
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(this.traineeProfile);
+
+    service.getTraineeProfileByTraineeTisId(DEFAULT_TIS_ID_1);
+
+    ConditionsOfJoining coj = programmeMembership.getConditionsOfJoining();
+    assertThat("Unexpected Conditions of Joining", coj, notNullValue());
+    assertThat("Unexpected CoJ signed at timestamp", coj.signedAt(), nullValue());
+    assertThat("Unexpected CoJ version", coj.version(), is(GG9));
+  }
+
+  @Test
+  void shouldUseSignedVersionWhenCojSigned() {
+    // Currently only GG9 is available, so latest and signed PM version are the same.
+    Instant now = Instant.now();
+    programmeMembership.setConditionsOfJoining(new ConditionsOfJoining(now, GG9));
+
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(this.traineeProfile);
+
+    service.getTraineeProfileByTraineeTisId(DEFAULT_TIS_ID_1);
+
+    ConditionsOfJoining coj = programmeMembership.getConditionsOfJoining();
+    assertThat("Unexpected Conditions of Joining", coj, notNullValue());
+    assertThat("Unexpected CoJ signed at timestamp", coj.signedAt(), is(now));
+    assertThat("Unexpected CoJ version", coj.version(), is(GG9));
   }
 
   @Test

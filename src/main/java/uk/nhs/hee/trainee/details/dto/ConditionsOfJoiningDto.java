@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright 2020 Crown Copyright (Health Education England)
+ * Copyright 2023 Crown Copyright (Health Education England)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -21,32 +21,15 @@
 
 package uk.nhs.hee.trainee.details.dto;
 
-import java.time.LocalDate;
-import java.util.List;
-import javax.validation.constraints.NotNull;
-import lombok.Data;
-import uk.nhs.hee.trainee.details.dto.enumeration.Status;
-import uk.nhs.hee.trainee.details.dto.signature.Signature;
-import uk.nhs.hee.trainee.details.dto.signature.SignedDto;
+import java.time.Instant;
+import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 
 /**
- * A DTO for programme membership information.
+ * A record of the Conditions of Joining agreement.
+ *
+ * @param signedAt When the Conditions of Joining were signed.
+ * @param version  The Gold Guide version of the Conditions of Joining.
  */
-@Data
-public class ProgrammeMembershipDto implements SignedDto {
+public record ConditionsOfJoiningDto(Instant signedAt, GoldGuideVersion version) {
 
-  @NotNull
-  private String tisId;
-  private String programmeTisId;
-  private String programmeName;
-  private String programmeNumber;
-  private String managingDeanery;
-  private String programmeMembershipType;
-  private LocalDate startDate;
-  private LocalDate endDate;
-  private LocalDate programmeCompletionDate;
-  private Status status;
-  private List<CurriculumDto> curricula;
-  private ConditionsOfJoiningDto conditionsOfJoining;
-  private Signature signature;
 }

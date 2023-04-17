@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright 2020 Crown Copyright (Health Education England)
+ * Copyright 2023 Crown Copyright (Health Education England)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -21,41 +21,15 @@
 
 package uk.nhs.hee.trainee.details.model;
 
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import lombok.Data;
-import uk.nhs.hee.trainee.details.dto.enumeration.Status;
+import java.time.Instant;
+import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 
-@Data
-public class ProgrammeMembership {
+/**
+ * A record of the Conditions of Joining agreement.
+ *
+ * @param signedAt When the Conditions of Joining were signed.
+ * @param version  The Gold Guide version of the Conditions of Joining.
+ */
+public record ConditionsOfJoining(Instant signedAt, GoldGuideVersion version) {
 
-  private String tisId;
-  private String programmeTisId;
-  private String programmeName;
-  private String programmeNumber;
-  private String managingDeanery;
-  private String programmeMembershipType;
-  private LocalDate startDate;
-  private LocalDate endDate;
-  private LocalDate programmeCompletionDate;
-  private List<Curriculum> curricula = new ArrayList<>();
-  private ConditionsOfJoining conditionsOfJoining;
-
-  /**
-   * Get programme status according to programme startDate and endDate.
-   */
-  public Status getStatus() {
-    if (this.startDate == null || this.endDate == null) {
-      return null;
-    }
-
-    LocalDate today = LocalDate.now();
-    if (today.isBefore(this.startDate)) {
-      return Status.FUTURE;
-    } else if (today.isAfter(this.endDate)) {
-      return Status.PAST;
-    }
-    return Status.CURRENT;
-  }
 }
