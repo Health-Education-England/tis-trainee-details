@@ -33,6 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
@@ -51,6 +52,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import uk.nhs.hee.trainee.details.TestJwtUtil;
+import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 import uk.nhs.hee.trainee.details.dto.signature.Signature;
 import uk.nhs.hee.trainee.details.dto.signature.SignedDto;
@@ -60,6 +62,7 @@ import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapperImpl;
 import uk.nhs.hee.trainee.details.mapper.SignatureMapperImpl;
 import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapper;
 import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapperImpl;
+import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
 import uk.nhs.hee.trainee.details.model.Curriculum;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.model.Placement;
@@ -112,6 +115,7 @@ class TraineeProfileResourceTest {
   private static final String PLACEMENT_TISID = "1";
   private static final String PLACEMENT_SITE = "Addenbrookes Hospital";
   private static final Status PLACEMENT_STATUS = Status.CURRENT;
+  private static final Instant NOW = Instant.now();
 
   @Autowired
   private MappingJackson2HttpMessageConverter jacksonMessageConverter;
@@ -203,6 +207,7 @@ class TraineeProfileResourceTest {
     programmeMembership.setProgrammeName(PROGRAMME_NAME);
     programmeMembership.setProgrammeNumber(PROGRAMME_NUMBER);
     programmeMembership.setCurricula(List.of(curriculum));
+    programmeMembership.setConditionsOfJoining(new ConditionsOfJoining(NOW, GoldGuideVersion.GG9));
   }
 
   /**
@@ -317,6 +322,10 @@ class TraineeProfileResourceTest {
             .value(CURRICULUM_NAME))
         .andExpect(jsonPath("$.programmeMemberships[*].curricula[*].curriculumSubType")
             .value(CURRICULUM_SUBTYPE))
+        .andExpect(jsonPath("$.programmeMemberships[*].conditionsOfJoining.signedAt").value(
+            NOW.toString()))
+        .andExpect(jsonPath("$.programmeMemberships[*].conditionsOfJoining.version").value(
+            GoldGuideVersion.GG9.toString()))
         .andExpect(jsonPath("$.programmeMemberships[*].signature.hmac").value(signature.getHmac()))
         .andExpect(jsonPath("$.programmeMemberships[*].signature.signedAt")
             .value(signature.getSignedAt().toString()))
