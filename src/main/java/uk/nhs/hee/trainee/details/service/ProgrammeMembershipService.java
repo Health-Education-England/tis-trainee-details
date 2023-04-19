@@ -22,7 +22,6 @@
 package uk.nhs.hee.trainee.details.service;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -106,7 +105,8 @@ public class ProgrammeMembershipService {
    * Sign Condition of Joining with the given programme membership ID.
    *
    * @param programmeMembershipId The ID of the programme membership for signing COJ.
-   * @return The updated programme membership or empty if the programme membership with the ID was not found.
+   * @return The updated programme membership
+   *     or empty if the programme membership with the ID was not found.
    */
   public Optional<ProgrammeMembership> signProgrammeMembershipCoj(String programmeMembershipId) {
 
@@ -118,7 +118,8 @@ public class ProgrammeMembershipService {
 
       for (ProgrammeMembership existingProgrammeMembership : existingProgrammeMemberships) {
         if (existingProgrammeMembership.getTisId().equals(programmeMembershipId)) {
-          ConditionsOfJoining conditionsOfJoining = new ConditionsOfJoining(Instant.now(), GoldGuideVersion.getLatest());
+          ConditionsOfJoining conditionsOfJoining =
+              new ConditionsOfJoining(Instant.now(), GoldGuideVersion.getLatest());
           existingProgrammeMembership.setConditionsOfJoining(conditionsOfJoining);
           repository.save(traineeProfile);
           return Optional.of(existingProgrammeMembership);

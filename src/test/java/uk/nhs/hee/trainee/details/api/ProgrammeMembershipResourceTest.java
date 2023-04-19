@@ -241,9 +241,10 @@ class ProgrammeMembershipResourceTest {
     programmeMembership.setProgrammeTisId("programmeTisIdValue");
     programmeMembership.setProgrammeName("programmeNameValue");
     programmeMembership.setProgrammeNumber("programmeNumberValue");
-    programmeMembership.setConditionsOfJoining(new ConditionsOfJoining(signedAt, GoldGuideVersion.getLatest()));
+    programmeMembership.setConditionsOfJoining(
+        new ConditionsOfJoining(signedAt, GoldGuideVersion.getLatest()));
 
-    when(service.signProgrammeMembershipCoj(eq("40"))).thenReturn(Optional.of(programmeMembership));
+    when(service.signProgrammeMembershipCoj("40")).thenReturn(Optional.of(programmeMembership));
 
     ProgrammeMembershipDto dto = new ProgrammeMembershipDto();
     dto.setTisId("tisIdValue");
@@ -258,6 +259,7 @@ class ProgrammeMembershipResourceTest {
         .andExpect(jsonPath("$.programmeName").value(is("programmeNameValue")))
         .andExpect(jsonPath("$.programmeNumber").value(is("programmeNumberValue")))
         .andExpect(jsonPath("$.conditionsOfJoining.signedAt").value(is(signedAt.toString())))
-        .andExpect(jsonPath("$.conditionsOfJoining.version").value(is(GoldGuideVersion.getLatest().toString())));
+        .andExpect(jsonPath("$.conditionsOfJoining.version")
+            .value(is(GoldGuideVersion.getLatest().toString())));
   }
 }
