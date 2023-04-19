@@ -22,19 +22,23 @@
 package uk.nhs.hee.trainee.details.service;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
+import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapper;
+import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
@@ -55,6 +59,8 @@ class ProgrammeMembershipServiceTest {
   private static final String NEW_PROGRAMME_MEMBERSHIP_ID = "1";
   private static final String EXISTING_PROGRAMME_MEMBERSHIP_ID = "2";
   private static final String NOT_EXISTING_PROGRAMME_MEMBERSHIP_ID = "3";
+  private static final Instant COJ_SIGNED_AT = Instant.now();
+  private static final GoldGuideVersion GOLD_GUIDE_VERSION = GoldGuideVersion.GG9;
 
   private ProgrammeMembershipService service;
   private TraineeProfileRepository repository;
@@ -100,6 +106,7 @@ class ProgrammeMembershipServiceTest {
     expectedProgrammeMembership.setStartDate(START_DATE.plusDays(100));
     expectedProgrammeMembership.setEndDate(END_DATE.plusDays(100));
     expectedProgrammeMembership.setProgrammeCompletionDate(COMPLETION_DATE.plusDays(100));
+    expectedProgrammeMembership.setConditionsOfJoining(new ConditionsOfJoining(COJ_SIGNED_AT, GOLD_GUIDE_VERSION));
 
     assertThat("Unexpected programme membership.", programmeMembership.get(),
         is(expectedProgrammeMembership));
@@ -131,6 +138,7 @@ class ProgrammeMembershipServiceTest {
     expectedProgrammeMembership.setStartDate(START_DATE.plusDays(100));
     expectedProgrammeMembership.setEndDate(END_DATE.plusDays(100));
     expectedProgrammeMembership.setProgrammeCompletionDate(COMPLETION_DATE.plusDays(100));
+    expectedProgrammeMembership.setConditionsOfJoining(new ConditionsOfJoining(COJ_SIGNED_AT, GOLD_GUIDE_VERSION));
 
     assertThat("Unexpected programme membership.", programmeMembership.get(),
         is(expectedProgrammeMembership));
@@ -164,6 +172,7 @@ class ProgrammeMembershipServiceTest {
     expectedProgrammeMembership.setStartDate(START_DATE.plusDays(100));
     expectedProgrammeMembership.setEndDate(END_DATE.plusDays(100));
     expectedProgrammeMembership.setProgrammeCompletionDate(COMPLETION_DATE.plusDays(100));
+    expectedProgrammeMembership.setConditionsOfJoining(new ConditionsOfJoining(COJ_SIGNED_AT, GOLD_GUIDE_VERSION));
 
     assertThat("Unexpected programme membership.", programmeMembership.get(),
         is(expectedProgrammeMembership));
@@ -195,6 +204,37 @@ class ProgrammeMembershipServiceTest {
     assertThat("Unexpected result.", result, is(false));
   }
 
+  @Test
+  void shouldSignCojWhenTraineeProgrammeMembershipFound() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.getProgrammeMemberships()
+        .add(createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_ID, ORIGINAL_SUFFIX, 0));
+
+    when(repository.findByProgrammeMembershipId(EXISTING_PROGRAMME_MEMBERSHIP_ID)).thenReturn(traineeProfile);
+    when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
+
+    Optional<ProgrammeMembership> programmeMembership = service
+        .signProgrammeMembershipCoj(EXISTING_PROGRAMME_MEMBERSHIP_ID);
+
+    assertThat("Unexpected optional isEmpty flag.", programmeMembership.isEmpty(), is(false));
+    assertThat("Unexpected COJ signedAt.", programmeMembership.get().getConditionsOfJoining().signedAt(),
+        notNullValue());
+    assertThat("Unexpected COJ version.", programmeMembership.get().getConditionsOfJoining().version(),
+        is(GoldGuideVersion.getLatest()));
+  }
+
+  @Test
+  void shouldNotSignCojWhenTraineeProgrammeMembershipNotFound() {
+    when(repository.findByProgrammeMembershipId(TRAINEE_TIS_ID)).thenReturn(null);
+
+    Optional<ProgrammeMembership> programmeMembership = service
+        .signProgrammeMembershipCoj("randomPmId");
+
+    assertThat("Unexpected optional isEmpty flag.", programmeMembership.isEmpty(), is(true));
+    verify(repository).findByProgrammeMembershipId("randomPmId");
+    verifyNoMoreInteractions(repository);
+  }
+
   /**
    * Create an instance of ProgrammeMembership with default dummy values.
    *
@@ -215,6 +255,7 @@ class ProgrammeMembershipServiceTest {
     programmeMembership.setStartDate(START_DATE.plusDays(dateAdjustmentDays));
     programmeMembership.setEndDate(END_DATE.plusDays(dateAdjustmentDays));
     programmeMembership.setProgrammeCompletionDate(COMPLETION_DATE.plusDays(dateAdjustmentDays));
+    programmeMembership.setConditionsOfJoining(new ConditionsOfJoining(COJ_SIGNED_AT, GOLD_GUIDE_VERSION));
 
     return programmeMembership;
   }

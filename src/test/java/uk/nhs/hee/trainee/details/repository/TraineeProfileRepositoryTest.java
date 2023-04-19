@@ -23,9 +23,11 @@ package uk.nhs.hee.trainee.details.repository;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.springframework.test.util.AssertionErrors.assertTrue;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
@@ -40,6 +42,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 import uk.nhs.hee.trainee.details.TestConfig;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
+import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 
 @Disabled("Current requires a local DB instance, ignore until in-memory test DB is set up")
@@ -48,6 +51,7 @@ import uk.nhs.hee.trainee.details.model.TraineeProfile;
 class TraineeProfileRepositoryTest {
 
   private static final String EMAIL = "email@email.com";
+  private static final String PROGRAMME_MEMBERSHIP_ID = "321";
 
   @Autowired
   private TraineeProfileRepository repository;
@@ -68,6 +72,11 @@ class TraineeProfileRepositoryTest {
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setEmail(EMAIL);
     traineeProfile.setPersonalDetails(personalDetails);
+
+    ProgrammeMembership programmeMembership = new ProgrammeMembership();
+    programmeMembership.setTisId(PROGRAMME_MEMBERSHIP_ID);
+    traineeProfile.setProgrammeMemberships(new ArrayList<>(List.of(programmeMembership)));
+
     repository.save(traineeProfile);
   }
 
@@ -131,5 +140,19 @@ class TraineeProfileRepositoryTest {
       assertThatThrownBy(() -> repository.save(secondCopy.get()))
           .isInstanceOf(OptimisticLockingFailureException.class);
     }
+  }
+
+  @Test
+  @Transactional
+  void shouldReturnTraineeProfileWhenProgrammeMembershipFound() {
+    TraineeProfile traineeProfile = repository.findByProgrammeMembershipId(PROGRAMME_MEMBERSHIP_ID);
+    assertThat("Unexpected trainee profile ID.", traineeProfile.getId(), is("1"));
+  }
+
+  @Test
+  @Transactional
+  void shouldReturnEmptyWhenProgrammeMembershipNotFound() {
+    TraineeProfile traineeProfile = repository.findByProgrammeMembershipId("000");
+    assertThat("Unexpected trainee profile.", traineeProfile, nullValue());
   }
 }
