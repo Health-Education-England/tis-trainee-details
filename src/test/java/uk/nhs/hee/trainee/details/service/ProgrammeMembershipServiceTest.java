@@ -252,7 +252,7 @@ class ProgrammeMembershipServiceTest {
         .signProgrammeMembershipCoj(TRAINEE_TIS_ID, "randomPmId");
 
     assertThat("Unexpected optional isEmpty flag.", programmeMembership.isEmpty(), is(true));
-    verify(repository,never()).save(traineeProfile);
+    verify(repository, never()).save(traineeProfile);
   }
 
   /**

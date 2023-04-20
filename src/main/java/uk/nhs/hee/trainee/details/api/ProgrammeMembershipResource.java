@@ -22,14 +22,12 @@
 package uk.nhs.hee.trainee.details.api;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Optional;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.http.HttpHeaders;
@@ -62,6 +60,9 @@ public class ProgrammeMembershipResource {
   private final ProgrammeMembershipMapper mapper;
   private final ObjectMapper objectMapper;
 
+  /**
+   * ProgrammeMembershipResource class constructor.
+   */
   public ProgrammeMembershipResource(ProgrammeMembershipService service,
       ProgrammeMembershipMapper mapper, ObjectMapper objectMapper) {
     this.service = service;
