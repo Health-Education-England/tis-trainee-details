@@ -59,7 +59,7 @@ public class ProgrammeMembershipResource {
    * ProgrammeMembershipResource class constructor.
    */
   public ProgrammeMembershipResource(ProgrammeMembershipService service,
-      ProgrammeMembershipMapper mapper, ObjectMapper objectMapper) {
+      ProgrammeMembershipMapper mapper) {
     this.service = service;
     this.mapper = mapper;
   }

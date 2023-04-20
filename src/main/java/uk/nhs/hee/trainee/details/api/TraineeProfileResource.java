@@ -22,7 +22,6 @@
 package uk.nhs.hee.trainee.details.api;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -52,13 +51,10 @@ public class TraineeProfileResource {
 
   private final TraineeProfileService service;
   private final TraineeProfileMapper mapper;
-  private final ObjectMapper objectMapper;
 
-  protected TraineeProfileResource(TraineeProfileService service, TraineeProfileMapper mapper,
-      ObjectMapper objectMapper) {
+  protected TraineeProfileResource(TraineeProfileService service, TraineeProfileMapper mapper) {
     this.service = service;
     this.mapper = mapper;
-    this.objectMapper = objectMapper;
   }
 
   /**
