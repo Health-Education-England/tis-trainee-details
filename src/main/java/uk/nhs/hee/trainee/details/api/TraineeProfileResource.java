@@ -47,8 +47,6 @@ import uk.nhs.hee.trainee.details.service.TraineeProfileService;
 @XRayEnabled
 public class TraineeProfileResource {
 
-  private static final String TIS_ID_ATTRIBUTE = "custom:tisId";
-
   private final TraineeProfileService service;
   private final TraineeProfileMapper mapper;
 
