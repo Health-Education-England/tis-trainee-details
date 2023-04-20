@@ -108,9 +108,9 @@ public class ProgrammeMembershipService {
    * @return The updated programme membership
    *     or empty if the programme membership with the ID was not found.
    */
-  public Optional<ProgrammeMembership> signProgrammeMembershipCoj(String programmeMembershipId) {
+  public Optional<ProgrammeMembership> signProgrammeMembershipCoj(String traineeTisId, String programmeMembershipId) {
 
-    TraineeProfile traineeProfile = repository.findByProgrammeMembershipId(programmeMembershipId);
+    TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
 
     if (traineeProfile != null) {
       List<ProgrammeMembership> existingProgrammeMemberships = traineeProfile

@@ -25,13 +25,13 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -215,12 +215,11 @@ class ProgrammeMembershipServiceTest {
     traineeProfile.getProgrammeMemberships()
         .add(createProgrammeMembership("3", ORIGINAL_SUFFIX, 0));
 
-    when(repository.findByProgrammeMembershipId(EXISTING_PROGRAMME_MEMBERSHIP_ID))
-        .thenReturn(traineeProfile);
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
     when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
 
     Optional<ProgrammeMembership> programmeMembership = service
-        .signProgrammeMembershipCoj(EXISTING_PROGRAMME_MEMBERSHIP_ID);
+        .signProgrammeMembershipCoj(TRAINEE_TIS_ID, EXISTING_PROGRAMME_MEMBERSHIP_ID);
 
     assertThat("Unexpected optional isEmpty flag.", programmeMembership.isEmpty(), is(false));
     assertThat("Unexpected COJ signedAt.",
@@ -232,15 +231,28 @@ class ProgrammeMembershipServiceTest {
   }
 
   @Test
-  void shouldNotSignCojWhenTraineeProgrammeMembershipNotFound() {
-    when(repository.findByProgrammeMembershipId(TRAINEE_TIS_ID)).thenReturn(null);
-
+  void shouldNotSignCojWhenTraineeProfileNotFound() {
     Optional<ProgrammeMembership> programmeMembership = service
-        .signProgrammeMembershipCoj("randomPmId");
+        .signProgrammeMembershipCoj("randomId", EXISTING_PROGRAMME_MEMBERSHIP_ID);
 
     assertThat("Unexpected optional isEmpty flag.", programmeMembership.isEmpty(), is(true));
-    verify(repository).findByProgrammeMembershipId("randomPmId");
+    verify(repository).findByTraineeTisId("randomId");
     verifyNoMoreInteractions(repository);
+  }
+
+  @Test
+  void shouldNotSignCojWhenTraineeFoundButProgrammeMembershipsNotExists() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.getProgrammeMemberships()
+        .add(createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_ID, ORIGINAL_SUFFIX, 0));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    Optional<ProgrammeMembership> programmeMembership = service
+        .signProgrammeMembershipCoj(TRAINEE_TIS_ID, "randomPmId");
+
+    assertThat("Unexpected optional isEmpty flag.", programmeMembership.isEmpty(), is(true));
+    verify(repository,never()).save(traineeProfile);
   }
 
   /**

@@ -27,9 +27,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -45,6 +43,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.test.context.ContextConfiguration;
@@ -52,6 +51,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import uk.nhs.hee.trainee.details.TestJwtUtil;
 import uk.nhs.hee.trainee.details.dto.ProgrammeMembershipDto;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.dto.signature.Signature;
@@ -77,6 +77,8 @@ class ProgrammeMembershipResourceTest {
 
   @Autowired
   private ProgrammeMembershipMapper programmeMembershipMapper;
+  @Autowired
+  private ObjectMapper objectMapper;
 
   private MockMvc mockMvc;
 
@@ -89,7 +91,7 @@ class ProgrammeMembershipResourceTest {
   @BeforeEach
   void setUp() {
     ProgrammeMembershipResource resource = new ProgrammeMembershipResource(service,
-        programmeMembershipMapper);
+        programmeMembershipMapper, objectMapper);
     mockMvc = MockMvcBuilders.standaloneSetup(resource)
         .setMessageConverters(jacksonMessageConverter)
         .build();
@@ -222,12 +224,21 @@ class ProgrammeMembershipResourceTest {
   }
 
   @Test
-  void shouldReturnNotFoundStatusInSignCojWhenPmNotFound() throws Exception {
-    when(service.signProgrammeMembershipCoj("0"))
-        .thenReturn(Optional.empty());
-
+  void getShouldReturnBadRequestWhenTokenNotFound() throws Exception {
     mockMvc.perform(post("/api/programme-membership/{programmeMembershipId}/sign-coj", 0)
             .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void shouldReturnNotFoundStatusInSignCojWhenPmNotFound() throws Exception {
+    when(service.signProgrammeMembershipCoj("tisIdValue", "0"))
+        .thenReturn(Optional.empty());
+
+    String token = TestJwtUtil.generateTokenForTisId("tisIdValue");
+    mockMvc.perform(post("/api/programme-membership/{programmeMembershipId}/sign-coj", 0)
+            .contentType(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isNotFound())
         .andExpect(status().reason("Trainee with Programme Membership 0 not found."));
   }
@@ -244,14 +255,16 @@ class ProgrammeMembershipResourceTest {
     programmeMembership.setConditionsOfJoining(
         new ConditionsOfJoining(signedAt, GoldGuideVersion.getLatest()));
 
-    when(service.signProgrammeMembershipCoj("40")).thenReturn(Optional.of(programmeMembership));
+    when(service.signProgrammeMembershipCoj("tisIdValue", "40")).thenReturn(Optional.of(programmeMembership));
 
     ProgrammeMembershipDto dto = new ProgrammeMembershipDto();
     dto.setTisId("tisIdValue");
 
+    String token = TestJwtUtil.generateTokenForTisId("tisIdValue");
     mockMvc.perform(post("/api/programme-membership/{programmeMembershipId}/sign-coj", 40)
             .contentType(MediaType.APPLICATION_JSON)
-            .content(mapper.writeValueAsBytes(dto)))
+            .content(mapper.writeValueAsBytes(dto))
+            .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.tisId").value(is("tisIdValue")))
