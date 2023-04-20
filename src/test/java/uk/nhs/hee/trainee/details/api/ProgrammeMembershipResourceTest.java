@@ -93,7 +93,7 @@ class ProgrammeMembershipResourceTest {
   @BeforeEach
   void setUp() {
     ProgrammeMembershipResource resource = new ProgrammeMembershipResource(service,
-        programmeMembershipMapper, objectMapper);
+        programmeMembershipMapper);
     mockMvc = MockMvcBuilders.standaloneSetup(resource)
         .setMessageConverters(jacksonMessageConverter)
         .build();
