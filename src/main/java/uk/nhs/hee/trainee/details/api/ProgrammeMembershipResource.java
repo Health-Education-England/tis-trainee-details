@@ -22,19 +22,24 @@
 package uk.nhs.hee.trainee.details.api;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
+import java.io.IOException;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import uk.nhs.hee.trainee.details.api.util.AuthTokenUtil;
 import uk.nhs.hee.trainee.details.dto.ProgrammeMembershipDto;
 import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapper;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
@@ -49,6 +54,9 @@ public class ProgrammeMembershipResource {
   private final ProgrammeMembershipService service;
   private final ProgrammeMembershipMapper mapper;
 
+  /**
+   * ProgrammeMembershipResource class constructor.
+   */
   public ProgrammeMembershipResource(ProgrammeMembershipService service,
       ProgrammeMembershipMapper mapper) {
     this.service = service;
@@ -61,10 +69,10 @@ public class ProgrammeMembershipResource {
    *
    * @param traineeTisId The ID of the trainee to update.
    * @param dto          The person details to update with.
-   * @return The updated or created Qualification.
+   * @return The updated or created Programme Membership.
    */
   @PatchMapping("/{traineeTisId}")
-  public ResponseEntity<ProgrammeMembershipDto> updateQualification(
+  public ResponseEntity<ProgrammeMembershipDto> updateProgrammeMembership(
       @PathVariable(name = "traineeTisId") String traineeTisId,
       @RequestBody @Validated ProgrammeMembershipDto dto) {
     log.info("Update programme membership of trainee with TIS ID {}", traineeTisId);
@@ -96,5 +104,35 @@ public class ProgrammeMembershipResource {
       // other exceptions are possible, e.g. DataAccessException if MongoDB is down
     }
     return ResponseEntity.ok(true);
+  }
+
+  /**
+   * Sign Condition of Joining with the given programme membership,
+   * setting version to the latest Gold Guide version, and signedAt to current time.
+   *
+   * @param programmeMembershipId The ID of the programme membership for signing COJ.
+   * @return The updated Programme Membership.
+   */
+  @PostMapping("/{programmeMembershipId}/sign-coj")
+  public ResponseEntity<ProgrammeMembershipDto> signCoj(
+      @PathVariable String programmeMembershipId,
+      @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
+    log.info("Signing COJ with Programme Membership ID {}", programmeMembershipId);
+
+    String traineeTisId;
+    try {
+      traineeTisId = AuthTokenUtil.getTraineeTisId(token);
+    } catch (IOException e) {
+      log.warn("Unable to read tisId from token.", e);
+      return ResponseEntity.badRequest().build();
+    }
+
+    Optional<ProgrammeMembership> optionalEntity = service
+        .signProgrammeMembershipCoj(traineeTisId, programmeMembershipId);
+    ProgrammeMembership entity = optionalEntity
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+            "Trainee with Programme Membership " + programmeMembershipId + " not found."));
+
+    return ResponseEntity.ok(mapper.toDto(entity));
   }
 }

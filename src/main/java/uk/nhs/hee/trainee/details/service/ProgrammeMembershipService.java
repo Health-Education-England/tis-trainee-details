@@ -22,10 +22,13 @@
 package uk.nhs.hee.trainee.details.service;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
+import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapper;
+import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
@@ -96,5 +99,34 @@ public class ProgrammeMembershipService {
     repository.save(traineeProfile);
 
     return true;
+  }
+
+  /**
+   * Sign Condition of Joining with the given programme membership ID.
+   *
+   * @param programmeMembershipId The ID of the programme membership for signing COJ.
+   * @return The updated programme membership
+   *     or empty if the programme membership with the ID was not found.
+   */
+  public Optional<ProgrammeMembership> signProgrammeMembershipCoj(
+      String traineeTisId, String programmeMembershipId) {
+
+    TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
+
+    if (traineeProfile != null) {
+      List<ProgrammeMembership> existingProgrammeMemberships = traineeProfile
+          .getProgrammeMemberships();
+
+      for (ProgrammeMembership existingProgrammeMembership : existingProgrammeMemberships) {
+        if (existingProgrammeMembership.getTisId().equals(programmeMembershipId)) {
+          ConditionsOfJoining conditionsOfJoining =
+              new ConditionsOfJoining(Instant.now(), GoldGuideVersion.getLatest());
+          existingProgrammeMembership.setConditionsOfJoining(conditionsOfJoining);
+          repository.save(traineeProfile);
+          return Optional.of(existingProgrammeMembership);
+        }
+      }
+    }
+    return Optional.empty();
   }
 }

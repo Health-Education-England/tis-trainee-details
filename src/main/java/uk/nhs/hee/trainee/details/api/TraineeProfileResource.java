@@ -22,12 +22,8 @@
 package uk.nhs.hee.trainee.details.api;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.List;
-import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -38,6 +34,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import uk.nhs.hee.trainee.details.api.util.AuthTokenUtil;
 import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
 import uk.nhs.hee.trainee.details.dto.TraineeProfileDto;
 import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapper;
@@ -50,17 +47,12 @@ import uk.nhs.hee.trainee.details.service.TraineeProfileService;
 @XRayEnabled
 public class TraineeProfileResource {
 
-  private static final String TIS_ID_ATTRIBUTE = "custom:tisId";
-
   private final TraineeProfileService service;
   private final TraineeProfileMapper mapper;
-  private final ObjectMapper objectMapper;
 
-  protected TraineeProfileResource(TraineeProfileService service, TraineeProfileMapper mapper,
-      ObjectMapper objectMapper) {
+  protected TraineeProfileResource(TraineeProfileService service, TraineeProfileMapper mapper) {
     this.service = service;
     this.mapper = mapper;
-    this.objectMapper = objectMapper;
   }
 
   /**
@@ -74,14 +66,9 @@ public class TraineeProfileResource {
       @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
     log.info("Trainee Profile of authenticated user.");
 
-    String[] tokenSections = token.split("\\.");
-    byte[] payloadBytes = Base64.getUrlDecoder()
-        .decode(tokenSections[1].getBytes(StandardCharsets.UTF_8));
     String tisId;
-
     try {
-      Map<?, ?> payload = objectMapper.readValue(payloadBytes, Map.class);
-      tisId = (String) payload.get(TIS_ID_ATTRIBUTE);
+      tisId = AuthTokenUtil.getTraineeTisId(token);
     } catch (IOException e) {
       log.warn("Unable to read tisId from token.", e);
       return ResponseEntity.badRequest().build();

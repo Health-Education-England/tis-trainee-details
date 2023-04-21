@@ -29,12 +29,14 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,6 +45,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.test.context.ContextConfiguration;
@@ -50,12 +53,15 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import uk.nhs.hee.trainee.details.TestJwtUtil;
 import uk.nhs.hee.trainee.details.dto.ProgrammeMembershipDto;
+import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.dto.signature.Signature;
 import uk.nhs.hee.trainee.details.dto.signature.SignedDto;
 import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapper;
 import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapperImpl;
 import uk.nhs.hee.trainee.details.mapper.SignatureMapperImpl;
+import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.service.ProgrammeMembershipService;
 import uk.nhs.hee.trainee.details.service.SignatureService;
@@ -73,6 +79,8 @@ class ProgrammeMembershipResourceTest {
 
   @Autowired
   private ProgrammeMembershipMapper programmeMembershipMapper;
+  @Autowired
+  private ObjectMapper objectMapper;
 
   private MockMvc mockMvc;
 
@@ -215,5 +223,59 @@ class ProgrammeMembershipResourceTest {
             delete("/api/programme-membership/{traineeTisId}", "triggersError")
                 .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void getShouldReturnBadRequestWhenTokenNotFound() throws Exception {
+    mockMvc.perform(post("/api/programme-membership/{programmeMembershipId}/sign-coj", 0)
+            .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void shouldReturnNotFoundStatusInSignCojWhenPmNotFound() throws Exception {
+    when(service.signProgrammeMembershipCoj("tisIdValue", "0"))
+        .thenReturn(Optional.empty());
+
+    String token = TestJwtUtil.generateTokenForTisId("tisIdValue");
+    mockMvc.perform(post("/api/programme-membership/{programmeMembershipId}/sign-coj", 0)
+            .contentType(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isNotFound())
+        .andExpect(status().reason("Trainee with Programme Membership 0 not found."));
+  }
+
+  @Test
+  void shouldSignCojWhenTraineePmFound() throws Exception {
+    final Instant signedAt =  Instant.now();
+
+    ProgrammeMembership programmeMembership = new ProgrammeMembership();
+    programmeMembership.setTisId("tisIdValue");
+    programmeMembership.setProgrammeTisId("programmeTisIdValue");
+    programmeMembership.setProgrammeName("programmeNameValue");
+    programmeMembership.setProgrammeNumber("programmeNumberValue");
+    programmeMembership.setConditionsOfJoining(
+        new ConditionsOfJoining(signedAt, GoldGuideVersion.getLatest()));
+
+    when(service.signProgrammeMembershipCoj("tisIdValue", "40"))
+        .thenReturn(Optional.of(programmeMembership));
+
+    ProgrammeMembershipDto dto = new ProgrammeMembershipDto();
+    dto.setTisId("tisIdValue");
+
+    String token = TestJwtUtil.generateTokenForTisId("tisIdValue");
+    mockMvc.perform(post("/api/programme-membership/{programmeMembershipId}/sign-coj", 40)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(mapper.writeValueAsBytes(dto))
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.tisId").value(is("tisIdValue")))
+        .andExpect(jsonPath("$.programmeTisId").value(is("programmeTisIdValue")))
+        .andExpect(jsonPath("$.programmeName").value(is("programmeNameValue")))
+        .andExpect(jsonPath("$.programmeNumber").value(is("programmeNumberValue")))
+        .andExpect(jsonPath("$.conditionsOfJoining.signedAt").value(is(signedAt.toString())))
+        .andExpect(jsonPath("$.conditionsOfJoining.version")
+            .value(is(GoldGuideVersion.GG9.toString())));
   }
 }

@@ -31,7 +31,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -121,9 +120,6 @@ class TraineeProfileResourceTest {
   private MappingJackson2HttpMessageConverter jacksonMessageConverter;
 
   @Autowired
-  private ObjectMapper objectMapper;
-
-  @Autowired
   private TraineeProfileMapper traineeProfileMapper;
 
   private MockMvc mockMvc;
@@ -146,7 +142,7 @@ class TraineeProfileResourceTest {
   @BeforeEach
   void setup() {
     TraineeProfileResource traineeProfileResource = new TraineeProfileResource(service,
-        traineeProfileMapper, objectMapper);
+        traineeProfileMapper);
     this.mockMvc = MockMvcBuilders.standaloneSetup(traineeProfileResource)
         .setMessageConverters(jacksonMessageConverter)
         .build();
