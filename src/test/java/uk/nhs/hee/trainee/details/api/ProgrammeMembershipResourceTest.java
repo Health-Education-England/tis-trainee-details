@@ -276,6 +276,6 @@ class ProgrammeMembershipResourceTest {
         .andExpect(jsonPath("$.programmeNumber").value(is("programmeNumberValue")))
         .andExpect(jsonPath("$.conditionsOfJoining.signedAt").value(is(signedAt.toString())))
         .andExpect(jsonPath("$.conditionsOfJoining.version")
-            .value(is(GoldGuideVersion.getLatest().toString())));
+            .value(is(GoldGuideVersion.GG9.toString())));
   }
 }

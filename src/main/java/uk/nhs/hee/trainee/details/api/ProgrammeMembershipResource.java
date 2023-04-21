@@ -22,7 +22,6 @@
 package uk.nhs.hee.trainee.details.api;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
@@ -120,9 +119,7 @@ public class ProgrammeMembershipResource {
       @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
     log.info("Signing COJ with Programme Membership ID {}", programmeMembershipId);
 
-
     String traineeTisId;
-
     try {
       traineeTisId = AuthTokenUtil.getTraineeTisId(token);
     } catch (IOException e) {
