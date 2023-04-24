@@ -87,8 +87,8 @@ class EventPublishServiceTest {
         event.getProgrammeMembershipTisId(), is("123"));
     ConditionsOfJoining conditionsOfJoiningSent = event.getConditionsOfJoining();
     assertThat("Unexpected CoJ Signed At",
-        conditionsOfJoining.signedAt(), is(conditionsOfJoiningSent.signedAt()));
+        conditionsOfJoiningSent.signedAt(), is(signedAt));
     assertThat("Unexpected CoJ Version",
-        conditionsOfJoining.version(), is(conditionsOfJoiningSent.version()));
+        conditionsOfJoiningSent.version(), is(GoldGuideVersion.GG9));
   }
 }
