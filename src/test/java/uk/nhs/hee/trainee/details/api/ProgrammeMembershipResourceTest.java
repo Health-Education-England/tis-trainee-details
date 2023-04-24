@@ -63,6 +63,7 @@ import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapperImpl;
 import uk.nhs.hee.trainee.details.mapper.SignatureMapperImpl;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
+import uk.nhs.hee.trainee.details.service.EventPublishService;
 import uk.nhs.hee.trainee.details.service.ProgrammeMembershipService;
 import uk.nhs.hee.trainee.details.service.SignatureService;
 
@@ -88,12 +89,15 @@ class ProgrammeMembershipResourceTest {
   private ProgrammeMembershipService service;
 
   @MockBean
+  private EventPublishService eventPublishService;
+
+  @MockBean
   private SignatureService signatureService;
 
   @BeforeEach
   void setUp() {
     ProgrammeMembershipResource resource = new ProgrammeMembershipResource(service,
-        programmeMembershipMapper);
+        programmeMembershipMapper, eventPublishService);
     mockMvc = MockMvcBuilders.standaloneSetup(resource)
         .setMessageConverters(jacksonMessageConverter)
         .build();
@@ -247,7 +251,7 @@ class ProgrammeMembershipResourceTest {
 
   @Test
   void shouldSignCojWhenTraineePmFound() throws Exception {
-    final Instant signedAt =  Instant.now();
+    final Instant signedAt = Instant.now();
 
     ProgrammeMembership programmeMembership = new ProgrammeMembership();
     programmeMembership.setTisId("tisIdValue");

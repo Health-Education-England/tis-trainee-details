@@ -28,22 +28,28 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import io.awspring.cloud.messaging.core.QueueMessagingTemplate;
+import java.time.Instant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
+import uk.nhs.hee.trainee.details.event.CojSignedEvent;
 import uk.nhs.hee.trainee.details.event.ProfileCreateEvent;
+import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
+import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 
 class EventPublishServiceTest {
 
   private static final String QUEUE_URL = "queue.url";
+  private static final String COJ_QUEUE_URL = "coj.queue.url";
   private EventPublishService eventPublishService;
   private QueueMessagingTemplate messagingTemplate;
 
   @BeforeEach
   void setUp() {
     messagingTemplate = mock(QueueMessagingTemplate.class);
-    eventPublishService = new EventPublishService(messagingTemplate, QUEUE_URL);
+    eventPublishService = new EventPublishService(messagingTemplate, QUEUE_URL, COJ_QUEUE_URL);
   }
 
   @Test
@@ -59,5 +65,30 @@ class EventPublishServiceTest {
 
     ProfileCreateEvent event = eventCaptor.getValue();
     assertThat("Unexpected trainee ID.", event.getTraineeTisId(), is("10"));
+  }
+
+  @Test
+  void shouldPublishCojSignedEvent() {
+    ProgrammeMembership programmeMembership = new ProgrammeMembership();
+    programmeMembership.setTisId("123");
+    Instant signedAt = Instant.now();
+    ConditionsOfJoining conditionsOfJoining
+        = new ConditionsOfJoining(signedAt, GoldGuideVersion.GG9);
+    programmeMembership.setConditionsOfJoining(conditionsOfJoining);
+
+    eventPublishService.publishCojSignedEvent(programmeMembership);
+
+    ArgumentCaptor<CojSignedEvent> eventCaptor = ArgumentCaptor.forClass(
+        CojSignedEvent.class);
+    verify(messagingTemplate).convertAndSend(eq(COJ_QUEUE_URL), eventCaptor.capture());
+
+    CojSignedEvent event = eventCaptor.getValue();
+    assertThat("Unexpected programme membership ID.",
+        event.getProgrammeMembershipTisId(), is("123"));
+    ConditionsOfJoining conditionsOfJoiningSent = event.getConditionsOfJoining();
+    assertThat("Unexpected CoJ Signed At",
+        conditionsOfJoiningSent.signedAt(), is(signedAt));
+    assertThat("Unexpected CoJ Version",
+        conditionsOfJoiningSent.version(), is(GoldGuideVersion.GG9));
   }
 }
