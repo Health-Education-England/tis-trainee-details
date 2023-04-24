@@ -83,7 +83,8 @@ class EventPublishServiceTest {
     verify(messagingTemplate).convertAndSend(eq(COJ_QUEUE_URL), eventCaptor.capture());
 
     CojSignedEvent event = eventCaptor.getValue();
-    assertThat("Unexpected programme membership ID.", event.getProgrammeMembershipTisId(), is("123"));
+    assertThat("Unexpected programme membership ID.",
+        event.getProgrammeMembershipTisId(), is("123"));
     ConditionsOfJoining conditionsOfJoiningSent = event.getConditionsOfJoining();
     assertThat("Unexpected CoJ Signed At",
         conditionsOfJoining.signedAt(), is(conditionsOfJoiningSent.signedAt()));
