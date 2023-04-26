@@ -63,8 +63,8 @@ import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapperImpl;
 import uk.nhs.hee.trainee.details.mapper.SignatureMapperImpl;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
-import uk.nhs.hee.trainee.details.service.EventPublishService;
 import uk.nhs.hee.trainee.details.service.ProgrammeMembershipService;
+import uk.nhs.hee.trainee.details.service.RabbitPublishService;
 import uk.nhs.hee.trainee.details.service.SignatureService;
 
 @ContextConfiguration(classes = {ProgrammeMembershipMapperImpl.class, SignatureMapperImpl.class})
@@ -89,7 +89,7 @@ class ProgrammeMembershipResourceTest {
   private ProgrammeMembershipService service;
 
   @MockBean
-  private EventPublishService eventPublishService;
+  private RabbitPublishService rabbitPublishService;
 
   @MockBean
   private SignatureService signatureService;
@@ -97,7 +97,7 @@ class ProgrammeMembershipResourceTest {
   @BeforeEach
   void setUp() {
     ProgrammeMembershipResource resource = new ProgrammeMembershipResource(service,
-        programmeMembershipMapper, eventPublishService);
+        programmeMembershipMapper, rabbitPublishService);
     mockMvc = MockMvcBuilders.standaloneSetup(resource)
         .setMessageConverters(jacksonMessageConverter)
         .build();

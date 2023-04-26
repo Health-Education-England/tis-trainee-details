@@ -7,6 +7,12 @@ spring:
   data:
     mongodb:
       uri: mongodb://${DB_USER:admin}:${DB_PASSWORD:pwd}@${DB_HOST:localhost}:${DB_PORT:27017}/${DB_NAME:trainee}?authSource=admin
+  rabbitmq:
+    host: ${TRAINEE_DETAILS_RABBITMQ_HOST}
+    port: ${TRAINEE_DETAILS_RABBITMQ_PORT}
+    username: ${TRAINEE_DETAILS_RABBITMQ_USERNAME}
+    password: ${TRAINEE_DETAILS_RABBITMQ_PASSWORD}
+    ssl.enabled: ${TRAINEE_DETAILS_RABBITMQ_USE_SSL}
 
 logging:
   level:
@@ -20,8 +26,11 @@ application:
   aws:
     sqs:
       event: ${EVENT_QUEUE_URL:}
-      coj-signed: ${COJ_SIGNED_QUEUE_URL:}
   environment: ${ENVIRONMENT:local}
+  rabbit:
+    coj-signed-queue: ${COJ_SIGNED_RABBIT_QUEUE_URL:}
+    coj-signed-exchange: ${COJ_SIGNED_RABBIT_EXCHANGE:}
+    coj-signed-routing-key: ${COJ_SIGNED_RABBIT_ROUTING_KEY:}
   signature:
     secret-key: ${SIGNATURE_SECRET_KEY}
     expire-after:  # Minutes

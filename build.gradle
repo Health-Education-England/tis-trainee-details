@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "uk.nhs.hee.trainee.details"
-version = "0.19.0"
+version = "0.20.0"
 
 configurations {
   compileOnly {
@@ -56,6 +56,9 @@ dependencies {
   // Amazon AWS
   implementation "io.awspring.cloud:spring-cloud-starter-aws-messaging"
   implementation "com.amazonaws:aws-xray-recorder-sdk-spring:2.13.0"
+
+  // Rabbit MQ
+  implementation "org.springframework.integration:spring-integration-amqp:6.0.5"
 
 }
 
