@@ -54,7 +54,8 @@ class RabbitPublishServiceTest {
 
   @BeforeEach
   void setUp() {
-    rabbitPublishService = new RabbitPublishService(RABBIT_EXCHANGE, RABBIT_ROUTING_KEY, rabbitTemplate);
+    rabbitPublishService
+        = new RabbitPublishService(RABBIT_EXCHANGE, RABBIT_ROUTING_KEY, rabbitTemplate);
   }
 
   @Test

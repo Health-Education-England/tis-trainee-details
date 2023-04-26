@@ -28,15 +28,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import io.awspring.cloud.messaging.core.QueueMessagingTemplate;
-import java.time.Instant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
-import uk.nhs.hee.trainee.details.event.CojSignedEvent;
 import uk.nhs.hee.trainee.details.event.ProfileCreateEvent;
-import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
-import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 
 class EventPublishServiceTest {

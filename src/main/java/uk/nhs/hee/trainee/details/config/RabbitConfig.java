@@ -40,14 +40,17 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitConfig {
 
-  @Value("${application.rabbit.coj-signed}")
-  private String cojQueueName;
+  private final String cojQueueName;
+  private final String cojExchange;
+  private final String cojRoutingKey;
 
-  @Value("${application.rabbit.coj-signed-exchange}")
-  private String cojExchange;
-
-  @Value("${application.rabbit.coj-signed-routing-key}")
-  private String cojRoutingKey;
+  RabbitConfig(@Value("${application.rabbit.coj-signed}") String cojQueueName,
+               @Value("${application.rabbit.coj-signed-exchange}") String cojExchange,
+               @Value("${application.rabbit.coj-signed-routing-key}") String cojRoutingKey) {
+    this.cojQueueName = cojQueueName;
+    this.cojExchange = cojExchange;
+    this.cojRoutingKey = cojRoutingKey;
+  }
 
   @Bean
   public Queue cojSignedQueue() {
