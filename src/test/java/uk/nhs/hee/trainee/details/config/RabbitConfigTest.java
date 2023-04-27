@@ -59,7 +59,7 @@ class RabbitConfigTest {
   void shouldBuildQueue() {
     Queue cojQueue = rabbitConfig.cojSignedQueue();
     assertThat("Unexpected CoJ queue name", cojQueue.getName(), is(RABBIT_QUEUE_NAME));
-    assertThat("Unexpected CoJ queue durability", cojQueue.isDurable(), is(false));
+    assertThat("Unexpected CoJ queue durability", cojQueue.isDurable(), is(true));
   }
 
   @Test
