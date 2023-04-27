@@ -22,19 +22,13 @@
 package uk.nhs.hee.trainee.details.service;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
-import com.rabbitmq.client.AMQP;
-import io.awspring.cloud.messaging.core.QueueMessagingTemplate;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.core.Exchange;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.event.CojSignedEvent;
-import uk.nhs.hee.trainee.details.event.ProfileCreateEvent;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
-import uk.nhs.hee.trainee.details.model.TraineeProfile;
 
 /**
  * A service to publish events to Rabbit MQ.
@@ -48,8 +42,8 @@ public class RabbitPublishService {
   private final String routingKey;
   private final RabbitTemplate rabbitTemplate;
 
-  RabbitPublishService(@Value("${application.rabbit.coj-signed-exchange}") String rabbitExchange,
-                       @Value("${application.rabbit.coj-signed-routing-key}") String routingKey,
+  RabbitPublishService(@Value("${application.rabbit.coj-signed.exchange}") String rabbitExchange,
+                       @Value("${application.rabbit.coj-signed.routing-key}") String routingKey,
                        RabbitTemplate rabbitTemplate) {
     this.rabbitExchange = rabbitExchange;
     this.routingKey = routingKey;

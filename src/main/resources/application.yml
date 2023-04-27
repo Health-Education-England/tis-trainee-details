@@ -28,9 +28,10 @@ application:
       event: ${EVENT_QUEUE_URL:}
   environment: ${ENVIRONMENT:local}
   rabbit:
-    coj-signed-queue: ${COJ_SIGNED_RABBIT_QUEUE_URL:}
-    coj-signed-exchange: ${COJ_SIGNED_RABBIT_EXCHANGE:}
-    coj-signed-routing-key: ${COJ_SIGNED_RABBIT_ROUTING_KEY:}
+    coj-signed:
+      queue: ${COJ_SIGNED_RABBIT_QUEUE_URL:}
+      exchange: ${COJ_SIGNED_RABBIT_EXCHANGE:}
+      routing-key: ${COJ_SIGNED_RABBIT_ROUTING_KEY:}
   signature:
     secret-key: ${SIGNATURE_SECRET_KEY}
     expire-after:  # Minutes

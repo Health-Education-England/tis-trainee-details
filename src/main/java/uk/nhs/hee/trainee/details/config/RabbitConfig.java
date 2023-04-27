@@ -44,9 +44,9 @@ public class RabbitConfig {
   private final String cojExchange;
   private final String cojRoutingKey;
 
-  RabbitConfig(@Value("${application.rabbit.coj-signed}") String cojQueueName,
-               @Value("${application.rabbit.coj-signed-exchange}") String cojExchange,
-               @Value("${application.rabbit.coj-signed-routing-key}") String cojRoutingKey) {
+  RabbitConfig(@Value("${application.rabbit.coj-signed.queue}") String cojQueueName,
+               @Value("${application.rabbit.coj-signed.exchange}") String cojExchange,
+               @Value("${application.rabbit.coj-signed.routing-key}") String cojRoutingKey) {
     this.cojQueueName = cojQueueName;
     this.cojExchange = cojExchange;
     this.cojRoutingKey = cojRoutingKey;
@@ -54,7 +54,7 @@ public class RabbitConfig {
 
   @Bean
   public Queue cojSignedQueue() {
-    return new Queue(cojQueueName, false);
+    return new Queue(cojQueueName, true);
   }
 
   @Bean
