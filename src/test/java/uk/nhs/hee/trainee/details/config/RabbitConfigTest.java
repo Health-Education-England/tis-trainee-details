@@ -26,9 +26,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.DirectExchange;
-import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
@@ -37,13 +34,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Test class for the Rabbit configuration.
- * TODO: check that these are actually meaningful tests
  */
 class RabbitConfigTest {
-
-  private static final String RABBIT_QUEUE_NAME = "coj.queue";
-  private static final String RABBIT_EXCHANGE = "exchange";
-  private static final String RABBIT_ROUTING_KEY = "routing.key";
 
   @Autowired
   private ConnectionFactory connectionFactory;
@@ -52,32 +44,7 @@ class RabbitConfigTest {
 
   @BeforeEach
   void setUp() {
-    rabbitConfig = new RabbitConfig(RABBIT_QUEUE_NAME, RABBIT_EXCHANGE, RABBIT_ROUTING_KEY);
-  }
-
-  @Test
-  void shouldBuildQueue() {
-    Queue cojQueue = rabbitConfig.cojSignedQueue();
-    assertThat("Unexpected CoJ queue name", cojQueue.getName(), is(RABBIT_QUEUE_NAME));
-    assertThat("Unexpected CoJ queue durability", cojQueue.isDurable(), is(true));
-  }
-
-  @Test
-  void shouldBuildExchange() {
-    DirectExchange exchange = rabbitConfig.exchange();
-    assertThat("Unexpected exchange name", exchange.getName(), is(RABBIT_EXCHANGE));
-  }
-
-  @Test
-  void shouldBuildBinding() {
-    Binding binding
-        = rabbitConfig.cojBinding(rabbitConfig.cojSignedQueue(), rabbitConfig.exchange());
-    assertThat("Unexpected binding exchange",
-        binding.getExchange(), is(RABBIT_EXCHANGE));
-    assertThat("Unexpected binding destination",
-        binding.getDestination(), is(RABBIT_QUEUE_NAME));
-    assertThat("Unexpected binding routing key",
-        binding.getRoutingKey(), is(RABBIT_ROUTING_KEY));
+    rabbitConfig = new RabbitConfig();
   }
 
   @Test

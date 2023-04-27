@@ -23,15 +23,10 @@ package uk.nhs.hee.trainee.details.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.amqp.core.AcknowledgeMode;
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.DirectExchange;
-import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -39,33 +34,6 @@ import org.springframework.context.annotation.Configuration;
 @ConditionalOnProperty("spring.rabbitmq.host")
 @Configuration
 public class RabbitConfig {
-
-  private final String cojQueueName;
-  private final String cojExchange;
-  private final String cojRoutingKey;
-
-  RabbitConfig(@Value("${application.rabbit.coj-signed.queue}") String cojQueueName,
-               @Value("${application.rabbit.coj-signed.exchange}") String cojExchange,
-               @Value("${application.rabbit.coj-signed.routing-key}") String cojRoutingKey) {
-    this.cojQueueName = cojQueueName;
-    this.cojExchange = cojExchange;
-    this.cojRoutingKey = cojRoutingKey;
-  }
-
-  @Bean
-  public Queue cojSignedQueue() {
-    return new Queue(cojQueueName, true);
-  }
-
-  @Bean
-  public DirectExchange exchange() {
-    return new DirectExchange(cojExchange);
-  }
-
-  @Bean
-  public Binding cojBinding(final Queue cojSignedQueue, final DirectExchange exchange) {
-    return BindingBuilder.bind(cojSignedQueue).to(exchange).with(cojRoutingKey);
-  }
 
   @Bean
   public MessageConverter jsonMessageConverter() {

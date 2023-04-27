@@ -29,7 +29,6 @@ application:
   environment: ${ENVIRONMENT:local}
   rabbit:
     coj-signed:
-      queue: ${COJ_SIGNED_RABBIT_QUEUE_URL:}
       exchange: ${COJ_SIGNED_RABBIT_EXCHANGE:}
       routing-key: ${COJ_SIGNED_RABBIT_ROUTING_KEY:}
   signature:
