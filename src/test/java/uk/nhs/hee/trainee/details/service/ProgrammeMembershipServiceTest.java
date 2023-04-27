@@ -30,6 +30,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Optional;
@@ -107,7 +108,7 @@ class ProgrammeMembershipServiceTest {
     expectedProgrammeMembership.setEndDate(END_DATE.plusDays(100));
     expectedProgrammeMembership.setProgrammeCompletionDate(COMPLETION_DATE.plusDays(100));
     expectedProgrammeMembership.setConditionsOfJoining(
-        new ConditionsOfJoining(COJ_SIGNED_AT, GOLD_GUIDE_VERSION));
+        new ConditionsOfJoining(COJ_SIGNED_AT.plus(Duration.ofDays(100)), GOLD_GUIDE_VERSION));
 
     assertThat("Unexpected programme membership.", programmeMembership.get(),
         is(expectedProgrammeMembership));
@@ -140,7 +141,7 @@ class ProgrammeMembershipServiceTest {
     expectedProgrammeMembership.setEndDate(END_DATE.plusDays(100));
     expectedProgrammeMembership.setProgrammeCompletionDate(COMPLETION_DATE.plusDays(100));
     expectedProgrammeMembership.setConditionsOfJoining(
-        new ConditionsOfJoining(COJ_SIGNED_AT, GOLD_GUIDE_VERSION));
+        new ConditionsOfJoining(COJ_SIGNED_AT.plus(Duration.ofDays(100)), GOLD_GUIDE_VERSION));
 
     assertThat("Unexpected programme membership.", programmeMembership.get(),
         is(expectedProgrammeMembership));
@@ -175,10 +176,37 @@ class ProgrammeMembershipServiceTest {
     expectedProgrammeMembership.setEndDate(END_DATE.plusDays(100));
     expectedProgrammeMembership.setProgrammeCompletionDate(COMPLETION_DATE.plusDays(100));
     expectedProgrammeMembership.setConditionsOfJoining(
-        new ConditionsOfJoining(COJ_SIGNED_AT, GOLD_GUIDE_VERSION));
+        new ConditionsOfJoining(COJ_SIGNED_AT.plus(Duration.ofDays(100)), GOLD_GUIDE_VERSION));
 
     assertThat("Unexpected programme membership.", programmeMembership.get(),
         is(expectedProgrammeMembership));
+  }
+
+  @Test
+  void shouldNotUpdateExistingConditionsOfJoiningWhenNewCojNull() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.getProgrammeMemberships()
+        .add(createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_ID, ORIGINAL_SUFFIX, 0));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+    when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
+
+    ProgrammeMembership newProgrammeMembership = createProgrammeMembership(
+        EXISTING_PROGRAMME_MEMBERSHIP_ID, MODIFIED_SUFFIX, 100);
+    newProgrammeMembership.setConditionsOfJoining(null);
+
+    Optional<ProgrammeMembership> programmeMembership = service
+        .updateProgrammeMembershipForTrainee(TRAINEE_TIS_ID, newProgrammeMembership);
+
+    assertThat("Unexpected optional isEmpty flag.", programmeMembership.isEmpty(), is(false));
+    ProgrammeMembership updatedProgrammeMembership = programmeMembership.get();
+    assertThat("Unexpected conditions of joining.",
+        updatedProgrammeMembership.getConditionsOfJoining(), notNullValue());
+
+    ConditionsOfJoining conditionsOfJoining = updatedProgrammeMembership.getConditionsOfJoining();
+    assertThat("Unexpected signed at.", conditionsOfJoining.signedAt(), is(COJ_SIGNED_AT));
+    assertThat("Unexpected signed version.", conditionsOfJoining.version(),
+        is(GoldGuideVersion.GG9));
   }
 
   @Test
@@ -276,7 +304,8 @@ class ProgrammeMembershipServiceTest {
     programmeMembership.setEndDate(END_DATE.plusDays(dateAdjustmentDays));
     programmeMembership.setProgrammeCompletionDate(COMPLETION_DATE.plusDays(dateAdjustmentDays));
     programmeMembership.setConditionsOfJoining(
-        new ConditionsOfJoining(COJ_SIGNED_AT, GOLD_GUIDE_VERSION));
+        new ConditionsOfJoining(COJ_SIGNED_AT.plus(Duration.ofDays(dateAdjustmentDays)),
+            GOLD_GUIDE_VERSION));
 
     return programmeMembership;
   }
