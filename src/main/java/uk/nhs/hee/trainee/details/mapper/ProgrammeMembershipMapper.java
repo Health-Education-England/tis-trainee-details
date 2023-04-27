@@ -21,6 +21,8 @@
 
 package uk.nhs.hee.trainee.details.mapper;
 
+import static org.mapstruct.NullValuePropertyMappingStrategy.IGNORE;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
@@ -35,6 +37,7 @@ public interface ProgrammeMembershipMapper {
 
   ProgrammeMembership toEntity(ProgrammeMembershipDto dto);
 
+  @Mapping(target = "conditionsOfJoining", nullValuePropertyMappingStrategy = IGNORE)
   void updateProgrammeMembership(@MappingTarget ProgrammeMembership target,
       ProgrammeMembership source);
 }
