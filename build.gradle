@@ -58,8 +58,7 @@ dependencies {
   implementation "com.amazonaws:aws-xray-recorder-sdk-spring:2.13.0"
 
   // Rabbit MQ
-  implementation "org.springframework.integration:spring-integration-amqp:6.0.5"
-
+  implementation "org.springframework.boot:spring-boot-starter-amqp"
 }
 
 checkstyle {
