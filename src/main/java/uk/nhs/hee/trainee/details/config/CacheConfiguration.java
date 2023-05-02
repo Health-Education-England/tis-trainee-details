@@ -19,19 +19,38 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package uk.nhs.hee.trainee.details.model;
+package uk.nhs.hee.trainee.details.config;
 
-import java.io.Serializable;
-import java.time.Instant;
-import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
+import java.time.Duration;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.cache.RedisCacheConfiguration;
+import org.springframework.data.redis.cache.RedisCacheManager.RedisCacheManagerBuilder;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
 
 /**
- * A record of the Conditions of Joining agreement.
- *
- * @param signedAt When the Conditions of Joining were signed.
- * @param version  The Gold Guide version of the Conditions of Joining.
+ * Configuration for caching behaviour.
  */
-public record ConditionsOfJoining(Instant signedAt, GoldGuideVersion version) implements
-    Serializable {
+@Configuration
+@EnableCaching
+public class CacheConfiguration {
 
+  /**
+   * Create a default cache manager.
+   *
+   * @param factory The Redis connection factory.
+   * @return The built cache manager.
+   */
+  @Bean
+  public CacheManager cacheManager(RedisConnectionFactory factory) {
+    RedisCacheConfiguration configuration = RedisCacheConfiguration.defaultCacheConfig()
+        .entryTtl(Duration.ZERO)
+        .prefixCacheNameWith("Details::");
+
+    return RedisCacheManagerBuilder.fromConnectionFactory(factory)
+        .cacheDefaults(configuration)
+        .build();
+  }
 }

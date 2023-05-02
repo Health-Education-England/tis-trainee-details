@@ -1,0 +1,7 @@
+spring:
+  data:
+    redis:
+      host: ${embedded.redis.host}
+      port: ${embedded.redis.port}
+      user: ${embedded.redis.user}
+      password: ${embedded.redis.password}

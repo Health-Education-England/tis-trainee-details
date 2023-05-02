@@ -38,13 +38,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
-import uk.nhs.hee.trainee.details.TestConfig;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 
 @Disabled("Current requires a local DB instance, ignore until in-memory test DB is set up")
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(classes = TestConfig.class)
+@SpringBootTest
 class TraineeProfileRepositoryTest {
 
   private static final String EMAIL = "email@email.com";
