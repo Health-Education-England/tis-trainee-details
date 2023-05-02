@@ -1,2 +1,7 @@
 mongock:
   enabled: false
+
+cloud:
+  aws:
+    region:
+      static: eu-west-2

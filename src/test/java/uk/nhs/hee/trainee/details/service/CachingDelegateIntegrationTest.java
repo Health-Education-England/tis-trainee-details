@@ -24,29 +24,26 @@ package uk.nhs.hee.trainee.details.service;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import io.awspring.cloud.autoconfigure.messaging.SqsAutoConfiguration;
-import io.awspring.cloud.messaging.core.QueueMessagingTemplate;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import uk.nhs.hee.trainee.details.config.MongoConfiguration;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
 
 @SpringBootTest(properties = "embedded.containers.enabled=true")
-@ActiveProfiles("redis")
+@ActiveProfiles({"test", "redis"})
 @Testcontainers(disabledWithoutDocker = true)
-@EnableAutoConfiguration(exclude = SqsAutoConfiguration.class)
 class CachingDelegateIntegrationTest {
 
   @MockBean
-  private QueueMessagingTemplate queueMessagingTemplate;
+  private MongoConfiguration mongoConfiguration;
 
   @Autowired
   CachingDelegate delegate;

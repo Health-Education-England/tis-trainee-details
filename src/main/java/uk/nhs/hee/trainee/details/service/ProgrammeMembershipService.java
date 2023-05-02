@@ -121,7 +121,7 @@ public class ProgrammeMembershipService {
    *
    * @param programmeMembershipId The ID of the programme membership for signing COJ.
    * @return The updated programme membership or empty if the programme membership with the ID was
-   * not found.
+   *     not found.
    */
   public Optional<ProgrammeMembership> signProgrammeMembershipCoj(
       String traineeTisId, String programmeMembershipId) {
