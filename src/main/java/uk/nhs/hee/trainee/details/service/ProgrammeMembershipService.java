@@ -25,6 +25,7 @@ import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapper;
@@ -59,10 +60,14 @@ public class ProgrammeMembershipService {
       ProgrammeMembership programmeMembership) {
     if (programmeMembership.getConditionsOfJoining() == null
         || programmeMembership.getConditionsOfJoining().signedAt() == null) {
+
       // Restore the Conditions of Joining if it exists after this PM was previously deleted.
-      Optional<ConditionsOfJoining> conditionsOfJoining = cachingDelegate.getConditionsOfJoining(
-          programmeMembership.getTisId());
-      conditionsOfJoining.ifPresent(programmeMembership::setConditionsOfJoining);
+      for (String id : programmeMembership.getTisId().split(",")) {
+        Optional<ConditionsOfJoining> conditionsOfJoining = cachingDelegate.getConditionsOfJoining(
+            id);
+        conditionsOfJoining.ifPresent(programmeMembership::setConditionsOfJoining);
+        // All results should be the same, but iterating through all IDs ensures a clean cache.
+      }
     }
 
     TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
@@ -107,6 +112,14 @@ public class ProgrammeMembershipService {
     existingProgrammeMemberships.stream()
         .filter(pm -> pm.getConditionsOfJoining() != null
             && pm.getConditionsOfJoining().signedAt() != null)
+        .flatMap(pm ->
+            Stream.of(pm.getTisId().split(",")).map(id -> {
+              ProgrammeMembership newPm = new ProgrammeMembership();
+              newPm.setTisId(id);
+              newPm.setConditionsOfJoining(pm.getConditionsOfJoining());
+              return newPm;
+            })
+        )
         .forEach(pm -> cachingDelegate.cacheConditionsOfJoining(pm.getTisId(),
             pm.getConditionsOfJoining()));
 
