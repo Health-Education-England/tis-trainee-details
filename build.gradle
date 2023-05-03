@@ -55,7 +55,7 @@ dependencies {
 
   // Amazon AWS
   implementation "io.awspring.cloud:spring-cloud-starter-aws-messaging"
-  implementation "com.amazonaws:aws-xray-recorder-sdk-spring:2.13.0"
+  implementation "com.amazonaws:aws-xray-recorder-sdk-spring:2.14.0"
 
   // Rabbit MQ
   implementation "org.springframework.boot:spring-boot-starter-amqp"
