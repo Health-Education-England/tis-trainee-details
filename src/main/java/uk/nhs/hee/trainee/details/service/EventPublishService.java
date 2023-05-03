@@ -26,10 +26,7 @@ import io.awspring.cloud.messaging.core.QueueMessagingTemplate;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import uk.nhs.hee.trainee.details.event.CojSignedEvent;
 import uk.nhs.hee.trainee.details.event.ProfileCreateEvent;
-import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
-import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 
 /**
@@ -42,14 +39,11 @@ public class EventPublishService {
 
   private final QueueMessagingTemplate messagingTemplate;
   private final String eventQueueUrl;
-  private final String cojSignedQueueUrl;
 
   EventPublishService(QueueMessagingTemplate messagingTemplate,
-      @Value("${application.aws.sqs.event}") String eventQueueUrl,
-      @Value("${application.aws.sqs.coj-signed}") String cojSignedQueueUrl) {
+      @Value("${application.aws.sqs.event}") String eventQueueUrl) {
     this.messagingTemplate = messagingTemplate;
     this.eventQueueUrl = eventQueueUrl;
-    this.cojSignedQueueUrl = cojSignedQueueUrl;
   }
 
   /**
@@ -62,20 +56,5 @@ public class EventPublishService {
 
     ProfileCreateEvent event = new ProfileCreateEvent(profile.getTraineeTisId());
     messagingTemplate.convertAndSend(eventQueueUrl, event);
-  }
-
-  /**
-   * Publish a CoJ signed event.
-   *
-   * @param programmeMembership The signed {@link ProgrammeMembership}.
-   */
-  public void publishCojSignedEvent(ProgrammeMembership programmeMembership) {
-    log.info("Sending CoJ signed event for programme membership id '{}'",
-        programmeMembership.getTisId());
-
-    ConditionsOfJoining conditionsOfJoining = programmeMembership.getConditionsOfJoining();
-
-    CojSignedEvent event = new CojSignedEvent(programmeMembership.getTisId(), conditionsOfJoining);
-    messagingTemplate.convertAndSend(cojSignedQueueUrl, event);
   }
 }

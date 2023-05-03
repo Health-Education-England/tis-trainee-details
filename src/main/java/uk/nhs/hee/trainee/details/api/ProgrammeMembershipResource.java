@@ -43,8 +43,8 @@ import uk.nhs.hee.trainee.details.api.util.AuthTokenUtil;
 import uk.nhs.hee.trainee.details.dto.ProgrammeMembershipDto;
 import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapper;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
-import uk.nhs.hee.trainee.details.service.EventPublishService;
 import uk.nhs.hee.trainee.details.service.ProgrammeMembershipService;
+import uk.nhs.hee.trainee.details.service.RabbitPublishService;
 
 @Slf4j
 @RestController
@@ -54,16 +54,16 @@ public class ProgrammeMembershipResource {
 
   private final ProgrammeMembershipService service;
   private final ProgrammeMembershipMapper mapper;
-  private final EventPublishService eventPublishService;
+  private final RabbitPublishService rabbitPublishService;
 
   /**
    * ProgrammeMembershipResource class constructor.
    */
   public ProgrammeMembershipResource(ProgrammeMembershipService service,
-      ProgrammeMembershipMapper mapper, EventPublishService eventPublishService) {
+      ProgrammeMembershipMapper mapper, RabbitPublishService rabbitPublishService) {
     this.service = service;
     this.mapper = mapper;
-    this.eventPublishService = eventPublishService;
+    this.rabbitPublishService = rabbitPublishService;
   }
 
   /**
@@ -136,7 +136,7 @@ public class ProgrammeMembershipResource {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "Trainee with Programme Membership " + programmeMembershipId + " not found."));
 
-    eventPublishService.publishCojSignedEvent(entity);
+    rabbitPublishService.publishCojSignedEvent(entity);
 
     return ResponseEntity.ok(mapper.toDto(entity));
   }
