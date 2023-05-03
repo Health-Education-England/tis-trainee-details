@@ -83,4 +83,25 @@ class RabbitPublishServiceTest {
     assertThat("Unexpected CoJ Version",
         conditionsOfJoiningSent.version(), is(GoldGuideVersion.GG9));
   }
+
+  @Test
+  void shouldPublishCojSignedEventWithSimplifiedId() {
+    ProgrammeMembership programmeMembership = new ProgrammeMembership();
+    programmeMembership.setTisId("123,456,7890");
+    Instant signedAt = Instant.now();
+    ConditionsOfJoining conditionsOfJoining
+        = new ConditionsOfJoining(signedAt, GoldGuideVersion.GG9);
+    programmeMembership.setConditionsOfJoining(conditionsOfJoining);
+
+    rabbitPublishService.publishCojSignedEvent(programmeMembership);
+
+    ArgumentCaptor<CojSignedEvent> eventCaptor = ArgumentCaptor.forClass(
+        CojSignedEvent.class);
+
+    verify(rabbitTemplate).convertAndSend(any(), any(), eventCaptor.capture());
+
+    CojSignedEvent event = eventCaptor.getValue();
+    assertThat("Unexpected programme membership ID.",
+        event.getProgrammeMembershipTisId(), is("123"));
+  }
 }

@@ -61,7 +61,11 @@ public class RabbitPublishService {
 
     ConditionsOfJoining conditionsOfJoining = programmeMembership.getConditionsOfJoining();
 
-    CojSignedEvent event = new CojSignedEvent(programmeMembership.getTisId(), conditionsOfJoining);
+    // FIXME: simplify multiple curriculum membership IDs - they should all resolve to the same
+    // parent programme membership ID in TIS.
+    String firstPmId = programmeMembership.getTisId().split(",")[0];
+
+    CojSignedEvent event = new CojSignedEvent(firstPmId, conditionsOfJoining);
     rabbitTemplate.convertAndSend(rabbitExchange, routingKey, event);
   }
 }
