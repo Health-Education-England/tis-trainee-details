@@ -32,7 +32,6 @@ application:
   aws:
     sqs:
       event: ${EVENT_QUEUE_URL:}
-      coj-signed: ${COJ_SIGNED_QUEUE_URL:}
   environment: ${ENVIRONMENT:local}
   rabbit:
     coj-signed:
