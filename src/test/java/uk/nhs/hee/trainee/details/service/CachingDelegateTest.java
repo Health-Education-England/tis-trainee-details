@@ -19,19 +19,37 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package uk.nhs.hee.trainee.details.model;
+package uk.nhs.hee.trainee.details.service;
 
-import java.io.Serializable;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+
 import java.time.Instant;
+import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
+import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
 
-/**
- * A record of the Conditions of Joining agreement.
- *
- * @param signedAt When the Conditions of Joining were signed.
- * @param version  The Gold Guide version of the Conditions of Joining.
- */
-public record ConditionsOfJoining(Instant signedAt, GoldGuideVersion version) implements
-    Serializable {
+class CachingDelegateTest {
 
+  private CachingDelegate delegate;
+
+  @BeforeEach
+  void setUp() {
+    delegate = new CachingDelegate();
+  }
+
+  @Test
+  void shouldReturnCachedConditionsOfJoining() {
+    ConditionsOfJoining cachedCoj = new ConditionsOfJoining(Instant.now(), GoldGuideVersion.GG9);
+    ConditionsOfJoining returnedCoj = delegate.cacheConditionsOfJoining("40", cachedCoj);
+    assertThat("Unexpected Conditions of Joining.", cachedCoj, is(returnedCoj));
+  }
+
+  @Test
+  void shouldGetEmptyConditionsOfJoining() {
+    Optional<ConditionsOfJoining> coj = delegate.getConditionsOfJoining("40");
+    assertThat("Unexpected Conditions of Joining.", coj, is(Optional.empty()));
+  }
 }

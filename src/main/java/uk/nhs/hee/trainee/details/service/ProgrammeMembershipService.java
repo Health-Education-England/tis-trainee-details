@@ -39,11 +39,13 @@ public class ProgrammeMembershipService {
 
   private final TraineeProfileRepository repository;
   private final ProgrammeMembershipMapper mapper;
+  private final CachingDelegate cachingDelegate;
 
   ProgrammeMembershipService(TraineeProfileRepository repository,
-      ProgrammeMembershipMapper mapper) {
+      ProgrammeMembershipMapper mapper, CachingDelegate cachingDelegate) {
     this.repository = repository;
     this.mapper = mapper;
+    this.cachingDelegate = cachingDelegate;
   }
 
   /**
@@ -55,6 +57,13 @@ public class ProgrammeMembershipService {
    */
   public Optional<ProgrammeMembership> updateProgrammeMembershipForTrainee(String traineeTisId,
       ProgrammeMembership programmeMembership) {
+    if (programmeMembership.getConditionsOfJoining() == null
+        || programmeMembership.getConditionsOfJoining().signedAt() == null) {
+      // Restore the Conditions of Joining if it exists after this PM was previously deleted.
+      Optional<ConditionsOfJoining> conditionsOfJoining = cachingDelegate.getConditionsOfJoining(
+          programmeMembership.getTisId());
+      conditionsOfJoining.ifPresent(programmeMembership::setConditionsOfJoining);
+    }
 
     TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
 
@@ -82,11 +91,10 @@ public class ProgrammeMembershipService {
   /**
    * Delete the programme memberships for the trainee with the given TIS ID.
    *
-   * @param traineeTisId        The TIS id of the trainee.
+   * @param traineeTisId The TIS id of the trainee.
    * @return True, or False if a trainee with the ID was not found.
    */
   public boolean deleteProgrammeMembershipsForTrainee(String traineeTisId) {
-
     TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
 
     if (traineeProfile == null) {
@@ -94,6 +102,13 @@ public class ProgrammeMembershipService {
     }
     List<ProgrammeMembership> existingProgrammeMemberships = traineeProfile
         .getProgrammeMemberships();
+
+    // Cache any signed Conditions of Joining so that it can be restored later.
+    existingProgrammeMemberships.stream()
+        .filter(pm -> pm.getConditionsOfJoining() != null
+            && pm.getConditionsOfJoining().signedAt() != null)
+        .forEach(pm -> cachingDelegate.cacheConditionsOfJoining(pm.getTisId(),
+            pm.getConditionsOfJoining()));
 
     existingProgrammeMemberships.clear();
     repository.save(traineeProfile);
@@ -105,8 +120,8 @@ public class ProgrammeMembershipService {
    * Sign Condition of Joining with the given programme membership ID.
    *
    * @param programmeMembershipId The ID of the programme membership for signing COJ.
-   * @return The updated programme membership
-   *     or empty if the programme membership with the ID was not found.
+   * @return The updated programme membership or empty if the programme membership with the ID was
+   *     not found.
    */
   public Optional<ProgrammeMembership> signProgrammeMembershipCoj(
       String traineeTisId, String programmeMembershipId) {
