@@ -84,19 +84,20 @@ class AwsXrayInterceptorTest {
     Map<String, Object> taskMetadataMap = (Map<String, Object>) ecsMetadataMap.get("TaskMetadata");
     assertThat("Unexpected task metadata.", taskMetadataMap, notNullValue());
     assertThat("Unexpected cluster.", taskMetadataMap.get("Cluster"), is("cluster"));
-    assertThat("Unexpected cluster.", taskMetadataMap.get("TaskARN"), is("taskArn"));
-    assertThat("Unexpected cluster.", taskMetadataMap.get("Family"), is("family"));
+    assertThat("Unexpected task ARN.", taskMetadataMap.get("TaskARN"), is("taskArn"));
+    assertThat("Unexpected family.", taskMetadataMap.get("Family"), is("family"));
 
     Map<String, Object> containerMetadataMap = (Map<String, Object>) ecsMetadataMap.get(
         "ContainerMetadata");
-    assertThat("Unexpected task metadata.", containerMetadataMap, notNullValue());
-    assertThat("Unexpected cluster.", containerMetadataMap.get("ContainerARN"), is("containerArn"));
+    assertThat("Unexpected container metadata.", containerMetadataMap, notNullValue());
+    assertThat("Unexpected container ARN.", containerMetadataMap.get("ContainerARN"),
+        is("containerArn"));
 
     Map<String, Object> logOptionsMap = (Map<String, Object>) containerMetadataMap.get(
         "LogOptions");
-    assertThat("Unexpected task metadata.", logOptionsMap, notNullValue());
-    assertThat("Unexpected cluster.", logOptionsMap.get("awslogs-group"), is("logGroup"));
-    assertThat("Unexpected cluster.", logOptionsMap.get("awslogs-region"), is("region"));
-    assertThat("Unexpected cluster.", logOptionsMap.get("awslogs-stream"), is("logStream"));
+    assertThat("Unexpected log options metadata.", logOptionsMap, notNullValue());
+    assertThat("Unexpected log group.", logOptionsMap.get("awslogs-group"), is("logGroup"));
+    assertThat("Unexpected log region.", logOptionsMap.get("awslogs-region"), is("region"));
+    assertThat("Unexpected log stream.", logOptionsMap.get("awslogs-stream"), is("logStream"));
   }
 }

@@ -44,8 +44,8 @@ public class SentryConfiguration {
    */
   @PostConstruct
   void configureScope() {
-    ecsMetadata.ifPresent(ecsMetadata ->
-        Sentry.configureScope(scope -> scope.setContexts("EcsMetadata", ecsMetadata))
+    ecsMetadata.ifPresent(metadata ->
+        Sentry.configureScope(scope -> scope.setContexts("EcsMetadata", metadata))
     );
   }
 }
