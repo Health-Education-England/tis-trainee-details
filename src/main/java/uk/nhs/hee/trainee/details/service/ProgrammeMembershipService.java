@@ -130,6 +130,34 @@ public class ProgrammeMembershipService {
   }
 
   /**
+   * Delete the matching programme membership for the trainee with the given TIS ID.
+   *
+   * @param traineeTisId          The TIS id of the trainee.
+   * @param programmeMembershipId The ID of the programme membership to delete.
+   * @return True, or False if a trainee with the ID was not found.
+   */
+  public boolean deleteProgrammeMembershipForTrainee(String traineeTisId,
+      String programmeMembershipId) {
+    TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
+
+    if (traineeProfile == null) {
+      return false;
+    }
+
+    for (var iter = traineeProfile.getProgrammeMemberships().iterator(); iter.hasNext(); ) {
+      ProgrammeMembership programmeMembership = iter.next();
+
+      if (programmeMembership.getTisId().equals(programmeMembershipId)) {
+        iter.remove();
+        repository.save(traineeProfile);
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
    * Sign Condition of Joining with the given programme membership ID.
    *
    * @param programmeMembershipId The ID of the programme membership for signing COJ.

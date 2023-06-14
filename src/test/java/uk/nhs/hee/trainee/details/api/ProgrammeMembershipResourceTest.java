@@ -181,13 +181,50 @@ class ProgrammeMembershipResourceTest {
 
   @Test
   void shouldDeleteProgrammeMembershipWhenTraineeFound() throws Exception {
+    when(service
+        .deleteProgrammeMembershipForTrainee("40", "140"))
+        .thenReturn(true);
 
+    MvcResult result = mockMvc.perform(
+            delete("/api/programme-membership/{traineeTisId}/{programmeMembershipId}", 40, 140)
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andReturn();
+
+    Boolean resultBoolean = Boolean.parseBoolean(result.getResponse().getContentAsString());
+    assertThat("Unexpected result.", resultBoolean, is(true));
+  }
+
+  @Test
+  void shouldNotDeleteProgrammeMembershipWhenTraineeNotFound() throws Exception {
+    when(service
+        .deleteProgrammeMembershipForTrainee("40", "140"))
+        .thenReturn(false);
+
+    mockMvc.perform(
+            delete("/api/programme-membership/{traineeTisId}/{programmeMembershipId}", 40, 140)
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void shouldThrowBadRequestWhenDeleteProgrammeMembershipException() throws Exception {
+    when(service
+        .deleteProgrammeMembershipForTrainee("triggersError", "triggersError"))
+        .thenThrow(new IllegalArgumentException());
+
+    mockMvc.perform(
+            delete("/api/programme-membership/{traineeTisId}/{programmeMembershipId}",
+                "triggersError", "triggersError")
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void shouldDeleteProgrammeMembershipsWhenTraineeFound() throws Exception {
     when(service
         .deleteProgrammeMembershipsForTrainee("40"))
         .thenReturn(true);
-
-    ProgrammeMembershipDto dto = new ProgrammeMembershipDto();
-    dto.setTisId("tisIdValue");
 
     MvcResult result = mockMvc.perform(
             delete("/api/programme-membership/{traineeTisId}", 40)
@@ -200,13 +237,10 @@ class ProgrammeMembershipResourceTest {
   }
 
   @Test
-  void shouldNotDeleteProgrammeMembershipWhenTraineeNotFound() throws Exception {
+  void shouldNotDeleteProgrammeMembershipsWhenTraineeNotFound() throws Exception {
     when(service
         .deleteProgrammeMembershipsForTrainee("40"))
         .thenReturn(false);
-
-    ProgrammeMembershipDto dto = new ProgrammeMembershipDto();
-    dto.setTisId("tisIdValue");
 
     mockMvc.perform(
             delete("/api/programme-membership/{traineeTisId}", 40)
@@ -215,13 +249,10 @@ class ProgrammeMembershipResourceTest {
   }
 
   @Test
-  void shouldThrowBadRequestWhenDeleteProgrammeMembershipException() throws Exception {
+  void shouldThrowBadRequestWhenDeleteProgrammeMembershipsException() throws Exception {
     when(service
         .deleteProgrammeMembershipsForTrainee("triggersError"))
         .thenThrow(new IllegalArgumentException());
-
-    ProgrammeMembershipDto dto = new ProgrammeMembershipDto();
-    dto.setTisId("tisIdValue");
 
     mockMvc.perform(
             delete("/api/programme-membership/{traineeTisId}", "triggersError")
