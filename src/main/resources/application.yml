@@ -14,11 +14,11 @@ spring:
     user: ${REDIS_USER:default}
     password: ${REDIS_PASSWORD:password}
   rabbitmq:
-    host: ${TRAINEE_DETAILS_RABBITMQ_HOST}
-    port: ${TRAINEE_DETAILS_RABBITMQ_PORT}
+    host: ${TRAINEE_DETAILS_RABBITMQ_HOST:host.docker.internal}
+    port: ${TRAINEE_DETAILS_RABBITMQ_PORT:5672}
     username: ${TRAINEE_DETAILS_RABBITMQ_USERNAME}
     password: ${TRAINEE_DETAILS_RABBITMQ_PASSWORD}
-    ssl.enabled: ${TRAINEE_DETAILS_RABBITMQ_USE_SSL}
+    ssl.enabled: ${TRAINEE_DETAILS_RABBITMQ_USE_SSL:false}
 
 logging:
   level:

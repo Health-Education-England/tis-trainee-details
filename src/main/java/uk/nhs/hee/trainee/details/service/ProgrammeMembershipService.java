@@ -25,11 +25,14 @@ import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Stream;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
+import uk.nhs.hee.trainee.details.event.CojSignedEvent;
 import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapper;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
+import uk.nhs.hee.trainee.details.model.Curriculum;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
@@ -62,11 +65,32 @@ public class ProgrammeMembershipService {
         || programmeMembership.getConditionsOfJoining().signedAt() == null) {
 
       // Restore the Conditions of Joining if it exists after this PM was previously deleted.
-      for (String id : programmeMembership.getTisId().split(",")) {
-        Optional<ConditionsOfJoining> conditionsOfJoining = cachingDelegate.getConditionsOfJoining(
-            id);
-        conditionsOfJoining.ifPresent(programmeMembership::setConditionsOfJoining);
-        // All results should be the same, but iterating through all IDs ensures a clean cache.
+      // FIXME: push all PMs through tis-trainee-sync to flush 2 and 3 so they can be removed?
+      // 3 scenarios:
+      try {
+        //1. new uuid PM, with CoJ also cached against new uuid *THE FUTURE*
+        UUID uuid = UUID.fromString(programmeMembership.getTisId());
+        Optional<ConditionsOfJoining> conditionsOfJoiningUuid
+            = cachingDelegate.getConditionsOfJoining(uuid.toString());
+        if (conditionsOfJoiningUuid.isPresent()) {
+          programmeMembership.setConditionsOfJoining(conditionsOfJoiningUuid.get());
+        } else {
+          //2. new uuid PM, with CoJ cached against old delimited cm ids *THE PRESENT*
+          for (Curriculum curriculum : programmeMembership.getCurricula()) {
+            Optional<ConditionsOfJoining> conditionsOfJoiningId
+                = cachingDelegate.getConditionsOfJoining(curriculum.getCurriculumTisId());
+            conditionsOfJoiningId.ifPresent(programmeMembership::setConditionsOfJoining);
+            // All results should be the same, but iterating through all IDs ensures a clean cache.
+          }
+        }
+      } catch (IllegalArgumentException e) {
+        //3. old cm-ids PM, with CoJ cached against old delimited cm ids *THE PAST*
+        for (String id : programmeMembership.getTisId().split(",")) {
+          Optional<ConditionsOfJoining> conditionsOfJoiningId
+              = cachingDelegate.getConditionsOfJoining(id);
+          conditionsOfJoiningId.ifPresent(programmeMembership::setConditionsOfJoining);
+          // All results should be the same, but iterating through all IDs ensures a clean cache.
+        }
       }
     }
 
