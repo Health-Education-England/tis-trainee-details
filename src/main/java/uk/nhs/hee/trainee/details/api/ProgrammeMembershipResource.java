@@ -110,8 +110,34 @@ public class ProgrammeMembershipResource {
   }
 
   /**
-   * Sign Condition of Joining with the given programme membership,
-   * setting version to the latest Gold Guide version, and signedAt to current time.
+   * Delete a programme membership of the trainee.
+   *
+   * @param traineeTisId          The ID of the trainee to update.
+   * @param programmeMembershipId The ID of the programme membership to delete.
+   * @return True if the programme membership was deleted.
+   */
+  @DeleteMapping("/{traineeTisId}/{programmeMembershipId}")
+  public ResponseEntity<Boolean> deleteProgrammeMembership(
+      @PathVariable(name = "traineeTisId") String traineeTisId,
+      @PathVariable(name = "programmeMembershipId") String programmeMembershipId) {
+    log.info("Delete programme membership {} of trainee with TIS ID {}", programmeMembershipId,
+        traineeTisId);
+    try {
+      boolean found = service.deleteProgrammeMembershipForTrainee(traineeTisId,
+          programmeMembershipId);
+      if (!found) {
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "ProgrammeMembership not found.");
+      }
+    } catch (IllegalArgumentException | InvalidDataAccessApiUsageException e) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getLocalizedMessage());
+      // other exceptions are possible, e.g. DataAccessException if MongoDB is down
+    }
+    return ResponseEntity.ok(true);
+  }
+
+  /**
+   * Sign Condition of Joining with the given programme membership, setting version to the latest
+   * Gold Guide version, and signedAt to current time.
    *
    * @param programmeMembershipId The ID of the programme membership for signing COJ.
    * @return The updated Programme Membership.

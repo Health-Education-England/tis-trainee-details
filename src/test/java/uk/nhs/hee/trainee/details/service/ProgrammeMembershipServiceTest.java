@@ -37,9 +37,11 @@ import static org.mockito.Mockito.when;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapperImpl;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
@@ -347,7 +349,7 @@ class ProgrammeMembershipServiceTest {
   }
 
   @Test
-  void shouldDeleteProgrammeMembershipWhenTraineeFoundAndProgrammeMembershipExists() {
+  void shouldDeleteProgrammeMembershipsWhenTraineeFoundAndProgrammeMembershipsExist() {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.getProgrammeMemberships()
         .add(createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_ID, ORIGINAL_SUFFIX, 0));
@@ -360,7 +362,7 @@ class ProgrammeMembershipServiceTest {
   }
 
   @Test
-  void shouldNotDeleteProgrammeMembershipWhenTraineeNotFound() {
+  void shouldNotDeleteProgrammeMembershipsWhenTraineeNotFound() {
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(null);
 
     boolean result = service.deleteProgrammeMembershipsForTrainee(TRAINEE_TIS_ID);
@@ -369,7 +371,7 @@ class ProgrammeMembershipServiceTest {
   }
 
   @Test
-  void shouldCacheCojFromDeleteProgrammeMembershipWhenCojSigned() {
+  void shouldCacheCojFromDeleteProgrammeMembershipsWhenCojSigned() {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.getProgrammeMemberships()
         .add(createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_ID, ORIGINAL_SUFFIX, 0));
@@ -382,7 +384,7 @@ class ProgrammeMembershipServiceTest {
   }
 
   @Test
-  void shouldCacheCojFromDeleteProgrammeMembershipWhenCojSignedForMultipleCurriculum() {
+  void shouldCacheCojFromDeleteProgrammeMembershipsWhenCojSignedForMultipleCurriculum() {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.getProgrammeMemberships()
         .add(createProgrammeMembership(MULTIPLE_PROGRAMME_MEMBERSHIP_ID, ORIGINAL_SUFFIX, 0));
@@ -397,7 +399,7 @@ class ProgrammeMembershipServiceTest {
   }
 
   @Test
-  void shouldNotCacheCojFromDeleteProgrammeMembershipWhenCojNotSigned() {
+  void shouldNotCacheCojFromDeleteProgrammeMembershipsWhenCojNotSigned() {
     ProgrammeMembership programmeMembership = createProgrammeMembership(
         EXISTING_PROGRAMME_MEMBERSHIP_ID, ORIGINAL_SUFFIX, 0);
     programmeMembership.setConditionsOfJoining(new ConditionsOfJoining(null, GoldGuideVersion.GG9));
@@ -413,7 +415,7 @@ class ProgrammeMembershipServiceTest {
   }
 
   @Test
-  void shouldNotCacheCojFromDeleteProgrammeMembershipWhenCojNull() {
+  void shouldNotCacheCojFromDeleteProgrammeMembershipsWhenCojNull() {
     ProgrammeMembership programmeMembership = createProgrammeMembership(
         EXISTING_PROGRAMME_MEMBERSHIP_ID, ORIGINAL_SUFFIX, 0);
     programmeMembership.setConditionsOfJoining(null);
@@ -426,6 +428,64 @@ class ProgrammeMembershipServiceTest {
     service.deleteProgrammeMembershipsForTrainee(TRAINEE_TIS_ID);
 
     verifyNoInteractions(cachingDelegate);
+  }
+
+  @Test
+  void shouldNotDeleteProgrammeMembershipWhenTraineeNotFound() {
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(null);
+
+    boolean deleted = service.deleteProgrammeMembershipForTrainee(TRAINEE_TIS_ID,
+        NEW_PROGRAMME_MEMBERSHIP_ID);
+
+    assertThat("Unexpected result.", deleted, is(false));
+    verify(repository, never()).save(any());
+  }
+
+  @Test
+  void shouldNotDeleteProgrammeMembershipWhenTraineesProgrammeMembershipNotFound() {
+    ProgrammeMembership programmeMembership = createProgrammeMembership(
+        EXISTING_PROGRAMME_MEMBERSHIP_ID, ORIGINAL_SUFFIX, 0);
+
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.getProgrammeMemberships().add(programmeMembership);
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean deleted = service.deleteProgrammeMembershipForTrainee(TRAINEE_TIS_ID,
+        NEW_PROGRAMME_MEMBERSHIP_ID);
+
+    assertThat("Unexpected result.", deleted, is(false));
+    verify(repository, never()).save(any());
+  }
+
+  @Test
+  void shouldDeleteProgrammeMembershipWhenTraineeFoundAndProgrammeMembershipExists() {
+    ProgrammeMembership programmeMembership1 = createProgrammeMembership(
+        EXISTING_PROGRAMME_MEMBERSHIP_ID, ORIGINAL_SUFFIX, 0);
+    ProgrammeMembership programmeMembership2 = createProgrammeMembership(
+        "unrelatedPm", "unrelatedPm", 1);
+
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.getProgrammeMemberships()
+        .addAll(List.of(programmeMembership1, programmeMembership2));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean deleted = service.deleteProgrammeMembershipForTrainee(TRAINEE_TIS_ID,
+        EXISTING_PROGRAMME_MEMBERSHIP_ID);
+
+    assertThat("Unexpected result.", deleted, is(true));
+
+    ArgumentCaptor<TraineeProfile> profileCaptor = ArgumentCaptor.forClass(TraineeProfile.class);
+    verify(repository).save(profileCaptor.capture());
+
+    List<ProgrammeMembership> programmeMemberships = profileCaptor.getValue()
+        .getProgrammeMemberships();
+    assertThat("Unexpected programme membership count.", programmeMemberships.size(), is(1));
+
+    ProgrammeMembership remainingProgrammeMembership = programmeMemberships.get(0);
+    assertThat("Unexpected programme membership id.", remainingProgrammeMembership.getTisId(),
+        is("unrelatedPm"));
   }
 
   @Test
