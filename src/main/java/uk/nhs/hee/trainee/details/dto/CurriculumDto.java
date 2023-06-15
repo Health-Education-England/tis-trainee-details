@@ -30,6 +30,7 @@ import lombok.Data;
 @Data
 public class CurriculumDto {
 
+  private String tisId;
   private String curriculumTisId;
   private String curriculumName;
   private String curriculumSubType;
