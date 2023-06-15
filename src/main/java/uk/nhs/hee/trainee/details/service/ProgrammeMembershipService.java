@@ -78,7 +78,7 @@ public class ProgrammeMembershipService {
           //2. new uuid PM, with CoJ cached against old delimited cm ids *THE PRESENT*
           for (Curriculum curriculum : programmeMembership.getCurricula()) {
             Optional<ConditionsOfJoining> conditionsOfJoiningId
-                = cachingDelegate.getConditionsOfJoining(curriculum.getCurriculumTisId());
+                = cachingDelegate.getConditionsOfJoining(curriculum.getTisId());
             conditionsOfJoiningId.ifPresent(programmeMembership::setConditionsOfJoining);
             // All results should be the same, but iterating through all IDs ensures a clean cache.
           }
