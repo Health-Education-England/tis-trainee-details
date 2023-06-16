@@ -21,6 +21,7 @@
 
 package uk.nhs.hee.trainee.details.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDate;
 import lombok.Data;
 
@@ -30,6 +31,8 @@ import lombok.Data;
 @Data
 public class CurriculumDto {
 
+  @JsonProperty(value = "curriculumMembershipId")
+  private String tisId;
   private String curriculumTisId;
   private String curriculumName;
   private String curriculumSubType;

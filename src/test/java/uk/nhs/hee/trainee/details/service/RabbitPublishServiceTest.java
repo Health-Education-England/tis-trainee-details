@@ -27,6 +27,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 
 import java.time.Instant;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -103,5 +104,27 @@ class RabbitPublishServiceTest {
     CojSignedEvent event = eventCaptor.getValue();
     assertThat("Unexpected programme membership ID.",
         event.getProgrammeMembershipTisId(), is("123"));
+  }
+
+  @Test
+  void shouldPublishCojSignedEventWithUuid() {
+    UUID uuid = UUID.randomUUID();
+    ProgrammeMembership programmeMembership = new ProgrammeMembership();
+    programmeMembership.setTisId(uuid.toString());
+    Instant signedAt = Instant.now();
+    ConditionsOfJoining conditionsOfJoining
+        = new ConditionsOfJoining(signedAt, GoldGuideVersion.GG9);
+    programmeMembership.setConditionsOfJoining(conditionsOfJoining);
+
+    rabbitPublishService.publishCojSignedEvent(programmeMembership);
+
+    ArgumentCaptor<CojSignedEvent> eventCaptor = ArgumentCaptor.forClass(
+        CojSignedEvent.class);
+
+    verify(rabbitTemplate).convertAndSend(any(), any(), eventCaptor.capture());
+
+    CojSignedEvent event = eventCaptor.getValue();
+    assertThat("Unexpected programme membership ID.",
+        event.getProgrammeMembershipTisId(), is(uuid.toString()));
   }
 }

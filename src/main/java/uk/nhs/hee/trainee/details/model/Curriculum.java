@@ -27,6 +27,7 @@ import lombok.Data;
 @Data
 public class Curriculum {
 
+  private String tisId;
   private String curriculumTisId;
   private String curriculumName;
   private String curriculumSubType;

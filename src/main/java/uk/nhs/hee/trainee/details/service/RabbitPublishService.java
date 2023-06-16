@@ -22,6 +22,7 @@
 package uk.nhs.hee.trainee.details.service;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
@@ -61,11 +62,16 @@ public class RabbitPublishService {
 
     ConditionsOfJoining conditionsOfJoining = programmeMembership.getConditionsOfJoining();
 
-    // FIXME: simplify multiple curriculum membership IDs - they should all resolve to the same
-    // parent programme membership ID in TIS.
-    String firstPmId = programmeMembership.getTisId().split(",")[0];
+    // FIXME: remove deprecated (non-uuid) tisId
+    CojSignedEvent event;
+    try {
+      UUID uuid = UUID.fromString(programmeMembership.getTisId());
+      event = new CojSignedEvent(uuid.toString(), conditionsOfJoining);
+    } catch (IllegalArgumentException e) {
+      String firstPmId = programmeMembership.getTisId().split(",")[0];
+      event = new CojSignedEvent(firstPmId, conditionsOfJoining);
+    }
 
-    CojSignedEvent event = new CojSignedEvent(firstPmId, conditionsOfJoining);
     rabbitTemplate.convertAndSend(rabbitExchange, routingKey, event);
   }
 }
