@@ -350,8 +350,7 @@ class ProgrammeMembershipServiceTest {
     assertThat("Unexpected signed version.", conditionsOfJoining.version(),
         is(GoldGuideVersion.GG9));
 
-    verify(cachingDelegate, times(1))
-        .getConditionsOfJoining(PROGRAMME_MEMBERSHIP_UUID.toString());
+    verify(cachingDelegate).getConditionsOfJoining(PROGRAMME_MEMBERSHIP_UUID.toString());
   }
 
   @Test
@@ -386,10 +385,8 @@ class ProgrammeMembershipServiceTest {
     assertThat("Unexpected signed version.", conditionsOfJoining.version(),
         is(GoldGuideVersion.GG9));
 
-    verify(cachingDelegate, times(1))
-        .getConditionsOfJoining(PROGRAMME_MEMBERSHIP_UUID.toString());
-    verify(cachingDelegate, times(1))
-        .getConditionsOfJoining("123");
+    verify(cachingDelegate).getConditionsOfJoining(PROGRAMME_MEMBERSHIP_UUID.toString());
+    verify(cachingDelegate).getConditionsOfJoining("123");
   }
 
   @Test
@@ -482,8 +479,7 @@ class ProgrammeMembershipServiceTest {
 
     service.deleteProgrammeMembershipsForTrainee(TRAINEE_TIS_ID);
 
-    verify(cachingDelegate, times(1))
-        .cacheConditionsOfJoining(eq(PROGRAMME_MEMBERSHIP_UUID.toString()), any());
+    verify(cachingDelegate).cacheConditionsOfJoining(eq(PROGRAMME_MEMBERSHIP_UUID.toString()), any());
   }
 
   @Test
