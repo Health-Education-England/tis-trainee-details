@@ -45,7 +45,7 @@ public class ProgrammeMembershipService {
   private final CachingDelegate cachingDelegate;
 
   ProgrammeMembershipService(TraineeProfileRepository repository,
-      ProgrammeMembershipMapper mapper, CachingDelegate cachingDelegate) {
+                             ProgrammeMembershipMapper mapper, CachingDelegate cachingDelegate) {
     this.repository = repository;
     this.mapper = mapper;
     this.cachingDelegate = cachingDelegate;
@@ -59,7 +59,7 @@ public class ProgrammeMembershipService {
    * @return The updated programme membership or empty if a trainee with the ID was not found.
    */
   public Optional<ProgrammeMembership> updateProgrammeMembershipForTrainee(String traineeTisId,
-      ProgrammeMembership programmeMembership) {
+                                                                           ProgrammeMembership programmeMembership) {
     if (programmeMembership.getConditionsOfJoining() == null
         || programmeMembership.getConditionsOfJoining().signedAt() == null) {
 
@@ -144,16 +144,16 @@ public class ProgrammeMembershipService {
             })
         )
         .forEach(pm -> {
-              try {
-                //preferentially cache against new uuid
-                UUID uuid = UUID.fromString(pm.getTisId());
-                cachingDelegate.cacheConditionsOfJoining(uuid.toString(),
-                    pm.getConditionsOfJoining());
-              } catch (IllegalArgumentException e) {
-                //fallback: cache against delimited ids
-                cachingDelegate.cacheConditionsOfJoining(pm.getTisId(),
-                    pm.getConditionsOfJoining());
-              }
+          try {
+            //preferentially cache against new uuid
+            UUID uuid = UUID.fromString(pm.getTisId());
+            cachingDelegate.cacheConditionsOfJoining(uuid.toString(),
+                pm.getConditionsOfJoining());
+          } catch (IllegalArgumentException e) {
+            //fallback: cache against delimited ids
+            cachingDelegate.cacheConditionsOfJoining(pm.getTisId(),
+                pm.getConditionsOfJoining());
+          }
         });
 
     existingProgrammeMemberships.clear();
@@ -170,7 +170,7 @@ public class ProgrammeMembershipService {
    * @return True, or False if a trainee with the ID was not found.
    */
   public boolean deleteProgrammeMembershipForTrainee(String traineeTisId,
-      String programmeMembershipId) {
+                                                     String programmeMembershipId) {
     TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
 
     if (traineeProfile == null) {
@@ -195,7 +195,7 @@ public class ProgrammeMembershipService {
    *
    * @param programmeMembershipId The ID of the programme membership for signing COJ.
    * @return The updated programme membership or empty if the programme membership with the ID was
-   *     not found.
+   * not found.
    */
   public Optional<ProgrammeMembership> signProgrammeMembershipCoj(
       String traineeTisId, String programmeMembershipId) {
