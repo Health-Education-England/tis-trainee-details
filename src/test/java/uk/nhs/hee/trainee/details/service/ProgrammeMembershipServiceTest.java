@@ -633,7 +633,7 @@ class ProgrammeMembershipServiceTest {
    * @return The dummy entity.
    */
   private ProgrammeMembership createProgrammeMembership(String tisId, String stringSuffix,
-                                                        int dateAdjustmentDays) {
+      int dateAdjustmentDays) {
     ProgrammeMembership programmeMembership = new ProgrammeMembership();
     programmeMembership.setTisId(tisId);
     programmeMembership.setProgrammeTisId(PROGRAMME_TIS_ID + stringSuffix);
