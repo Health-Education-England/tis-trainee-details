@@ -473,6 +473,20 @@ class ProgrammeMembershipServiceTest {
   }
 
   @Test
+  void shouldCacheCojFromDeleteProgrammeMembershipsWhenCojSignedUsingUuid() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.getProgrammeMemberships()
+        .add(createProgrammeMembership(PROGRAMME_MEMBERSHIP_UUID.toString(), ORIGINAL_SUFFIX, 0));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    service.deleteProgrammeMembershipsForTrainee(TRAINEE_TIS_ID);
+
+    verify(cachingDelegate, times(1))
+        .cacheConditionsOfJoining(eq(PROGRAMME_MEMBERSHIP_UUID.toString()), any());
+  }
+
+  @Test
   void shouldNotCacheCojFromDeleteProgrammeMembershipsWhenCojNotSigned() {
     ProgrammeMembership programmeMembership = createProgrammeMembership(
         EXISTING_PROGRAMME_MEMBERSHIP_ID, ORIGINAL_SUFFIX, 0);

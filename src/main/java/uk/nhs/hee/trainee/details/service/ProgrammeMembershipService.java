@@ -29,7 +29,6 @@ import java.util.UUID;
 import java.util.stream.Stream;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
-import uk.nhs.hee.trainee.details.event.CojSignedEvent;
 import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapper;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
 import uk.nhs.hee.trainee.details.model.Curriculum;
@@ -144,8 +143,18 @@ public class ProgrammeMembershipService {
               return newPm;
             })
         )
-        .forEach(pm -> cachingDelegate.cacheConditionsOfJoining(pm.getTisId(),
-            pm.getConditionsOfJoining()));
+        .forEach(pm -> {
+              try {
+                //preferentially cache against new uuid
+                UUID uuid = UUID.fromString(pm.getTisId());
+                cachingDelegate.cacheConditionsOfJoining(uuid.toString(),
+                    pm.getConditionsOfJoining());
+              } catch (IllegalArgumentException e) {
+                //fallback: cache against delimited ids
+                cachingDelegate.cacheConditionsOfJoining(pm.getTisId(),
+                    pm.getConditionsOfJoining());
+              }
+        });
 
     existingProgrammeMemberships.clear();
     repository.save(traineeProfile);
