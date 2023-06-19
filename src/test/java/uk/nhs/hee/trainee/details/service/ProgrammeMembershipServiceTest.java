@@ -37,7 +37,6 @@ import static org.mockito.Mockito.when;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -324,15 +323,13 @@ class ProgrammeMembershipServiceTest {
   }
 
   @Test
-  void shouldUpdateProgrammeMembershipCojWhenPmHasUuidAndCachedCojHasUuid() {
+  void shouldUpdateProgrammeMembershipCojWhenPmHasUuidAndSavedPmHasUuid() {
     ProgrammeMembership programmeMembership = createProgrammeMembership(
         PROGRAMME_MEMBERSHIP_UUID.toString(), ORIGINAL_SUFFIX, 0);
-    programmeMembership.setConditionsOfJoining(null);
+    programmeMembership.setConditionsOfJoining(
+        new ConditionsOfJoining(COJ_SIGNED_AT, GoldGuideVersion.GG9));
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.getProgrammeMemberships().add(programmeMembership);
-
-    when(cachingDelegate.getConditionsOfJoining(PROGRAMME_MEMBERSHIP_UUID.toString())).thenReturn(
-        Optional.of(new ConditionsOfJoining(COJ_SIGNED_AT, GoldGuideVersion.GG9)));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
@@ -349,44 +346,43 @@ class ProgrammeMembershipServiceTest {
     assertThat("Unexpected signed at.", conditionsOfJoining.signedAt(), is(COJ_SIGNED_AT));
     assertThat("Unexpected signed version.", conditionsOfJoining.version(),
         is(GoldGuideVersion.GG9));
-
-    verify(cachingDelegate).getConditionsOfJoining(PROGRAMME_MEMBERSHIP_UUID.toString());
   }
 
   @Test
-  void shouldUpdateProgrammeMembershipCojWhenPmHasUuidAndCachedCojHasIds() {
-    Curriculum curriculum = new Curriculum();
-    curriculum.setTisId("123");
-    ProgrammeMembership programmeMembership = createProgrammeMembership(
-        PROGRAMME_MEMBERSHIP_UUID.toString(), ORIGINAL_SUFFIX, 0);
-    programmeMembership.setConditionsOfJoining(null);
-    programmeMembership.setCurricula(new ArrayList<>(Arrays.asList(curriculum)));
+  void shouldUpdateProgrammeMembershipCojWhenPmHasUuidAndSavedPmHasDeprecatedIds() {
+    Curriculum curriculum1 = new Curriculum();
+    curriculum1.setTisId("456");
+    Curriculum curriculum2 = new Curriculum();
+    curriculum1.setTisId("123");
+    Curriculum curriculum3 = new Curriculum();
+    curriculum1.setTisId("789");
+    ProgrammeMembership savedProgrammeMembership = createProgrammeMembership(
+        MULTIPLE_PROGRAMME_MEMBERSHIP_ID, ORIGINAL_SUFFIX, 0);
+    savedProgrammeMembership.setConditionsOfJoining(
+        new ConditionsOfJoining(COJ_SIGNED_AT, GoldGuideVersion.GG9));
+    savedProgrammeMembership.setCurricula(Arrays.asList(curriculum1, curriculum2, curriculum3));
     TraineeProfile traineeProfile = new TraineeProfile();
-    traineeProfile.getProgrammeMemberships().add(programmeMembership);
+    traineeProfile.getProgrammeMemberships().add(savedProgrammeMembership);
 
-    when(cachingDelegate.getConditionsOfJoining(PROGRAMME_MEMBERSHIP_UUID.toString())).thenReturn(
-        Optional.empty());
-    when(cachingDelegate.getConditionsOfJoining("123")).thenReturn(
-        Optional.of(new ConditionsOfJoining(COJ_SIGNED_AT, GoldGuideVersion.GG9)));
+    ProgrammeMembership updatedProgrammeMembership = createProgrammeMembership(
+        PROGRAMME_MEMBERSHIP_UUID.toString(), ORIGINAL_SUFFIX, 0);
+
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
     Optional<ProgrammeMembership> optionalProgrammeMembership = service
-        .updateProgrammeMembershipForTrainee(TRAINEE_TIS_ID, programmeMembership);
+        .updateProgrammeMembershipForTrainee(TRAINEE_TIS_ID, updatedProgrammeMembership);
 
     assertThat("Unexpected optional isEmpty flag.", optionalProgrammeMembership.isEmpty(),
         is(false));
-    ProgrammeMembership updatedProgrammeMembership = optionalProgrammeMembership.get();
+    ProgrammeMembership resultingProgrammeMembership = optionalProgrammeMembership.get();
     assertThat("Unexpected conditions of joining.",
-        updatedProgrammeMembership.getConditionsOfJoining(), notNullValue());
+        resultingProgrammeMembership.getConditionsOfJoining(), notNullValue());
 
-    ConditionsOfJoining conditionsOfJoining = updatedProgrammeMembership.getConditionsOfJoining();
+    ConditionsOfJoining conditionsOfJoining = resultingProgrammeMembership.getConditionsOfJoining();
     assertThat("Unexpected signed at.", conditionsOfJoining.signedAt(), is(COJ_SIGNED_AT));
     assertThat("Unexpected signed version.", conditionsOfJoining.version(),
         is(GoldGuideVersion.GG9));
-
-    verify(cachingDelegate).getConditionsOfJoining(PROGRAMME_MEMBERSHIP_UUID.toString());
-    verify(cachingDelegate).getConditionsOfJoining("123");
   }
 
   @Test
