@@ -80,7 +80,10 @@ public class ProgrammeMembershipService {
         //1. new uuid PM, with CoJ also saved against this PM *THE FUTURE*
         UUID uuid = UUID.fromString(programmeMembership.getTisId());
         ProgrammeMembership savedProgrammeMembership
-            = findByTisId(existingProgrammeMemberships, uuid.toString());
+            = existingProgrammeMemberships.stream()
+            .filter(i -> i.getTisId().equals(uuid.toString()))
+            .findAny()
+            .orElse(null);
         if (savedProgrammeMembership == null) {
           //2. new uuid PM, but with CoJ saved against old PM with delimited cm ids *THE PRESENT*
           String deprecatedId = programmeMembership.getCurricula().stream()
@@ -89,7 +92,10 @@ public class ProgrammeMembershipService {
               .collect(Collectors.joining(","));
 
           ProgrammeMembership oldProgrammeMembership
-              = findByTisId(existingProgrammeMemberships, deprecatedId);
+              = existingProgrammeMemberships.stream()
+              .filter(i -> i.getTisId().equals(deprecatedId))
+              .findAny()
+              .orElse(null);
           if (oldProgrammeMembership != null) {
             ConditionsOfJoining savedCoj = oldProgrammeMembership.getConditionsOfJoining();
             programmeMembership.setConditionsOfJoining(savedCoj);
@@ -221,20 +227,5 @@ public class ProgrammeMembershipService {
       }
     }
     return Optional.empty();
-  }
-
-  /**
-   * Helper function to find a programme membership by its TisId.
-   *
-   * @param programmeMemberships the list of programme memberships to search.
-   * @param tisId the tisId to match.
-   * @return a matching programme membership, or null if no match.
-   */
-  private ProgrammeMembership findByTisId(List<ProgrammeMembership> programmeMemberships,
-     String tisId) {
-    return programmeMemberships.stream()
-        .filter(i -> i.getTisId().equals(tisId))
-        .findAny()
-        .orElse(null);
   }
 }
