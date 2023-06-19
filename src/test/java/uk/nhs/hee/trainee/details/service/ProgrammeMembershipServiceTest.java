@@ -356,9 +356,9 @@ class ProgrammeMembershipServiceTest {
   @Test
   void shouldUpdateProgrammeMembershipCojWhenPmHasUuidAndSavedPmHasDeprecatedIds() {
     Curriculum curriculum1 = new Curriculum();
-    curriculum1.setTisId("456");
+    curriculum1.setTisId("123");
     Curriculum curriculum2 = new Curriculum();
-    curriculum2.setTisId("123");
+    curriculum2.setTisId("456");
     Curriculum curriculum3 = new Curriculum();
     curriculum3.setTisId("789");
 
@@ -368,7 +368,7 @@ class ProgrammeMembershipServiceTest {
     programmeMembership.setCurricula(Arrays.asList(curriculum1, curriculum2, curriculum3));
 
     ProgrammeMembership savedProgrammeMembership = createProgrammeMembership(
-        MULTIPLE_PROGRAMME_MEMBERSHIP_ID, ORIGINAL_SUFFIX, 0);
+        "123,456", ORIGINAL_SUFFIX, 0);
     savedProgrammeMembership.setConditionsOfJoining(
         new ConditionsOfJoining(COJ_SIGNED_AT, GoldGuideVersion.GG9));
     TraineeProfile traineeProfile = new TraineeProfile();
@@ -393,12 +393,15 @@ class ProgrammeMembershipServiceTest {
 
   @Test
   void shouldNotUpdateProgrammeMembershipCojWhenPmHasUuidAndSavedPmNotFound() {
+    Curriculum curriculum = new Curriculum();
+    curriculum.setTisId("123");
     ProgrammeMembership programmeMembership = createProgrammeMembership(
         PROGRAMME_MEMBERSHIP_UUID.toString(), ORIGINAL_SUFFIX, 0);
     programmeMembership.setConditionsOfJoining(null);
+    programmeMembership.setCurricula(List.of(curriculum));
 
     ProgrammeMembership savedProgrammeMembership = createProgrammeMembership(
-        "unmatched id", ORIGINAL_SUFFIX, 0);
+        "456,789", ORIGINAL_SUFFIX, 0);
     savedProgrammeMembership.setConditionsOfJoining(
         new ConditionsOfJoining(COJ_SIGNED_AT, GoldGuideVersion.GG9));
     TraineeProfile traineeProfile = new TraineeProfile();

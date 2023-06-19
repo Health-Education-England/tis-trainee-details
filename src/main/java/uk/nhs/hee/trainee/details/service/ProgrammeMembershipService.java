@@ -23,6 +23,7 @@ package uk.nhs.hee.trainee.details.service;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -86,20 +87,19 @@ public class ProgrammeMembershipService {
             .orElse(null);
         if (savedProgrammeMembership == null) {
           //2. new uuid PM, but with CoJ saved against old PM with delimited cm ids *THE PRESENT*
-          String deprecatedId = programmeMembership.getCurricula().stream()
-              .map(Curriculum::getTisId)
-              .sorted()
-              .collect(Collectors.joining(","));
-
-          ProgrammeMembership oldProgrammeMembership
-              = existingProgrammeMemberships.stream()
-              .filter(i -> i.getTisId().equals(deprecatedId))
-              .findAny()
-              .orElse(null);
-          if (oldProgrammeMembership != null) {
-            ConditionsOfJoining savedCoj = oldProgrammeMembership.getConditionsOfJoining();
-            programmeMembership.setConditionsOfJoining(savedCoj);
+          for (Curriculum curriculum : programmeMembership.getCurricula()) {
+            ProgrammeMembership oldProgrammeMembership
+                = existingProgrammeMemberships.stream()
+                .filter(i -> Arrays.stream(i.getTisId().split(","))
+                    .anyMatch(id -> id.equals(curriculum.getTisId())))
+                .findAny()
+                .orElse(null);
+            if (oldProgrammeMembership != null) {
+              ConditionsOfJoining savedCoj = oldProgrammeMembership.getConditionsOfJoining();
+              programmeMembership.setConditionsOfJoining(savedCoj);
+            }
           }
+
         }
       } catch (IllegalArgumentException e) {
         //3. old cm-ids PM, with CoJ cached against old delimited cm ids *THE PAST*
