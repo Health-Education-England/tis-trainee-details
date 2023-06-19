@@ -26,6 +26,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
@@ -60,26 +61,44 @@ public class ProgrammeMembershipService {
    */
   public Optional<ProgrammeMembership> updateProgrammeMembershipForTrainee(String traineeTisId,
       ProgrammeMembership programmeMembership) {
+    TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
+
+    if (traineeProfile == null) {
+      return Optional.empty();
+    }
+
+    List<ProgrammeMembership> existingProgrammeMemberships = traineeProfile
+        .getProgrammeMemberships();
+
     if (programmeMembership.getConditionsOfJoining() == null
         || programmeMembership.getConditionsOfJoining().signedAt() == null) {
 
-      // Restore the Conditions of Joining if it exists after this PM was previously deleted.
+      // Restore the Conditions of Joining if it exists
       // FIXME: push all PMs through tis-trainee-sync to flush 2 and 3 so they can be removed?
       // 3 scenarios:
       try {
-        //1. new uuid PM, with CoJ also cached against new uuid *THE FUTURE*
+        //1. new uuid PM, with CoJ also saved against this PM *THE FUTURE*
         UUID uuid = UUID.fromString(programmeMembership.getTisId());
-        Optional<ConditionsOfJoining> conditionsOfJoiningUuid
-            = cachingDelegate.getConditionsOfJoining(uuid.toString());
-        if (conditionsOfJoiningUuid.isPresent()) {
-          programmeMembership.setConditionsOfJoining(conditionsOfJoiningUuid.get());
-        } else {
-          //2. new uuid PM, with CoJ cached against old delimited cm ids *THE PRESENT*
-          for (Curriculum curriculum : programmeMembership.getCurricula()) {
-            Optional<ConditionsOfJoining> conditionsOfJoiningId
-                = cachingDelegate.getConditionsOfJoining(curriculum.getTisId());
-            conditionsOfJoiningId.ifPresent(programmeMembership::setConditionsOfJoining);
-            // All results should be the same, but iterating through all IDs ensures a clean cache.
+        ProgrammeMembership savedProgrammeMembership
+            = existingProgrammeMemberships.stream()
+            .filter(i -> i.getTisId().equals(uuid.toString()))
+            .findAny()
+            .orElse(null);
+        if (savedProgrammeMembership == null) {
+          //2. new uuid PM, but with CoJ saved against old PM with delimited cm ids *THE PRESENT*
+          String deprecatedId = programmeMembership.getCurricula().stream()
+              .map(Curriculum::getTisId)
+              .sorted()
+              .collect(Collectors.joining(","));
+
+          ProgrammeMembership oldProgrammeMembership
+              = existingProgrammeMemberships.stream()
+              .filter(i -> i.getTisId().equals(deprecatedId))
+              .findAny()
+              .orElse(null);
+          if (oldProgrammeMembership != null) {
+            ConditionsOfJoining savedCoj = oldProgrammeMembership.getConditionsOfJoining();
+            programmeMembership.setConditionsOfJoining(savedCoj);
           }
         }
       } catch (IllegalArgumentException e) {
@@ -92,15 +111,6 @@ public class ProgrammeMembershipService {
         }
       }
     }
-
-    TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
-
-    if (traineeProfile == null) {
-      return Optional.empty();
-    }
-
-    List<ProgrammeMembership> existingProgrammeMemberships = traineeProfile
-        .getProgrammeMemberships();
 
     for (ProgrammeMembership existingProgrammeMembership : existingProgrammeMemberships) {
 
