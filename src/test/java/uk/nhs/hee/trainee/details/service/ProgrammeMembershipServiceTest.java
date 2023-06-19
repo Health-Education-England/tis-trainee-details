@@ -23,6 +23,7 @@ package uk.nhs.hee.trainee.details.service;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -388,6 +389,31 @@ class ProgrammeMembershipServiceTest {
     assertThat("Unexpected signed at.", conditionsOfJoining.signedAt(), is(COJ_SIGNED_AT));
     assertThat("Unexpected signed version.", conditionsOfJoining.version(),
         is(GoldGuideVersion.GG9));
+  }
+
+  @Test
+  void shouldNotUpdateProgrammeMembershipCojWhenPmHasUuidAndSavedPmNotFound() {
+    ProgrammeMembership programmeMembership = createProgrammeMembership(
+        PROGRAMME_MEMBERSHIP_UUID.toString(), ORIGINAL_SUFFIX, 0);
+    programmeMembership.setConditionsOfJoining(null);
+
+    ProgrammeMembership savedProgrammeMembership = createProgrammeMembership(
+        "unmatched id", ORIGINAL_SUFFIX, 0);
+    savedProgrammeMembership.setConditionsOfJoining(
+        new ConditionsOfJoining(COJ_SIGNED_AT, GoldGuideVersion.GG9));
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.getProgrammeMemberships().add(savedProgrammeMembership);
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    Optional<ProgrammeMembership> optionalProgrammeMembership = service
+        .updateProgrammeMembershipForTrainee(TRAINEE_TIS_ID, programmeMembership);
+
+    assertThat("Unexpected optional isEmpty flag.", optionalProgrammeMembership.isEmpty(),
+        is(false));
+    ProgrammeMembership updatedProgrammeMembership = optionalProgrammeMembership.get();
+    assertThat("Unexpected conditions of joining.",
+        updatedProgrammeMembership.getConditionsOfJoining(), nullValue());
   }
 
   @Test
