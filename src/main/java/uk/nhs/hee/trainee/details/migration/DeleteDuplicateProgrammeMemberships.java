@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright 2022 Crown Copyright (Health Education England)
+ * Copyright 2023 Crown Copyright (Health Education England)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -38,11 +38,11 @@ import org.springframework.data.mongodb.core.query.Update;
  */
 @Slf4j
 @ChangeUnit(id = "deleteDuplicateTraineeProfileProgrammeMemberships", order = "3")
-public class RemoveDuplicateProgrammeMemberships {
+public class DeleteDuplicateProgrammeMemberships {
   private static final String PROFILE_COLLECTION = "TraineeProfile";
   private final MongoTemplate mongoTemplate;
 
-  public RemoveDuplicateProgrammeMemberships(MongoTemplate mongoTemplate) {
+  public DeleteDuplicateProgrammeMemberships(MongoTemplate mongoTemplate) {
     this.mongoTemplate = mongoTemplate;
   }
 
