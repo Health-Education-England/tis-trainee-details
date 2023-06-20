@@ -56,9 +56,11 @@ public class RemoveDuplicateProgrammeMemberships {
             new BasicDBObject("tisId", new BasicDBObject("$regex", "^[0-9,]+$")));
     try {
       UpdateResult result = mongoTemplate.updateMulti(new Query(), update, PROFILE_COLLECTION);
-      log.info("Deprecated programme memberships deleted on {} trainees", result.getModifiedCount());
+      log.info("Deprecated programme memberships deleted on {} trainees",
+          result.getModifiedCount());
     } catch (MongoException me) {
-      log.error("Unable to delete deprecated programme memberships due to an error: {} ", me.toString());
+      log.error("Unable to delete deprecated programme memberships due to an error: {} ",
+          me.toString());
     }
   }
 
