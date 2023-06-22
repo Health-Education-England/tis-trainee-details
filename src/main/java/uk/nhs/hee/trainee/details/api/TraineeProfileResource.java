@@ -82,6 +82,7 @@ public class TraineeProfileResource {
     }
 
     traineeProfile = service.hidePastProgrammes(traineeProfile);
+    traineeProfile = service.hideDeprecatedProgrammes(traineeProfile); //remove once these are deleted
     traineeProfile = service.hidePastPlacements(traineeProfile);
     return ResponseEntity.ok(mapper.toDto(traineeProfile));
   }
