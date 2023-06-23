@@ -241,7 +241,7 @@ class TraineeProfileServiceTest {
   }
 
   @Test
-  void hideUuidProgrammesShouldHideUuidProgrammes() {
+  void hideDeprecatedProgrammesShouldHideDeprecatedProgrammes() {
     var programmeMembership2 = new ProgrammeMembership();
     programmeMembership2.setTisId("456,7,8934");
     var programmeMembership3 = new ProgrammeMembership();
@@ -251,10 +251,9 @@ class TraineeProfileServiceTest {
     programmeMemberships.add(programmeMembership2);
     programmeMemberships.add(programmeMembership3);
 
-    TraineeProfile returnedTraineeProfile = service.hideUuidProgrammes(traineeProfile);
-    assertThat(returnedTraineeProfile.getProgrammeMemberships().size(), is(2));
-    assertThat(returnedTraineeProfile.getProgrammeMemberships(), hasItem(programmeMembership));
-    assertThat(returnedTraineeProfile.getProgrammeMemberships(), hasItem(programmeMembership2));
+    TraineeProfile returnedTraineeProfile = service.hideDeprecatedProgrammes(traineeProfile);
+    assertThat(returnedTraineeProfile.getProgrammeMemberships().size(), is(1));
+    assertThat(returnedTraineeProfile.getProgrammeMemberships(), hasItem(programmeMembership3));
   }
 
   @Test

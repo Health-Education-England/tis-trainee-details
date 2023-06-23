@@ -125,13 +125,13 @@ public class TraineeProfileService {
   }
 
   /**
-   * Remove uuid programmes from the trainee profile.
+   * Remove deprecated programmes from the trainee profile.
    *
    * @param traineeProfile The trainee profile to modify.
    * @return The modified trainee profile.
    */
-  public TraineeProfile hideUuidProgrammes(TraineeProfile traineeProfile) {
-    traineeProfile.getProgrammeMemberships().removeIf(c -> !c.getTisId().matches("[0-9,]+"));
+  public TraineeProfile hideDeprecatedProgrammes(TraineeProfile traineeProfile) {
+    traineeProfile.getProgrammeMemberships().removeIf(c -> c.getTisId().matches("[0-9,]+"));
     return traineeProfile;
   }
 
