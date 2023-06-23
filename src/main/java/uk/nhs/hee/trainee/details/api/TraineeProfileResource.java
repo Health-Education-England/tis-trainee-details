@@ -83,6 +83,7 @@ public class TraineeProfileResource {
 
     traineeProfile = service.hidePastProgrammes(traineeProfile);
     traineeProfile = service.hidePastPlacements(traineeProfile);
+    traineeProfile = service.hideUuidProgrammes(traineeProfile); //remove once migrated
     return ResponseEntity.ok(mapper.toDto(traineeProfile));
   }
 
