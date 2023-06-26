@@ -84,7 +84,8 @@ public class ProgrammeMembershipService {
             .filter(i -> i.getTisId().equals(uuid.toString()))
             .findAny()
             .orElse(null);
-        if (savedProgrammeMembership == null) {
+        if (savedProgrammeMembership == null
+            || savedProgrammeMembership.getConditionsOfJoining() == null) {
           //2. new uuid PM, but with CoJ saved against old PM with delimited cm ids *THE PRESENT*
           for (Curriculum curriculum : programmeMembership.getCurricula()) {
             ProgrammeMembership oldProgrammeMembership

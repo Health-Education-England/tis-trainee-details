@@ -354,6 +354,43 @@ class ProgrammeMembershipServiceTest {
   }
 
   @Test
+  void shouldUpdateProgrammeMembershipCojWhenPmHasUuidAndSavedUuidPmHasNoCoJButLegacyPmDoes() {
+    Curriculum curriculum1 = new Curriculum();
+    curriculum1.setTisId("123");
+
+    ProgrammeMembership programmeMembership = createProgrammeMembership(
+        PROGRAMME_MEMBERSHIP_UUID.toString(), ORIGINAL_SUFFIX, 0);
+    programmeMembership.setConditionsOfJoining(null);
+    programmeMembership.setCurricula(List.of(curriculum1));
+
+    TraineeProfile traineeProfile = new TraineeProfile();
+    ProgrammeMembership savedProgrammeMembership = createProgrammeMembership(
+        PROGRAMME_MEMBERSHIP_UUID.toString(), ORIGINAL_SUFFIX, 0);
+    ProgrammeMembership savedProgrammeMembershipLegacy = createProgrammeMembership(
+        "123", ORIGINAL_SUFFIX, 0);
+    savedProgrammeMembershipLegacy.setConditionsOfJoining(
+        new ConditionsOfJoining(COJ_SIGNED_AT, GoldGuideVersion.GG9));
+    traineeProfile.getProgrammeMemberships().addAll(
+        List.of(savedProgrammeMembership, savedProgrammeMembershipLegacy));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    Optional<ProgrammeMembership> optionalProgrammeMembership = service
+        .updateProgrammeMembershipForTrainee(TRAINEE_TIS_ID, programmeMembership);
+
+    assertThat("Unexpected optional isEmpty flag.", optionalProgrammeMembership.isEmpty(),
+        is(false));
+    ProgrammeMembership updatedProgrammeMembership = optionalProgrammeMembership.get();
+    assertThat("Unexpected conditions of joining.",
+        updatedProgrammeMembership.getConditionsOfJoining(), notNullValue());
+
+    ConditionsOfJoining conditionsOfJoining = updatedProgrammeMembership.getConditionsOfJoining();
+    assertThat("Unexpected signed at.", conditionsOfJoining.signedAt(), is(COJ_SIGNED_AT));
+    assertThat("Unexpected signed version.", conditionsOfJoining.version(),
+        is(GoldGuideVersion.GG9));
+  }
+
+  @Test
   void shouldUpdateProgrammeMembershipCojWhenPmHasUuidAndSavedPmHasDeprecatedIds() {
     Curriculum curriculum1 = new Curriculum();
     curriculum1.setTisId("123");
