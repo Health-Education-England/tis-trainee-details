@@ -354,7 +354,7 @@ class ProgrammeMembershipServiceTest {
   }
 
   @Test
-  void shouldUpdateProgrammeMembershipCojWhenPmHasUuidAndSavedUuidPmHasNoCoJButLegacyPmDoes() {
+  void shouldUpdateProgrammeMembershipCojWhenPmHasUuidAndSavedUuidPmHasNoCojButLegacyPmDoes() {
     Curriculum curriculum1 = new Curriculum();
     curriculum1.setTisId("123");
 
@@ -366,6 +366,7 @@ class ProgrammeMembershipServiceTest {
     TraineeProfile traineeProfile = new TraineeProfile();
     ProgrammeMembership savedProgrammeMembership = createProgrammeMembership(
         PROGRAMME_MEMBERSHIP_UUID.toString(), ORIGINAL_SUFFIX, 0);
+    savedProgrammeMembership.setConditionsOfJoining(null);
     ProgrammeMembership savedProgrammeMembershipLegacy = createProgrammeMembership(
         "123", ORIGINAL_SUFFIX, 0);
     savedProgrammeMembershipLegacy.setConditionsOfJoining(
