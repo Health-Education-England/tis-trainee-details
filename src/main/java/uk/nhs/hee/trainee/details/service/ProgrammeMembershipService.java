@@ -24,9 +24,12 @@ package uk.nhs.hee.trainee.details.service;
 import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
@@ -87,23 +90,20 @@ public class ProgrammeMembershipService {
         if (savedProgrammeMembership == null
             || savedProgrammeMembership.getConditionsOfJoining() == null) {
           //2. new uuid PM, but with CoJ saved against old PM with delimited cm ids *THE PRESENT*
-          for (Curriculum curriculum : programmeMembership.getCurricula()) {
-            ProgrammeMembership oldProgrammeMembership
-                = existingProgrammeMemberships.stream()
-                .filter(epm -> Arrays.stream(epm.getTisId().split(","))
-                    .anyMatch(id -> id.equals(curriculum.getTisId())))
-                .findAny()
-                .orElse(null);
-            if (oldProgrammeMembership != null
-                && oldProgrammeMembership.getConditionsOfJoining() != null) {
-              ConditionsOfJoining savedCoj = oldProgrammeMembership.getConditionsOfJoining();
-              if (programmeMembership.getConditionsOfJoining() == null
-                  || programmeMembership.getConditionsOfJoining().signedAt()
-                      .isBefore(savedCoj.signedAt())) {
-                programmeMembership.setConditionsOfJoining(savedCoj);
-              }
-            }
-          }
+
+          Set<String> curriculaIds = programmeMembership.getCurricula().stream()
+              .map(Curriculum::getTisId)
+              .collect(Collectors.toSet());
+
+          ConditionsOfJoining savedCoj = existingProgrammeMemberships.stream()
+              .filter(
+                  epm -> Arrays.stream(epm.getTisId().split(",")).anyMatch(curriculaIds::contains))
+              .filter(epm -> epm.getConditionsOfJoining() != null)
+              .max(Comparator.comparing(epm -> epm.getConditionsOfJoining().signedAt()))
+              .map(ProgrammeMembership::getConditionsOfJoining)
+              .orElse(null);
+
+          programmeMembership.setConditionsOfJoining(savedCoj);
         }
       } catch (IllegalArgumentException e) {
         //3. old cm-ids PM, with CoJ cached against old delimited cm ids *THE PAST*
