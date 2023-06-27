@@ -90,15 +90,17 @@ public class ProgrammeMembershipService {
           for (Curriculum curriculum : programmeMembership.getCurricula()) {
             ProgrammeMembership oldProgrammeMembership
                 = existingProgrammeMemberships.stream()
-                .filter(i -> Arrays.stream(i.getTisId().split(","))
+                .filter(epm -> Arrays.stream(epm.getTisId().split(","))
                     .anyMatch(id -> id.equals(curriculum.getTisId())))
                 .findAny()
                 .orElse(null);
             if (oldProgrammeMembership != null
                 && oldProgrammeMembership.getConditionsOfJoining() != null) {
               ConditionsOfJoining savedCoj = oldProgrammeMembership.getConditionsOfJoining();
-              programmeMembership.setConditionsOfJoining(savedCoj);
-              break;
+              if (programmeMembership.getConditionsOfJoining() == null ||
+                  programmeMembership.getConditionsOfJoining().signedAt()
+                      .isBefore(savedCoj.signedAt()))
+                programmeMembership.setConditionsOfJoining(savedCoj);
             }
           }
         }

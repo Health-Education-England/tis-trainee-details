@@ -38,6 +38,7 @@ import static org.mockito.Mockito.when;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -71,6 +72,8 @@ class ProgrammeMembershipServiceTest {
   private static final String MULTIPLE_PROGRAMME_MEMBERSHIP_ID = "123,456,789";
   private static final UUID PROGRAMME_MEMBERSHIP_UUID = UUID.randomUUID();
   private static final Instant COJ_SIGNED_AT = Instant.now();
+  private static final Instant COJ_SIGNED_AT_LATER
+      = COJ_SIGNED_AT.plus(10, ChronoUnit.MINUTES);
   private static final GoldGuideVersion GOLD_GUIDE_VERSION = GoldGuideVersion.GG9;
 
   private ProgrammeMembershipService service;
@@ -502,6 +505,50 @@ class ProgrammeMembershipServiceTest {
   }
 
   @Test
+  void shouldUpdateProgrammeMembershipCojToLatestWhenPmHasUuidAndSavedPmsHaveCojs() {
+    Curriculum curriculum123 = new Curriculum();
+    curriculum123.setTisId("123");
+    ProgrammeMembership oldPm123 = createProgrammeMembership("123", ORIGINAL_SUFFIX, 0);
+    oldPm123.setConditionsOfJoining(null);
+    oldPm123.setConditionsOfJoining(new ConditionsOfJoining(COJ_SIGNED_AT, GoldGuideVersion.GG9));
+
+    Curriculum curriculum456 = new Curriculum();
+    curriculum456.setTisId("456");
+    ProgrammeMembership oldPm456 = createProgrammeMembership("456", ORIGINAL_SUFFIX, 0);
+    oldPm456.setConditionsOfJoining(
+        new ConditionsOfJoining(COJ_SIGNED_AT_LATER, GoldGuideVersion.GG9));
+
+    Curriculum curriculum789 = new Curriculum();
+    curriculum789.setTisId("789");
+    ProgrammeMembership oldPm789 = createProgrammeMembership("789", ORIGINAL_SUFFIX, 0);
+    oldPm789.setConditionsOfJoining(new ConditionsOfJoining(COJ_SIGNED_AT, GoldGuideVersion.GG9));
+
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.getProgrammeMemberships().addAll(List.of(oldPm123, oldPm456, oldPm789));
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    ProgrammeMembership programmeMembership = createProgrammeMembership(
+        PROGRAMME_MEMBERSHIP_UUID.toString(), ORIGINAL_SUFFIX, 0);
+    programmeMembership.setConditionsOfJoining(null);
+    programmeMembership.setCurricula(List.of(curriculum123, curriculum456, curriculum789));
+
+    Optional<ProgrammeMembership> optionalProgrammeMembership =
+        service.updateProgrammeMembershipForTrainee(TRAINEE_TIS_ID, programmeMembership);
+
+    assertThat("Unexpected optional isEmpty flag.", optionalProgrammeMembership.isEmpty(),
+        is(false));
+    ProgrammeMembership updatedProgrammeMembership = optionalProgrammeMembership.get();
+    assertThat("Unexpected conditions of joining.",
+        updatedProgrammeMembership.getConditionsOfJoining(), notNullValue());
+
+    ConditionsOfJoining conditionsOfJoining = updatedProgrammeMembership.getConditionsOfJoining();
+    assertThat("Unexpected signed at.", conditionsOfJoining.signedAt(),
+        is(COJ_SIGNED_AT_LATER));
+    assertThat("Unexpected signed version.", conditionsOfJoining.version(),
+        is(GoldGuideVersion.GG9));
+  }
+
+  @Test
   void shouldNotUpdateProgrammeMembershipCojWhenPmHasUuidAndSavedPmNotFound() {
     Curriculum curriculum = new Curriculum();
     curriculum.setTisId("123");
@@ -770,7 +817,7 @@ class ProgrammeMembershipServiceTest {
    * @return The dummy entity.
    */
   private ProgrammeMembership createProgrammeMembership(String tisId, String stringSuffix,
-      int dateAdjustmentDays) {
+                                                        int dateAdjustmentDays) {
     ProgrammeMembership programmeMembership = new ProgrammeMembership();
     programmeMembership.setTisId(tisId);
     programmeMembership.setProgrammeTisId(PROGRAMME_TIS_ID + stringSuffix);
