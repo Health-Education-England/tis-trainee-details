@@ -94,12 +94,13 @@ public class ProgrammeMembershipService {
                     .anyMatch(id -> id.equals(curriculum.getTisId())))
                 .findAny()
                 .orElse(null);
-            if (oldProgrammeMembership != null) {
+            if (oldProgrammeMembership != null
+                && oldProgrammeMembership.getConditionsOfJoining() != null) {
               ConditionsOfJoining savedCoj = oldProgrammeMembership.getConditionsOfJoining();
               programmeMembership.setConditionsOfJoining(savedCoj);
+              break;
             }
           }
-
         }
       } catch (IllegalArgumentException e) {
         //3. old cm-ids PM, with CoJ cached against old delimited cm ids *THE PAST*
@@ -205,7 +206,7 @@ public class ProgrammeMembershipService {
    *
    * @param programmeMembershipId The ID of the programme membership for signing COJ.
    * @return The updated programme membership or empty if the programme membership with the ID was
-   *     not found.
+   * not found.
    */
   public Optional<ProgrammeMembership> signProgrammeMembershipCoj(
       String traineeTisId, String programmeMembershipId) {

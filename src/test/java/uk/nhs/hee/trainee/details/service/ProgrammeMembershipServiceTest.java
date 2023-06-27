@@ -430,6 +430,78 @@ class ProgrammeMembershipServiceTest {
   }
 
   @Test
+  void shouldUpdateProgrammeMembershipCojWhenPmHasUuidAndFirstSavedPmHasCoj() {
+    Curriculum curriculum123 = new Curriculum();
+    curriculum123.setTisId("123");
+    ProgrammeMembership oldPm123 = createProgrammeMembership("123", ORIGINAL_SUFFIX, 0);
+    oldPm123.setConditionsOfJoining(new ConditionsOfJoining(COJ_SIGNED_AT, GoldGuideVersion.GG9));
+
+    Curriculum curriculum456 = new Curriculum();
+    curriculum456.setTisId("456");
+    ProgrammeMembership oldPm456 = createProgrammeMembership("456", ORIGINAL_SUFFIX, 0);
+    oldPm456.setConditionsOfJoining(null);
+
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.getProgrammeMemberships().addAll(List.of(oldPm123, oldPm456));
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    ProgrammeMembership programmeMembership = createProgrammeMembership(
+        PROGRAMME_MEMBERSHIP_UUID.toString(), ORIGINAL_SUFFIX, 0);
+    programmeMembership.setConditionsOfJoining(null);
+    programmeMembership.setCurricula(List.of(curriculum123, curriculum456));
+
+    Optional<ProgrammeMembership> optionalProgrammeMembership =
+        service.updateProgrammeMembershipForTrainee(TRAINEE_TIS_ID, programmeMembership);
+
+    assertThat("Unexpected optional isEmpty flag.", optionalProgrammeMembership.isEmpty(),
+        is(false));
+    ProgrammeMembership updatedProgrammeMembership = optionalProgrammeMembership.get();
+    assertThat("Unexpected conditions of joining.",
+        updatedProgrammeMembership.getConditionsOfJoining(), notNullValue());
+
+    ConditionsOfJoining conditionsOfJoining = updatedProgrammeMembership.getConditionsOfJoining();
+    assertThat("Unexpected signed at.", conditionsOfJoining.signedAt(), is(COJ_SIGNED_AT));
+    assertThat("Unexpected signed version.", conditionsOfJoining.version(),
+        is(GoldGuideVersion.GG9));
+  }
+
+  @Test
+  void shouldUpdateProgrammeMembershipCojWhenPmHasUuidAndSecondSavedPmHasCoj() {
+    Curriculum curriculum123 = new Curriculum();
+    curriculum123.setTisId("123");
+    ProgrammeMembership oldPm123 = createProgrammeMembership("123", ORIGINAL_SUFFIX, 0);
+    oldPm123.setConditionsOfJoining(null);
+
+    Curriculum curriculum456 = new Curriculum();
+    curriculum456.setTisId("456");
+    ProgrammeMembership oldPm456 = createProgrammeMembership("456", ORIGINAL_SUFFIX, 0);
+    oldPm456.setConditionsOfJoining(new ConditionsOfJoining(COJ_SIGNED_AT, GoldGuideVersion.GG9));
+
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.getProgrammeMemberships().addAll(List.of(oldPm123, oldPm456));
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    ProgrammeMembership programmeMembership = createProgrammeMembership(
+        PROGRAMME_MEMBERSHIP_UUID.toString(), ORIGINAL_SUFFIX, 0);
+    programmeMembership.setConditionsOfJoining(null);
+    programmeMembership.setCurricula(List.of(curriculum123, curriculum456));
+
+    Optional<ProgrammeMembership> optionalProgrammeMembership =
+        service.updateProgrammeMembershipForTrainee(TRAINEE_TIS_ID, programmeMembership);
+
+    assertThat("Unexpected optional isEmpty flag.", optionalProgrammeMembership.isEmpty(),
+        is(false));
+    ProgrammeMembership updatedProgrammeMembership = optionalProgrammeMembership.get();
+    assertThat("Unexpected conditions of joining.",
+        updatedProgrammeMembership.getConditionsOfJoining(), notNullValue());
+
+    ConditionsOfJoining conditionsOfJoining = updatedProgrammeMembership.getConditionsOfJoining();
+    assertThat("Unexpected signed at.", conditionsOfJoining.signedAt(), is(COJ_SIGNED_AT));
+    assertThat("Unexpected signed version.", conditionsOfJoining.version(),
+        is(GoldGuideVersion.GG9));
+  }
+
+  @Test
   void shouldNotUpdateProgrammeMembershipCojWhenPmHasUuidAndSavedPmNotFound() {
     Curriculum curriculum = new Curriculum();
     curriculum.setTisId("123");
@@ -547,7 +619,8 @@ class ProgrammeMembershipServiceTest {
 
     service.deleteProgrammeMembershipsForTrainee(TRAINEE_TIS_ID);
 
-    verify(cachingDelegate).cacheConditionsOfJoining(eq(PROGRAMME_MEMBERSHIP_UUID.toString()), any());
+    verify(cachingDelegate).cacheConditionsOfJoining(eq(PROGRAMME_MEMBERSHIP_UUID.toString()),
+        any());
   }
 
   @Test
