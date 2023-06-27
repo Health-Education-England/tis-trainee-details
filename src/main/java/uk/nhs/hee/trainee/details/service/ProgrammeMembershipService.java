@@ -97,10 +97,11 @@ public class ProgrammeMembershipService {
             if (oldProgrammeMembership != null
                 && oldProgrammeMembership.getConditionsOfJoining() != null) {
               ConditionsOfJoining savedCoj = oldProgrammeMembership.getConditionsOfJoining();
-              if (programmeMembership.getConditionsOfJoining() == null ||
-                  programmeMembership.getConditionsOfJoining().signedAt()
-                      .isBefore(savedCoj.signedAt()))
+              if (programmeMembership.getConditionsOfJoining() == null
+                  || programmeMembership.getConditionsOfJoining().signedAt()
+                      .isBefore(savedCoj.signedAt())) {
                 programmeMembership.setConditionsOfJoining(savedCoj);
+              }
             }
           }
         }
