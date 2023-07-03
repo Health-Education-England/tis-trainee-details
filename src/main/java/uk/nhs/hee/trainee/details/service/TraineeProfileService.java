@@ -25,6 +25,7 @@ import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
@@ -130,10 +131,10 @@ public class TraineeProfileService {
     return traineeProfilesForEmail.stream()
         .filter(traineeProfile ->
             traineeProfile.getPersonalDetails().getGmcNumber().equalsIgnoreCase(gmc)
-                && traineeProfile.getPersonalDetails().getPostCode().replaceAll("\\s","")
-                .equalsIgnoreCase(postcode.replaceAll("\\s","")))
+                && traineeProfile.getPersonalDetails().getPostCode().replaceAll("\\s", "")
+                .equalsIgnoreCase(postcode.replaceAll("\\s", "")))
         .map(TraineeProfile::getTraineeTisId)
-        .collect(Collectors.toList());
+        .toList();
   }
 
   /**

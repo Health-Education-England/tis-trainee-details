@@ -122,13 +122,13 @@ public class TraineeProfileResource {
    *
    * @param email    The email to match.
    * @param gmc      The GMC number to match.
-   * @param postCode The post code to match.
+   * @param postcode The post code to match.
    * @return The matching trainee ID, or 404 if not verified or not unique
    */
   @GetMapping("/trainee-verify")
-  public ResponseEntity<String> getTraineeIds(@NotNull @RequestParam String email,
-                                              @NotNull @RequestParam String gmc,
-                                              @NotNull @RequestParam String postcode) {
+  public ResponseEntity<String> getVerifiedTraineeIds(@NotNull @RequestParam String email,
+                                                      @NotNull @RequestParam String gmc,
+                                                      @NotNull @RequestParam String postcode) {
     List<String> traineeIds = service.getTraineeTisIdsByEmailGmcAndPostcode(email, gmc, postcode);
 
     if (traineeIds.size() != 1) {
