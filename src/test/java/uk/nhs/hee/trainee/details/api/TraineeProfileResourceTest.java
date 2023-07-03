@@ -376,6 +376,48 @@ class TraineeProfileResourceTest {
   }
 
   @Test
+  void shouldReturnTraineeIdWhenProfileFoundByEmailGmcAndPostcode() throws Exception {
+    when(service.getTraineeTisIdsByEmailGmcAndPostcode(PERSON_EMAIL, PERSON_GMC, PERSON_POSTCODE))
+        .thenReturn(List.of(DEFAULT_TIS_ID_1));
+    mockMvc.perform(get("/api/trainee-profile/trainee-verify")
+            .param("email", PERSON_EMAIL)
+            .param("gmc", PERSON_GMC)
+            .param("postcode", PERSON_POSTCODE)
+            .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$").value(DEFAULT_TIS_ID_1));
+  }
+
+  @Test
+  void shouldReturnNotFoundWhenProfileNotFoundByEmailGmcAndPostcode() throws Exception {
+    when(service.getTraineeTisIdsByEmailGmcAndPostcode(PERSON_EMAIL, PERSON_GMC, PERSON_POSTCODE))
+        .thenReturn(Collections.emptyList());
+
+    mockMvc.perform(get("/api/trainee-profile/trainee-verify")
+            .param("email", PERSON_EMAIL)
+            .param("gmc", PERSON_GMC)
+            .param("postcode", PERSON_POSTCODE)
+            .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$").doesNotExist());
+  }
+
+  @Test
+  void shouldReturnNotFoundWhenMultipleProfilesFoundByEmailGmcAndPostcode() throws Exception {
+    when(service.getTraineeTisIdsByEmailGmcAndPostcode(PERSON_EMAIL, PERSON_GMC, PERSON_POSTCODE))
+        .thenReturn(List.of(DEFAULT_TIS_ID_1, "id2"));
+
+    mockMvc.perform(get("/api/trainee-profile/trainee-verify")
+            .param("email", PERSON_EMAIL)
+            .param("gmc", PERSON_GMC)
+            .param("postcode", PERSON_POSTCODE)
+            .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$").doesNotExist());
+  }
+
+  @Test
   void shouldReturnNoContentWhenDeletingProfile() throws Exception {
     mockMvc.perform(delete("/api/trainee-profile/{tisId}", "1")
             .contentType(MediaType.APPLICATION_JSON))

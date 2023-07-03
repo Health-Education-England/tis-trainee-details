@@ -114,6 +114,29 @@ public class TraineeProfileService {
   }
 
   /**
+   * Get the trainee ID(s) associated with the given email, GMC number and post code.
+   *
+   * @param email     The email address of the trainee.
+   * @param gmc       The GMC number of the trainee.
+   * @param postcode  The post code of the trainee.
+   * @return The trainee TIS IDs.
+   */
+  public List<String> getTraineeTisIdsByEmailGmcAndPostcode(String email, String gmc,
+                                                            String postcode) {
+    List<TraineeProfile> traineeProfilesForEmail
+        = repository.findAllByTraineeEmail(email.toLowerCase());
+
+    // filter by GMC and postcode
+    return traineeProfilesForEmail.stream()
+        .filter(traineeProfile ->
+            traineeProfile.getPersonalDetails().getGmcNumber().equalsIgnoreCase(gmc)
+                && traineeProfile.getPersonalDetails().getPostCode().replaceAll("\\s","")
+                .equalsIgnoreCase(postcode.replaceAll("\\s","")))
+        .map(TraineeProfile::getTraineeTisId)
+        .collect(Collectors.toList());
+  }
+
+  /**
    * Remove past programmes from the trainee profile.
    *
    * @param traineeProfile The trainee profile to modify.
