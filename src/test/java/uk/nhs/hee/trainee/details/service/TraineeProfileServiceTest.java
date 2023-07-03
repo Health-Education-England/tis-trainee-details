@@ -503,6 +503,54 @@ class TraineeProfileServiceTest {
         hasItems(DEFAULT_TIS_ID_1, DEFAULT_TIS_ID_2));
   }
 
+  @ParameterizedTest
+  @ValueSource(strings = {"a GMC number", "a gmc number"})
+  void shouldIgnoreGmcCaseWhenFindingProfilesByEmailGmcAndPostcode(String arg) {
+    PersonalDetails personalDetails2 = new PersonalDetails();
+    personalDetails2.setGmcNumber(arg);
+    personalDetails2.setPostCode(PERSON_POSTCODE);
+    traineeProfile.setPersonalDetails(personalDetails2);
+
+    PersonalDetails personalDetails3 = new PersonalDetails();
+    personalDetails3.setGmcNumber(PERSON_GMC);
+    personalDetails3.setPostCode(PERSON_POSTCODE);
+    traineeProfile2.setPersonalDetails(personalDetails3);
+
+    when(repository.findAllByTraineeEmail(PERSON_EMAIL))
+        .thenReturn(List.of(traineeProfile, traineeProfile2));
+
+    List<String> traineeTisIds = service.getTraineeTisIdsByEmailGmcAndPostcode(PERSON_EMAIL,
+        "a gmc Number", PERSON_POSTCODE);
+
+    assertThat("Unexpected number of trainee TIS IDs.", traineeTisIds.size(), is(1));
+    assertThat("Unexpected trainee TIS IDs.", traineeTisIds,
+        hasItem(DEFAULT_TIS_ID_1));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"SW1A 0AA", "sw1a  0aa", "sw1A0aA"})
+  void shouldIgnorePostcodeCaseAndSpacingWhenFindingProfilesByEmailGmcAndPostcode(String arg) {
+    PersonalDetails personalDetails2 = new PersonalDetails();
+    personalDetails2.setGmcNumber(PERSON_GMC);
+    personalDetails2.setPostCode(arg);
+    traineeProfile.setPersonalDetails(personalDetails2);
+
+    PersonalDetails personalDetails3 = new PersonalDetails();
+    personalDetails3.setGmcNumber(PERSON_GMC);
+    personalDetails3.setPostCode(PERSON_POSTCODE);
+    traineeProfile2.setPersonalDetails(personalDetails3);
+
+    when(repository.findAllByTraineeEmail(PERSON_EMAIL))
+        .thenReturn(List.of(traineeProfile, traineeProfile2));
+
+    List<String> traineeTisIds = service.getTraineeTisIdsByEmailGmcAndPostcode(PERSON_EMAIL,
+        PERSON_GMC, "SW1A 0AA");
+
+    assertThat("Unexpected number of trainee TIS IDs.", traineeTisIds.size(), is(1));
+    assertThat("Unexpected trainee TIS IDs.", traineeTisIds,
+        hasItem(DEFAULT_TIS_ID_1));
+  }
+
   @Test
   void shouldDeleteProfileById() {
     service.deleteTraineeProfileByTraineeTisId("1");

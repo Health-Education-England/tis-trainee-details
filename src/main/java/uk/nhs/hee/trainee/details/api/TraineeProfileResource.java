@@ -24,6 +24,7 @@ package uk.nhs.hee.trainee.details.api;
 import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.io.IOException;
 import java.util.List;
+import javax.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -114,5 +115,27 @@ public class TraineeProfileResource {
   public ResponseEntity<Void> deleteTraineeProfile(@PathVariable String tisId) {
     service.deleteTraineeProfileByTraineeTisId(tisId);
     return ResponseEntity.noContent().build();
+  }
+
+  /**
+   * Verify the trainee against the provided details.
+   *
+   * @param email    The email to match.
+   * @param gmc      The GMC number to match.
+   * @param postcode The post code to match.
+   * @return The matching trainee ID, or 404 if not verified or not unique
+   */
+  @GetMapping("/trainee-verify")
+  public ResponseEntity<String> getVerifiedTraineeIds(@NotNull @RequestParam String email,
+                                                      @NotNull @RequestParam String gmc,
+                                                      @NotNull @RequestParam String postcode) {
+    List<String> traineeIds = service.getTraineeTisIdsByEmailGmcAndPostcode(email, gmc, postcode);
+
+    if (traineeIds.size() != 1) {
+      //trainee cannot be uniquely identified
+      return ResponseEntity.notFound().build();
+    } else {
+      return ResponseEntity.ok(traineeIds.get(0));
+    }
   }
 }
