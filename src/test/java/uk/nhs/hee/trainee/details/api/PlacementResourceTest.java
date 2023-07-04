@@ -126,6 +126,7 @@ class PlacementResourceTest {
     placement.setEndDate(end);
     placement.setSite("siteValue");
     placement.setSiteLocation("siteLocationValue");
+    placement.setSiteKnownAs("siteKnownAsValue");
     placement.setGrade("gradeValue");
     placement.setSpecialty("specialtyValue");
     placement.setPlacementType("placementTypeValue");
@@ -155,6 +156,7 @@ class PlacementResourceTest {
         .andExpect(jsonPath("$.endDate").value(is(end.toString())))
         .andExpect(jsonPath("$.site").value(is("siteValue")))
         .andExpect(jsonPath("$.siteLocation").value(is("siteLocationValue")))
+        .andExpect(jsonPath("$.siteKnownAs").value(is("siteKnownAsValue")))
         .andExpect(jsonPath("$.grade").value(is("gradeValue")))
         .andExpect(jsonPath("$.specialty").value(is("specialtyValue")))
         .andExpect(jsonPath("$.placementType").value(is("placementTypeValue")))

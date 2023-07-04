@@ -40,6 +40,7 @@ public class PlacementDto implements SignedDto {
   private LocalDate endDate;
   private String site;
   private String siteLocation;
+  private String siteKnownAs;
   private String grade;
   private String specialty;
   private String placementType;

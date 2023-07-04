@@ -46,6 +46,7 @@ class PlacementServiceTest {
   private static final LocalDate END_DATE = START_DATE.plusYears(1);
   private static final String SITE = "site-";
   private static final String SITE_LOCATION = "siteLocation-";
+  private static final String SITE_KNOWN_AS = "siteKnownAs-";
   private static final String GRADE = "grade-";
   private static final String SPECIALTY = "specialty-";
   private static final String PLACEMENT_TYPE = "placementType-";
@@ -94,6 +95,7 @@ class PlacementServiceTest {
     expectedPlacement.setEndDate(END_DATE.plusDays(100));
     expectedPlacement.setSite(SITE + MODIFIED_SUFFIX);
     expectedPlacement.setSiteLocation(SITE_LOCATION + MODIFIED_SUFFIX);
+    expectedPlacement.setSiteKnownAs(SITE_KNOWN_AS + MODIFIED_SUFFIX);
     expectedPlacement.setGrade(GRADE);
     expectedPlacement.setSpecialty(SPECIALTY);
     expectedPlacement.setPlacementType(PLACEMENT_TYPE);
@@ -122,6 +124,7 @@ class PlacementServiceTest {
     expectedPlacement.setEndDate(END_DATE.plusDays(100));
     expectedPlacement.setSite(SITE + MODIFIED_SUFFIX);
     expectedPlacement.setSiteLocation(SITE_LOCATION + MODIFIED_SUFFIX);
+    expectedPlacement.setSiteKnownAs(SITE_KNOWN_AS + MODIFIED_SUFFIX);
     expectedPlacement.setGrade(GRADE);
     expectedPlacement.setSpecialty(SPECIALTY);
     expectedPlacement.setPlacementType(PLACEMENT_TYPE);
@@ -151,6 +154,7 @@ class PlacementServiceTest {
     expectedPlacement.setEndDate(END_DATE.plusDays(100));
     expectedPlacement.setSite(SITE + MODIFIED_SUFFIX);
     expectedPlacement.setSiteLocation(SITE_LOCATION + MODIFIED_SUFFIX);
+    expectedPlacement.setSiteKnownAs(SITE_KNOWN_AS + MODIFIED_SUFFIX);
     expectedPlacement.setGrade(GRADE);
     expectedPlacement.setSpecialty(SPECIALTY);
     expectedPlacement.setPlacementType(PLACEMENT_TYPE);
@@ -214,6 +218,7 @@ class PlacementServiceTest {
     placement.setEndDate(END_DATE.plusDays(dateAdjustmentDays));
     placement.setSite(SITE + stringSuffix);
     placement.setSiteLocation(SITE_LOCATION + stringSuffix);
+    placement.setSiteKnownAs(SITE_KNOWN_AS + stringSuffix);
     placement.setGrade(GRADE);
     placement.setSpecialty(SPECIALTY);
     placement.setPlacementType(PLACEMENT_TYPE);
