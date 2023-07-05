@@ -376,13 +376,13 @@ class TraineeProfileResourceTest {
   }
 
   @Test
-  void shouldReturnTraineeIdWhenProfileFoundByEmailGmcAndPostcode() throws Exception {
-    when(service.getTraineeTisIdsByEmailGmcAndPostcode(PERSON_EMAIL, PERSON_GMC, PERSON_POSTCODE))
+  void shouldReturnTraineeIdWhenProfileFoundByEmailGmcAndDob() throws Exception {
+    when(service.getTraineeTisIdsByEmailGmcAndDob(PERSON_EMAIL, PERSON_GMC, PERSON_DATEOFBIRTH))
         .thenReturn(List.of(DEFAULT_TIS_ID_1));
     mockMvc.perform(get("/api/trainee-profile/trainee-verify")
             .param("email", PERSON_EMAIL)
             .param("gmc", PERSON_GMC)
-            .param("postcode", PERSON_POSTCODE)
+            .param("dob", PERSON_DATEOFBIRTH.toString())
             .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -390,28 +390,28 @@ class TraineeProfileResourceTest {
   }
 
   @Test
-  void shouldReturnNotFoundWhenProfileNotFoundByEmailGmcAndPostcode() throws Exception {
-    when(service.getTraineeTisIdsByEmailGmcAndPostcode(PERSON_EMAIL, PERSON_GMC, PERSON_POSTCODE))
+  void shouldReturnNotFoundWhenProfileNotFoundByEmailGmcAndDob() throws Exception {
+    when(service.getTraineeTisIdsByEmailGmcAndDob(PERSON_EMAIL, PERSON_GMC, PERSON_DATEOFBIRTH))
         .thenReturn(Collections.emptyList());
 
     mockMvc.perform(get("/api/trainee-profile/trainee-verify")
             .param("email", PERSON_EMAIL)
             .param("gmc", PERSON_GMC)
-            .param("postcode", PERSON_POSTCODE)
+            .param("dob", PERSON_DATEOFBIRTH.toString())
             .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$").doesNotExist());
   }
 
   @Test
-  void shouldReturnNotFoundWhenMultipleProfilesFoundByEmailGmcAndPostcode() throws Exception {
-    when(service.getTraineeTisIdsByEmailGmcAndPostcode(PERSON_EMAIL, PERSON_GMC, PERSON_POSTCODE))
+  void shouldReturnNotFoundWhenMultipleProfilesFoundByEmailGmcAndDob() throws Exception {
+    when(service.getTraineeTisIdsByEmailGmcAndDob(PERSON_EMAIL, PERSON_GMC, PERSON_DATEOFBIRTH))
         .thenReturn(List.of(DEFAULT_TIS_ID_1, "id2"));
 
     mockMvc.perform(get("/api/trainee-profile/trainee-verify")
             .param("email", PERSON_EMAIL)
             .param("gmc", PERSON_GMC)
-            .param("postcode", PERSON_POSTCODE)
+            .param("dob", PERSON_DATEOFBIRTH.toString())
             .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$").doesNotExist());

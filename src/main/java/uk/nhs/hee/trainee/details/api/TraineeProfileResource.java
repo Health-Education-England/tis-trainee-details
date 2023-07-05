@@ -23,9 +23,11 @@ package uk.nhs.hee.trainee.details.api;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
 import javax.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -120,21 +122,25 @@ public class TraineeProfileResource {
   /**
    * Verify the trainee against the provided details.
    *
-   * @param email    The email to match.
-   * @param gmc      The GMC number to match.
-   * @param postcode The post code to match.
+   * @param email The email to match.
+   * @param gmc   The GMC number to match.
+   * @param dob   The date of birth to match.
    * @return The matching trainee ID, or 404 if not verified or not unique
    */
   @GetMapping("/trainee-verify")
   public ResponseEntity<String> getVerifiedTraineeIds(@NotNull @RequestParam String email,
-                                                      @NotNull @RequestParam String gmc,
-                                                      @NotNull @RequestParam String postcode) {
-    List<String> traineeIds = service.getTraineeTisIdsByEmailGmcAndPostcode(email, gmc, postcode);
+      @NotNull @RequestParam String gmc,
+      @NotNull @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dob) {
+    log.info("Request to verify trainee ID matching email '{}', GMC '{}' and DOB '{}'", email, gmc,
+        dob.toString());
+    List<String> traineeIds = service.getTraineeTisIdsByEmailGmcAndDob(email, gmc, dob);
 
     if (traineeIds.size() != 1) {
       //trainee cannot be uniquely identified
+      log.info("Trainee could not be uniquely verified ({} matches)", traineeIds.size());
       return ResponseEntity.notFound().build();
     } else {
+      log.info("Trainee verified with ID {}", traineeIds.get(0));
       return ResponseEntity.ok(traineeIds.get(0));
     }
   }
