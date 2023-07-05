@@ -22,10 +22,10 @@
 package uk.nhs.hee.trainee.details.service;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
+import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
@@ -117,13 +117,13 @@ public class TraineeProfileService {
   /**
    * Get the trainee ID(s) associated with the given email, GMC number and post code.
    *
-   * @param email     The email address of the trainee.
-   * @param gmc       The GMC number of the trainee.
-   * @param postcode  The post code of the trainee.
+   * @param email The email address of the trainee.
+   * @param gmc   The GMC number of the trainee.
+   * @param dob   The date of birth of the trainee.
    * @return The trainee TIS IDs.
    */
-  public List<String> getTraineeTisIdsByEmailGmcAndPostcode(String email, String gmc,
-                                                            String postcode) {
+  public List<String> getTraineeTisIdsByEmailGmcAndDob(String email, String gmc,
+                                                       LocalDate dob) {
     List<TraineeProfile> traineeProfilesForEmail
         = repository.findAllByTraineeEmail(email.toLowerCase());
 
@@ -131,8 +131,7 @@ public class TraineeProfileService {
     return traineeProfilesForEmail.stream()
         .filter(traineeProfile ->
             traineeProfile.getPersonalDetails().getGmcNumber().equalsIgnoreCase(gmc)
-                && traineeProfile.getPersonalDetails().getPostCode().replaceAll("\\s", "")
-                .equalsIgnoreCase(postcode.replaceAll("\\s", "")))
+                && traineeProfile.getPersonalDetails().getDateOfBirth().equals(dob))
         .map(TraineeProfile::getTraineeTisId)
         .toList();
   }
