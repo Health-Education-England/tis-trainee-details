@@ -21,7 +21,8 @@
 
 package uk.nhs.hee.trainee.details.event;
 
-import io.awspring.cloud.messaging.listener.SqsMessageDeletionPolicy;
+import static io.awspring.cloud.messaging.listener.SqsMessageDeletionPolicy.ON_SUCCESS;
+
 import io.awspring.cloud.messaging.listener.annotation.SqsListener;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
@@ -49,7 +50,7 @@ public class GmcDetailsListener {
    *
    * @param event The sync event containing the GMC details.
    */
-  @SqsListener(value = "${application.aws.sqs.gmc-details-update", deletionPolicy = SqsMessageDeletionPolicy.ON_SUCCESS)
+  @SqsListener(value = "${application.aws.sqs.gmc-details-update", deletionPolicy = ON_SUCCESS)
   void updateGmcDetails(PersonalDetailsEvent event) {
     String tisId = event.metadata().tisId();
     log.info("Update GMC details of trainee with TIS ID {}", tisId);
@@ -57,6 +58,9 @@ public class GmcDetailsListener {
     PersonalDetailsDto dto = event.data();
     PersonalDetails entity = mapper.toEntity(dto);
     Optional<PersonalDetails> optionalEntity = service.updateGmcDetailsByTisId(tisId, entity);
-    optionalEntity.orElseThrow(() -> new IllegalArgumentException("Trainee not found."));
+
+    if (optionalEntity.isEmpty()) {
+      throw new IllegalArgumentException("Trainee not found.");
+    }
   }
 }

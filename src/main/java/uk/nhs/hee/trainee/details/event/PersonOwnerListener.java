@@ -21,7 +21,8 @@
 
 package uk.nhs.hee.trainee.details.event;
 
-import io.awspring.cloud.messaging.listener.SqsMessageDeletionPolicy;
+import static io.awspring.cloud.messaging.listener.SqsMessageDeletionPolicy.ON_SUCCESS;
+
 import io.awspring.cloud.messaging.listener.annotation.SqsListener;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
@@ -49,7 +50,7 @@ public class PersonOwnerListener {
    *
    * @param event The sync event containing the person owner data.
    */
-  @SqsListener(value = "${application.aws.sqs.person-owner-update", deletionPolicy = SqsMessageDeletionPolicy.ON_SUCCESS)
+  @SqsListener(value = "${application.aws.sqs.person-owner-update", deletionPolicy = ON_SUCCESS)
   void updatePersonOwner(PersonalDetailsEvent event) {
     String tisId = event.metadata().tisId();
     log.info("Update person owner of trainee with TIS ID {}", tisId);
@@ -57,6 +58,9 @@ public class PersonOwnerListener {
     PersonalDetailsDto dto = event.data();
     PersonalDetails entity = mapper.toEntity(dto);
     Optional<PersonalDetails> optionalEntity = service.updatePersonOwnerByTisId(tisId, entity);
-    optionalEntity.orElseThrow(() -> new IllegalArgumentException("Trainee not found."));
+
+    if (optionalEntity.isEmpty()) {
+      throw new IllegalArgumentException("Trainee not found.");
+    }
   }
 }

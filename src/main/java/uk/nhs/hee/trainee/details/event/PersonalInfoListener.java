@@ -49,7 +49,8 @@ public class PersonalInfoListener {
    *
    * @param event The sync event containing the personal information.
    */
-  @SqsListener(value = "${application.aws.sqs.personal-info-update", deletionPolicy = SqsMessageDeletionPolicy.ON_SUCCESS)
+  @SqsListener(value = "${application.aws.sqs.personal-info-update",
+      deletionPolicy = SqsMessageDeletionPolicy.ON_SUCCESS)
   void updatePersonalInfo(PersonalDetailsEvent event) {
     String tisId = event.metadata().tisId();
     log.info("Update personal info of trainee with TIS ID {}", tisId);
@@ -57,6 +58,9 @@ public class PersonalInfoListener {
     PersonalDetailsDto dto = event.data();
     PersonalDetails entity = mapper.toEntity(dto);
     Optional<PersonalDetails> optionalEntity = service.updatePersonalInfoByTisId(tisId, entity);
-    optionalEntity.orElseThrow(() -> new IllegalArgumentException("Trainee not found."));
+
+    if (optionalEntity.isEmpty()) {
+      throw new IllegalArgumentException("Trainee not found.");
+    }
   }
 }
