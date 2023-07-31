@@ -21,9 +21,33 @@
 
 package uk.nhs.hee.trainee.details.dto;
 
-public record PersonalDetailsEvent(PersonalDetailsDto data, PersonalDetailsMetadata metadata) {
+import com.fasterxml.jackson.annotation.JsonProperty;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 
-  public record PersonalDetailsMetadata(String tisId) {
+/**
+ * A representation of a PersonalDetails update event.
+ *
+ * @param tisId  The TIS ID of the record being updated.
+ * @param update A wrapper around the update data.
+ */
+public record PersonalDetailsUpdateEvent(
+    @NotEmpty String tisId,
+
+    @NotNull
+    @JsonProperty("record")
+    Update update) {
+
+  /**
+   * A wrapper around the update data, used so the record structure matches the incoming message.
+   *
+   * @param personalDetails The updated personal details.
+   */
+  public record Update(
+      @NotNull
+      @JsonProperty("data")
+      PersonalDetailsDto personalDetails) {
 
   }
+
 }
