@@ -53,7 +53,7 @@ import uk.nhs.hee.trainee.details.service.SignatureService;
 
 @ContextConfiguration(classes = {PersonalDetailsMapperImpl.class, SignatureMapperImpl.class})
 @ExtendWith(SpringExtension.class)
-@WebMvcTest(ContactDetailsResource.class)
+@WebMvcTest(BasicDetailsResource.class)
 class BasicDetailsResourceTest {
 
   @Autowired
