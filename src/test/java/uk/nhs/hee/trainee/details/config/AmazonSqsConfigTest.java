@@ -19,11 +19,37 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package uk.nhs.hee.trainee.details.dto;
+package uk.nhs.hee.trainee.details.config;
 
-public record PersonalDetailsEvent(PersonalDetailsDto data, PersonalDetailsMetadata metadata) {
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.sameInstance;
+import static org.hamcrest.MatcherAssert.assertThat;
 
-  public record PersonalDetailsMetadata(String tisId) {
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.messaging.converter.MappingJackson2MessageConverter;
+import org.springframework.messaging.converter.MessageConverter;
 
+class AmazonSqsConfigTest {
+
+  private AmazonSqsConfig config;
+
+  @BeforeEach
+  void setUp() {
+    config = new AmazonSqsConfig();
+  }
+
+  @Test
+  void shouldIncludeExistingObjectMapperInMessageConverter() {
+    ObjectMapper objectMapper = new ObjectMapper();
+
+    MessageConverter messageConverter = config.messageConverter(objectMapper);
+
+    assertThat("Unexpected message converter.", messageConverter,
+        instanceOf(MappingJackson2MessageConverter.class));
+    assertThat("Unexpected object mapper.",
+        ((MappingJackson2MessageConverter) messageConverter).getObjectMapper(),
+        sameInstance(objectMapper));
   }
 }

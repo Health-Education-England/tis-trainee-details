@@ -34,8 +34,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
-import uk.nhs.hee.trainee.details.dto.PersonalDetailsEvent;
-import uk.nhs.hee.trainee.details.dto.PersonalDetailsEvent.PersonalDetailsMetadata;
+import uk.nhs.hee.trainee.details.dto.PersonalDetailsUpdateEvent;
+import uk.nhs.hee.trainee.details.dto.PersonalDetailsUpdateEvent.Update;
 import uk.nhs.hee.trainee.details.mapper.PersonalDetailsMapperImpl;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.service.PersonalDetailsService;
@@ -58,8 +58,8 @@ class PersonOwnerListenerTest {
   @Test
   void shouldThrowExceptionWhenTraineeNotFound() {
     PersonalDetailsDto dto = new PersonalDetailsDto();
-    PersonalDetailsMetadata metadata = new PersonalDetailsMetadata(TIS_ID);
-    PersonalDetailsEvent event = new PersonalDetailsEvent(dto, metadata);
+    Update update = new Update(dto);
+    PersonalDetailsUpdateEvent event = new PersonalDetailsUpdateEvent(TIS_ID, update);
 
     when(service.updatePersonOwnerByTisId(eq(TIS_ID), any())).thenReturn(Optional.empty());
 
@@ -71,8 +71,8 @@ class PersonOwnerListenerTest {
     PersonalDetailsDto dto = new PersonalDetailsDto();
     dto.setPersonOwner(PERSON_OWNER);
 
-    PersonalDetailsMetadata metadata = new PersonalDetailsMetadata(TIS_ID);
-    PersonalDetailsEvent event = new PersonalDetailsEvent(dto, metadata);
+    Update update = new Update(dto);
+    PersonalDetailsUpdateEvent event = new PersonalDetailsUpdateEvent(TIS_ID, update);
 
     ArgumentCaptor<PersonalDetails> entityCaptor = ArgumentCaptor.forClass(PersonalDetails.class);
     when(service.updatePersonOwnerByTisId(eq(TIS_ID), entityCaptor.capture())).then(

@@ -28,11 +28,14 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
-import uk.nhs.hee.trainee.details.dto.PersonalDetailsEvent;
+import uk.nhs.hee.trainee.details.dto.PersonalDetailsUpdateEvent;
 import uk.nhs.hee.trainee.details.mapper.PersonalDetailsMapper;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.service.PersonalDetailsService;
 
+/**
+ * A listener for GDC Details events.
+ */
 @Slf4j
 @Component
 public class GdcDetailsListener {
@@ -50,12 +53,12 @@ public class GdcDetailsListener {
    *
    * @param event The sync event containing the GDC details.
    */
-  @SqsListener(value = "${application.aws.sqs.gdc-details-update", deletionPolicy = ON_SUCCESS)
-  void updateGdcDetails(PersonalDetailsEvent event) {
-    String tisId = event.metadata().tisId();
+  @SqsListener(value = "${application.aws.sqs.gdc-details-update}", deletionPolicy = ON_SUCCESS)
+  void updateGdcDetails(PersonalDetailsUpdateEvent event) {
+    String tisId = event.tisId();
     log.info("Update GDC details of trainee with TIS ID {}", tisId);
 
-    PersonalDetailsDto dto = event.data();
+    PersonalDetailsDto dto = event.update().personalDetails();
     PersonalDetails entity = mapper.toEntity(dto);
     Optional<PersonalDetails> optionalEntity = service.updateGdcDetailsByTisId(tisId, entity);
 
