@@ -22,6 +22,7 @@
 package uk.nhs.hee.trainee.details.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.AcknowledgeMode;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -30,9 +31,12 @@ import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.retry.backoff.ExponentialBackOffPolicy;
+import org.springframework.retry.support.RetryTemplate;
 
 @ConditionalOnProperty("spring.rabbitmq.host")
 @Configuration
+@Slf4j
 public class RabbitConfig {
 
   @Bean
@@ -49,6 +53,23 @@ public class RabbitConfig {
     final RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
     rabbitTemplate.setMessageConverter(jsonMessageConverter());
     rabbitTemplate.containerAckMode(AcknowledgeMode.AUTO);
+
+    RetryTemplate retryTemplate = new RetryTemplate();
+    ExponentialBackOffPolicy backOffPolicy = new ExponentialBackOffPolicy();
+    backOffPolicy.setInitialInterval(500);
+    backOffPolicy.setMultiplier(10.0);
+    backOffPolicy.setMaxInterval(10000);
+    retryTemplate.setBackOffPolicy(backOffPolicy);
+    rabbitTemplate.setRetryTemplate(retryTemplate);
+
+    rabbitTemplate.setReturnsCallback(returned ->
+        log.info("Received Rabbit returned message {}", returned));
+
+    rabbitTemplate.setConfirmCallback((correlationData, ack, cause) ->
+        log.info("Received Rabbit confirmation with result {}", ack));
+
+    rabbitTemplate.setMandatory(true);
+
     return rabbitTemplate;
   }
 }
