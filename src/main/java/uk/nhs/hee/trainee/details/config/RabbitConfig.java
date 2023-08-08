@@ -32,6 +32,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.retry.backoff.ExponentialBackOffPolicy;
+import org.springframework.retry.policy.SimpleRetryPolicy;
 import org.springframework.retry.support.RetryTemplate;
 
 @ConditionalOnProperty("spring.rabbitmq.host")
@@ -57,16 +58,14 @@ public class RabbitConfig {
     RetryTemplate retryTemplate = new RetryTemplate();
     ExponentialBackOffPolicy backOffPolicy = new ExponentialBackOffPolicy();
     backOffPolicy.setInitialInterval(500);
-    backOffPolicy.setMultiplier(10.0);
-    backOffPolicy.setMaxInterval(10000);
+    backOffPolicy.setMultiplier(3.0);
+    backOffPolicy.setMaxInterval(3000_000);
     retryTemplate.setBackOffPolicy(backOffPolicy);
+    SimpleRetryPolicy simpleRetryPolicy = new SimpleRetryPolicy();
+    simpleRetryPolicy.setMaxAttempts(15);
+
+    retryTemplate.setRetryPolicy(simpleRetryPolicy);
     rabbitTemplate.setRetryTemplate(retryTemplate);
-
-    rabbitTemplate.setReturnsCallback(returned ->
-        log.info("Received Rabbit returned message {}", returned));
-
-    rabbitTemplate.setConfirmCallback((correlationData, ack, cause) ->
-        log.info("Received Rabbit confirmation with result {}", ack));
 
     rabbitTemplate.setMandatory(true);
 

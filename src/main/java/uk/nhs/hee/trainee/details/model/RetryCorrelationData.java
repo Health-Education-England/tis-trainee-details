@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright 2020 Crown Copyright (Health Education England)
+ * Copyright 2023 Crown Copyright (Health Education England)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -19,21 +19,24 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package uk.nhs.hee.trainee.details;
+package uk.nhs.hee.trainee.details.model;
 
-import io.mongock.runner.springboot.EnableMongock;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
-import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.amqp.rabbit.connection.CorrelationData;
 
-@EnableMongock
-@SpringBootApplication
-@ConfigurationPropertiesScan
-@EnableScheduling
-public class TisTraineeDetailsApplication {
+/**
+ * Extends the CorrelationData class with a retry count to allow a sensible number of retries for
+ * nack'd messages.
+ */
+public class RetryCorrelationData extends CorrelationData {
 
-  public static void main(String[] args) {
-    SpringApplication.run(TisTraineeDetailsApplication.class);
+  private final int retryCount;
+
+  public RetryCorrelationData(String id, int retryCount) {
+    super(id);
+    this.retryCount = retryCount;
+  }
+
+  public int getRetryCount() {
+    return retryCount;
   }
 }

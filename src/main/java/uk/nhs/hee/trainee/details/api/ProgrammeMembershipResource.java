@@ -162,7 +162,7 @@ public class ProgrammeMembershipResource {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "Trainee with Programme Membership " + programmeMembershipId + " not found."));
 
-    rabbitPublishService.publishCojSignedEvent(entity);
+    rabbitPublishService.publishCojSignedEvent(entity, 0);
 
     return ResponseEntity.ok(mapper.toDto(entity));
   }

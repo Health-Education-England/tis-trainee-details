@@ -19,6 +19,8 @@ spring:
     username: ${TRAINEE_DETAILS_RABBITMQ_USERNAME}
     password: ${TRAINEE_DETAILS_RABBITMQ_PASSWORD}
     ssl.enabled: ${TRAINEE_DETAILS_RABBITMQ_USE_SSL}
+    publisher-confirm-type: correlated
+    max-retries: 50
 
 logging:
   level:
