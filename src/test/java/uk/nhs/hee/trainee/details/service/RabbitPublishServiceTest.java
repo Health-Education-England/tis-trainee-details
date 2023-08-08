@@ -24,6 +24,7 @@ package uk.nhs.hee.trainee.details.service;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
 import java.time.Instant;
@@ -40,6 +41,7 @@ import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.event.CojSignedEvent;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
+import uk.nhs.hee.trainee.details.model.RetryCorrelationData;
 
 @ExtendWith(MockitoExtension.class)
 class RabbitPublishServiceTest {
@@ -68,12 +70,13 @@ class RabbitPublishServiceTest {
         = new ConditionsOfJoining(signedAt, GoldGuideVersion.GG9);
     programmeMembership.setConditionsOfJoining(conditionsOfJoining);
 
-    rabbitPublishService.publishCojSignedEvent(programmeMembership);
+    rabbitPublishService.publishCojSignedEvent(programmeMembership, 0);
 
     ArgumentCaptor<CojSignedEvent> eventCaptor = ArgumentCaptor.forClass(
         CojSignedEvent.class);
 
-    verify(rabbitTemplate).convertAndSend(any(), any(), eventCaptor.capture());
+    verify(rabbitTemplate).convertAndSend(any(), any(), eventCaptor.capture(),
+        any(RetryCorrelationData.class));
 
     CojSignedEvent event = eventCaptor.getValue();
     assertThat("Unexpected programme membership ID.",
@@ -94,12 +97,13 @@ class RabbitPublishServiceTest {
         = new ConditionsOfJoining(signedAt, GoldGuideVersion.GG9);
     programmeMembership.setConditionsOfJoining(conditionsOfJoining);
 
-    rabbitPublishService.publishCojSignedEvent(programmeMembership);
+    rabbitPublishService.publishCojSignedEvent(programmeMembership, 0);
 
     ArgumentCaptor<CojSignedEvent> eventCaptor = ArgumentCaptor.forClass(
         CojSignedEvent.class);
 
-    verify(rabbitTemplate).convertAndSend(any(), any(), eventCaptor.capture());
+    verify(rabbitTemplate).convertAndSend(any(), any(), eventCaptor.capture(),
+        any(RetryCorrelationData.class));
 
     CojSignedEvent event = eventCaptor.getValue();
     assertThat("Unexpected programme membership ID.",
@@ -116,15 +120,38 @@ class RabbitPublishServiceTest {
         = new ConditionsOfJoining(signedAt, GoldGuideVersion.GG9);
     programmeMembership.setConditionsOfJoining(conditionsOfJoining);
 
-    rabbitPublishService.publishCojSignedEvent(programmeMembership);
+    rabbitPublishService.publishCojSignedEvent(programmeMembership, 0);
 
     ArgumentCaptor<CojSignedEvent> eventCaptor = ArgumentCaptor.forClass(
         CojSignedEvent.class);
 
-    verify(rabbitTemplate).convertAndSend(any(), any(), eventCaptor.capture());
+    verify(rabbitTemplate).convertAndSend(any(), any(), eventCaptor.capture(),
+        any(RetryCorrelationData.class));
 
     CojSignedEvent event = eventCaptor.getValue();
     assertThat("Unexpected programme membership ID.",
         event.getProgrammeMembershipTisId(), is(uuid.toString()));
+  }
+
+  @Test
+  void shouldPublishCojSignedEventWithPmCorrelationId() {
+    ProgrammeMembership programmeMembership = new ProgrammeMembership();
+    programmeMembership.setTisId("123,456,7890");
+    Instant signedAt = Instant.now();
+    ConditionsOfJoining conditionsOfJoining
+        = new ConditionsOfJoining(signedAt, GoldGuideVersion.GG9);
+    programmeMembership.setConditionsOfJoining(conditionsOfJoining);
+
+    rabbitPublishService.publishCojSignedEvent(programmeMembership, 0);
+
+    ArgumentCaptor<RetryCorrelationData> correlationCaptor = ArgumentCaptor.forClass(
+        RetryCorrelationData.class);
+
+    verify(rabbitTemplate).convertAndSend(any(), any(), any(CojSignedEvent.class),
+        correlationCaptor.capture());
+
+    RetryCorrelationData correlation = correlationCaptor.getValue();
+    assertThat("Unexpected correlation ID.",
+        correlation.getId(), is("123,456,7890"));
   }
 }
