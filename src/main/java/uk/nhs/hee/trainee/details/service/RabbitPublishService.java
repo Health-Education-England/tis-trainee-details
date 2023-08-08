@@ -23,9 +23,9 @@ package uk.nhs.hee.trainee.details.service;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.util.UUID;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.Queue;
 import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -47,8 +47,10 @@ public class RabbitPublishService {
   private final String rabbitExchange;
   private final String routingKey;
   private final RabbitTemplate rabbitTemplate;
-  protected ConcurrentHashMap<String, ProgrammeMembership> outstandingConfirms = new ConcurrentHashMap<>();
-  protected ConcurrentLinkedQueue<RetryCorrelationData> negativeAckedMessages = new ConcurrentLinkedQueue<>();
+  protected ConcurrentHashMap<String, ProgrammeMembership> outstandingConfirms
+      = new ConcurrentHashMap<>();
+  protected ConcurrentLinkedQueue<RetryCorrelationData> negativeAckedMessages
+      = new ConcurrentLinkedQueue<>();
 
   RabbitPublishService(@Value("${application.rabbit.coj-signed.exchange}") String rabbitExchange,
                        @Value("${application.rabbit.coj-signed.routing-key}") String routingKey,
@@ -58,6 +60,9 @@ public class RabbitPublishService {
     this.rabbitTemplate = rabbitTemplate;
   }
 
+  /**
+   * Set up the Rabbit confirmation callback handler.
+   */
   @PostConstruct
   public void postConstruct() {
     rabbitTemplate.setConfirmCallback((correlation, ack, reason) -> {
@@ -81,8 +86,8 @@ public class RabbitPublishService {
   void handleRabbitAcknowledgement(boolean isAck, RetryCorrelationData retryCorrelationData) {
     final String id = retryCorrelationData.getId();
     if (!isAck) {
-      log.info("Rabbit message for programme membership id '{}' got nack-ed, " +
-          "saving to nack-ed message queue for retry", id);
+      log.info("Rabbit message for programme membership id '{}' got nack-ed, "
+          + "saving to nack-ed message queue for retry", id);
       negativeAckedMessages.add(new RetryCorrelationData(id,
           retryCorrelationData.getRetryCount() + 1));
     } else {
@@ -101,7 +106,8 @@ public class RabbitPublishService {
   public void publishCojSignedEvent(ProgrammeMembership programmeMembership, int retryCount) {
     log.info("Sending CoJ signed event for programme membership id '{}' [retry {}]",
         programmeMembership.getTisId(), retryCount);
-    RetryCorrelationData correlationData = new RetryCorrelationData(programmeMembership.getTisId(), retryCount);
+    RetryCorrelationData correlationData
+        = new RetryCorrelationData(programmeMembership.getTisId(), retryCount);
 
     ConditionsOfJoining conditionsOfJoining = programmeMembership.getConditionsOfJoining();
 
@@ -123,6 +129,7 @@ public class RabbitPublishService {
    * Remove a cached outstanding confirm message (if it has been successfully processed).
    *
    * @param id the message id.
+   *
    * @return the queued programme membership.
    */
   public ProgrammeMembership cleanOutstandingConfirm(String id) {

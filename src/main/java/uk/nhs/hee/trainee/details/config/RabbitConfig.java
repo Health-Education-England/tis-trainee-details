@@ -55,11 +55,11 @@ public class RabbitConfig {
     rabbitTemplate.setMessageConverter(jsonMessageConverter());
     rabbitTemplate.containerAckMode(AcknowledgeMode.AUTO);
 
-    RetryTemplate retryTemplate = new RetryTemplate();
     ExponentialBackOffPolicy backOffPolicy = new ExponentialBackOffPolicy();
     backOffPolicy.setInitialInterval(500);
     backOffPolicy.setMultiplier(3.0);
     backOffPolicy.setMaxInterval(3000_000);
+    RetryTemplate retryTemplate = new RetryTemplate();
     retryTemplate.setBackOffPolicy(backOffPolicy);
     SimpleRetryPolicy simpleRetryPolicy = new SimpleRetryPolicy();
     simpleRetryPolicy.setMaxAttempts(15);

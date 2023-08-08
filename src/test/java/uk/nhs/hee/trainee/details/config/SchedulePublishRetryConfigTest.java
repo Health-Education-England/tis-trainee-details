@@ -42,7 +42,7 @@ import uk.nhs.hee.trainee.details.model.RetryCorrelationData;
 import uk.nhs.hee.trainee.details.service.RabbitPublishService;
 
 class SchedulePublishRetryConfigTest {
-  private final int MAX_RETRIES = 3;
+  private static final int MAX_RETRIES = 3;
 
   @Mock
   RabbitPublishService rabbitPublishServiceMock;

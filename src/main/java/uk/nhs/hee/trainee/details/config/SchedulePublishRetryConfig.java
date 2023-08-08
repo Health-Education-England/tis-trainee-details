@@ -21,6 +21,8 @@
 
 package uk.nhs.hee.trainee.details.config;
 
+import java.util.Collection;
+import java.util.Queue;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -28,13 +30,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
-
-import java.util.Collection;
-import java.util.Queue;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.RetryCorrelationData;
 import uk.nhs.hee.trainee.details.service.RabbitPublishService;
 
+/**
+ * Configure Rabbit message republishing for not-acknowledged and unconfirmed errors.
+ */
 @Slf4j
 @Configuration
 @EnableScheduling
@@ -44,6 +46,13 @@ public class SchedulePublishRetryConfig {
   private final RabbitPublishService rabbitPublishService;
   private final int maxRetries;
 
+  /**
+   * Initialise the SchedulePublishRetryConfig object.
+   *
+   * @param rabbitTemplate       the Rabbit template.
+   * @param rabbitPublishService the Rabbit publishing service.
+   * @param maxRetries           the maximum number of message retries.
+   */
   public SchedulePublishRetryConfig(RabbitTemplate rabbitTemplate,
                                     RabbitPublishService rabbitPublishService,
                                     @Value("${spring.rabbitmq.max-retries}") int maxRetries) {
@@ -52,6 +61,9 @@ public class SchedulePublishRetryConfig {
     this.maxRetries = maxRetries;
   }
 
+  /**
+   * Republish not-acknowledged messages (up to a maximum number of retries).
+   */
   @Scheduled(fixedDelay = 10000)
   public void scheduleNackedRepublishTask() {
     Queue<RetryCorrelationData> queue = rabbitPublishService.getNegativeAckedMessages();
@@ -63,11 +75,15 @@ public class SchedulePublishRetryConfig {
       }
       RetryCorrelationData retryCorrelationData = queue.remove();
 
-      log.info("Retry nack-ed Rabbit message : {}", retryCorrelationData.getId());
-      checkRetryCountAndRepublish(retryCorrelationData.getRetryCount(), retryCorrelationData.getId());
+      log.info("Retry nack-ed Rabbit message id : '{}'", retryCorrelationData.getId());
+      checkRetryCountAndRepublish(retryCorrelationData.getRetryCount(),
+          retryCorrelationData.getId());
     }
   }
 
+  /**
+   * Republish unconfirmed messages (up to a maximum number of retries).
+   */
   @Scheduled(fixedDelay = 5000)
   public void scheduleUnconfirmedRepublishTask() {
     Collection<CorrelationData> unconfirmed = rabbitTemplate.getUnconfirmed(10000);
@@ -76,18 +92,24 @@ public class SchedulePublishRetryConfig {
       for (CorrelationData correlationData : unconfirmed) {
         RetryCorrelationData retryCorrelationData = (RetryCorrelationData) correlationData;
 
-        log.info("Retry unconfirmed Rabbit message id : {}", retryCorrelationData.getId());
+        log.info("Retry unconfirmed Rabbit message id : '{}'", retryCorrelationData.getId());
         checkRetryCountAndRepublish(retryCorrelationData.getRetryCount(), correlationData.getId());
       }
     }
   }
 
+  /**
+   * Perform the message republishing.
+   *
+   * @param retryCount the current retry count for the message.
+   * @param id         the message id.
+   */
   void checkRetryCountAndRepublish(int retryCount, String id) {
     ProgrammeMembership pm = rabbitPublishService.cleanOutstandingConfirm(id);
 
     if (pm == null) {
-      log.warn("Failed to retrieve programme membership from outstandingConfirms queue " +
-          "with id : '{}'", id);
+      log.warn("Failed to retrieve programme membership from outstandingConfirms queue "
+          + "with id : '{}'", id);
       return;
     }
 

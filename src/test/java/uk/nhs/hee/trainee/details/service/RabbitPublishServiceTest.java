@@ -36,7 +36,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.event.CojSignedEvent;
@@ -167,7 +166,8 @@ class RabbitPublishServiceTest {
 
     rabbitPublishService.handleRabbitAcknowledgement(true, retryCorrelationData);
 
-    assertThat("Unexpected outstanding confirms", rabbitPublishService.outstandingConfirms.size(), is(0));
+    assertThat("Unexpected outstanding confirms",
+        rabbitPublishService.outstandingConfirms.size(), is(0));
   }
 
   @Test
@@ -181,7 +181,8 @@ class RabbitPublishServiceTest {
 
     rabbitPublishService.handleRabbitAcknowledgement(false, retryCorrelationData);
 
-    assertThat("Unexpected outstanding confirms", rabbitPublishService.outstandingConfirms.size(), is(1));
+    assertThat("Unexpected outstanding confirms",
+        rabbitPublishService.outstandingConfirms.size(), is(1));
   }
 
   @Test
@@ -196,7 +197,8 @@ class RabbitPublishServiceTest {
     assertThat("Unexpected nacked queue",
         rabbitPublishService.negativeAckedMessages.size(), is(1));
 
-    Queue<RetryCorrelationData> retryCorrelationDataQueue = rabbitPublishService.getNegativeAckedMessages();
+    Queue<RetryCorrelationData> retryCorrelationDataQueue
+        = rabbitPublishService.getNegativeAckedMessages();
     assertThat("Unexpected nacked queue element retry count",
         retryCorrelationDataQueue.remove().getRetryCount(), is(1));
   }
