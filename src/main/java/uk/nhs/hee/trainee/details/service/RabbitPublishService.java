@@ -71,6 +71,13 @@ public class RabbitPublishService {
     });
   }
 
+  /**
+   * Manage the collections of nacked and unconfirmed messages based on Rabbit message
+   * acknowledgements.
+   *
+   * @param isAck                was the message acknowledged (success) or not (failure).
+   * @param retryCorrelationData message correlation details to match to cached entries.
+   */
   void handleRabbitAcknowledgement(boolean isAck, RetryCorrelationData retryCorrelationData) {
     final String id = retryCorrelationData.getId();
     if (!isAck) {
@@ -112,12 +119,23 @@ public class RabbitPublishService {
     rabbitTemplate.convertAndSend(rabbitExchange, routingKey, event, correlationData);
   }
 
+  /**
+   * Remove a cached outstanding confirm message (if it has been successfully processed).
+   *
+   * @param id the message id.
+   * @return the queued programme membership.
+   */
   public ProgrammeMembership cleanOutstandingConfirm(String id) {
     // remove the data from outstandingConfirms
     // created as public method for usage in other retry schedulers as well.
     return outstandingConfirms.remove(id);
   }
 
+  /**
+   * Get the queue of nacked messages.
+   *
+   * @return the queue of nacked messages.
+   */
   public Queue<RetryCorrelationData> getNegativeAckedMessages() {
     return negativeAckedMessages;
   }

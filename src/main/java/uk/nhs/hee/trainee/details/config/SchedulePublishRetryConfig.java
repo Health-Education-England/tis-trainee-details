@@ -26,6 +26,7 @@ import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import java.util.Collection;
@@ -36,6 +37,7 @@ import uk.nhs.hee.trainee.details.service.RabbitPublishService;
 
 @Slf4j
 @Configuration
+@EnableScheduling
 public class SchedulePublishRetryConfig {
 
   private final RabbitTemplate rabbitTemplate;

@@ -24,10 +24,10 @@ package uk.nhs.hee.trainee.details.service;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
 import java.time.Instant;
+import java.util.Queue;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,6 +36,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.event.CojSignedEvent;
@@ -153,5 +154,58 @@ class RabbitPublishServiceTest {
     RetryCorrelationData correlation = correlationCaptor.getValue();
     assertThat("Unexpected correlation ID.",
         correlation.getId(), is("123,456,7890"));
+  }
+
+  @Test
+  void shouldRemoveAckedMessageFromOutstandingConfirms() {
+    ProgrammeMembership programmeMembership = new ProgrammeMembership();
+    programmeMembership.setTisId("123");
+    rabbitPublishService.outstandingConfirms.clear();
+    rabbitPublishService.outstandingConfirms.put(programmeMembership.getTisId(),
+        programmeMembership);
+    RetryCorrelationData retryCorrelationData = new RetryCorrelationData("123", 0);
+
+    rabbitPublishService.handleRabbitAcknowledgement(true, retryCorrelationData);
+
+    assertThat("Unexpected outstanding confirms", rabbitPublishService.outstandingConfirms.size(), is(0));
+  }
+
+  @Test
+  void shouldNotRemoveNackedMessageFromOutstandingConfirms() {
+    ProgrammeMembership programmeMembership = new ProgrammeMembership();
+    programmeMembership.setTisId("123");
+    rabbitPublishService.outstandingConfirms.clear();
+    rabbitPublishService.outstandingConfirms.put(programmeMembership.getTisId(),
+        programmeMembership);
+    RetryCorrelationData retryCorrelationData = new RetryCorrelationData("123", 0);
+
+    rabbitPublishService.handleRabbitAcknowledgement(false, retryCorrelationData);
+
+    assertThat("Unexpected outstanding confirms", rabbitPublishService.outstandingConfirms.size(), is(1));
+  }
+
+  @Test
+  void shouldAddNackedMessageToNackedQueue() {
+    ProgrammeMembership programmeMembership = new ProgrammeMembership();
+    programmeMembership.setTisId("123");
+    rabbitPublishService.negativeAckedMessages.clear();
+    RetryCorrelationData retryCorrelationData = new RetryCorrelationData("123", 0);
+
+    rabbitPublishService.handleRabbitAcknowledgement(false, retryCorrelationData);
+
+    assertThat("Unexpected nacked queue",
+        rabbitPublishService.negativeAckedMessages.size(), is(1));
+
+    Queue<RetryCorrelationData> retryCorrelationDataQueue = rabbitPublishService.getNegativeAckedMessages();
+    assertThat("Unexpected nacked queue element retry count",
+        retryCorrelationDataQueue.remove().getRetryCount(), is(1));
+  }
+
+  @Test
+  void shouldSetupRabitConfirmCallback() {
+
+    rabbitPublishService.postConstruct();
+
+    verify(rabbitTemplate).setConfirmCallback(any());
   }
 }
