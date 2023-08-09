@@ -31,6 +31,8 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -153,8 +155,9 @@ class RabbitPublishServiceTest {
     assertThat("Unexpected correlation ID.", correlation.getId(), is("123,456,7890"));
   }
 
-  @Test
-  void shouldRemoveAckedMessageFromOutstandingConfirms() {
+  @ParameterizedTest()
+  @ValueSource(booleans = {true, false})
+  void shouldRemoveCallbackedMessageFromOutstandingConfirms(boolean isAck) {
     ProgrammeMembership programmeMembership = new ProgrammeMembership();
     programmeMembership.setTisId("123");
     rabbitPublishService.outstandingConfirms.clear();
@@ -162,25 +165,10 @@ class RabbitPublishServiceTest {
         programmeMembership);
     CorrelationData correlationData = new CorrelationData("123");
 
-    rabbitPublishService.handleRabbitAcknowledgement(true, correlationData);
+    rabbitPublishService.handleRabbitAcknowledgement(isAck, correlationData);
 
     assertThat("Unexpected outstanding confirms",
         rabbitPublishService.outstandingConfirms.size(), is(0));
-  }
-
-  @Test
-  void shouldNotRemoveNackedMessageFromOutstandingConfirms() {
-    ProgrammeMembership programmeMembership = new ProgrammeMembership();
-    programmeMembership.setTisId("123");
-    rabbitPublishService.outstandingConfirms.clear();
-    rabbitPublishService.outstandingConfirms.put(programmeMembership.getTisId(),
-        programmeMembership);
-    CorrelationData correlationData = new CorrelationData("123");
-
-    rabbitPublishService.handleRabbitAcknowledgement(false, correlationData);
-
-    assertThat("Unexpected outstanding confirms",
-        rabbitPublishService.outstandingConfirms.size(), is(1));
   }
 
   @Test

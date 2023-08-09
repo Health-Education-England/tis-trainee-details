@@ -27,7 +27,7 @@ logging:
     root: INFO
 
 sentry:
-  dsn: ${SENTRY_DSN:}
+  dsn: http://be5d80005ca84e62867f572b1f03c5da@localhost:9000/11
   environment: ${application.environment}
 
 application:
