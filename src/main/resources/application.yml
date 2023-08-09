@@ -19,13 +19,15 @@ spring:
     username: ${TRAINEE_DETAILS_RABBITMQ_USERNAME}
     password: ${TRAINEE_DETAILS_RABBITMQ_PASSWORD}
     ssl.enabled: ${TRAINEE_DETAILS_RABBITMQ_USE_SSL}
+    publisher-confirm-type: correlated
+    max-message-age-unconfirmed: 10000
 
 logging:
   level:
     root: INFO
 
 sentry:
-  dsn: ${SENTRY_DSN:}
+  dsn: http://be5d80005ca84e62867f572b1f03c5da@localhost:9000/11
   environment: ${application.environment}
 
 application:
