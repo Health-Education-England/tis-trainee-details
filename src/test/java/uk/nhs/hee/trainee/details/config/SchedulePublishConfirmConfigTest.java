@@ -21,8 +21,10 @@
 
 package uk.nhs.hee.trainee.details.config;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.Collection;
@@ -30,7 +32,6 @@ import java.util.Collections;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
@@ -43,20 +44,21 @@ class SchedulePublishConfirmConfigTest {
 
   @BeforeEach
   void setUp() {
-    rabbitTemplateMock = Mockito.mock(RabbitTemplate.class);
+    rabbitTemplateMock = mock(RabbitTemplate.class);
     schedulePublishConfirmConfig = new SchedulePublishConfirmConfig(rabbitTemplateMock, 100L);
   }
 
   @Test
   void shouldRaiseAlertForUnconfirmedMessage() {
+    int unconfirmedMessageCount;
     CorrelationData unconfirmedCorrelationData
         = new CorrelationData("123");
     Collection<CorrelationData> unconfirmed = Collections.singletonList(unconfirmedCorrelationData);
 
     when(rabbitTemplateMock.getUnconfirmed(anyLong())).thenReturn(unconfirmed);
 
-    schedulePublishConfirmConfig.scheduleUnconfirmedRepublishTask();
+    unconfirmedMessageCount = schedulePublishConfirmConfig.scheduleUnconfirmedRepublishTask();
 
-    //TODO: verify Sentry alert sent
+    assertThat("Unexpected unconfirmed message count", unconfirmedMessageCount, is(1));
   }
 }

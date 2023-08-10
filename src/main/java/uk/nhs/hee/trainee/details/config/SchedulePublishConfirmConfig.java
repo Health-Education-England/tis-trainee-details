@@ -57,13 +57,17 @@ public class SchedulePublishConfirmConfig {
 
   /**
    * Post Sentry alert for unconfirmed messages older than [maxMessageAgeUnconfirmed] seconds.
+   *
+   * @return the number of unconfirmed messages dropped.
    */
   @Scheduled(fixedDelay = 5000)
-  public void scheduleUnconfirmedRepublishTask() {
+  public int scheduleUnconfirmedRepublishTask() {
+    int unconfirmedMessageCount = 0;
     Collection<CorrelationData> unconfirmed
         = rabbitTemplate.getUnconfirmed(maxMessageAgeUnconfirmed);
 
     if (unconfirmed != null) {
+      unconfirmedMessageCount = unconfirmed.size();
       for (CorrelationData correlationData : unconfirmed) {
         log.info("Abandoning unconfirmed Rabbit message id : '{}'", correlationData.getId());
         AmqpException e = new AmqpException("Rabbit message for programme membership id '"
@@ -71,5 +75,6 @@ public class SchedulePublishConfirmConfig {
         Sentry.captureException(e);
       }
     }
+    return unconfirmedMessageCount;
   }
 }

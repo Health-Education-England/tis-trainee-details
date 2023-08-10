@@ -28,10 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.AmqpException;
-import org.springframework.amqp.UncategorizedAmqpException;
-import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
-import org.springframework.amqp.rabbit.core.AmqpNackReceivedException;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -67,13 +64,15 @@ public class RabbitPublishService {
   @PostConstruct
   public void postConstruct() {
     rabbitTemplate.setConfirmCallback((correlation, ack, reason) -> {
-
       if (correlation == null) {
         return;
       }
-
       handleRabbitAcknowledgement(ack, correlation);
     });
+  }
+
+  public static void raiseRabbitSentryException(AmqpException e) {
+    Sentry.captureException(e);
   }
 
   /**
@@ -89,7 +88,7 @@ public class RabbitPublishService {
       log.info("Rabbit message for programme membership id '{}' got nack-ed", id);
       AmqpException e = new AmqpException("Rabbit message for programme membership id '"
           + id + "' got nack-ed");
-      Sentry.captureException(e);
+      raiseRabbitSentryException(e);
     } else {
       //acked, message reached the broker successfully
       log.info("Rabbit message for programme membership id '{}' got acked", id);
@@ -123,7 +122,7 @@ public class RabbitPublishService {
       rabbitTemplate.convertAndSend(rabbitExchange, routingKey, event, correlationData);
     } catch (AmqpException e) {
       log.info("Rabbit has gone away!");
-      Sentry.captureException(e);
+      raiseRabbitSentryException(e);
     }
   }
 }

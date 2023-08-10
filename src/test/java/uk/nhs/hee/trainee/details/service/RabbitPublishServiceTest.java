@@ -23,7 +23,9 @@ package uk.nhs.hee.trainee.details.service;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
 import java.time.Instant;
@@ -37,6 +39,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
@@ -172,21 +175,29 @@ class RabbitPublishServiceTest {
   }
 
   @Test
-  void shouldSendNackedMessageToSentry() {
-    ProgrammeMembership programmeMembership = new ProgrammeMembership();
-    programmeMembership.setTisId("123");
-    CorrelationData correlationData = new CorrelationData("123");
-
-    rabbitPublishService.handleRabbitAcknowledgement(false, correlationData);
-
-    //TODO: verify Sentry sent
-  }
-
-  @Test
-  void shouldSetupRabitConfirmCallback() {
-
+  void shouldSetRabitConfirmCallback() {
     rabbitPublishService.postConstruct();
 
     verify(rabbitTemplate).setConfirmCallback(any());
+  }
+
+  @Test
+  void shouldNotThrowExceptionIfRabbitThrowsException() {
+    doThrow(new AmqpException("rabbit failed"))
+        .when(rabbitTemplate)
+        .convertAndSend(any(), any(), any(CojSignedEvent.class), any(CorrelationData.class));
+
+    ProgrammeMembership programmeMembership = new ProgrammeMembership();
+    programmeMembership.setTisId("123");
+    Instant signedAt = Instant.now();
+    ConditionsOfJoining conditionsOfJoining
+        = new ConditionsOfJoining(signedAt, GoldGuideVersion.GG9);
+    programmeMembership.setConditionsOfJoining(conditionsOfJoining);
+
+    try {
+      rabbitPublishService.publishCojSignedEvent(programmeMembership);
+    } catch (Exception e) {
+      fail("Unexpected exception when Rabbit not available");
+    }
   }
 }
