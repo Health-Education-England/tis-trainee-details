@@ -61,4 +61,15 @@ class SchedulePublishConfirmConfigTest {
 
     assertThat("Unexpected unconfirmed message count", unconfirmedMessageCount, is(1));
   }
+
+  @Test
+  void shouldNotRaiseAlertIfNoUnconfirmedMessage() {
+    int unconfirmedMessageCount;
+
+    when(rabbitTemplateMock.getUnconfirmed(anyLong())).thenReturn(null);
+
+    unconfirmedMessageCount = schedulePublishConfirmConfig.scheduleUnconfirmedRepublishTask();
+
+    assertThat("Unexpected unconfirmed message count", unconfirmedMessageCount, is(0));
+  }
 }
