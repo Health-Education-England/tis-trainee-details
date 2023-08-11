@@ -22,8 +22,13 @@
 package uk.nhs.hee.trainee.details.service;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
+import io.sentry.Sentry;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.AmqpException;
+import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -42,6 +47,8 @@ public class RabbitPublishService {
   private final String rabbitExchange;
   private final String routingKey;
   private final RabbitTemplate rabbitTemplate;
+  protected ConcurrentHashMap<String, ProgrammeMembership> outstandingConfirms
+      = new ConcurrentHashMap<>();
 
   RabbitPublishService(@Value("${application.rabbit.coj-signed.exchange}") String rabbitExchange,
                        @Value("${application.rabbit.coj-signed.routing-key}") String routingKey,
@@ -52,6 +59,43 @@ public class RabbitPublishService {
   }
 
   /**
+   * Set up the Rabbit confirmation callback handler.
+   */
+  @PostConstruct
+  public void postConstruct() {
+    rabbitTemplate.setConfirmCallback((correlation, ack, reason) -> {
+      if (correlation == null) {
+        return;
+      }
+      handleRabbitAcknowledgement(ack, correlation);
+    });
+  }
+
+  public static void raiseRabbitSentryException(AmqpException e) {
+    Sentry.captureException(e);
+  }
+
+  /**
+   * Log successfully acked messages and raise sentry alerts for nacked messages.
+   *
+   * @param isAck           was the message acknowledged (success) or not (failure).
+   * @param correlationData message correlation details.
+   */
+  void handleRabbitAcknowledgement(boolean isAck, CorrelationData correlationData) {
+    final String id = correlationData.getId();
+    outstandingConfirms.remove(id);
+    if (!isAck) {
+      log.info("Rabbit message for programme membership id '{}' got nack-ed", id);
+      AmqpException e = new AmqpException("Rabbit message for programme membership id '"
+          + id + "' got nack-ed");
+      raiseRabbitSentryException(e);
+    } else {
+      //acked, message reached the broker successfully
+      log.info("Rabbit message for programme membership id '{}' got acked", id);
+    }
+  }
+
+  /**
    * Publish a CoJ signed event.
    *
    * @param programmeMembership The signed {@link ProgrammeMembership}.
@@ -59,6 +103,7 @@ public class RabbitPublishService {
   public void publishCojSignedEvent(ProgrammeMembership programmeMembership) {
     log.info("Sending CoJ signed event for programme membership id '{}'",
         programmeMembership.getTisId());
+    CorrelationData correlationData = new CorrelationData(programmeMembership.getTisId());
 
     ConditionsOfJoining conditionsOfJoining = programmeMembership.getConditionsOfJoining();
 
@@ -72,6 +117,12 @@ public class RabbitPublishService {
       event = new CojSignedEvent(firstPmId, conditionsOfJoining);
     }
 
-    rabbitTemplate.convertAndSend(rabbitExchange, routingKey, event);
+    outstandingConfirms.putIfAbsent(programmeMembership.getTisId(), programmeMembership);
+    try {
+      rabbitTemplate.convertAndSend(rabbitExchange, routingKey, event, correlationData);
+    } catch (AmqpException e) {
+      log.info("Rabbit has gone away!");
+      raiseRabbitSentryException(e);
+    }
   }
 }

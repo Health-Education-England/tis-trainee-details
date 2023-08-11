@@ -23,7 +23,9 @@ package uk.nhs.hee.trainee.details.service;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
 import java.time.Instant;
@@ -31,10 +33,14 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.amqp.AmqpException;
+import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.event.CojSignedEvent;
@@ -73,7 +79,8 @@ class RabbitPublishServiceTest {
     ArgumentCaptor<CojSignedEvent> eventCaptor = ArgumentCaptor.forClass(
         CojSignedEvent.class);
 
-    verify(rabbitTemplate).convertAndSend(any(), any(), eventCaptor.capture());
+    verify(rabbitTemplate).convertAndSend(any(), any(), eventCaptor.capture(),
+        any(CorrelationData.class));
 
     CojSignedEvent event = eventCaptor.getValue();
     assertThat("Unexpected programme membership ID.",
@@ -99,7 +106,8 @@ class RabbitPublishServiceTest {
     ArgumentCaptor<CojSignedEvent> eventCaptor = ArgumentCaptor.forClass(
         CojSignedEvent.class);
 
-    verify(rabbitTemplate).convertAndSend(any(), any(), eventCaptor.capture());
+    verify(rabbitTemplate).convertAndSend(any(), any(), eventCaptor.capture(),
+        any(CorrelationData.class));
 
     CojSignedEvent event = eventCaptor.getValue();
     assertThat("Unexpected programme membership ID.",
@@ -121,10 +129,72 @@ class RabbitPublishServiceTest {
     ArgumentCaptor<CojSignedEvent> eventCaptor = ArgumentCaptor.forClass(
         CojSignedEvent.class);
 
-    verify(rabbitTemplate).convertAndSend(any(), any(), eventCaptor.capture());
+    verify(rabbitTemplate).convertAndSend(any(), any(), eventCaptor.capture(),
+        any(CorrelationData.class));
 
     CojSignedEvent event = eventCaptor.getValue();
     assertThat("Unexpected programme membership ID.",
         event.getProgrammeMembershipTisId(), is(uuid.toString()));
+  }
+
+  @Test
+  void shouldPublishCojSignedEventWithPmCorrelationId() {
+    ProgrammeMembership programmeMembership = new ProgrammeMembership();
+    programmeMembership.setTisId("123,456,7890");
+    Instant signedAt = Instant.now();
+    ConditionsOfJoining conditionsOfJoining
+        = new ConditionsOfJoining(signedAt, GoldGuideVersion.GG9);
+    programmeMembership.setConditionsOfJoining(conditionsOfJoining);
+
+    rabbitPublishService.publishCojSignedEvent(programmeMembership);
+
+    ArgumentCaptor<CorrelationData> correlationCaptor = ArgumentCaptor.forClass(
+        CorrelationData.class);
+
+    verify(rabbitTemplate).convertAndSend(any(), any(), any(CojSignedEvent.class),
+        correlationCaptor.capture());
+
+    CorrelationData correlation = correlationCaptor.getValue();
+    assertThat("Unexpected correlation ID.", correlation.getId(), is("123,456,7890"));
+  }
+
+  @ParameterizedTest()
+  @ValueSource(booleans = {true, false})
+  void shouldRemoveCallbackedMessageFromOutstandingConfirms(boolean isAck) {
+    ProgrammeMembership programmeMembership = new ProgrammeMembership();
+    programmeMembership.setTisId("123");
+    rabbitPublishService.outstandingConfirms.clear();
+    rabbitPublishService.outstandingConfirms.put(programmeMembership.getTisId(),
+        programmeMembership);
+    CorrelationData correlationData = new CorrelationData("123");
+
+    rabbitPublishService.handleRabbitAcknowledgement(isAck, correlationData);
+
+    assertThat("Unexpected outstanding confirms",
+        rabbitPublishService.outstandingConfirms.size(), is(0));
+  }
+
+  @Test
+  void shouldSetRabitConfirmCallback() {
+    rabbitPublishService.postConstruct();
+
+    verify(rabbitTemplate).setConfirmCallback(any());
+  }
+
+  @Test
+  void shouldNotThrowExceptionIfRabbitThrowsException() {
+    doThrow(new AmqpException("rabbit failed"))
+        .when(rabbitTemplate)
+        .convertAndSend(any(), any(), any(CojSignedEvent.class), any(CorrelationData.class));
+
+    ProgrammeMembership programmeMembership = new ProgrammeMembership();
+    programmeMembership.setTisId("123");
+    Instant signedAt = Instant.now();
+    ConditionsOfJoining conditionsOfJoining
+        = new ConditionsOfJoining(signedAt, GoldGuideVersion.GG9);
+    programmeMembership.setConditionsOfJoining(conditionsOfJoining);
+
+    assertDoesNotThrow(() -> rabbitPublishService.publishCojSignedEvent(programmeMembership),
+        "Unexpected exception when Rabbit not available");
   }
 }
