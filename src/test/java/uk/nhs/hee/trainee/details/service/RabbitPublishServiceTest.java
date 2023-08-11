@@ -23,7 +23,7 @@ package uk.nhs.hee.trainee.details.service;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
@@ -194,10 +194,7 @@ class RabbitPublishServiceTest {
         = new ConditionsOfJoining(signedAt, GoldGuideVersion.GG9);
     programmeMembership.setConditionsOfJoining(conditionsOfJoining);
 
-    try {
-      rabbitPublishService.publishCojSignedEvent(programmeMembership);
-    } catch (Exception e) {
-      fail("Unexpected exception when Rabbit not available");
-    }
+    assertDoesNotThrow(() -> rabbitPublishService.publishCojSignedEvent(programmeMembership),
+        "Unexpected exception when Rabbit not available");
   }
 }
