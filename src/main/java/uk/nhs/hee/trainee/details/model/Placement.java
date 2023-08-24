@@ -22,7 +22,10 @@
 package uk.nhs.hee.trainee.details.model;
 
 import java.time.LocalDate;
+import java.util.Set;
 import lombok.Data;
+import org.springframework.data.mongodb.core.mapping.Unwrapped;
+import org.springframework.data.mongodb.core.mapping.Unwrapped.OnEmpty;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 
 @Data
@@ -31,9 +34,9 @@ public class Placement {
   private String tisId;
   private LocalDate startDate;
   private LocalDate endDate;
-  private String site;
-  private String siteLocation;
-  private String siteKnownAs;
+  @Unwrapped(onEmpty = OnEmpty.USE_NULL)
+  private Site site;
+  private Set<Site> otherSites;
   private String grade;
   private String specialty;
   private String placementType;

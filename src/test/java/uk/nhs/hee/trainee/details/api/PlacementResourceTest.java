@@ -58,6 +58,7 @@ import uk.nhs.hee.trainee.details.mapper.PlacementMapper;
 import uk.nhs.hee.trainee.details.mapper.PlacementMapperImpl;
 import uk.nhs.hee.trainee.details.mapper.SignatureMapperImpl;
 import uk.nhs.hee.trainee.details.model.Placement;
+import uk.nhs.hee.trainee.details.model.Site;
 import uk.nhs.hee.trainee.details.service.PlacementService;
 import uk.nhs.hee.trainee.details.service.SignatureService;
 
@@ -124,13 +125,16 @@ class PlacementResourceTest {
     placement.setTisId("tisIdValue");
     placement.setStartDate(start);
     placement.setEndDate(end);
-    placement.setSite("siteValue");
-    placement.setSiteLocation("siteLocationValue");
-    placement.setSiteKnownAs("siteKnownAsValue");
     placement.setGrade("gradeValue");
     placement.setSpecialty("specialtyValue");
     placement.setPlacementType("placementTypeValue");
     placement.setStatus(Status.CURRENT);
+
+    Site site = new Site();
+    site.setName("siteValue");
+    site.setKnownAs("siteKnownAsValue");
+    site.setLocation("siteLocationValue");
+    placement.setSite(site);
 
     when(service.updatePlacementForTrainee(eq("40"), any(Placement.class)))
         .thenReturn(Optional.of(placement));

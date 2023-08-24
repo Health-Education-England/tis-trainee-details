@@ -66,6 +66,7 @@ import uk.nhs.hee.trainee.details.model.Curriculum;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.model.Placement;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
+import uk.nhs.hee.trainee.details.model.Site;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.service.SignatureService;
 import uk.nhs.hee.trainee.details.service.TraineeProfileService;
@@ -222,8 +223,11 @@ class TraineeProfileResourceTest {
   void setupPlacementData() {
     placement = new Placement();
     placement.setTisId(PLACEMENT_TISID);
-    placement.setSite(PLACEMENT_SITE);
     placement.setStatus(PLACEMENT_STATUS);
+
+    Site site = new Site();
+    site.setName(PLACEMENT_SITE);
+    placement.setSite(site);
   }
 
   @Test

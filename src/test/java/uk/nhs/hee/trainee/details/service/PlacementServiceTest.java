@@ -29,7 +29,6 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,6 +36,7 @@ import org.mapstruct.factory.Mappers;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 import uk.nhs.hee.trainee.details.mapper.PlacementMapper;
 import uk.nhs.hee.trainee.details.model.Placement;
+import uk.nhs.hee.trainee.details.model.Site;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 
@@ -93,13 +93,16 @@ class PlacementServiceTest {
     expectedPlacement.setTisId(NEW_PLACEMENT_ID);
     expectedPlacement.setStartDate(START_DATE.plusDays(100));
     expectedPlacement.setEndDate(END_DATE.plusDays(100));
-    expectedPlacement.setSite(SITE + MODIFIED_SUFFIX);
-    expectedPlacement.setSiteLocation(SITE_LOCATION + MODIFIED_SUFFIX);
-    expectedPlacement.setSiteKnownAs(SITE_KNOWN_AS + MODIFIED_SUFFIX);
     expectedPlacement.setGrade(GRADE);
     expectedPlacement.setSpecialty(SPECIALTY);
     expectedPlacement.setPlacementType(PLACEMENT_TYPE);
     expectedPlacement.setStatus(Status.CURRENT);
+
+    Site site = new Site();
+    site.setName(SITE + MODIFIED_SUFFIX);
+    site.setKnownAs(SITE_KNOWN_AS + MODIFIED_SUFFIX);
+    site.setLocation(SITE_LOCATION + MODIFIED_SUFFIX);
+    expectedPlacement.setSite(site);
 
     assertThat("Unexpected placement.", placement.get(), is(expectedPlacement));
   }
@@ -122,13 +125,16 @@ class PlacementServiceTest {
     expectedPlacement.setTisId(NEW_PLACEMENT_ID);
     expectedPlacement.setStartDate(START_DATE.plusDays(100));
     expectedPlacement.setEndDate(END_DATE.plusDays(100));
-    expectedPlacement.setSite(SITE + MODIFIED_SUFFIX);
-    expectedPlacement.setSiteLocation(SITE_LOCATION + MODIFIED_SUFFIX);
-    expectedPlacement.setSiteKnownAs(SITE_KNOWN_AS + MODIFIED_SUFFIX);
     expectedPlacement.setGrade(GRADE);
     expectedPlacement.setSpecialty(SPECIALTY);
     expectedPlacement.setPlacementType(PLACEMENT_TYPE);
     expectedPlacement.setStatus(Status.CURRENT);
+
+    Site site = new Site();
+    site.setName(SITE + MODIFIED_SUFFIX);
+    site.setKnownAs(SITE_KNOWN_AS + MODIFIED_SUFFIX);
+    site.setLocation(SITE_LOCATION + MODIFIED_SUFFIX);
+    expectedPlacement.setSite(site);
 
     assertThat("Unexpected placement.", placement.get(), is(expectedPlacement));
   }
@@ -152,13 +158,16 @@ class PlacementServiceTest {
     expectedPlacement.setTisId(EXISTING_PLACEMENT_ID);
     expectedPlacement.setStartDate(START_DATE.plusDays(100));
     expectedPlacement.setEndDate(END_DATE.plusDays(100));
-    expectedPlacement.setSite(SITE + MODIFIED_SUFFIX);
-    expectedPlacement.setSiteLocation(SITE_LOCATION + MODIFIED_SUFFIX);
-    expectedPlacement.setSiteKnownAs(SITE_KNOWN_AS + MODIFIED_SUFFIX);
     expectedPlacement.setGrade(GRADE);
     expectedPlacement.setSpecialty(SPECIALTY);
     expectedPlacement.setPlacementType(PLACEMENT_TYPE);
     expectedPlacement.setStatus(Status.CURRENT);
+
+    Site site = new Site();
+    site.setName(SITE + MODIFIED_SUFFIX);
+    site.setKnownAs(SITE_KNOWN_AS + MODIFIED_SUFFIX);
+    site.setLocation(SITE_LOCATION + MODIFIED_SUFFIX);
+    expectedPlacement.setSite(site);
 
     assertThat("Unexpected placement.", placement.get(), is(expectedPlacement));
   }
@@ -216,13 +225,16 @@ class PlacementServiceTest {
     placement.setTisId(tisId);
     placement.setStartDate(START_DATE.plusDays(dateAdjustmentDays));
     placement.setEndDate(END_DATE.plusDays(dateAdjustmentDays));
-    placement.setSite(SITE + stringSuffix);
-    placement.setSiteLocation(SITE_LOCATION + stringSuffix);
-    placement.setSiteKnownAs(SITE_KNOWN_AS + stringSuffix);
     placement.setGrade(GRADE);
     placement.setSpecialty(SPECIALTY);
     placement.setPlacementType(PLACEMENT_TYPE);
     placement.setStatus(Status.CURRENT);
+
+    Site site = new Site();
+    site.setName(SITE + stringSuffix);
+    site.setKnownAs(SITE_KNOWN_AS + stringSuffix);
+    site.setLocation(SITE_LOCATION + stringSuffix);
+    placement.setSite(site);
 
     return placement;
   }

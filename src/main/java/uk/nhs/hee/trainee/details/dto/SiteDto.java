@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright 2020 Crown Copyright (Health Education England)
+ * Copyright 2023 Crown Copyright (Health Education England)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -21,34 +21,21 @@
 
 package uk.nhs.hee.trainee.details.dto;
 
-import com.fasterxml.jackson.annotation.JsonUnwrapped;
-import java.time.LocalDate;
-import java.util.Set;
-import javax.validation.constraints.NotNull;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
-import uk.nhs.hee.trainee.details.dto.enumeration.Status;
-import uk.nhs.hee.trainee.details.dto.signature.Signature;
-import uk.nhs.hee.trainee.details.dto.signature.SignedDto;
 
 /**
- * A DTO for placement information.
+ * A DTO representing TIS site data.
  */
 @Data
-public class PlacementDto implements SignedDto {
+public class SiteDto {
 
-  @NotNull
-  private String tisId;
-  private LocalDate startDate;
-  private LocalDate endDate;
-  @JsonUnwrapped
-  private SiteDto site;
-  private Set<SiteDto> otherSites;
-  private String grade;
-  private String specialty;
-  private String placementType;
-  private String employingBody;
-  private String trainingBody;
-  private String wholeTimeEquivalent;
-  private Status status;
-  private Signature signature;
+  @JsonProperty("site")
+  private String name;
+
+  @JsonProperty("siteKnownAs")
+  private String knownAs;
+
+  @JsonProperty("siteLocation")
+  private String location;
 }
