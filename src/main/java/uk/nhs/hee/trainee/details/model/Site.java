@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright 2020 Crown Copyright (Health Education England)
+ * Copyright 2023 Crown Copyright (Health Education England)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -19,36 +19,23 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package uk.nhs.hee.trainee.details.dto;
+package uk.nhs.hee.trainee.details.model;
 
-import com.fasterxml.jackson.annotation.JsonUnwrapped;
-import java.time.LocalDate;
-import java.util.Set;
-import javax.validation.constraints.NotNull;
 import lombok.Data;
-import uk.nhs.hee.trainee.details.dto.enumeration.Status;
-import uk.nhs.hee.trainee.details.dto.signature.Signature;
-import uk.nhs.hee.trainee.details.dto.signature.SignedDto;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 /**
- * A DTO for placement information.
+ * An entity representing site data.
  */
 @Data
-public class PlacementDto implements SignedDto {
+public class Site {
 
-  @NotNull
-  private String tisId;
-  private LocalDate startDate;
-  private LocalDate endDate;
-  @JsonUnwrapped
-  private SiteDto site;
-  private Set<SiteDto> otherSites;
-  private String grade;
-  private String specialty;
-  private String placementType;
-  private String employingBody;
-  private String trainingBody;
-  private String wholeTimeEquivalent;
-  private Status status;
-  private Signature signature;
+  @Field("site")
+  private String name;
+
+  @Field("siteKnownAs")
+  private String knownAs;
+
+  @Field("siteLocation")
+  private String location;
 }
