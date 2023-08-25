@@ -45,6 +45,7 @@ public class PlacementDto implements SignedDto {
   private Set<SiteDto> otherSites;
   private String grade;
   private String specialty;
+  private String subSpecialty;
   private String placementType;
   private String employingBody;
   private String trainingBody;
