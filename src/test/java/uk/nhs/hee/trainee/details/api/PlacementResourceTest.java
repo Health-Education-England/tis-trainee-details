@@ -128,6 +128,7 @@ class PlacementResourceTest {
     placement.setGrade("gradeValue");
     placement.setSpecialty("specialtyValue");
     placement.setSubSpecialty("subSpecialtyValue");
+    placement.setPostAllowsSubspecialty(true);
     placement.setPlacementType("placementTypeValue");
     placement.setStatus(Status.CURRENT);
 
@@ -165,6 +166,7 @@ class PlacementResourceTest {
         .andExpect(jsonPath("$.grade").value(is("gradeValue")))
         .andExpect(jsonPath("$.specialty").value(is("specialtyValue")))
         .andExpect(jsonPath("$.subSpecialty").value(is("subSpecialtyValue")))
+        .andExpect(jsonPath("$.postAllowsSubspecialty").value(is(true)))
         .andExpect(jsonPath("$.placementType").value(is("placementTypeValue")))
         .andExpect(jsonPath("$.status").value(is("CURRENT")))
         .andExpect(jsonPath("$.signature.hmac").value(signature.getHmac()))
