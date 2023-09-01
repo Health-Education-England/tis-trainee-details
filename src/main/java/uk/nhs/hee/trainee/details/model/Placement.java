@@ -40,6 +40,7 @@ public class Placement {
   private String grade;
   private String specialty;
   private String subSpecialty;
+  private Boolean postAllowsSubspecialty;
   private String placementType;
   private String employingBody;
   private String trainingBody;
