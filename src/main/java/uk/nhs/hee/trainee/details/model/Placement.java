@@ -39,6 +39,7 @@ public class Placement {
   private Set<Site> otherSites;
   private String grade;
   private String specialty;
+  private String subSpecialty;
   private String placementType;
   private String employingBody;
   private String trainingBody;
