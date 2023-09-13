@@ -22,6 +22,7 @@
 package uk.nhs.hee.trainee.details.service;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
@@ -71,7 +72,7 @@ class RabbitPublishServiceTest {
     programmeMembership.setTisId("123");
     Instant signedAt = Instant.now();
     ConditionsOfJoining conditionsOfJoining
-        = new ConditionsOfJoining(signedAt, GoldGuideVersion.GG9);
+        = new ConditionsOfJoining(signedAt, GoldGuideVersion.GG9, null);
     programmeMembership.setConditionsOfJoining(conditionsOfJoining);
 
     rabbitPublishService.publishCojSignedEvent(programmeMembership);
@@ -90,6 +91,8 @@ class RabbitPublishServiceTest {
         conditionsOfJoiningSent.signedAt(), is(signedAt));
     assertThat("Unexpected CoJ Version",
         conditionsOfJoiningSent.version(), is(GoldGuideVersion.GG9));
+    assertThat("Unexpected CoJ received from TIS", conditionsOfJoiningSent.receivedFromTis(),
+        nullValue());
   }
 
   @Test
@@ -98,7 +101,7 @@ class RabbitPublishServiceTest {
     programmeMembership.setTisId("123,456,7890");
     Instant signedAt = Instant.now();
     ConditionsOfJoining conditionsOfJoining
-        = new ConditionsOfJoining(signedAt, GoldGuideVersion.GG9);
+        = new ConditionsOfJoining(signedAt, GoldGuideVersion.GG9, null);
     programmeMembership.setConditionsOfJoining(conditionsOfJoining);
 
     rabbitPublishService.publishCojSignedEvent(programmeMembership);
@@ -121,7 +124,7 @@ class RabbitPublishServiceTest {
     programmeMembership.setTisId(uuid.toString());
     Instant signedAt = Instant.now();
     ConditionsOfJoining conditionsOfJoining
-        = new ConditionsOfJoining(signedAt, GoldGuideVersion.GG9);
+        = new ConditionsOfJoining(signedAt, GoldGuideVersion.GG9, null);
     programmeMembership.setConditionsOfJoining(conditionsOfJoining);
 
     rabbitPublishService.publishCojSignedEvent(programmeMembership);
@@ -143,7 +146,7 @@ class RabbitPublishServiceTest {
     programmeMembership.setTisId("123,456,7890");
     Instant signedAt = Instant.now();
     ConditionsOfJoining conditionsOfJoining
-        = new ConditionsOfJoining(signedAt, GoldGuideVersion.GG9);
+        = new ConditionsOfJoining(signedAt, GoldGuideVersion.GG9, null);
     programmeMembership.setConditionsOfJoining(conditionsOfJoining);
 
     rabbitPublishService.publishCojSignedEvent(programmeMembership);
@@ -191,7 +194,7 @@ class RabbitPublishServiceTest {
     programmeMembership.setTisId("123");
     Instant signedAt = Instant.now();
     ConditionsOfJoining conditionsOfJoining
-        = new ConditionsOfJoining(signedAt, GoldGuideVersion.GG9);
+        = new ConditionsOfJoining(signedAt, GoldGuideVersion.GG9, null);
     programmeMembership.setConditionsOfJoining(conditionsOfJoining);
 
     assertDoesNotThrow(() -> rabbitPublishService.publishCojSignedEvent(programmeMembership),

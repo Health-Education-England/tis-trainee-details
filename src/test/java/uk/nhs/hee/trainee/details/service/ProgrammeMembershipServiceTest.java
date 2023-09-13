@@ -72,6 +72,7 @@ class ProgrammeMembershipServiceTest {
   private static final UUID PROGRAMME_MEMBERSHIP_UUID = UUID.randomUUID();
   private static final Instant COJ_SIGNED_AT = Instant.now();
   private static final GoldGuideVersion GOLD_GUIDE_VERSION = GoldGuideVersion.GG9;
+  private static final Instant COJ_RECEIVED_FROM_TIS = Instant.now();
 
   private ProgrammeMembershipService service;
   private TraineeProfileRepository repository;
@@ -121,7 +122,8 @@ class ProgrammeMembershipServiceTest {
     expectedProgrammeMembership.setEndDate(END_DATE.plusDays(100));
     expectedProgrammeMembership.setProgrammeCompletionDate(COMPLETION_DATE.plusDays(100));
     expectedProgrammeMembership.setConditionsOfJoining(
-        new ConditionsOfJoining(COJ_SIGNED_AT.plus(Duration.ofDays(100)), GOLD_GUIDE_VERSION));
+        new ConditionsOfJoining(COJ_SIGNED_AT.plus(Duration.ofDays(100)), GOLD_GUIDE_VERSION,
+            COJ_RECEIVED_FROM_TIS.plus(Duration.ofDays(100))));
 
     assertThat("Unexpected programme membership.", programmeMembership.get(),
         is(expectedProgrammeMembership));
@@ -153,7 +155,8 @@ class ProgrammeMembershipServiceTest {
     expectedProgrammeMembership.setEndDate(END_DATE.plusDays(100));
     expectedProgrammeMembership.setProgrammeCompletionDate(COMPLETION_DATE.plusDays(100));
     expectedProgrammeMembership.setConditionsOfJoining(
-        new ConditionsOfJoining(COJ_SIGNED_AT.plus(Duration.ofDays(100)), GOLD_GUIDE_VERSION));
+        new ConditionsOfJoining(COJ_SIGNED_AT.plus(Duration.ofDays(100)), GOLD_GUIDE_VERSION,
+            COJ_RECEIVED_FROM_TIS.plus(Duration.ofDays(100))));
 
     assertThat("Unexpected programme membership.", programmeMembership.get(),
         is(expectedProgrammeMembership));
@@ -187,7 +190,8 @@ class ProgrammeMembershipServiceTest {
     expectedProgrammeMembership.setEndDate(END_DATE.plusDays(100));
     expectedProgrammeMembership.setProgrammeCompletionDate(COMPLETION_DATE.plusDays(100));
     expectedProgrammeMembership.setConditionsOfJoining(
-        new ConditionsOfJoining(COJ_SIGNED_AT.plus(Duration.ofDays(100)), GOLD_GUIDE_VERSION));
+        new ConditionsOfJoining(COJ_SIGNED_AT.plus(Duration.ofDays(100)), GOLD_GUIDE_VERSION,
+            COJ_RECEIVED_FROM_TIS.plus(Duration.ofDays(100))));
 
     assertThat("Unexpected programme membership.", programmeMembership.get(),
         is(expectedProgrammeMembership));
@@ -217,6 +221,8 @@ class ProgrammeMembershipServiceTest {
     assertThat("Unexpected signed at.", conditionsOfJoining.signedAt(), is(COJ_SIGNED_AT));
     assertThat("Unexpected signed version.", conditionsOfJoining.version(),
         is(GoldGuideVersion.GG9));
+    assertThat("Unexpected received from TIS.", conditionsOfJoining.receivedFromTis(),
+        is(COJ_RECEIVED_FROM_TIS));
   }
 
   @Test
@@ -250,6 +256,8 @@ class ProgrammeMembershipServiceTest {
     assertThat("Unexpected signed at.", conditionsOfJoining.signedAt(), is(COJ_SIGNED_AT));
     assertThat("Unexpected signed version.", conditionsOfJoining.version(),
         is(GoldGuideVersion.GG9));
+    assertThat("Unexpected received from TIS.", conditionsOfJoining.receivedFromTis(),
+        is(COJ_RECEIVED_FROM_TIS));
   }
 
   @Test
@@ -262,7 +270,7 @@ class ProgrammeMembershipServiceTest {
 
     ConditionsOfJoining coj = existingProgrammeMembership.getConditionsOfJoining();
     existingProgrammeMembership.setConditionsOfJoining(
-        new ConditionsOfJoining(null, GoldGuideVersion.GG9));
+        new ConditionsOfJoining(null, GoldGuideVersion.GG9, null));
 
     when(cachingDelegate.getConditionsOfJoining(EXISTING_PROGRAMME_MEMBERSHIP_ID)).thenReturn(
         Optional.of(coj));
@@ -271,7 +279,7 @@ class ProgrammeMembershipServiceTest {
     ProgrammeMembership newProgrammeMembership = createProgrammeMembership(
         EXISTING_PROGRAMME_MEMBERSHIP_ID, MODIFIED_SUFFIX, 100);
     newProgrammeMembership.setConditionsOfJoining(
-        new ConditionsOfJoining(null, GoldGuideVersion.GG9));
+        new ConditionsOfJoining(null, GoldGuideVersion.GG9, null));
 
     Optional<ProgrammeMembership> programmeMembership = service
         .updateProgrammeMembershipForTrainee(TRAINEE_TIS_ID, newProgrammeMembership);
@@ -285,6 +293,8 @@ class ProgrammeMembershipServiceTest {
     assertThat("Unexpected signed at.", conditionsOfJoining.signedAt(), is(COJ_SIGNED_AT));
     assertThat("Unexpected signed version.", conditionsOfJoining.version(),
         is(GoldGuideVersion.GG9));
+    assertThat("Unexpected received from TIS.", conditionsOfJoining.receivedFromTis(),
+        is(COJ_RECEIVED_FROM_TIS));
   }
 
   @Test
@@ -296,11 +306,12 @@ class ProgrammeMembershipServiceTest {
     traineeProfile.getProgrammeMemberships().add(programmeMembership);
 
     when(cachingDelegate.getConditionsOfJoining("123")).thenReturn(
-        Optional.of(new ConditionsOfJoining(Instant.MIN, GoldGuideVersion.GG9)));
+        Optional.of(new ConditionsOfJoining(Instant.MIN, GoldGuideVersion.GG9, Instant.MIN)));
     when(cachingDelegate.getConditionsOfJoining("456")).thenReturn(
-        Optional.of(new ConditionsOfJoining(Instant.MAX, GoldGuideVersion.GG9)));
+        Optional.of(new ConditionsOfJoining(Instant.MAX, GoldGuideVersion.GG9, Instant.MAX)));
     when(cachingDelegate.getConditionsOfJoining("789")).thenReturn(
-        Optional.of(new ConditionsOfJoining(COJ_SIGNED_AT, GoldGuideVersion.GG9)));
+        Optional.of(
+            new ConditionsOfJoining(COJ_SIGNED_AT, GoldGuideVersion.GG9, COJ_RECEIVED_FROM_TIS)));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
@@ -317,6 +328,8 @@ class ProgrammeMembershipServiceTest {
     assertThat("Unexpected signed at.", conditionsOfJoining.signedAt(), is(COJ_SIGNED_AT));
     assertThat("Unexpected signed version.", conditionsOfJoining.version(),
         is(GoldGuideVersion.GG9));
+    assertThat("Unexpected received from TIS.", conditionsOfJoining.receivedFromTis(),
+        is(COJ_RECEIVED_FROM_TIS));
 
     verify(cachingDelegate, times(1)).getConditionsOfJoining("123");
     verify(cachingDelegate, times(1)).getConditionsOfJoining("456");
@@ -333,7 +346,7 @@ class ProgrammeMembershipServiceTest {
     ProgrammeMembership savedProgrammeMembership = createProgrammeMembership(
         PROGRAMME_MEMBERSHIP_UUID.toString(), ORIGINAL_SUFFIX, 0);
     savedProgrammeMembership.setConditionsOfJoining(
-        new ConditionsOfJoining(COJ_SIGNED_AT, GoldGuideVersion.GG9));
+        new ConditionsOfJoining(COJ_SIGNED_AT, GoldGuideVersion.GG9, COJ_RECEIVED_FROM_TIS));
     traineeProfile.getProgrammeMemberships().add(savedProgrammeMembership);
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
@@ -351,6 +364,8 @@ class ProgrammeMembershipServiceTest {
     assertThat("Unexpected signed at.", conditionsOfJoining.signedAt(), is(COJ_SIGNED_AT));
     assertThat("Unexpected signed version.", conditionsOfJoining.version(),
         is(GoldGuideVersion.GG9));
+    assertThat("Unexpected received from TIS.", conditionsOfJoining.receivedFromTis(),
+        is(COJ_RECEIVED_FROM_TIS));
   }
 
   @Test
@@ -370,7 +385,7 @@ class ProgrammeMembershipServiceTest {
     ProgrammeMembership savedProgrammeMembershipLegacy = createProgrammeMembership(
         "123", ORIGINAL_SUFFIX, 0);
     savedProgrammeMembershipLegacy.setConditionsOfJoining(
-        new ConditionsOfJoining(COJ_SIGNED_AT, GoldGuideVersion.GG9));
+        new ConditionsOfJoining(COJ_SIGNED_AT, GoldGuideVersion.GG9, COJ_RECEIVED_FROM_TIS));
     traineeProfile.getProgrammeMemberships().addAll(
         List.of(savedProgrammeMembership, savedProgrammeMembershipLegacy));
 
@@ -389,6 +404,8 @@ class ProgrammeMembershipServiceTest {
     assertThat("Unexpected signed at.", conditionsOfJoining.signedAt(), is(COJ_SIGNED_AT));
     assertThat("Unexpected signed version.", conditionsOfJoining.version(),
         is(GoldGuideVersion.GG9));
+    assertThat("Unexpected received from TIS.", conditionsOfJoining.receivedFromTis(),
+        is(COJ_RECEIVED_FROM_TIS));
   }
 
   @Test
@@ -408,7 +425,7 @@ class ProgrammeMembershipServiceTest {
     ProgrammeMembership savedProgrammeMembership = createProgrammeMembership(
         "123,456", ORIGINAL_SUFFIX, 0);
     savedProgrammeMembership.setConditionsOfJoining(
-        new ConditionsOfJoining(COJ_SIGNED_AT, GoldGuideVersion.GG9));
+        new ConditionsOfJoining(COJ_SIGNED_AT, GoldGuideVersion.GG9, COJ_RECEIVED_FROM_TIS));
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.getProgrammeMemberships().add(savedProgrammeMembership);
 
@@ -427,6 +444,8 @@ class ProgrammeMembershipServiceTest {
     assertThat("Unexpected signed at.", conditionsOfJoining.signedAt(), is(COJ_SIGNED_AT));
     assertThat("Unexpected signed version.", conditionsOfJoining.version(),
         is(GoldGuideVersion.GG9));
+    assertThat("Unexpected received from TIS.", conditionsOfJoining.receivedFromTis(),
+        is(COJ_RECEIVED_FROM_TIS));
   }
 
   @Test
@@ -434,7 +453,8 @@ class ProgrammeMembershipServiceTest {
     Curriculum curriculum123 = new Curriculum();
     curriculum123.setTisId("123");
     ProgrammeMembership oldPm123 = createProgrammeMembership("123", ORIGINAL_SUFFIX, 0);
-    oldPm123.setConditionsOfJoining(new ConditionsOfJoining(COJ_SIGNED_AT, GoldGuideVersion.GG9));
+    oldPm123.setConditionsOfJoining(
+        new ConditionsOfJoining(COJ_SIGNED_AT, GoldGuideVersion.GG9, COJ_RECEIVED_FROM_TIS));
 
     Curriculum curriculum456 = new Curriculum();
     curriculum456.setTisId("456");
@@ -463,6 +483,8 @@ class ProgrammeMembershipServiceTest {
     assertThat("Unexpected signed at.", conditionsOfJoining.signedAt(), is(COJ_SIGNED_AT));
     assertThat("Unexpected signed version.", conditionsOfJoining.version(),
         is(GoldGuideVersion.GG9));
+    assertThat("Unexpected received from TIS.", conditionsOfJoining.receivedFromTis(),
+        is(COJ_RECEIVED_FROM_TIS));
   }
 
   @Test
@@ -475,7 +497,8 @@ class ProgrammeMembershipServiceTest {
     Curriculum curriculum456 = new Curriculum();
     curriculum456.setTisId("456");
     ProgrammeMembership oldPm456 = createProgrammeMembership("456", ORIGINAL_SUFFIX, 0);
-    oldPm456.setConditionsOfJoining(new ConditionsOfJoining(COJ_SIGNED_AT, GoldGuideVersion.GG9));
+    oldPm456.setConditionsOfJoining(
+        new ConditionsOfJoining(COJ_SIGNED_AT, GoldGuideVersion.GG9, COJ_RECEIVED_FROM_TIS));
 
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.getProgrammeMemberships().addAll(List.of(oldPm123, oldPm456));
@@ -499,6 +522,8 @@ class ProgrammeMembershipServiceTest {
     assertThat("Unexpected signed at.", conditionsOfJoining.signedAt(), is(COJ_SIGNED_AT));
     assertThat("Unexpected signed version.", conditionsOfJoining.version(),
         is(GoldGuideVersion.GG9));
+    assertThat("Unexpected received from TIS.", conditionsOfJoining.receivedFromTis(),
+        is(COJ_RECEIVED_FROM_TIS));
   }
 
   @Test
@@ -513,7 +538,7 @@ class ProgrammeMembershipServiceTest {
     ProgrammeMembership savedProgrammeMembership = createProgrammeMembership(
         "456,789", ORIGINAL_SUFFIX, 0);
     savedProgrammeMembership.setConditionsOfJoining(
-        new ConditionsOfJoining(COJ_SIGNED_AT, GoldGuideVersion.GG9));
+        new ConditionsOfJoining(COJ_SIGNED_AT, GoldGuideVersion.GG9, COJ_RECEIVED_FROM_TIS));
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.getProgrammeMemberships().add(savedProgrammeMembership);
 
@@ -536,7 +561,8 @@ class ProgrammeMembershipServiceTest {
         EXISTING_PROGRAMME_MEMBERSHIP_ID, ORIGINAL_SUFFIX, 0));
 
     when(cachingDelegate.getConditionsOfJoining(EXISTING_PROGRAMME_MEMBERSHIP_ID)).thenReturn(
-        Optional.of(new ConditionsOfJoining(Instant.MAX, GoldGuideVersion.GG9)));
+        Optional.of(
+            new ConditionsOfJoining(Instant.MAX, GoldGuideVersion.GG9, COJ_RECEIVED_FROM_TIS)));
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
     ProgrammeMembership newProgrammeMembership = createProgrammeMembership(
@@ -555,6 +581,8 @@ class ProgrammeMembershipServiceTest {
         is(COJ_SIGNED_AT.plus(Duration.ofDays(100))));
     assertThat("Unexpected signed version.", conditionsOfJoining.version(),
         is(GoldGuideVersion.GG9));
+    assertThat("Unexpected received from TIS.", conditionsOfJoining.receivedFromTis(),
+        is(COJ_RECEIVED_FROM_TIS.plus(Duration.ofDays(100))));
 
     verifyNoInteractions(cachingDelegate);
   }
@@ -627,7 +655,8 @@ class ProgrammeMembershipServiceTest {
   void shouldNotCacheCojFromDeleteProgrammeMembershipsWhenCojNotSigned() {
     ProgrammeMembership programmeMembership = createProgrammeMembership(
         EXISTING_PROGRAMME_MEMBERSHIP_ID, ORIGINAL_SUFFIX, 0);
-    programmeMembership.setConditionsOfJoining(new ConditionsOfJoining(null, GoldGuideVersion.GG9));
+    programmeMembership.setConditionsOfJoining(
+        new ConditionsOfJoining(null, GoldGuideVersion.GG9, COJ_RECEIVED_FROM_TIS));
 
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.getProgrammeMemberships().add(programmeMembership);
@@ -734,6 +763,9 @@ class ProgrammeMembershipServiceTest {
     assertThat("Unexpected COJ version.",
         programmeMembership.get().getConditionsOfJoining().version(),
         is(GoldGuideVersion.getLatest()));
+    assertThat("Unexpected CoJ received from TIS",
+        programmeMembership.get().getConditionsOfJoining().receivedFromTis(),
+        nullValue());
   }
 
   @Test
@@ -770,7 +802,7 @@ class ProgrammeMembershipServiceTest {
    * @return The dummy entity.
    */
   private ProgrammeMembership createProgrammeMembership(String tisId, String stringSuffix,
-      int dateAdjustmentDays) {
+                                                        int dateAdjustmentDays) {
     ProgrammeMembership programmeMembership = new ProgrammeMembership();
     programmeMembership.setTisId(tisId);
     programmeMembership.setProgrammeTisId(PROGRAMME_TIS_ID + stringSuffix);
@@ -783,7 +815,7 @@ class ProgrammeMembershipServiceTest {
     programmeMembership.setProgrammeCompletionDate(COMPLETION_DATE.plusDays(dateAdjustmentDays));
     programmeMembership.setConditionsOfJoining(
         new ConditionsOfJoining(COJ_SIGNED_AT.plus(Duration.ofDays(dateAdjustmentDays)),
-            GOLD_GUIDE_VERSION));
+            GOLD_GUIDE_VERSION, COJ_RECEIVED_FROM_TIS.plus(Duration.ofDays(dateAdjustmentDays))));
 
     return programmeMembership;
   }

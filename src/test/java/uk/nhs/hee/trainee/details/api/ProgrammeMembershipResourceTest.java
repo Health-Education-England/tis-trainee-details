@@ -290,7 +290,7 @@ class ProgrammeMembershipResourceTest {
     programmeMembership.setProgrammeName("programmeNameValue");
     programmeMembership.setProgrammeNumber("programmeNumberValue");
     programmeMembership.setConditionsOfJoining(
-        new ConditionsOfJoining(signedAt, GoldGuideVersion.getLatest()));
+        new ConditionsOfJoining(signedAt, GoldGuideVersion.getLatest(), null));
 
     when(service.signProgrammeMembershipCoj("tisIdValue", "40"))
         .thenReturn(Optional.of(programmeMembership));
@@ -311,6 +311,8 @@ class ProgrammeMembershipResourceTest {
         .andExpect(jsonPath("$.programmeNumber").value(is("programmeNumberValue")))
         .andExpect(jsonPath("$.conditionsOfJoining.signedAt").value(is(signedAt.toString())))
         .andExpect(jsonPath("$.conditionsOfJoining.version")
-            .value(is(GoldGuideVersion.GG9.toString())));
+            .value(is(GoldGuideVersion.GG9.toString())))
+        .andExpect(jsonPath("$.conditionsOfJoining.receivedFromTis")
+            .isEmpty());
   }
 }

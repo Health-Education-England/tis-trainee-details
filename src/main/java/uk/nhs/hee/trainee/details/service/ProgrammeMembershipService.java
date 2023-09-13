@@ -220,7 +220,7 @@ public class ProgrammeMembershipService {
       for (ProgrammeMembership existingProgrammeMembership : existingProgrammeMemberships) {
         if (existingProgrammeMembership.getTisId().equals(programmeMembershipId)) {
           ConditionsOfJoining conditionsOfJoining =
-              new ConditionsOfJoining(Instant.now(), GoldGuideVersion.getLatest());
+              new ConditionsOfJoining(Instant.now(), GoldGuideVersion.getLatest(), null);
           existingProgrammeMembership.setConditionsOfJoining(conditionsOfJoining);
           repository.save(traineeProfile);
           return Optional.of(existingProgrammeMembership);

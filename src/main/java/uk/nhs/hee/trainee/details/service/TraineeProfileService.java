@@ -75,7 +75,7 @@ public class TraineeProfileService {
       }
 
       // Set latest CoJ version if not already signed.
-      ConditionsOfJoining coj = new ConditionsOfJoining(null, GoldGuideVersion.getLatest());
+      ConditionsOfJoining coj = new ConditionsOfJoining(null, GoldGuideVersion.getLatest(), null);
 
       traineeProfile.getProgrammeMemberships().stream()
           .filter(pm -> pm.getConditionsOfJoining() == null
