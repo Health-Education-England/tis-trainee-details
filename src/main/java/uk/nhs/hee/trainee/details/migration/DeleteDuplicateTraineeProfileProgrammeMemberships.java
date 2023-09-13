@@ -57,7 +57,8 @@ public class DeleteDuplicateTraineeProfileProgrammeMemberships {
       UpdateResult result = mongoTemplate.updateMulti(new Query(), update, PROFILE_COLLECTION);
       log.info("Duplicate programme memberships deleted on {} trainees", result.getModifiedCount());
     } catch (MongoException me) {
-      log.error("Unable to delete duplicate programme memberships due to an error: {} ", me.toString());
+      log.error("Unable to delete duplicate programme memberships due to an error: {} ",
+          me.toString());
     }
   }
 
@@ -67,6 +68,6 @@ public class DeleteDuplicateTraineeProfileProgrammeMemberships {
   @RollbackExecution
   public void rollback() {
     log.warn("Rollback requested but not available "
-        + "for 'deleteDuplicateTraineeProfilePlacements' migration.");
+        + "for 'deleteDuplicateTraineeProfileProgrammeMemberships' migration.");
   }
 }
