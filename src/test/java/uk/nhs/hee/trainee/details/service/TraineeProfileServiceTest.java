@@ -373,7 +373,7 @@ class TraineeProfileServiceTest {
     assertThat("Unexpected Conditions of Joining", coj, notNullValue());
     assertThat("Unexpected CoJ signed at timestamp", coj.signedAt(), nullValue());
     assertThat("Unexpected CoJ version", coj.version(), is(GG9));
-    assertThat("Unexpected CoJ received from TIS", coj.receivedFromTis(), nullValue());
+    assertThat("Unexpected CoJ synced at", coj.syncedAt(), nullValue());
   }
 
   @Test
@@ -390,7 +390,7 @@ class TraineeProfileServiceTest {
     assertThat("Unexpected Conditions of Joining", coj, notNullValue());
     assertThat("Unexpected CoJ signed at timestamp", coj.signedAt(), is(now));
     assertThat("Unexpected CoJ version", coj.version(), is(GG9));
-    assertThat("Unexpected CoJ received from TIS", coj.receivedFromTis(), nullValue());
+    assertThat("Unexpected CoJ synced at", coj.syncedAt(), nullValue());
   }
 
   @Test

@@ -27,11 +27,11 @@ import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 /**
  * A record of the Conditions of Joining agreement.
  *
- * @param signedAt        When the Conditions of Joining were signed.
- * @param version         The Gold Guide version of the Conditions of Joining.
- * @param receivedFromTis When the saved Conditions of Joining was received back from TIS.
+ * @param signedAt When the Conditions of Joining were signed.
+ * @param version  The Gold Guide version of the Conditions of Joining.
+ * @param syncedAt When the saved Conditions of Joining was synced from TIS.
  */
 public record ConditionsOfJoiningDto(Instant signedAt, GoldGuideVersion version,
-                                     Instant receivedFromTis) {
+                                     Instant syncedAt) {
 
 }

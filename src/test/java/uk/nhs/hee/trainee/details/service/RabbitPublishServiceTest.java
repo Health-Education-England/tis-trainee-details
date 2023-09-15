@@ -91,7 +91,7 @@ class RabbitPublishServiceTest {
         conditionsOfJoiningSent.signedAt(), is(signedAt));
     assertThat("Unexpected CoJ Version",
         conditionsOfJoiningSent.version(), is(GoldGuideVersion.GG9));
-    assertThat("Unexpected CoJ received from TIS", conditionsOfJoiningSent.receivedFromTis(),
+    assertThat("Unexpected CoJ synced at", conditionsOfJoiningSent.syncedAt(),
         nullValue());
   }
 

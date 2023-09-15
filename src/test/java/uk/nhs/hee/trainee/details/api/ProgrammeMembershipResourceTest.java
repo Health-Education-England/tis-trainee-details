@@ -312,7 +312,7 @@ class ProgrammeMembershipResourceTest {
         .andExpect(jsonPath("$.conditionsOfJoining.signedAt").value(is(signedAt.toString())))
         .andExpect(jsonPath("$.conditionsOfJoining.version")
             .value(is(GoldGuideVersion.GG9.toString())))
-        .andExpect(jsonPath("$.conditionsOfJoining.receivedFromTis")
+        .andExpect(jsonPath("$.conditionsOfJoining.syncedAt")
             .isEmpty());
   }
 }
