@@ -116,6 +116,7 @@ class TraineeProfileResourceTest {
   private static final String PLACEMENT_SITE = "Addenbrookes Hospital";
   private static final Status PLACEMENT_STATUS = Status.CURRENT;
   private static final Instant NOW = Instant.now();
+  private static final Instant COJ_SYNCED_AT = Instant.MAX;
 
   @Autowired
   private MappingJackson2HttpMessageConverter jacksonMessageConverter;
@@ -204,7 +205,8 @@ class TraineeProfileResourceTest {
     programmeMembership.setProgrammeName(PROGRAMME_NAME);
     programmeMembership.setProgrammeNumber(PROGRAMME_NUMBER);
     programmeMembership.setCurricula(List.of(curriculum));
-    programmeMembership.setConditionsOfJoining(new ConditionsOfJoining(NOW, GoldGuideVersion.GG9));
+    programmeMembership.setConditionsOfJoining(
+        new ConditionsOfJoining(NOW, GoldGuideVersion.GG9, COJ_SYNCED_AT));
   }
 
   /**
@@ -327,6 +329,9 @@ class TraineeProfileResourceTest {
             NOW.toString()))
         .andExpect(jsonPath("$.programmeMemberships[*].conditionsOfJoining.version").value(
             GoldGuideVersion.GG9.toString()))
+        .andExpect(
+            jsonPath("$.programmeMemberships[*].conditionsOfJoining.syncedAt")
+                .value(COJ_SYNCED_AT.toString()))
         .andExpect(jsonPath("$.programmeMemberships[*].signature.hmac").value(signature.getHmac()))
         .andExpect(jsonPath("$.programmeMemberships[*].signature.signedAt")
             .value(signature.getSignedAt().toString()))

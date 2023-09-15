@@ -63,7 +63,8 @@ class CachingDelegateIntegrationTest {
   void shouldReturnCachedConditionsOfJoiningAfterCaching() {
     String key = UUID.randomUUID().toString();
 
-    ConditionsOfJoining coj = new ConditionsOfJoining(Instant.now(), GoldGuideVersion.GG9);
+    ConditionsOfJoining coj
+        = new ConditionsOfJoining(Instant.now(), GoldGuideVersion.GG9, Instant.now());
     ConditionsOfJoining cachedCoj = delegate.cacheConditionsOfJoining(key, coj);
     assertThat("Unexpected cached value.", cachedCoj, is(coj));
   }
@@ -72,7 +73,8 @@ class CachingDelegateIntegrationTest {
   void shouldGetCachedConditionsOfJoiningWhenCached() {
     String key = UUID.randomUUID().toString();
 
-    ConditionsOfJoining coj = new ConditionsOfJoining(Instant.now(), GoldGuideVersion.GG9);
+    ConditionsOfJoining coj
+        = new ConditionsOfJoining(Instant.now(), GoldGuideVersion.GG9, Instant.now());
     delegate.cacheConditionsOfJoining(key, coj);
 
     Optional<ConditionsOfJoining> cachedOptional = delegate.getConditionsOfJoining(key);
@@ -83,7 +85,8 @@ class CachingDelegateIntegrationTest {
   void shouldRemoveConditionsOfJoiningWhenRetrieved() {
     String key = UUID.randomUUID().toString();
 
-    ConditionsOfJoining coj = new ConditionsOfJoining(Instant.now(), GoldGuideVersion.GG9);
+    ConditionsOfJoining coj
+        = new ConditionsOfJoining(Instant.now(), GoldGuideVersion.GG9, Instant.now());
     delegate.cacheConditionsOfJoining(key, coj);
 
     // Ignore this result, the cached value should be evicted.

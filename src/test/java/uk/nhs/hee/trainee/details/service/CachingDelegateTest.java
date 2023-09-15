@@ -42,7 +42,8 @@ class CachingDelegateTest {
 
   @Test
   void shouldReturnCachedConditionsOfJoining() {
-    ConditionsOfJoining cachedCoj = new ConditionsOfJoining(Instant.now(), GoldGuideVersion.GG9);
+    ConditionsOfJoining cachedCoj
+        = new ConditionsOfJoining(Instant.now(), GoldGuideVersion.GG9, Instant.now());
     ConditionsOfJoining returnedCoj = delegate.cacheConditionsOfJoining("40", cachedCoj);
     assertThat("Unexpected Conditions of Joining.", cachedCoj, is(returnedCoj));
   }
