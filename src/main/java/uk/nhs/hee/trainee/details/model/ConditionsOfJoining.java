@@ -30,8 +30,10 @@ import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
  *
  * @param signedAt When the Conditions of Joining were signed.
  * @param version  The Gold Guide version of the Conditions of Joining.
+ * @param syncedAt When the saved Conditions of Joining was synced from TIS.
  */
-public record ConditionsOfJoining(Instant signedAt, GoldGuideVersion version) implements
+public record ConditionsOfJoining(Instant signedAt, GoldGuideVersion version,
+                                  Instant syncedAt) implements
     Serializable {
 
 }

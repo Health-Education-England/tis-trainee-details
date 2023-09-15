@@ -363,7 +363,7 @@ class TraineeProfileServiceTest {
   @Test
   void shouldUseLatestCojVersionWhenCojNotSigned() {
     // Currently only GG9 is available, so latest and unsigned PM version are the same.
-    programmeMembership.setConditionsOfJoining(new ConditionsOfJoining(null, GG9));
+    programmeMembership.setConditionsOfJoining(new ConditionsOfJoining(null, GG9, null));
 
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(this.traineeProfile);
 
@@ -373,13 +373,14 @@ class TraineeProfileServiceTest {
     assertThat("Unexpected Conditions of Joining", coj, notNullValue());
     assertThat("Unexpected CoJ signed at timestamp", coj.signedAt(), nullValue());
     assertThat("Unexpected CoJ version", coj.version(), is(GG9));
+    assertThat("Unexpected CoJ synced at", coj.syncedAt(), nullValue());
   }
 
   @Test
   void shouldUseSignedVersionWhenCojSigned() {
     // Currently only GG9 is available, so latest and signed PM version are the same.
     Instant now = Instant.now();
-    programmeMembership.setConditionsOfJoining(new ConditionsOfJoining(now, GG9));
+    programmeMembership.setConditionsOfJoining(new ConditionsOfJoining(now, GG9, null));
 
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(this.traineeProfile);
 
@@ -389,6 +390,7 @@ class TraineeProfileServiceTest {
     assertThat("Unexpected Conditions of Joining", coj, notNullValue());
     assertThat("Unexpected CoJ signed at timestamp", coj.signedAt(), is(now));
     assertThat("Unexpected CoJ version", coj.version(), is(GG9));
+    assertThat("Unexpected CoJ synced at", coj.syncedAt(), nullValue());
   }
 
   @Test
