@@ -23,13 +23,12 @@ package uk.nhs.hee.trainee.details.service;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -38,7 +37,6 @@ import static org.mockito.Mockito.when;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -48,7 +46,6 @@ import org.mockito.ArgumentCaptor;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapperImpl;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
-import uk.nhs.hee.trainee.details.model.Curriculum;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
@@ -66,13 +63,11 @@ class ProgrammeMembershipServiceTest {
   private static final String TRAINEE_TIS_ID = "40";
   private static final String MODIFIED_SUFFIX = "post";
   private static final String ORIGINAL_SUFFIX = "pre";
-  private static final String NEW_PROGRAMME_MEMBERSHIP_ID = "1";
-  private static final String EXISTING_PROGRAMME_MEMBERSHIP_ID = "2";
-  private static final String MULTIPLE_PROGRAMME_MEMBERSHIP_ID = "123,456,789";
-  private static final UUID PROGRAMME_MEMBERSHIP_UUID = UUID.randomUUID();
+  private static final String NEW_PROGRAMME_MEMBERSHIP_UUID = UUID.randomUUID().toString();
+  private static final String EXISTING_PROGRAMME_MEMBERSHIP_UUID = UUID.randomUUID().toString();
+  private static final String DIFFERENT_PROGRAMME_MEMBERSHIP_UUID = UUID.randomUUID().toString();
   private static final Instant COJ_SIGNED_AT = Instant.now();
   private static final GoldGuideVersion GOLD_GUIDE_VERSION = GoldGuideVersion.GG9;
-  private static final Instant COJ_SYNCED_AT = Instant.now();
 
   private ProgrammeMembershipService service;
   private TraineeProfileRepository repository;
@@ -89,7 +84,7 @@ class ProgrammeMembershipServiceTest {
   @Test
   void shouldNotUpdateProgrammeMembershipWhenTraineeIdNotFound() {
     ProgrammeMembership programmeMembership = new ProgrammeMembership();
-    programmeMembership.setTisId(EXISTING_PROGRAMME_MEMBERSHIP_ID);
+    programmeMembership.setTisId(EXISTING_PROGRAMME_MEMBERSHIP_UUID);
     Optional<ProgrammeMembership> updatedProgrammeMembership = service
         .updateProgrammeMembershipForTrainee("notFound", programmeMembership);
 
@@ -106,12 +101,12 @@ class ProgrammeMembershipServiceTest {
 
     Optional<ProgrammeMembership> programmeMembership = service
         .updateProgrammeMembershipForTrainee(TRAINEE_TIS_ID,
-            createProgrammeMembership(NEW_PROGRAMME_MEMBERSHIP_ID, MODIFIED_SUFFIX, 100));
+            createProgrammeMembership(NEW_PROGRAMME_MEMBERSHIP_UUID, MODIFIED_SUFFIX, 100));
 
     assertThat("Unexpected optional isEmpty flag.", programmeMembership.isEmpty(), is(false));
 
     ProgrammeMembership expectedProgrammeMembership = new ProgrammeMembership();
-    expectedProgrammeMembership.setTisId(NEW_PROGRAMME_MEMBERSHIP_ID);
+    expectedProgrammeMembership.setTisId(NEW_PROGRAMME_MEMBERSHIP_UUID);
     expectedProgrammeMembership.setProgrammeTisId(PROGRAMME_TIS_ID + MODIFIED_SUFFIX);
     expectedProgrammeMembership.setProgrammeName(PROGRAMME_NAME + MODIFIED_SUFFIX);
     expectedProgrammeMembership.setProgrammeNumber(PROGRAMME_NUMBER + MODIFIED_SUFFIX);
@@ -122,8 +117,7 @@ class ProgrammeMembershipServiceTest {
     expectedProgrammeMembership.setEndDate(END_DATE.plusDays(100));
     expectedProgrammeMembership.setProgrammeCompletionDate(COMPLETION_DATE.plusDays(100));
     expectedProgrammeMembership.setConditionsOfJoining(
-        new ConditionsOfJoining(COJ_SIGNED_AT.plus(Duration.ofDays(100)), GOLD_GUIDE_VERSION,
-            COJ_SYNCED_AT.plus(Duration.ofDays(100))));
+        new ConditionsOfJoining(COJ_SIGNED_AT.plus(Duration.ofDays(100)), GOLD_GUIDE_VERSION));
 
     assertThat("Unexpected programme membership.", programmeMembership.get(),
         is(expectedProgrammeMembership));
@@ -133,18 +127,18 @@ class ProgrammeMembershipServiceTest {
   void shouldAddProgrammeMembershipWhenTraineeFoundAndProgrammeMembershipNotExists() {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.getProgrammeMemberships()
-        .add(createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_ID, ORIGINAL_SUFFIX, 0));
+        .add(createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_UUID, ORIGINAL_SUFFIX, 0));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
     Optional<ProgrammeMembership> programmeMembership = service
         .updateProgrammeMembershipForTrainee(TRAINEE_TIS_ID,
-            createProgrammeMembership(NEW_PROGRAMME_MEMBERSHIP_ID, MODIFIED_SUFFIX, 100));
+            createProgrammeMembership(NEW_PROGRAMME_MEMBERSHIP_UUID, MODIFIED_SUFFIX, 100));
 
     assertThat("Unexpected optional isEmpty flag.", programmeMembership.isEmpty(), is(false));
 
     ProgrammeMembership expectedProgrammeMembership = new ProgrammeMembership();
-    expectedProgrammeMembership.setTisId(NEW_PROGRAMME_MEMBERSHIP_ID);
+    expectedProgrammeMembership.setTisId(NEW_PROGRAMME_MEMBERSHIP_UUID);
     expectedProgrammeMembership.setProgrammeTisId(PROGRAMME_TIS_ID + MODIFIED_SUFFIX);
     expectedProgrammeMembership.setProgrammeName(PROGRAMME_NAME + MODIFIED_SUFFIX);
     expectedProgrammeMembership.setProgrammeNumber(PROGRAMME_NUMBER + MODIFIED_SUFFIX);
@@ -155,8 +149,7 @@ class ProgrammeMembershipServiceTest {
     expectedProgrammeMembership.setEndDate(END_DATE.plusDays(100));
     expectedProgrammeMembership.setProgrammeCompletionDate(COMPLETION_DATE.plusDays(100));
     expectedProgrammeMembership.setConditionsOfJoining(
-        new ConditionsOfJoining(COJ_SIGNED_AT.plus(Duration.ofDays(100)), GOLD_GUIDE_VERSION,
-            COJ_SYNCED_AT.plus(Duration.ofDays(100))));
+        new ConditionsOfJoining(COJ_SIGNED_AT.plus(Duration.ofDays(100)), GOLD_GUIDE_VERSION));
 
     assertThat("Unexpected programme membership.", programmeMembership.get(),
         is(expectedProgrammeMembership));
@@ -166,20 +159,20 @@ class ProgrammeMembershipServiceTest {
   void shouldUpdateProgrammeMembershipWhenTraineeFoundAndProgrammeMembershipExists() {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.getProgrammeMemberships()
-        .add(createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_ID, ORIGINAL_SUFFIX, 0));
+        .add(createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_UUID, ORIGINAL_SUFFIX, 0));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
     Optional<ProgrammeMembership> programmeMembership = service
         .updateProgrammeMembershipForTrainee(TRAINEE_TIS_ID,
-            createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_ID, MODIFIED_SUFFIX, 100));
+            createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_UUID, MODIFIED_SUFFIX, 100));
 
     assertThat("Unexpected optional isEmpty flag.", programmeMembership.isEmpty(), is(false));
 
     ProgrammeMembership expectedProgrammeMembership = createProgrammeMembership(
-        EXISTING_PROGRAMME_MEMBERSHIP_ID,
+        EXISTING_PROGRAMME_MEMBERSHIP_UUID,
         ORIGINAL_SUFFIX, 0);
-    expectedProgrammeMembership.setTisId(EXISTING_PROGRAMME_MEMBERSHIP_ID);
+    expectedProgrammeMembership.setTisId(EXISTING_PROGRAMME_MEMBERSHIP_UUID);
     expectedProgrammeMembership.setProgrammeTisId(PROGRAMME_TIS_ID + MODIFIED_SUFFIX);
     expectedProgrammeMembership.setProgrammeName(PROGRAMME_NAME + MODIFIED_SUFFIX);
     expectedProgrammeMembership.setProgrammeNumber(PROGRAMME_NUMBER + MODIFIED_SUFFIX);
@@ -190,23 +183,22 @@ class ProgrammeMembershipServiceTest {
     expectedProgrammeMembership.setEndDate(END_DATE.plusDays(100));
     expectedProgrammeMembership.setProgrammeCompletionDate(COMPLETION_DATE.plusDays(100));
     expectedProgrammeMembership.setConditionsOfJoining(
-        new ConditionsOfJoining(COJ_SIGNED_AT.plus(Duration.ofDays(100)), GOLD_GUIDE_VERSION,
-            COJ_SYNCED_AT.plus(Duration.ofDays(100))));
+        new ConditionsOfJoining(COJ_SIGNED_AT.plus(Duration.ofDays(100)), GOLD_GUIDE_VERSION));
 
     assertThat("Unexpected programme membership.", programmeMembership.get(),
         is(expectedProgrammeMembership));
   }
 
   @Test
-  void shouldNotUpdateExistingConditionsOfJoiningWhenNewCojNull() {
+  void shouldNotUpdateProgrammeMembershipCojWhenNewCojNull() {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.getProgrammeMemberships()
-        .add(createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_ID, ORIGINAL_SUFFIX, 0));
+        .add(createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_UUID, ORIGINAL_SUFFIX, 0));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
     ProgrammeMembership newProgrammeMembership = createProgrammeMembership(
-        EXISTING_PROGRAMME_MEMBERSHIP_ID, MODIFIED_SUFFIX, 100);
+        EXISTING_PROGRAMME_MEMBERSHIP_UUID, MODIFIED_SUFFIX, 100);
     newProgrammeMembership.setConditionsOfJoining(null);
 
     Optional<ProgrammeMembership> programmeMembership = service
@@ -221,317 +213,17 @@ class ProgrammeMembershipServiceTest {
     assertThat("Unexpected signed at.", conditionsOfJoining.signedAt(), is(COJ_SIGNED_AT));
     assertThat("Unexpected signed version.", conditionsOfJoining.version(),
         is(GoldGuideVersion.GG9));
-    assertThat("Unexpected synced at.", conditionsOfJoining.syncedAt(), is(COJ_SYNCED_AT));
   }
 
   @Test
-  void shouldUpdateProgrammeMembershipCojWhenPmCojNullAndCojCached() {
-    ProgrammeMembership existingProgrammeMembership = createProgrammeMembership(
-        EXISTING_PROGRAMME_MEMBERSHIP_ID, ORIGINAL_SUFFIX, 0);
-
-    TraineeProfile traineeProfile = new TraineeProfile();
-    traineeProfile.getProgrammeMemberships().add(existingProgrammeMembership);
-
-    ConditionsOfJoining coj = existingProgrammeMembership.getConditionsOfJoining();
-    existingProgrammeMembership.setConditionsOfJoining(null);
-
-    when(cachingDelegate.getConditionsOfJoining(EXISTING_PROGRAMME_MEMBERSHIP_ID)).thenReturn(
-        Optional.of(coj));
-    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
-
-    ProgrammeMembership newProgrammeMembership = createProgrammeMembership(
-        EXISTING_PROGRAMME_MEMBERSHIP_ID, MODIFIED_SUFFIX, 100);
-    newProgrammeMembership.setConditionsOfJoining(null);
-
-    Optional<ProgrammeMembership> programmeMembership = service
-        .updateProgrammeMembershipForTrainee(TRAINEE_TIS_ID, newProgrammeMembership);
-
-    assertThat("Unexpected optional isEmpty flag.", programmeMembership.isEmpty(), is(false));
-    ProgrammeMembership updatedProgrammeMembership = programmeMembership.get();
-    assertThat("Unexpected conditions of joining.",
-        updatedProgrammeMembership.getConditionsOfJoining(), notNullValue());
-
-    ConditionsOfJoining conditionsOfJoining = updatedProgrammeMembership.getConditionsOfJoining();
-    assertThat("Unexpected signed at.", conditionsOfJoining.signedAt(), is(COJ_SIGNED_AT));
-    assertThat("Unexpected signed version.", conditionsOfJoining.version(),
-        is(GoldGuideVersion.GG9));
-    assertThat("Unexpected synced at.", conditionsOfJoining.syncedAt(), is(COJ_SYNCED_AT));
-  }
-
-  @Test
-  void shouldUpdateProgrammeMembershipCojWhenPmCojNotSignedAndCojCached() {
-    ProgrammeMembership existingProgrammeMembership = createProgrammeMembership(
-        EXISTING_PROGRAMME_MEMBERSHIP_ID, ORIGINAL_SUFFIX, 0);
-
-    TraineeProfile traineeProfile = new TraineeProfile();
-    traineeProfile.getProgrammeMemberships().add(existingProgrammeMembership);
-
-    ConditionsOfJoining coj = existingProgrammeMembership.getConditionsOfJoining();
-    existingProgrammeMembership.setConditionsOfJoining(
-        new ConditionsOfJoining(null, GoldGuideVersion.GG9, null));
-
-    when(cachingDelegate.getConditionsOfJoining(EXISTING_PROGRAMME_MEMBERSHIP_ID)).thenReturn(
-        Optional.of(coj));
-    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
-
-    ProgrammeMembership newProgrammeMembership = createProgrammeMembership(
-        EXISTING_PROGRAMME_MEMBERSHIP_ID, MODIFIED_SUFFIX, 100);
-    newProgrammeMembership.setConditionsOfJoining(
-        new ConditionsOfJoining(null, GoldGuideVersion.GG9, null));
-
-    Optional<ProgrammeMembership> programmeMembership = service
-        .updateProgrammeMembershipForTrainee(TRAINEE_TIS_ID, newProgrammeMembership);
-
-    assertThat("Unexpected optional isEmpty flag.", programmeMembership.isEmpty(), is(false));
-    ProgrammeMembership updatedProgrammeMembership = programmeMembership.get();
-    assertThat("Unexpected conditions of joining.",
-        updatedProgrammeMembership.getConditionsOfJoining(), notNullValue());
-
-    ConditionsOfJoining conditionsOfJoining = updatedProgrammeMembership.getConditionsOfJoining();
-    assertThat("Unexpected signed at.", conditionsOfJoining.signedAt(), is(COJ_SIGNED_AT));
-    assertThat("Unexpected signed version.", conditionsOfJoining.version(),
-        is(GoldGuideVersion.GG9));
-    assertThat("Unexpected synced at.", conditionsOfJoining.syncedAt(), is(COJ_SYNCED_AT));
-  }
-
-  @Test
-  void shouldUpdateProgrammeMembershipCojWhenPmHasMultipleIds() {
+  void shouldNotUpdateProgrammeMembershipCojWhenSavedPmNotFound() {
     ProgrammeMembership programmeMembership = createProgrammeMembership(
-        MULTIPLE_PROGRAMME_MEMBERSHIP_ID, ORIGINAL_SUFFIX, 0);
-    programmeMembership.setConditionsOfJoining(null);
-    TraineeProfile traineeProfile = new TraineeProfile();
-    traineeProfile.getProgrammeMemberships().add(programmeMembership);
-
-    when(cachingDelegate.getConditionsOfJoining("123")).thenReturn(
-        Optional.of(new ConditionsOfJoining(Instant.MIN, GoldGuideVersion.GG9, Instant.MIN)));
-    when(cachingDelegate.getConditionsOfJoining("456")).thenReturn(
-        Optional.of(new ConditionsOfJoining(Instant.MAX, GoldGuideVersion.GG9, Instant.MAX)));
-    when(cachingDelegate.getConditionsOfJoining("789")).thenReturn(
-        Optional.of(
-            new ConditionsOfJoining(COJ_SIGNED_AT, GoldGuideVersion.GG9, COJ_SYNCED_AT)));
-
-    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
-
-    Optional<ProgrammeMembership> optionalProgrammeMembership = service
-        .updateProgrammeMembershipForTrainee(TRAINEE_TIS_ID, programmeMembership);
-
-    assertThat("Unexpected optional isEmpty flag.", optionalProgrammeMembership.isEmpty(),
-        is(false));
-    ProgrammeMembership updatedProgrammeMembership = optionalProgrammeMembership.get();
-    assertThat("Unexpected conditions of joining.",
-        updatedProgrammeMembership.getConditionsOfJoining(), notNullValue());
-
-    ConditionsOfJoining conditionsOfJoining = updatedProgrammeMembership.getConditionsOfJoining();
-    assertThat("Unexpected signed at.", conditionsOfJoining.signedAt(), is(COJ_SIGNED_AT));
-    assertThat("Unexpected signed version.", conditionsOfJoining.version(),
-        is(GoldGuideVersion.GG9));
-    assertThat("Unexpected synced at.", conditionsOfJoining.syncedAt(), is(COJ_SYNCED_AT));
-
-    verify(cachingDelegate, times(1)).getConditionsOfJoining("123");
-    verify(cachingDelegate, times(1)).getConditionsOfJoining("456");
-    verify(cachingDelegate, times(1)).getConditionsOfJoining("789");
-  }
-
-  @Test
-  void shouldUpdateProgrammeMembershipCojWhenPmHasUuidAndSavedPmHasUuid() {
-    ProgrammeMembership programmeMembership = createProgrammeMembership(
-        PROGRAMME_MEMBERSHIP_UUID.toString(), ORIGINAL_SUFFIX, 0);
+        DIFFERENT_PROGRAMME_MEMBERSHIP_UUID, ORIGINAL_SUFFIX, 100);
     programmeMembership.setConditionsOfJoining(null);
 
     TraineeProfile traineeProfile = new TraineeProfile();
-    ProgrammeMembership savedProgrammeMembership = createProgrammeMembership(
-        PROGRAMME_MEMBERSHIP_UUID.toString(), ORIGINAL_SUFFIX, 0);
-    savedProgrammeMembership.setConditionsOfJoining(
-        new ConditionsOfJoining(COJ_SIGNED_AT, GoldGuideVersion.GG9, COJ_SYNCED_AT));
-    traineeProfile.getProgrammeMemberships().add(savedProgrammeMembership);
-
-    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
-
-    Optional<ProgrammeMembership> optionalProgrammeMembership = service
-        .updateProgrammeMembershipForTrainee(TRAINEE_TIS_ID, programmeMembership);
-
-    assertThat("Unexpected optional isEmpty flag.", optionalProgrammeMembership.isEmpty(),
-        is(false));
-    ProgrammeMembership updatedProgrammeMembership = optionalProgrammeMembership.get();
-    assertThat("Unexpected conditions of joining.",
-        updatedProgrammeMembership.getConditionsOfJoining(), notNullValue());
-
-    ConditionsOfJoining conditionsOfJoining = updatedProgrammeMembership.getConditionsOfJoining();
-    assertThat("Unexpected signed at.", conditionsOfJoining.signedAt(), is(COJ_SIGNED_AT));
-    assertThat("Unexpected signed version.", conditionsOfJoining.version(),
-        is(GoldGuideVersion.GG9));
-    assertThat("Unexpected synced at.", conditionsOfJoining.syncedAt(), is(COJ_SYNCED_AT));
-  }
-
-  @Test
-  void shouldUpdateProgrammeMembershipCojWhenPmHasUuidAndSavedUuidPmHasNoCojButLegacyPmDoes() {
-    Curriculum curriculum1 = new Curriculum();
-    curriculum1.setTisId("123");
-
-    ProgrammeMembership programmeMembership = createProgrammeMembership(
-        PROGRAMME_MEMBERSHIP_UUID.toString(), ORIGINAL_SUFFIX, 0);
-    programmeMembership.setConditionsOfJoining(null);
-    programmeMembership.setCurricula(List.of(curriculum1));
-
-    TraineeProfile traineeProfile = new TraineeProfile();
-    ProgrammeMembership savedProgrammeMembership = createProgrammeMembership(
-        PROGRAMME_MEMBERSHIP_UUID.toString(), ORIGINAL_SUFFIX, 0);
-    savedProgrammeMembership.setConditionsOfJoining(null);
-    ProgrammeMembership savedProgrammeMembershipLegacy = createProgrammeMembership(
-        "123", ORIGINAL_SUFFIX, 0);
-    savedProgrammeMembershipLegacy.setConditionsOfJoining(
-        new ConditionsOfJoining(COJ_SIGNED_AT, GoldGuideVersion.GG9, COJ_SYNCED_AT));
-    traineeProfile.getProgrammeMemberships().addAll(
-        List.of(savedProgrammeMembership, savedProgrammeMembershipLegacy));
-
-    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
-
-    Optional<ProgrammeMembership> optionalProgrammeMembership = service
-        .updateProgrammeMembershipForTrainee(TRAINEE_TIS_ID, programmeMembership);
-
-    assertThat("Unexpected optional isEmpty flag.", optionalProgrammeMembership.isEmpty(),
-        is(false));
-    ProgrammeMembership updatedProgrammeMembership = optionalProgrammeMembership.get();
-    assertThat("Unexpected conditions of joining.",
-        updatedProgrammeMembership.getConditionsOfJoining(), notNullValue());
-
-    ConditionsOfJoining conditionsOfJoining = updatedProgrammeMembership.getConditionsOfJoining();
-    assertThat("Unexpected signed at.", conditionsOfJoining.signedAt(), is(COJ_SIGNED_AT));
-    assertThat("Unexpected signed version.", conditionsOfJoining.version(),
-        is(GoldGuideVersion.GG9));
-    assertThat("Unexpected synced at.", conditionsOfJoining.syncedAt(), is(COJ_SYNCED_AT));
-  }
-
-  @Test
-  void shouldUpdateProgrammeMembershipCojWhenPmHasUuidAndSavedPmHasDeprecatedIds() {
-    Curriculum curriculum1 = new Curriculum();
-    curriculum1.setTisId("123");
-    Curriculum curriculum2 = new Curriculum();
-    curriculum2.setTisId("456");
-    Curriculum curriculum3 = new Curriculum();
-    curriculum3.setTisId("789");
-
-    ProgrammeMembership programmeMembership = createProgrammeMembership(
-        PROGRAMME_MEMBERSHIP_UUID.toString(), ORIGINAL_SUFFIX, 0);
-    programmeMembership.setConditionsOfJoining(null);
-    programmeMembership.setCurricula(Arrays.asList(curriculum1, curriculum2, curriculum3));
-
-    ProgrammeMembership savedProgrammeMembership = createProgrammeMembership(
-        "123,456", ORIGINAL_SUFFIX, 0);
-    savedProgrammeMembership.setConditionsOfJoining(
-        new ConditionsOfJoining(COJ_SIGNED_AT, GoldGuideVersion.GG9, COJ_SYNCED_AT));
-    TraineeProfile traineeProfile = new TraineeProfile();
-    traineeProfile.getProgrammeMemberships().add(savedProgrammeMembership);
-
-    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
-
-    Optional<ProgrammeMembership> optionalProgrammeMembership = service
-        .updateProgrammeMembershipForTrainee(TRAINEE_TIS_ID, programmeMembership);
-
-    assertThat("Unexpected optional isEmpty flag.", optionalProgrammeMembership.isEmpty(),
-        is(false));
-    ProgrammeMembership updatedProgrammeMembership = optionalProgrammeMembership.get();
-    assertThat("Unexpected conditions of joining.",
-        updatedProgrammeMembership.getConditionsOfJoining(), notNullValue());
-
-    ConditionsOfJoining conditionsOfJoining = updatedProgrammeMembership.getConditionsOfJoining();
-    assertThat("Unexpected signed at.", conditionsOfJoining.signedAt(), is(COJ_SIGNED_AT));
-    assertThat("Unexpected signed version.", conditionsOfJoining.version(),
-        is(GoldGuideVersion.GG9));
-    assertThat("Unexpected synced at.", conditionsOfJoining.syncedAt(), is(COJ_SYNCED_AT));
-  }
-
-  @Test
-  void shouldUpdateProgrammeMembershipCojWhenPmHasUuidAndFirstSavedPmHasCoj() {
-    Curriculum curriculum123 = new Curriculum();
-    curriculum123.setTisId("123");
-    ProgrammeMembership oldPm123 = createProgrammeMembership("123", ORIGINAL_SUFFIX, 0);
-    oldPm123.setConditionsOfJoining(
-        new ConditionsOfJoining(COJ_SIGNED_AT, GoldGuideVersion.GG9, COJ_SYNCED_AT));
-
-    Curriculum curriculum456 = new Curriculum();
-    curriculum456.setTisId("456");
-    ProgrammeMembership oldPm456 = createProgrammeMembership("456", ORIGINAL_SUFFIX, 0);
-    oldPm456.setConditionsOfJoining(null);
-
-    TraineeProfile traineeProfile = new TraineeProfile();
-    traineeProfile.getProgrammeMemberships().addAll(List.of(oldPm123, oldPm456));
-    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
-
-    ProgrammeMembership programmeMembership = createProgrammeMembership(
-        PROGRAMME_MEMBERSHIP_UUID.toString(), ORIGINAL_SUFFIX, 0);
-    programmeMembership.setConditionsOfJoining(null);
-    programmeMembership.setCurricula(List.of(curriculum123, curriculum456));
-
-    Optional<ProgrammeMembership> optionalProgrammeMembership =
-        service.updateProgrammeMembershipForTrainee(TRAINEE_TIS_ID, programmeMembership);
-
-    assertThat("Unexpected optional isEmpty flag.", optionalProgrammeMembership.isEmpty(),
-        is(false));
-    ProgrammeMembership updatedProgrammeMembership = optionalProgrammeMembership.get();
-    assertThat("Unexpected conditions of joining.",
-        updatedProgrammeMembership.getConditionsOfJoining(), notNullValue());
-
-    ConditionsOfJoining conditionsOfJoining = updatedProgrammeMembership.getConditionsOfJoining();
-    assertThat("Unexpected signed at.", conditionsOfJoining.signedAt(), is(COJ_SIGNED_AT));
-    assertThat("Unexpected signed version.", conditionsOfJoining.version(),
-        is(GoldGuideVersion.GG9));
-    assertThat("Unexpected synced at.", conditionsOfJoining.syncedAt(), is(COJ_SYNCED_AT));
-  }
-
-  @Test
-  void shouldUpdateProgrammeMembershipCojWhenPmHasUuidAndSecondSavedPmHasCoj() {
-    Curriculum curriculum123 = new Curriculum();
-    curriculum123.setTisId("123");
-    ProgrammeMembership oldPm123 = createProgrammeMembership("123", ORIGINAL_SUFFIX, 0);
-    oldPm123.setConditionsOfJoining(null);
-
-    Curriculum curriculum456 = new Curriculum();
-    curriculum456.setTisId("456");
-    ProgrammeMembership oldPm456 = createProgrammeMembership("456", ORIGINAL_SUFFIX, 0);
-    oldPm456.setConditionsOfJoining(
-        new ConditionsOfJoining(COJ_SIGNED_AT, GoldGuideVersion.GG9, COJ_SYNCED_AT));
-
-    TraineeProfile traineeProfile = new TraineeProfile();
-    traineeProfile.getProgrammeMemberships().addAll(List.of(oldPm123, oldPm456));
-    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
-
-    ProgrammeMembership programmeMembership = createProgrammeMembership(
-        PROGRAMME_MEMBERSHIP_UUID.toString(), ORIGINAL_SUFFIX, 0);
-    programmeMembership.setConditionsOfJoining(null);
-    programmeMembership.setCurricula(List.of(curriculum123, curriculum456));
-
-    Optional<ProgrammeMembership> optionalProgrammeMembership =
-        service.updateProgrammeMembershipForTrainee(TRAINEE_TIS_ID, programmeMembership);
-
-    assertThat("Unexpected optional isEmpty flag.", optionalProgrammeMembership.isEmpty(),
-        is(false));
-    ProgrammeMembership updatedProgrammeMembership = optionalProgrammeMembership.get();
-    assertThat("Unexpected conditions of joining.",
-        updatedProgrammeMembership.getConditionsOfJoining(), notNullValue());
-
-    ConditionsOfJoining conditionsOfJoining = updatedProgrammeMembership.getConditionsOfJoining();
-    assertThat("Unexpected signed at.", conditionsOfJoining.signedAt(), is(COJ_SIGNED_AT));
-    assertThat("Unexpected signed version.", conditionsOfJoining.version(),
-        is(GoldGuideVersion.GG9));
-    assertThat("Unexpected synced at.", conditionsOfJoining.syncedAt(), is(COJ_SYNCED_AT));
-  }
-
-  @Test
-  void shouldNotUpdateProgrammeMembershipCojWhenPmHasUuidAndSavedPmNotFound() {
-    Curriculum curriculum = new Curriculum();
-    curriculum.setTisId("123");
-    ProgrammeMembership programmeMembership = createProgrammeMembership(
-        PROGRAMME_MEMBERSHIP_UUID.toString(), ORIGINAL_SUFFIX, 0);
-    programmeMembership.setConditionsOfJoining(null);
-    programmeMembership.setCurricula(List.of(curriculum));
-
-    ProgrammeMembership savedProgrammeMembership = createProgrammeMembership(
-        "456,789", ORIGINAL_SUFFIX, 0);
-    savedProgrammeMembership.setConditionsOfJoining(
-        new ConditionsOfJoining(COJ_SIGNED_AT, GoldGuideVersion.GG9, COJ_SYNCED_AT));
-    TraineeProfile traineeProfile = new TraineeProfile();
-    traineeProfile.getProgrammeMemberships().add(savedProgrammeMembership);
+    traineeProfile.getProgrammeMemberships().add(createProgrammeMembership(
+        EXISTING_PROGRAMME_MEMBERSHIP_UUID, MODIFIED_SUFFIX, 0));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
@@ -546,18 +238,41 @@ class ProgrammeMembershipServiceTest {
   }
 
   @Test
-  void shouldNotUpdateProgrammeMembershipCojWhenCojAlreadySigned() {
+  void shouldNotUpdateProgrammeMembershipCojWhenNewCojNotSigned() {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.getProgrammeMemberships().add(createProgrammeMembership(
-        EXISTING_PROGRAMME_MEMBERSHIP_ID, ORIGINAL_SUFFIX, 0));
+        EXISTING_PROGRAMME_MEMBERSHIP_UUID, ORIGINAL_SUFFIX, 0));
 
-    when(cachingDelegate.getConditionsOfJoining(EXISTING_PROGRAMME_MEMBERSHIP_ID)).thenReturn(
-        Optional.of(
-            new ConditionsOfJoining(Instant.MAX, GoldGuideVersion.GG9, COJ_SYNCED_AT)));
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
     ProgrammeMembership newProgrammeMembership = createProgrammeMembership(
-        EXISTING_PROGRAMME_MEMBERSHIP_ID, MODIFIED_SUFFIX, 100);
+        EXISTING_PROGRAMME_MEMBERSHIP_UUID, MODIFIED_SUFFIX, 100);
+    ConditionsOfJoining newConditionsOfJoining = new ConditionsOfJoining(null, GoldGuideVersion.GG9);
+    newProgrammeMembership.setConditionsOfJoining(newConditionsOfJoining);
+
+    Optional<ProgrammeMembership> programmeMembership = service
+        .updateProgrammeMembershipForTrainee(TRAINEE_TIS_ID, newProgrammeMembership);
+
+    assertThat("Unexpected optional isEmpty flag.", programmeMembership.isEmpty(), is(false));
+    ProgrammeMembership updatedProgrammeMembership = programmeMembership.get();
+    assertThat("Unexpected conditions of joining.",
+        updatedProgrammeMembership.getConditionsOfJoining(), notNullValue());
+
+    ConditionsOfJoining conditionsOfJoining = updatedProgrammeMembership.getConditionsOfJoining();
+    assertThat("Unexpected signed at.", conditionsOfJoining.signedAt(),
+        is(COJ_SIGNED_AT));
+  }
+
+  @Test
+  void shouldUpdateProgrammeMembershipCojWhenNewCojSigned() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.getProgrammeMemberships().add(createProgrammeMembership(
+        EXISTING_PROGRAMME_MEMBERSHIP_UUID, ORIGINAL_SUFFIX, 0));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    ProgrammeMembership newProgrammeMembership = createProgrammeMembership(
+        EXISTING_PROGRAMME_MEMBERSHIP_UUID, MODIFIED_SUFFIX, 100);
 
     Optional<ProgrammeMembership> programmeMembership = service
         .updateProgrammeMembershipForTrainee(TRAINEE_TIS_ID, newProgrammeMembership);
@@ -572,17 +287,13 @@ class ProgrammeMembershipServiceTest {
         is(COJ_SIGNED_AT.plus(Duration.ofDays(100))));
     assertThat("Unexpected signed version.", conditionsOfJoining.version(),
         is(GoldGuideVersion.GG9));
-    assertThat("Unexpected synced at.", conditionsOfJoining.syncedAt(),
-        is(COJ_SYNCED_AT.plus(Duration.ofDays(100))));
-
-    verifyNoInteractions(cachingDelegate);
   }
 
   @Test
   void shouldDeleteProgrammeMembershipsWhenTraineeFoundAndProgrammeMembershipsExist() {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.getProgrammeMemberships()
-        .add(createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_ID, ORIGINAL_SUFFIX, 0));
+        .add(createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_UUID, ORIGINAL_SUFFIX, 0));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
@@ -604,50 +315,21 @@ class ProgrammeMembershipServiceTest {
   void shouldCacheCojFromDeleteProgrammeMembershipsWhenCojSigned() {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.getProgrammeMemberships()
-        .add(createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_ID, ORIGINAL_SUFFIX, 0));
+        .add(createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_UUID, ORIGINAL_SUFFIX, 0));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
     service.deleteProgrammeMembershipsForTrainee(TRAINEE_TIS_ID);
 
-    verify(cachingDelegate).cacheConditionsOfJoining(any(), any());
-  }
-
-  @Test
-  void shouldCacheCojFromDeleteProgrammeMembershipsWhenCojSignedForMultipleCurriculum() {
-    TraineeProfile traineeProfile = new TraineeProfile();
-    traineeProfile.getProgrammeMemberships()
-        .add(createProgrammeMembership(MULTIPLE_PROGRAMME_MEMBERSHIP_ID, ORIGINAL_SUFFIX, 0));
-
-    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
-
-    service.deleteProgrammeMembershipsForTrainee(TRAINEE_TIS_ID);
-
-    verify(cachingDelegate, times(1)).cacheConditionsOfJoining(eq("123"), any());
-    verify(cachingDelegate, times(1)).cacheConditionsOfJoining(eq("456"), any());
-    verify(cachingDelegate, times(1)).cacheConditionsOfJoining(eq("789"), any());
-  }
-
-  @Test
-  void shouldCacheCojFromDeleteProgrammeMembershipsWhenCojSignedUsingUuid() {
-    TraineeProfile traineeProfile = new TraineeProfile();
-    traineeProfile.getProgrammeMemberships()
-        .add(createProgrammeMembership(PROGRAMME_MEMBERSHIP_UUID.toString(), ORIGINAL_SUFFIX, 0));
-
-    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
-
-    service.deleteProgrammeMembershipsForTrainee(TRAINEE_TIS_ID);
-
-    verify(cachingDelegate).cacheConditionsOfJoining(eq(PROGRAMME_MEMBERSHIP_UUID.toString()),
+    verify(cachingDelegate).cacheConditionsOfJoining(eq(EXISTING_PROGRAMME_MEMBERSHIP_UUID),
         any());
   }
 
   @Test
   void shouldNotCacheCojFromDeleteProgrammeMembershipsWhenCojNotSigned() {
     ProgrammeMembership programmeMembership = createProgrammeMembership(
-        EXISTING_PROGRAMME_MEMBERSHIP_ID, ORIGINAL_SUFFIX, 0);
-    programmeMembership.setConditionsOfJoining(
-        new ConditionsOfJoining(null, GoldGuideVersion.GG9, COJ_SYNCED_AT));
+        EXISTING_PROGRAMME_MEMBERSHIP_UUID, ORIGINAL_SUFFIX, 0);
+    programmeMembership.setConditionsOfJoining(new ConditionsOfJoining(null, GoldGuideVersion.GG9));
 
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.getProgrammeMemberships().add(programmeMembership);
@@ -662,7 +344,7 @@ class ProgrammeMembershipServiceTest {
   @Test
   void shouldNotCacheCojFromDeleteProgrammeMembershipsWhenCojNull() {
     ProgrammeMembership programmeMembership = createProgrammeMembership(
-        EXISTING_PROGRAMME_MEMBERSHIP_ID, ORIGINAL_SUFFIX, 0);
+        EXISTING_PROGRAMME_MEMBERSHIP_UUID, ORIGINAL_SUFFIX, 0);
     programmeMembership.setConditionsOfJoining(null);
 
     TraineeProfile traineeProfile = new TraineeProfile();
@@ -680,7 +362,7 @@ class ProgrammeMembershipServiceTest {
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(null);
 
     boolean deleted = service.deleteProgrammeMembershipForTrainee(TRAINEE_TIS_ID,
-        NEW_PROGRAMME_MEMBERSHIP_ID);
+        NEW_PROGRAMME_MEMBERSHIP_UUID);
 
     assertThat("Unexpected result.", deleted, is(false));
     verify(repository, never()).save(any());
@@ -689,7 +371,7 @@ class ProgrammeMembershipServiceTest {
   @Test
   void shouldNotDeleteProgrammeMembershipWhenTraineesProgrammeMembershipNotFound() {
     ProgrammeMembership programmeMembership = createProgrammeMembership(
-        EXISTING_PROGRAMME_MEMBERSHIP_ID, ORIGINAL_SUFFIX, 0);
+        EXISTING_PROGRAMME_MEMBERSHIP_UUID, ORIGINAL_SUFFIX, 0);
 
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.getProgrammeMemberships().add(programmeMembership);
@@ -697,7 +379,7 @@ class ProgrammeMembershipServiceTest {
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
     boolean deleted = service.deleteProgrammeMembershipForTrainee(TRAINEE_TIS_ID,
-        NEW_PROGRAMME_MEMBERSHIP_ID);
+        DIFFERENT_PROGRAMME_MEMBERSHIP_UUID);
 
     assertThat("Unexpected result.", deleted, is(false));
     verify(repository, never()).save(any());
@@ -706,9 +388,9 @@ class ProgrammeMembershipServiceTest {
   @Test
   void shouldDeleteProgrammeMembershipWhenTraineeFoundAndProgrammeMembershipExists() {
     ProgrammeMembership programmeMembership1 = createProgrammeMembership(
-        EXISTING_PROGRAMME_MEMBERSHIP_ID, ORIGINAL_SUFFIX, 0);
+        EXISTING_PROGRAMME_MEMBERSHIP_UUID, ORIGINAL_SUFFIX, 0);
     ProgrammeMembership programmeMembership2 = createProgrammeMembership(
-        "unrelatedPm", "unrelatedPm", 1);
+        DIFFERENT_PROGRAMME_MEMBERSHIP_UUID, "unrelatedPm", 1);
 
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.getProgrammeMemberships()
@@ -717,7 +399,7 @@ class ProgrammeMembershipServiceTest {
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
     boolean deleted = service.deleteProgrammeMembershipForTrainee(TRAINEE_TIS_ID,
-        EXISTING_PROGRAMME_MEMBERSHIP_ID);
+        EXISTING_PROGRAMME_MEMBERSHIP_UUID);
 
     assertThat("Unexpected result.", deleted, is(true));
 
@@ -730,22 +412,22 @@ class ProgrammeMembershipServiceTest {
 
     ProgrammeMembership remainingProgrammeMembership = programmeMemberships.get(0);
     assertThat("Unexpected programme membership id.", remainingProgrammeMembership.getTisId(),
-        is("unrelatedPm"));
+        is(DIFFERENT_PROGRAMME_MEMBERSHIP_UUID));
   }
 
   @Test
   void shouldSignCojWhenTraineeProgrammeMembershipFound() {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.getProgrammeMemberships()
-        .add(createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_ID, ORIGINAL_SUFFIX, 0));
+        .add(createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_UUID, ORIGINAL_SUFFIX, 0));
     traineeProfile.getProgrammeMemberships()
-        .add(createProgrammeMembership("3", ORIGINAL_SUFFIX, 0));
+        .add(createProgrammeMembership(DIFFERENT_PROGRAMME_MEMBERSHIP_UUID, ORIGINAL_SUFFIX, 0));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
     when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
 
     Optional<ProgrammeMembership> programmeMembership = service
-        .signProgrammeMembershipCoj(TRAINEE_TIS_ID, EXISTING_PROGRAMME_MEMBERSHIP_ID);
+        .signProgrammeMembershipCoj(TRAINEE_TIS_ID, EXISTING_PROGRAMME_MEMBERSHIP_UUID);
 
     assertThat("Unexpected optional isEmpty flag.", programmeMembership.isEmpty(), is(false));
     assertThat("Unexpected COJ signedAt.",
@@ -754,15 +436,12 @@ class ProgrammeMembershipServiceTest {
     assertThat("Unexpected COJ version.",
         programmeMembership.get().getConditionsOfJoining().version(),
         is(GoldGuideVersion.getLatest()));
-    assertThat("Unexpected CoJ synced at",
-        programmeMembership.get().getConditionsOfJoining().syncedAt(),
-        nullValue());
   }
 
   @Test
   void shouldNotSignCojWhenTraineeProfileNotFound() {
     Optional<ProgrammeMembership> programmeMembership = service
-        .signProgrammeMembershipCoj("randomId", EXISTING_PROGRAMME_MEMBERSHIP_ID);
+        .signProgrammeMembershipCoj("randomId", EXISTING_PROGRAMME_MEMBERSHIP_UUID);
 
     assertThat("Unexpected optional isEmpty flag.", programmeMembership.isEmpty(), is(true));
     verify(repository).findByTraineeTisId("randomId");
@@ -773,12 +452,12 @@ class ProgrammeMembershipServiceTest {
   void shouldNotSignCojWhenTraineeFoundButProgrammeMembershipsNotExists() {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.getProgrammeMemberships()
-        .add(createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_ID, ORIGINAL_SUFFIX, 0));
+        .add(createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_UUID, ORIGINAL_SUFFIX, 0));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
     Optional<ProgrammeMembership> programmeMembership = service
-        .signProgrammeMembershipCoj(TRAINEE_TIS_ID, "randomPmId");
+        .signProgrammeMembershipCoj(TRAINEE_TIS_ID, DIFFERENT_PROGRAMME_MEMBERSHIP_UUID);
 
     assertThat("Unexpected optional isEmpty flag.", programmeMembership.isEmpty(), is(true));
     verify(repository, never()).save(traineeProfile);
@@ -793,7 +472,7 @@ class ProgrammeMembershipServiceTest {
    * @return The dummy entity.
    */
   private ProgrammeMembership createProgrammeMembership(String tisId, String stringSuffix,
-                                                        int dateAdjustmentDays) {
+      int dateAdjustmentDays) {
     ProgrammeMembership programmeMembership = new ProgrammeMembership();
     programmeMembership.setTisId(tisId);
     programmeMembership.setProgrammeTisId(PROGRAMME_TIS_ID + stringSuffix);
@@ -806,7 +485,7 @@ class ProgrammeMembershipServiceTest {
     programmeMembership.setProgrammeCompletionDate(COMPLETION_DATE.plusDays(dateAdjustmentDays));
     programmeMembership.setConditionsOfJoining(
         new ConditionsOfJoining(COJ_SIGNED_AT.plus(Duration.ofDays(dateAdjustmentDays)),
-            GOLD_GUIDE_VERSION, COJ_SYNCED_AT.plus(Duration.ofDays(dateAdjustmentDays))));
+            GOLD_GUIDE_VERSION));
 
     return programmeMembership;
   }
