@@ -247,7 +247,8 @@ class ProgrammeMembershipServiceTest {
 
     ProgrammeMembership newProgrammeMembership = createProgrammeMembership(
         EXISTING_PROGRAMME_MEMBERSHIP_UUID, MODIFIED_SUFFIX, 100);
-    ConditionsOfJoining newConditionsOfJoining = new ConditionsOfJoining(null, GoldGuideVersion.GG9);
+    ConditionsOfJoining newConditionsOfJoining
+        = new ConditionsOfJoining(null, GoldGuideVersion.GG9);
     newProgrammeMembership.setConditionsOfJoining(newConditionsOfJoining);
 
     Optional<ProgrammeMembership> programmeMembership = service
