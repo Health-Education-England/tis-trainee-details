@@ -243,6 +243,28 @@ class ProgrammeMembershipServiceTest {
   }
 
   @Test
+  void shouldNotUpdateProgrammeMembershipCojWhenNoSavedCoj() {
+    ProgrammeMembership programmeMembership = createProgrammeMembership(
+        EXISTING_PROGRAMME_MEMBERSHIP_UUID, ORIGINAL_SUFFIX, 100);
+    programmeMembership.setConditionsOfJoining(null);
+
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.getProgrammeMemberships().add(createProgrammeMembership(
+        EXISTING_PROGRAMME_MEMBERSHIP_UUID, MODIFIED_SUFFIX, 0));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    Optional<ProgrammeMembership> optionalProgrammeMembership = service
+        .updateProgrammeMembershipForTrainee(TRAINEE_TIS_ID, programmeMembership);
+
+    assertThat("Unexpected optional isEmpty flag.", optionalProgrammeMembership.isEmpty(),
+        is(false));
+    ProgrammeMembership updatedProgrammeMembership = optionalProgrammeMembership.get();
+    assertThat("Unexpected conditions of joining.",
+        updatedProgrammeMembership.getConditionsOfJoining(), notNullValue());
+  }
+
+  @Test
   void shouldNotUpdateProgrammeMembershipCojWhenNewCojNotSigned() {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.getProgrammeMemberships().add(createProgrammeMembership(
@@ -483,7 +505,7 @@ class ProgrammeMembershipServiceTest {
    * @return The dummy entity.
    */
   private ProgrammeMembership createProgrammeMembership(String tisId, String stringSuffix,
-      int dateAdjustmentDays) {
+                                                        int dateAdjustmentDays) {
     ProgrammeMembership programmeMembership = new ProgrammeMembership();
     programmeMembership.setTisId(tisId);
     programmeMembership.setProgrammeTisId(PROGRAMME_TIS_ID + stringSuffix);
