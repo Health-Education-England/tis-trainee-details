@@ -246,11 +246,14 @@ class ProgrammeMembershipServiceTest {
   void shouldNotUpdateProgrammeMembershipCojWhenNoSavedCoj() {
     ProgrammeMembership programmeMembership = createProgrammeMembership(
         EXISTING_PROGRAMME_MEMBERSHIP_UUID, ORIGINAL_SUFFIX, 100);
-    programmeMembership.setConditionsOfJoining(null);
+    programmeMembership.setConditionsOfJoining(new ConditionsOfJoining(
+        null, GOLD_GUIDE_VERSION, null));
 
+    ProgrammeMembership savedProgrammeMembership = createProgrammeMembership(
+        EXISTING_PROGRAMME_MEMBERSHIP_UUID, MODIFIED_SUFFIX, 0);
+    savedProgrammeMembership.setConditionsOfJoining(null);
     TraineeProfile traineeProfile = new TraineeProfile();
-    traineeProfile.getProgrammeMemberships().add(createProgrammeMembership(
-        EXISTING_PROGRAMME_MEMBERSHIP_UUID, MODIFIED_SUFFIX, 0));
+    traineeProfile.getProgrammeMemberships().add(savedProgrammeMembership);
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
