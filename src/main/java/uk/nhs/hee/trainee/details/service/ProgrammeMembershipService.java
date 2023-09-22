@@ -23,16 +23,13 @@ package uk.nhs.hee.trainee.details.service;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Stream;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapper;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
-import uk.nhs.hee.trainee.details.model.Curriculum;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
@@ -46,7 +43,7 @@ public class ProgrammeMembershipService {
   private final CachingDelegate cachingDelegate;
 
   ProgrammeMembershipService(TraineeProfileRepository repository,
-      ProgrammeMembershipMapper mapper, CachingDelegate cachingDelegate) {
+                             ProgrammeMembershipMapper mapper, CachingDelegate cachingDelegate) {
     this.repository = repository;
     this.mapper = mapper;
     this.cachingDelegate = cachingDelegate;
@@ -60,7 +57,7 @@ public class ProgrammeMembershipService {
    * @return The updated programme membership or empty if a trainee with the ID was not found.
    */
   public Optional<ProgrammeMembership> updateProgrammeMembershipForTrainee(String traineeTisId,
-      ProgrammeMembership programmeMembership) {
+         ProgrammeMembership programmeMembership) {
     TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
 
     if (traineeProfile == null) {
@@ -73,43 +70,20 @@ public class ProgrammeMembershipService {
     if (programmeMembership.getConditionsOfJoining() == null
         || programmeMembership.getConditionsOfJoining().signedAt() == null) {
 
-      // Restore the Conditions of Joining if it exists
-      // FIXME: push all PMs through tis-trainee-sync to flush 2 and 3 so they can be removed?
-      // 3 scenarios:
-      try {
-        //1. new uuid PM, with CoJ also saved against this PM *THE FUTURE*
-        UUID uuid = UUID.fromString(programmeMembership.getTisId());
-        ProgrammeMembership savedProgrammeMembership
-            = existingProgrammeMemberships.stream()
-            .filter(i -> i.getTisId().equals(uuid.toString()))
-            .findAny()
-            .orElse(null);
-        if (savedProgrammeMembership == null
-            || savedProgrammeMembership.getConditionsOfJoining() == null) {
-          //2. new uuid PM, but with CoJ saved against old PM with delimited cm ids *THE PRESENT*
-          for (Curriculum curriculum : programmeMembership.getCurricula()) {
-            ProgrammeMembership oldProgrammeMembership
-                = existingProgrammeMemberships.stream()
-                .filter(i -> Arrays.stream(i.getTisId().split(","))
-                    .anyMatch(id -> id.equals(curriculum.getTisId())))
-                .findAny()
-                .orElse(null);
-            if (oldProgrammeMembership != null
-                && oldProgrammeMembership.getConditionsOfJoining() != null) {
-              ConditionsOfJoining savedCoj = oldProgrammeMembership.getConditionsOfJoining();
-              programmeMembership.setConditionsOfJoining(savedCoj);
-              break;
-            }
-          }
-        }
-      } catch (IllegalArgumentException e) {
-        //3. old cm-ids PM, with CoJ cached against old delimited cm ids *THE PAST*
-        for (String id : programmeMembership.getTisId().split(",")) {
-          Optional<ConditionsOfJoining> conditionsOfJoiningId
-              = cachingDelegate.getConditionsOfJoining(id);
-          conditionsOfJoiningId.ifPresent(programmeMembership::setConditionsOfJoining);
-          // All results should be the same, but iterating through all IDs ensures a clean cache.
-        }
+      // Restore the Conditions of Joining if it exists. This covers the (generally short-term)
+      // case when a CoJ has just been signed, but the data has not yet made the round-trip to TIS
+      // and tis-trainee-sync, enriching the incoming programme membership with this information.
+
+      UUID uuid = UUID.fromString(programmeMembership.getTisId());
+      ProgrammeMembership savedProgrammeMembership
+          = existingProgrammeMemberships.stream()
+          .filter(i -> i.getTisId().equals(uuid.toString()))
+          .findAny()
+          .orElse(null);
+      if (savedProgrammeMembership != null
+          && savedProgrammeMembership.getConditionsOfJoining() != null) {
+        ConditionsOfJoining savedCoj = savedProgrammeMembership.getConditionsOfJoining();
+        programmeMembership.setConditionsOfJoining(savedCoj);
       }
     }
 
@@ -146,25 +120,10 @@ public class ProgrammeMembershipService {
     existingProgrammeMemberships.stream()
         .filter(pm -> pm.getConditionsOfJoining() != null
             && pm.getConditionsOfJoining().signedAt() != null)
-        .flatMap(pm ->
-            Stream.of(pm.getTisId().split(",")).map(id -> {
-              ProgrammeMembership newPm = new ProgrammeMembership();
-              newPm.setTisId(id);
-              newPm.setConditionsOfJoining(pm.getConditionsOfJoining());
-              return newPm;
-            })
-        )
         .forEach(pm -> {
-          try {
-            //preferentially cache against new uuid
-            UUID uuid = UUID.fromString(pm.getTisId());
-            cachingDelegate.cacheConditionsOfJoining(uuid.toString(),
-                pm.getConditionsOfJoining());
-          } catch (IllegalArgumentException e) {
-            //fallback: cache against delimited ids
-            cachingDelegate.cacheConditionsOfJoining(pm.getTisId(),
-                pm.getConditionsOfJoining());
-          }
+          UUID uuid = UUID.fromString(pm.getTisId());
+          cachingDelegate.cacheConditionsOfJoining(uuid.toString(),
+              pm.getConditionsOfJoining());
         });
 
     existingProgrammeMemberships.clear();
@@ -181,7 +140,7 @@ public class ProgrammeMembershipService {
    * @return True, or False if a trainee with the ID was not found.
    */
   public boolean deleteProgrammeMembershipForTrainee(String traineeTisId,
-      String programmeMembershipId) {
+                                                     String programmeMembershipId) {
     TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
 
     if (traineeProfile == null) {
