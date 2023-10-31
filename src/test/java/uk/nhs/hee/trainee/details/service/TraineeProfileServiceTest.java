@@ -564,4 +564,22 @@ class TraineeProfileServiceTest {
     service.deleteTraineeProfileByTraineeTisId("1");
     verify(repository).deleteByTraineeTisId("1");
   }
+
+  @Test
+  void shouldReturnNullWhenEmailNotFoundByTisId() {
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(null);
+
+    String traineeEmail = service.getTraineeEmailByTisId(DEFAULT_TIS_ID_1);
+
+    assertThat("Unexpected trainee email.", traineeEmail, is(nullValue()));
+  }
+
+  @Test
+  void shouldFindEmailByTisId() {
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+
+    String traineeEmail = service.getTraineeEmailByTisId(DEFAULT_TIS_ID_1);
+
+    assertThat("Unexpected trainee email.", traineeEmail, is(PERSON_EMAIL));
+  }
 }

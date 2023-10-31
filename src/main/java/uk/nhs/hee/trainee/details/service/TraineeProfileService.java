@@ -115,6 +115,22 @@ public class TraineeProfileService {
   }
 
   /**
+   * Get the trainee email associated with the given id.
+   *
+   * @param id The TIS ID of the trainee.
+   * @return The trainee email, or null if trainee not found.
+   */
+  public String getTraineeEmailByTisId(String id) {
+    TraineeProfile traineeProfile = repository.findByTraineeTisId(id);
+
+    if (traineeProfile != null) {
+      return traineeProfile.getPersonalDetails().getEmail();
+    } else {
+      return null;
+    }
+  }
+
+  /**
    * Get the trainee ID(s) associated with the given email, GMC number and post code.
    *
    * @param email The email address of the trainee.

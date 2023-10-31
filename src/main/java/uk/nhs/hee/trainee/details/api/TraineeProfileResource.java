@@ -144,4 +144,21 @@ public class TraineeProfileResource {
       return ResponseEntity.ok(traineeIds.get(0));
     }
   }
+
+  /**
+   * Get the trainee email for a trainee TIS ID.
+   *
+   * @param id The TIS ID to search by.
+   * @return The matching trainee email.
+   */
+  @GetMapping("/trainee-email")
+  public ResponseEntity<String> getTraineeEmail(@RequestParam String id) {
+    String email = service.getTraineeEmailByTisId(id);
+
+    if (email == null) {
+      return ResponseEntity.notFound().build();
+    } else {
+      return ResponseEntity.ok(email);
+    }
+  }
 }

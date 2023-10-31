@@ -433,4 +433,22 @@ class TraineeProfileResourceTest {
         .andExpect(status().isNoContent())
         .andExpect(jsonPath("$").doesNotExist());
   }
+
+  @Test
+  void getEmailShouldReturnNotFoundWhenProfileNotFoundByTisId() throws Exception {
+    mockMvc.perform(get("/api/trainee-profile/trainee-email")
+            .contentType(MediaType.APPLICATION_JSON)
+            .param("id", "non existent tis id"))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void getEmailShouldReturnEmailWhenProfileFoundByTisId() throws Exception {
+    when(service.getTraineeEmailByTisId(DEFAULT_TIS_ID_1)).thenReturn(PERSON_EMAIL);
+    mockMvc.perform(get("/api/trainee-profile/trainee-email")
+            .param("id", DEFAULT_TIS_ID_1))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$").value(PERSON_EMAIL));
+  }
 }
