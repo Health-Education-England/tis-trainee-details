@@ -25,6 +25,7 @@ import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
@@ -112,6 +113,22 @@ public class TraineeProfileService {
     return traineeProfiles.stream()
         .map(TraineeProfile::getTraineeTisId)
         .collect(Collectors.toList());
+  }
+
+  /**
+   * Get the trainee email associated with the given id.
+   *
+   * @param tisId The TIS ID of the trainee.
+   * @return The trainee email, or optional empty if trainee not found or email missing.
+   */
+  public Optional<String> getTraineeEmailByTisId(String tisId) {
+    TraineeProfile traineeProfile = repository.findByTraineeTisId(tisId);
+
+    if (traineeProfile != null && traineeProfile.getPersonalDetails() != null) {
+      String email = traineeProfile.getPersonalDetails().getEmail();
+      return Optional.ofNullable(email);
+    }
+    return Optional.empty();
   }
 
   /**
