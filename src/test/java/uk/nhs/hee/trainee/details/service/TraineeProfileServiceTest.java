@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -566,20 +567,42 @@ class TraineeProfileServiceTest {
   }
 
   @Test
-  void shouldReturnNullWhenEmailNotFoundByTisId() {
+  void shouldReturnEmptyWhenTraineeNotFoundByTisId() {
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(null);
 
-    String traineeEmail = service.getTraineeEmailByTisId(DEFAULT_TIS_ID_1);
+    Optional<String> traineeEmail = service.getTraineeEmailByTisId(DEFAULT_TIS_ID_1);
 
-    assertThat("Unexpected trainee email.", traineeEmail, is(nullValue()));
+    assertThat("Unexpected trainee email.", traineeEmail, is(Optional.empty()));
+  }
+
+  @Test
+  void shouldReturnEmptyWhenPersonalDetailsNotFoundByTisId() {
+    traineeProfile.setPersonalDetails(null);
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+
+    Optional<String> traineeEmail = service.getTraineeEmailByTisId(DEFAULT_TIS_ID_1);
+
+    assertThat("Unexpected trainee email.", traineeEmail, is(Optional.empty()));
+  }
+
+  @Test
+  void shouldReturnEmptyWhenPersonalDetailsEmailNotFoundByTisId() {
+    PersonalDetails personalDetails = traineeProfile.getPersonalDetails();
+    personalDetails.setEmail(null);
+    traineeProfile.setPersonalDetails(personalDetails);
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+
+    Optional<String> traineeEmail = service.getTraineeEmailByTisId(DEFAULT_TIS_ID_1);
+
+    assertThat("Unexpected trainee email.", traineeEmail, is(Optional.empty()));
   }
 
   @Test
   void shouldFindEmailByTisId() {
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
 
-    String traineeEmail = service.getTraineeEmailByTisId(DEFAULT_TIS_ID_1);
+    Optional<String> traineeEmail = service.getTraineeEmailByTisId(DEFAULT_TIS_ID_1);
 
-    assertThat("Unexpected trainee email.", traineeEmail, is(PERSON_EMAIL));
+    assertThat("Unexpected trainee email.", traineeEmail, is(Optional.of(PERSON_EMAIL)));
   }
 }

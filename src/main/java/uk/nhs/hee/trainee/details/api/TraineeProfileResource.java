@@ -25,6 +25,7 @@ import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import javax.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -148,17 +149,17 @@ public class TraineeProfileResource {
   /**
    * Get the trainee email for a trainee TIS ID.
    *
-   * @param id The TIS ID to search by.
+   * @param tisId The TIS ID to search by.
    * @return The matching trainee email.
    */
-  @GetMapping("/trainee-email")
-  public ResponseEntity<String> getTraineeEmail(@RequestParam String id) {
-    String email = service.getTraineeEmailByTisId(id);
+  @GetMapping("/trainee-email/{tisId}")
+  public ResponseEntity<String> getTraineeEmail(@PathVariable String tisId) {
+    Optional<String> email = service.getTraineeEmailByTisId(tisId);
 
-    if (email == null) {
+    if (email.isEmpty()) {
       return ResponseEntity.notFound().build();
     } else {
-      return ResponseEntity.ok(email);
+      return ResponseEntity.of(email);
     }
   }
 }
