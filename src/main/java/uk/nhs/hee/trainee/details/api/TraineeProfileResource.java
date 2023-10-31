@@ -156,10 +156,6 @@ public class TraineeProfileResource {
   public ResponseEntity<String> getTraineeEmail(@PathVariable String tisId) {
     Optional<String> email = service.getTraineeEmailByTisId(tisId);
 
-    if (email.isEmpty()) {
-      return ResponseEntity.notFound().build();
-    } else {
-      return ResponseEntity.of(email);
-    }
+    return ResponseEntity.of(email);
   }
 }

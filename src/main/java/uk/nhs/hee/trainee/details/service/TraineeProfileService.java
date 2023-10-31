@@ -126,9 +126,7 @@ public class TraineeProfileService {
 
     if (traineeProfile != null && traineeProfile.getPersonalDetails() != null) {
       String email = traineeProfile.getPersonalDetails().getEmail();
-      if (email != null) {
-        return Optional.of(email);
-      }
+      return Optional.ofNullable(email);
     }
     return Optional.empty();
   }
