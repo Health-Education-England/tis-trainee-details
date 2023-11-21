@@ -50,6 +50,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.nhs.hee.trainee.details.dto.UserAccountDetails;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
 import uk.nhs.hee.trainee.details.model.Curriculum;
@@ -570,9 +571,9 @@ class TraineeProfileServiceTest {
   void shouldReturnEmptyWhenTraineeNotFoundByTisId() {
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(null);
 
-    Optional<String> traineeEmail = service.getTraineeEmailByTisId(DEFAULT_TIS_ID_1);
+    Optional<UserAccountDetails> detail = service.getTraineeAccountDetailsByTisId(DEFAULT_TIS_ID_1);
 
-    assertThat("Unexpected trainee email.", traineeEmail, is(Optional.empty()));
+    assertThat("Unexpected trainee account details.", detail, is(Optional.empty()));
   }
 
   @Test
@@ -580,29 +581,20 @@ class TraineeProfileServiceTest {
     traineeProfile.setPersonalDetails(null);
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
 
-    Optional<String> traineeEmail = service.getTraineeEmailByTisId(DEFAULT_TIS_ID_1);
+    Optional<UserAccountDetails> detail = service.getTraineeAccountDetailsByTisId(DEFAULT_TIS_ID_1);
 
-    assertThat("Unexpected trainee email.", traineeEmail, is(Optional.empty()));
+    assertThat("Unexpected trainee account details.", detail, is(Optional.empty()));
   }
 
   @Test
-  void shouldReturnEmptyWhenPersonalDetailsEmailNotFoundByTisId() {
-    PersonalDetails personalDetails = traineeProfile.getPersonalDetails();
-    personalDetails.setEmail(null);
-    traineeProfile.setPersonalDetails(personalDetails);
+  void shouldFindAccountDetailsByTisId() {
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
 
-    Optional<String> traineeEmail = service.getTraineeEmailByTisId(DEFAULT_TIS_ID_1);
+    Optional<UserAccountDetails> detail = service.getTraineeAccountDetailsByTisId(DEFAULT_TIS_ID_1);
 
-    assertThat("Unexpected trainee email.", traineeEmail, is(Optional.empty()));
-  }
-
-  @Test
-  void shouldFindEmailByTisId() {
-    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
-
-    Optional<String> traineeEmail = service.getTraineeEmailByTisId(DEFAULT_TIS_ID_1);
-
-    assertThat("Unexpected trainee email.", traineeEmail, is(Optional.of(PERSON_EMAIL)));
+    assertThat("Unexpected missing account details.", detail.isPresent(), is(true));
+    assertThat("Unexpected trainee email.", detail.get().email(), is(PERSON_EMAIL));
+    assertThat("Unexpected trainee family name.", detail.get().familyName(),
+        is(PERSON_SURNAME));
   }
 }

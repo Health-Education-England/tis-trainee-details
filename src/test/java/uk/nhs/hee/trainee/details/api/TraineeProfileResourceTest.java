@@ -52,6 +52,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import uk.nhs.hee.trainee.details.TestJwtUtil;
+import uk.nhs.hee.trainee.details.dto.UserAccountDetails;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 import uk.nhs.hee.trainee.details.dto.signature.Signature;
@@ -436,19 +437,21 @@ class TraineeProfileResourceTest {
   }
 
   @Test
-  void getEmailShouldReturnNotFoundWhenProfileNotFoundByTisId() throws Exception {
-    mockMvc.perform(get("/api/trainee-profile/trainee-email/non-existent-tisid"))
+  void getUserAccountShouldReturnNotFoundWhenProfileNotFoundByTisId() throws Exception {
+    mockMvc.perform(get("/api/trainee-profile/account-details/non-existent-tisid"))
         .andExpect(status().isNotFound());
   }
 
   @Test
-  void getEmailShouldReturnEmailWhenProfileFoundByTisId() throws Exception {
-    when(service.getTraineeEmailByTisId(DEFAULT_TIS_ID_1)).thenReturn(Optional.of(PERSON_EMAIL));
+  void getUserAccountShouldReturnAccountDetailsWhenProfileFoundByTisId() throws Exception {
+    when(service.getTraineeAccountDetailsByTisId(DEFAULT_TIS_ID_1))
+        .thenReturn(Optional.of(new UserAccountDetails(PERSON_EMAIL, PERSON_SURNAME)));
 
-    mockMvc.perform(get("/api/trainee-profile/trainee-email/{tisId}", DEFAULT_TIS_ID_1)
+    mockMvc.perform(get("/api/trainee-profile/account-details/{tisId}", DEFAULT_TIS_ID_1)
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$").value(PERSON_EMAIL));
+        .andExpect(jsonPath("$.email").value(PERSON_EMAIL))
+        .andExpect(jsonPath("$.familyName").value(PERSON_SURNAME));
   }
 }
