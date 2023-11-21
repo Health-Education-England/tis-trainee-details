@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
+import uk.nhs.hee.trainee.details.dto.UserAccountDetails;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
@@ -121,12 +122,13 @@ public class TraineeProfileService {
    * @param tisId The TIS ID of the trainee.
    * @return The trainee email, or optional empty if trainee not found or email missing.
    */
-  public Optional<String> getTraineeEmailByTisId(String tisId) {
+  public Optional<UserAccountDetails> getTraineeAccountDetailsByTisId(String tisId) {
     TraineeProfile traineeProfile = repository.findByTraineeTisId(tisId);
 
     if (traineeProfile != null && traineeProfile.getPersonalDetails() != null) {
       String email = traineeProfile.getPersonalDetails().getEmail();
-      return Optional.ofNullable(email);
+      String familyName = traineeProfile.getPersonalDetails().getSurname();
+      return Optional.of(new UserAccountDetails(email, familyName));
     }
     return Optional.empty();
   }
