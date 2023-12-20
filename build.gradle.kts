@@ -6,7 +6,7 @@ plugins {
   // Code Quality
   checkstyle
   jacoco
-  id("org.sonarqube") version "4.4.0.3356"
+  id("org.sonarqube") version "4.4.1.3373"
 }
 
 group = "uk.nhs.hee.trainee.details"
