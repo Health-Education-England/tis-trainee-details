@@ -66,15 +66,15 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-amqp")
 }
 
-checkstyle {
-  config = resources.text.fromArchiveEntry(configurations.checkstyle.get().first(), "google_checks.xml")
-}
-
 java {
   toolchain {
     languageVersion.set(JavaLanguageVersion.of(17))
     vendor.set(JvmVendorSpec.ADOPTIUM)
   }
+}
+
+checkstyle {
+  config = resources.text.fromArchiveEntry(configurations.checkstyle.get().first(), "google_checks.xml")
 }
 
 sonarqube {
