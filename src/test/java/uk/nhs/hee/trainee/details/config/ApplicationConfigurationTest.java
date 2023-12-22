@@ -21,12 +21,17 @@
 
 package uk.nhs.hee.trainee.details.config;
 
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.messaging.converter.MappingJackson2MessageConverter;
+import org.springframework.messaging.converter.MessageConverter;
 import org.springframework.web.client.RestTemplate;
 
 class ApplicationConfigurationTest {
@@ -45,5 +50,18 @@ class ApplicationConfigurationTest {
     RestTemplate restTemplate = configuration.restTemplate(restTemplateBuilder);
 
     assertThat("Unexpected rest template.", restTemplate, notNullValue());
+  }
+
+  @Test
+  void shouldIncludeExistingObjectMapperInMessageConverter() {
+    ObjectMapper objectMapper = new ObjectMapper();
+
+    MessageConverter messageConverter = configuration.messageConverter(objectMapper);
+
+    assertThat("Unexpected message converter.", messageConverter,
+        instanceOf(MappingJackson2MessageConverter.class));
+    assertThat("Unexpected object mapper.",
+        ((MappingJackson2MessageConverter) messageConverter).getObjectMapper(),
+        sameInstance(objectMapper));
   }
 }

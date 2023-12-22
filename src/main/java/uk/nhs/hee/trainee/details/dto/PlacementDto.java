@@ -22,9 +22,9 @@
 package uk.nhs.hee.trainee.details.dto;
 
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
+import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.util.Set;
-import javax.validation.constraints.NotNull;
 import lombok.Data;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 import uk.nhs.hee.trainee.details.dto.signature.Signature;

@@ -21,9 +21,9 @@
 
 package uk.nhs.hee.trainee.details.dto;
 
+import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.util.List;
-import javax.validation.constraints.NotNull;
 import lombok.Data;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 import uk.nhs.hee.trainee.details.dto.signature.Signature;

@@ -23,9 +23,9 @@ package uk.nhs.hee.trainee.details.service;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
 import io.sentry.Sentry;
+import jakarta.annotation.PostConstruct;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
@@ -51,8 +51,8 @@ public class RabbitPublishService {
       = new ConcurrentHashMap<>();
 
   RabbitPublishService(@Value("${application.rabbit.coj-signed.exchange}") String rabbitExchange,
-                       @Value("${application.rabbit.coj-signed.routing-key}") String routingKey,
-                       RabbitTemplate rabbitTemplate) {
+      @Value("${application.rabbit.coj-signed.routing-key}") String routingKey,
+      RabbitTemplate rabbitTemplate) {
     this.rabbitExchange = rabbitExchange;
     this.routingKey = routingKey;
     this.rabbitTemplate = rabbitTemplate;

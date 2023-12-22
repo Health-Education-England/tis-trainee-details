@@ -1,6 +1,6 @@
 plugins {
   java
-  id("org.springframework.boot") version "2.7.5"
+  id("org.springframework.boot") version "3.2.1"
   id("io.spring.dependency-management") version "1.1.4"
 
   // Code Quality
@@ -25,7 +25,7 @@ repositories {
 dependencyManagement {
   imports {
     mavenBom("org.springframework.cloud:spring-cloud-dependencies:2023.0.0")
-    mavenBom("io.awspring.cloud:spring-cloud-aws-dependencies:2.4.4")
+    mavenBom("io.awspring.cloud:spring-cloud-aws-dependencies:3.0.3")
   }
 }
 
@@ -53,13 +53,13 @@ dependencies {
 
   val mongockVersion = "5.3.6"
   implementation("io.mongock:mongock-springboot:${mongockVersion}")
-  implementation("io.mongock:mongodb-springdata-v3-driver:${mongockVersion}")
+  implementation("io.mongock:mongodb-springdata-v4-driver:${mongockVersion}")
 
   // Sentry reporting
   implementation("io.sentry:sentry-spring-boot-starter:6.32.0")
 
   // Amazon AWS
-  implementation("io.awspring.cloud:spring-cloud-starter-aws-messaging")
+  implementation("io.awspring.cloud:spring-cloud-aws-starter-sqs")
   implementation("com.amazonaws:aws-xray-recorder-sdk-spring:2.15.0")
 
   // Rabbit MQ

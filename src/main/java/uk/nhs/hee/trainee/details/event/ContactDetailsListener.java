@@ -21,9 +21,7 @@
 
 package uk.nhs.hee.trainee.details.event;
 
-import static io.awspring.cloud.messaging.listener.SqsMessageDeletionPolicy.ON_SUCCESS;
-
-import io.awspring.cloud.messaging.listener.annotation.SqsListener;
+import io.awspring.cloud.sqs.annotation.SqsListener;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -53,7 +51,7 @@ public class ContactDetailsListener {
    *
    * @param event The sync event containing the contact details.
    */
-  @SqsListener(value = "${application.aws.sqs.contact-details-update}", deletionPolicy = ON_SUCCESS)
+  @SqsListener("${application.aws.sqs.contact-details-update}")
   void updateContactDetails(PersonalDetailsUpdateEvent event) {
     String tisId = event.tisId();
     log.info("Update contact details of trainee with TIS ID {}", tisId);

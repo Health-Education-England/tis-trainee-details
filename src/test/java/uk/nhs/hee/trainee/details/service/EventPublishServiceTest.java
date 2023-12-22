@@ -27,7 +27,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-import io.awspring.cloud.messaging.core.QueueMessagingTemplate;
+import io.awspring.cloud.sqs.operations.SqsTemplate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -38,11 +38,11 @@ class EventPublishServiceTest {
 
   private static final String QUEUE_URL = "queue.url";
   private EventPublishService eventPublishService;
-  private QueueMessagingTemplate messagingTemplate;
+  private SqsTemplate messagingTemplate;
 
   @BeforeEach
   void setUp() {
-    messagingTemplate = mock(QueueMessagingTemplate.class);
+    messagingTemplate = mock(SqsTemplate.class);
     eventPublishService = new EventPublishService(messagingTemplate, QUEUE_URL);
   }
 
@@ -55,7 +55,7 @@ class EventPublishServiceTest {
 
     ArgumentCaptor<ProfileCreateEvent> eventCaptor = ArgumentCaptor.forClass(
         ProfileCreateEvent.class);
-    verify(messagingTemplate).convertAndSend(eq(QUEUE_URL), eventCaptor.capture());
+    verify(messagingTemplate).send(eq(QUEUE_URL), eventCaptor.capture());
 
     ProfileCreateEvent event = eventCaptor.getValue();
     assertThat("Unexpected trainee ID.", event.getTraineeTisId(), is("10"));
