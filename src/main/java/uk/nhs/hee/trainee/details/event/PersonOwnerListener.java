@@ -21,9 +21,7 @@
 
 package uk.nhs.hee.trainee.details.event;
 
-import static io.awspring.cloud.messaging.listener.SqsMessageDeletionPolicy.ON_SUCCESS;
-
-import io.awspring.cloud.messaging.listener.annotation.SqsListener;
+import io.awspring.cloud.sqs.annotation.SqsListener;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -53,7 +51,7 @@ public class PersonOwnerListener {
    *
    * @param event The sync event containing the person owner data.
    */
-  @SqsListener(value = "${application.aws.sqs.person-owner-update}", deletionPolicy = ON_SUCCESS)
+  @SqsListener("${application.aws.sqs.person-owner-update}")
   void updatePersonOwner(PersonalDetailsUpdateEvent event) {
     String tisId = event.tisId();
     log.info("Update person owner of trainee with TIS ID {}", tisId);

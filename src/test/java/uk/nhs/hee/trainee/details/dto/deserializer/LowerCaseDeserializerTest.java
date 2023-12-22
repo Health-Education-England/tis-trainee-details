@@ -28,6 +28,7 @@ import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.JsonTokenId;
 import java.io.IOException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,6 +45,7 @@ class LowerCaseDeserializerTest {
   @Test
   void shouldDeserializeToLowerCase() throws IOException {
     JsonParser parser = mock(JsonParser.class);
+    when(parser.currentTokenId()).thenReturn(JsonTokenId.ID_STRING);
     when(parser.hasToken(JsonToken.VALUE_STRING)).thenReturn(true);
     when(parser.getText()).thenReturn("UPPER_CASE");
 

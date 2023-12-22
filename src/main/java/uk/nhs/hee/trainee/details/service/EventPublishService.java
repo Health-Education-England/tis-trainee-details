@@ -22,7 +22,7 @@
 package uk.nhs.hee.trainee.details.service;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
-import io.awspring.cloud.messaging.core.QueueMessagingTemplate;
+import io.awspring.cloud.sqs.operations.SqsTemplate;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -37,10 +37,10 @@ import uk.nhs.hee.trainee.details.model.TraineeProfile;
 @XRayEnabled
 public class EventPublishService {
 
-  private final QueueMessagingTemplate messagingTemplate;
+  private final SqsTemplate messagingTemplate;
   private final String eventQueueUrl;
 
-  EventPublishService(QueueMessagingTemplate messagingTemplate,
+  EventPublishService(SqsTemplate messagingTemplate,
       @Value("${application.aws.sqs.event}") String eventQueueUrl) {
     this.messagingTemplate = messagingTemplate;
     this.eventQueueUrl = eventQueueUrl;
@@ -55,6 +55,6 @@ public class EventPublishService {
     log.info("Sending profile creation event for trainee id '{}'", profile.getTraineeTisId());
 
     ProfileCreateEvent event = new ProfileCreateEvent(profile.getTraineeTisId());
-    messagingTemplate.convertAndSend(eventQueueUrl, event);
+    messagingTemplate.send(eventQueueUrl, event);
   }
 }

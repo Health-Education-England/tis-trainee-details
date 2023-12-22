@@ -23,6 +23,7 @@ package uk.nhs.hee.trainee.details.dto.deserializer;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.deser.impl.NullsConstantProvider;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import java.io.IOException;
 
@@ -37,6 +38,6 @@ public class LowerCaseDeserializer extends StdDeserializer<String> {
 
   @Override
   public String deserialize(JsonParser parser, DeserializationContext context) throws IOException {
-    return _parseString(parser, context).toLowerCase();
+    return _parseString(parser, context, NullsConstantProvider.nuller()).toLowerCase();
   }
 }

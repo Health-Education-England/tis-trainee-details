@@ -21,9 +21,7 @@
 
 package uk.nhs.hee.trainee.details.event;
 
-import static io.awspring.cloud.messaging.listener.SqsMessageDeletionPolicy.ON_SUCCESS;
-
-import io.awspring.cloud.messaging.listener.annotation.SqsListener;
+import io.awspring.cloud.sqs.annotation.SqsListener;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
@@ -53,7 +51,7 @@ public class BasicDetailsListener {
    *
    * @param event The sync event containing the basic details.
    */
-  @SqsListener(value = "${application.aws.sqs.basic-details-update}", deletionPolicy = ON_SUCCESS)
+  @SqsListener("${application.aws.sqs.basic-details-update}")
   void updateBasicDetails(PersonalDetailsUpdateEvent event) {
     String tisId = event.tisId();
     log.info("Update basic details of trainee with TIS ID {}", tisId);

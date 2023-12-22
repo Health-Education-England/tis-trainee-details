@@ -27,13 +27,12 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.ConstructorBinding;
+import org.springframework.boot.context.properties.bind.ConstructorBinding;
 import uk.nhs.hee.trainee.details.dto.signature.SignedDto;
 
 /**
  * Configuration properties for DTO signatures.
  */
-@ConstructorBinding
 @ConfigurationProperties(prefix = "application.signature")
 public final class SignatureConfigurationProperties {
 
@@ -48,6 +47,7 @@ public final class SignatureConfigurationProperties {
    * @param expireAfter A map where the value is a DTO class name and the value is how long, in
    *                    minutes, the signature for that DTO should be valid.
    */
+  @ConstructorBinding
   public SignatureConfigurationProperties(String secretKey, Map<String, Long> expireAfter) {
     this.secretKey = secretKey;
     this.expireAfter = expireAfter.entrySet().stream()
