@@ -6,11 +6,11 @@ plugins {
   // Code Quality
   checkstyle
   jacoco
-  id("org.sonarqube") version "4.4.0.3356"
+  id("org.sonarqube") version "4.4.1.3373"
 }
 
 group = "uk.nhs.hee.trainee.details"
-version = "0.33.1"
+version = "0.33.2"
 
 configurations {
   compileOnly {
@@ -39,7 +39,7 @@ dependencies {
 
   testImplementation("org.springframework.boot:spring-boot-starter-test")
   testImplementation("org.springframework.cloud:spring-cloud-starter-bootstrap")
-  testImplementation("com.playtika.testcontainers:embedded-redis:3.0.6")
+  testImplementation("com.playtika.testcontainers:embedded-redis:3.1.1")
   testImplementation("org.testcontainers:junit-jupiter:1.19.3")
 
   // Lombok
@@ -56,7 +56,7 @@ dependencies {
   implementation("io.mongock:mongodb-springdata-v4-driver:${mongockVersion}")
 
   // Sentry reporting
-  implementation("io.sentry:sentry-spring-boot-starter:6.32.0")
+  implementation("io.sentry:sentry-spring-boot-starter:7.1.0")
 
   // Amazon AWS
   implementation("io.awspring.cloud:spring-cloud-aws-starter-sqs")
