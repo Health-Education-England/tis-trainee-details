@@ -56,7 +56,7 @@ dependencies {
   implementation("io.mongock:mongodb-springdata-v4-driver:${mongockVersion}")
 
   // Sentry reporting
-  implementation("io.sentry:sentry-spring-boot-starter:7.1.0")
+  implementation("io.sentry:sentry-spring-boot-starter:7.2.0")
 
   // Amazon AWS
   implementation("io.awspring.cloud:spring-cloud-aws-starter-sqs")
