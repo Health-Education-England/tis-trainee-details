@@ -94,7 +94,7 @@ class TraineeProfileServiceTest {
   private static final String PERSON_POSTCODE = "SW1A1AA";
   private static final String PERSON_GMC = "1111111";
 
-  private static final String PROGRAMME_MEMBERSHIP_TISID = "123";
+  private static final String PROGRAMME_MEMBERSHIP_TISID = UUID.randomUUID().toString();
   private static final String PROGRAMME_TISID = "1";
   private static final String PROGRAMME_NAME = "General Practice";
   private static final String PROGRAMME_NUMBER = "EOE8950";
@@ -247,22 +247,6 @@ class TraineeProfileServiceTest {
     TraineeProfile returnedTraineeProfile = service.hidePastProgrammes(traineeProfile);
     assertThat(returnedTraineeProfile.getProgrammeMemberships().size(), is(1));
     assertThat(returnedTraineeProfile.getProgrammeMemberships(), hasItem(programmeMembership));
-  }
-
-  @Test
-  void hideDeprecatedProgrammesShouldHideDeprecatedProgrammes() {
-    var programmeMembership2 = new ProgrammeMembership();
-    programmeMembership2.setTisId("456,7,8934");
-    var programmeMembership3 = new ProgrammeMembership();
-    programmeMembership3.setTisId(UUID.randomUUID().toString());
-
-    List<ProgrammeMembership> programmeMemberships = traineeProfile.getProgrammeMemberships();
-    programmeMemberships.add(programmeMembership2);
-    programmeMemberships.add(programmeMembership3);
-
-    TraineeProfile returnedTraineeProfile = service.hideDeprecatedProgrammes(traineeProfile);
-    assertThat(returnedTraineeProfile.getProgrammeMemberships().size(), is(1));
-    assertThat(returnedTraineeProfile.getProgrammeMemberships(), hasItem(programmeMembership3));
   }
 
   @Test

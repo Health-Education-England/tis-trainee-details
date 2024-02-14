@@ -53,6 +53,7 @@ class RabbitPublishServiceTest {
 
   private static final String RABBIT_EXCHANGE = "rabbit.exchange";
   private static final String RABBIT_ROUTING_KEY = "routing.key";
+  private static final String TIS_ID = UUID.randomUUID().toString();
 
   @InjectMocks
   RabbitPublishService rabbitPublishService;
@@ -69,7 +70,7 @@ class RabbitPublishServiceTest {
   @Test
   void shouldPublishCojSignedEvent() {
     ProgrammeMembership programmeMembership = new ProgrammeMembership();
-    programmeMembership.setTisId("123");
+    programmeMembership.setTisId(TIS_ID);
     Instant signedAt = Instant.now();
     ConditionsOfJoining conditionsOfJoining
         = new ConditionsOfJoining(signedAt, GoldGuideVersion.GG9, null);
@@ -85,7 +86,7 @@ class RabbitPublishServiceTest {
 
     CojSignedEvent event = eventCaptor.getValue();
     assertThat("Unexpected programme membership ID.",
-        event.getProgrammeMembershipTisId(), is("123"));
+        event.getProgrammeMembershipTisId(), is(TIS_ID));
     ConditionsOfJoining conditionsOfJoiningSent = event.getConditionsOfJoining();
     assertThat("Unexpected CoJ Signed At",
         conditionsOfJoiningSent.signedAt(), is(signedAt));
@@ -96,54 +97,9 @@ class RabbitPublishServiceTest {
   }
 
   @Test
-  void shouldPublishCojSignedEventWithSimplifiedId() {
-    ProgrammeMembership programmeMembership = new ProgrammeMembership();
-    programmeMembership.setTisId("123,456,7890");
-    Instant signedAt = Instant.now();
-    ConditionsOfJoining conditionsOfJoining
-        = new ConditionsOfJoining(signedAt, GoldGuideVersion.GG9, null);
-    programmeMembership.setConditionsOfJoining(conditionsOfJoining);
-
-    rabbitPublishService.publishCojSignedEvent(programmeMembership);
-
-    ArgumentCaptor<CojSignedEvent> eventCaptor = ArgumentCaptor.forClass(
-        CojSignedEvent.class);
-
-    verify(rabbitTemplate).convertAndSend(any(), any(), eventCaptor.capture(),
-        any(CorrelationData.class));
-
-    CojSignedEvent event = eventCaptor.getValue();
-    assertThat("Unexpected programme membership ID.",
-        event.getProgrammeMembershipTisId(), is("123"));
-  }
-
-  @Test
-  void shouldPublishCojSignedEventWithUuid() {
-    UUID uuid = UUID.randomUUID();
-    ProgrammeMembership programmeMembership = new ProgrammeMembership();
-    programmeMembership.setTisId(uuid.toString());
-    Instant signedAt = Instant.now();
-    ConditionsOfJoining conditionsOfJoining
-        = new ConditionsOfJoining(signedAt, GoldGuideVersion.GG9, null);
-    programmeMembership.setConditionsOfJoining(conditionsOfJoining);
-
-    rabbitPublishService.publishCojSignedEvent(programmeMembership);
-
-    ArgumentCaptor<CojSignedEvent> eventCaptor = ArgumentCaptor.forClass(
-        CojSignedEvent.class);
-
-    verify(rabbitTemplate).convertAndSend(any(), any(), eventCaptor.capture(),
-        any(CorrelationData.class));
-
-    CojSignedEvent event = eventCaptor.getValue();
-    assertThat("Unexpected programme membership ID.",
-        event.getProgrammeMembershipTisId(), is(uuid.toString()));
-  }
-
-  @Test
   void shouldPublishCojSignedEventWithPmCorrelationId() {
     ProgrammeMembership programmeMembership = new ProgrammeMembership();
-    programmeMembership.setTisId("123,456,7890");
+    programmeMembership.setTisId(TIS_ID);
     Instant signedAt = Instant.now();
     ConditionsOfJoining conditionsOfJoining
         = new ConditionsOfJoining(signedAt, GoldGuideVersion.GG9, null);
@@ -158,18 +114,18 @@ class RabbitPublishServiceTest {
         correlationCaptor.capture());
 
     CorrelationData correlation = correlationCaptor.getValue();
-    assertThat("Unexpected correlation ID.", correlation.getId(), is("123,456,7890"));
+    assertThat("Unexpected correlation ID.", correlation.getId(), is(TIS_ID));
   }
 
   @ParameterizedTest()
   @ValueSource(booleans = {true, false})
   void shouldRemoveCallbackedMessageFromOutstandingConfirms(boolean isAck) {
     ProgrammeMembership programmeMembership = new ProgrammeMembership();
-    programmeMembership.setTisId("123");
+    programmeMembership.setTisId(TIS_ID);
     rabbitPublishService.outstandingConfirms.clear();
     rabbitPublishService.outstandingConfirms.put(programmeMembership.getTisId(),
         programmeMembership);
-    CorrelationData correlationData = new CorrelationData("123");
+    CorrelationData correlationData = new CorrelationData(TIS_ID);
 
     rabbitPublishService.handleRabbitAcknowledgement(isAck, correlationData);
 
@@ -191,7 +147,7 @@ class RabbitPublishServiceTest {
         .convertAndSend(any(), any(), any(CojSignedEvent.class), any(CorrelationData.class));
 
     ProgrammeMembership programmeMembership = new ProgrammeMembership();
-    programmeMembership.setTisId("123");
+    programmeMembership.setTisId(TIS_ID);
     Instant signedAt = Instant.now();
     ConditionsOfJoining conditionsOfJoining
         = new ConditionsOfJoining(signedAt, GoldGuideVersion.GG9, null);
