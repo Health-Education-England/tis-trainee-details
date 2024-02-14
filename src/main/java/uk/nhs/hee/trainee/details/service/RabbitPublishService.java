@@ -107,15 +107,9 @@ public class RabbitPublishService {
 
     ConditionsOfJoining conditionsOfJoining = programmeMembership.getConditionsOfJoining();
 
-    // FIXME: remove deprecated (non-uuid) tisId
     CojSignedEvent event;
-    try {
-      UUID uuid = UUID.fromString(programmeMembership.getTisId());
-      event = new CojSignedEvent(uuid.toString(), conditionsOfJoining);
-    } catch (IllegalArgumentException e) {
-      String firstPmId = programmeMembership.getTisId().split(",")[0];
-      event = new CojSignedEvent(firstPmId, conditionsOfJoining);
-    }
+    UUID uuid = UUID.fromString(programmeMembership.getTisId());
+    event = new CojSignedEvent(uuid.toString(), conditionsOfJoining);
 
     outstandingConfirms.putIfAbsent(programmeMembership.getTisId(), programmeMembership);
     try {

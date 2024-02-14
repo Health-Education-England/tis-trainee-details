@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "uk.nhs.hee.trainee.details"
-version = "0.33.2"
+version = "1.0.0"
 
 configurations {
   compileOnly {
