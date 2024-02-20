@@ -31,6 +31,8 @@ public class Curriculum {
   private String curriculumTisId;
   private String curriculumName;
   private String curriculumSubType;
+  private String curriculumSpecialty;
+  private String curriculumSpecialtyCode;
   private LocalDate curriculumStartDate;
   private LocalDate curriculumEndDate;
 }
