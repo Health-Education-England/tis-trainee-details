@@ -28,6 +28,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -314,5 +315,35 @@ class ProgrammeMembershipResourceTest {
             .value(is(GoldGuideVersion.GG9.toString())))
         .andExpect(jsonPath("$.conditionsOfJoining.syncedAt")
             .isEmpty());
+  }
+
+  @Test
+  void shouldReturnProgrammeMembershipNewStarterWhenTraineeFound() throws Exception {
+    when(service
+        .isNewStarter("40", "1"))
+        .thenReturn(true);
+
+    MvcResult result = mockMvc.perform(
+            get("/api/programme-membership/isnewstarter/{traineeTisId}/{programmeMembershipId}",
+                "40", "1")
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andReturn();
+
+    Boolean resultBoolean = Boolean.parseBoolean(result.getResponse().getContentAsString());
+    assertThat("Unexpected result.", resultBoolean, is(true));
+  }
+
+  @Test
+  void shouldThrowBadRequestWhenProgrammeMembershipNewStarterException() throws Exception {
+    when(service
+        .isNewStarter("triggersError", "1"))
+        .thenThrow(new IllegalArgumentException());
+
+    mockMvc.perform(
+            get("/api/programme-membership/isnewstarter/{traineeTisId}/{programmeMembershipId}",
+                "triggersError", "1")
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest());
   }
 }
