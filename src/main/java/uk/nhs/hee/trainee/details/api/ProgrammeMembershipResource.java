@@ -61,7 +61,7 @@ public class ProgrammeMembershipResource {
    * ProgrammeMembershipResource class constructor.
    */
   public ProgrammeMembershipResource(ProgrammeMembershipService service,
-      ProgrammeMembershipMapper mapper, RabbitPublishService rabbitPublishService) {
+                                     ProgrammeMembershipMapper mapper, RabbitPublishService rabbitPublishService) {
     this.service = service;
     this.mapper = mapper;
     this.rabbitPublishService = rabbitPublishService;
@@ -168,6 +168,13 @@ public class ProgrammeMembershipResource {
     return ResponseEntity.ok(mapper.toDto(entity));
   }
 
+  /**
+   * Determine whether the given programme membership represents a 'new starter' event or not.
+   *
+   * @param traineeTisId          The ID of the trainee.
+   * @param programmeMembershipId The ID of the programme membership to assess.
+   * @return True if the programme membership is a new starter, otherwise false.
+   */
   @GetMapping("/isnewstarter/{traineeTisId}/{programmeMembershipId}")
   public ResponseEntity<Boolean> isNewStarter(
       @PathVariable(name = "traineeTisId") String traineeTisId,
