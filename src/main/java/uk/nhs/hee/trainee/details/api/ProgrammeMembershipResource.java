@@ -31,6 +31,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -165,5 +166,20 @@ public class ProgrammeMembershipResource {
     rabbitPublishService.publishCojSignedEvent(entity);
 
     return ResponseEntity.ok(mapper.toDto(entity));
+  }
+
+  @GetMapping("/isnewstarter/{traineeTisId}/{programmeMembershipId}")
+  public ResponseEntity<Boolean> isNewStarter(
+      @PathVariable(name = "traineeTisId") String traineeTisId,
+      @PathVariable(name = "programmeMembershipId") String programmeMembershipId) {
+    log.info("Assess new starter status: programme membership {} of trainee with TIS ID {}",
+        programmeMembershipId, traineeTisId);
+    try {
+      boolean isNewStarter = service.isNewStarter(traineeTisId, programmeMembershipId);
+      return ResponseEntity.ok(isNewStarter);
+    } catch (IllegalArgumentException | InvalidDataAccessApiUsageException e) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getLocalizedMessage());
+      // other exceptions are possible, e.g. DataAccessException if MongoDB is down
+    }
   }
 }
