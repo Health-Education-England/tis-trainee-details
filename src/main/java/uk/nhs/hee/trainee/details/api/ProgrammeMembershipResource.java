@@ -61,7 +61,7 @@ public class ProgrammeMembershipResource {
    * ProgrammeMembershipResource class constructor.
    */
   public ProgrammeMembershipResource(ProgrammeMembershipService service,
-         ProgrammeMembershipMapper mapper, RabbitPublishService rabbitPublishService) {
+       ProgrammeMembershipMapper mapper, RabbitPublishService rabbitPublishService) {
     this.service = service;
     this.mapper = mapper;
     this.rabbitPublishService = rabbitPublishService;
