@@ -256,15 +256,15 @@ public class ProgrammeMembershipService {
     //if there are no preceding PMs, it is a new starter
     List<ProgrammeMembership> precedingPms = getRecentPrecedingPms(programmeMembership, otherPms);
     if (precedingPms.isEmpty()) {
-      log.info("New starter: [true] there are no preceding programme memberships " +
-          "that ended within {} days", PROGRAMME_BREAK_DAYS);
+      log.info("New starter: [true] there are no preceding programme memberships "
+          + "that ended within {} days", PROGRAMME_BREAK_DAYS);
       return true;
     }
 
     //if none of the preceding PMs are intra-deanery transfer or rota PMs, it is a new starter
     List<ProgrammeMembership> intraOrRotaPms = getIntraOrRotaPms(programmeMembership, precedingPms);
     log.info("New starter: [{}] there are {} preceding intra-deanery / rota programme memberships ",
-        intraOrRotaPms.isEmpty()? "true" : "false", intraOrRotaPms.size());
+        intraOrRotaPms.isEmpty() ? "true" : "false", intraOrRotaPms.size());
     return intraOrRotaPms.isEmpty();
     //otherwise it is not a new starter
   }
