@@ -663,8 +663,6 @@ class ProgrammeMembershipServiceTest {
 
   @Test
   void newStarterShouldBeFalseIfPrecedingPmWithMultipleCurriculaIsIntraOrRota() {
-    List<ProgrammeMembership> pms
-        = new java.util.ArrayList<>(List.of(getProgrammeMembershipDefault()));
     //preceding PM with non-matching curriculum specialty code
     ProgrammeMembership rotaPm = getProgrammeMembershipWithOneCurriculum("another id",
         PROGRAMME_MEMBERSHIP_TYPE, START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 100),
@@ -675,6 +673,9 @@ class ProgrammeMembershipServiceTest {
     c2.setCurriculumSubType(MEDICAL_CURRICULA.get(0));
     c2.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
     rotaPm.setCurricula(List.of(rotaPm.getCurricula().get(0), c2));
+
+    List<ProgrammeMembership> pms
+        = new java.util.ArrayList<>(List.of(getProgrammeMembershipDefault()));
     pms.add(rotaPm);
 
     TraineeProfile traineeProfile = new TraineeProfile();

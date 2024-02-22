@@ -68,7 +68,7 @@ public class ProgrammeMembershipService {
    * @return The updated programme membership or empty if a trainee with the ID was not found.
    */
   public Optional<ProgrammeMembership> updateProgrammeMembershipForTrainee(String traineeTisId,
-         ProgrammeMembership programmeMembership) {
+                                                                           ProgrammeMembership programmeMembership) {
     TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
 
     if (traineeProfile == null) {
@@ -312,13 +312,10 @@ public class ProgrammeMembershipService {
                 return pm.getManagingDeanery().equalsIgnoreCase(anchorPm.getManagingDeanery());
               }
             })
-            .filter(pm -> {
-              if (pm.getStartDate() == null || anchorPm.getStartDate() == null) {
-                return false;
-              } else {
-                return pm.getStartDate().isBefore(anchorPm.getStartDate());
-              }
-            }).toList();
+            .filter(pm ->
+                pm.getStartDate().isBefore(anchorPm.getStartDate())
+                //dates cannot be null because any offenders are removed in getRecentPrecedingPms()
+            ).toList();
 
     List<String> anchorPmCurriculumSpecialties = anchorPm.getCurricula().stream()
         .map(Curriculum::getCurriculumSpecialtyCode)
@@ -344,24 +341,22 @@ public class ProgrammeMembershipService {
    * @return The filtered list.
    */
   private List<ProgrammeMembership> getRecentPrecedingPms(ProgrammeMembership anchorPm,
-                                                  List<ProgrammeMembership> candidatePms) {
-    List<ProgrammeMembership> precedingPms
-        = new ArrayList<>(candidatePms.stream()
-        .filter(pm -> {
-          if (pm.getStartDate() == null || anchorPm.getStartDate() == null) {
-            return false;
-          } else {
-            return pm.getStartDate().isBefore(anchorPm.getStartDate());
-          }
-        })
-        .filter(pm -> {
-          if (pm.getEndDate() == null) {
-            return false;
-          } else {
-            return pm.getEndDate().isAfter(anchorPm.getStartDate().minusDays(PROGRAMME_BREAK_DAYS));
-          }
-        }).toList());
-    precedingPms.sort(Comparator.comparing(ProgrammeMembership::getStartDate).reversed());
-    return precedingPms;
+                                                          List<ProgrammeMembership> candidatePms) {
+    return
+        candidatePms.stream()
+            .filter(pm -> {
+              if (pm.getStartDate() == null || anchorPm.getStartDate() == null) {
+                return false;
+              } else {
+                return pm.getStartDate().isBefore(anchorPm.getStartDate());
+              }
+            })
+            .filter(pm -> {
+              if (pm.getEndDate() == null) {
+                return false;
+              } else {
+                return pm.getEndDate().isAfter(anchorPm.getStartDate().minusDays(PROGRAMME_BREAK_DAYS));
+              }
+            }).toList();
   }
 }
