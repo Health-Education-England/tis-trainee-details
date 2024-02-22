@@ -524,7 +524,7 @@ class ProgrammeMembershipServiceTest {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipDefault("unknown id",
-            PROGRAMME_MEMBERSHIP_TYPE, START_DATE, END_DATE)));
+            PROGRAMME_MEMBERSHIP_TYPE, START_DATE, END_DATE))); //PROGRAMME_TIS_ID != "unknown id"
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
     boolean isNewStarter = service.isNewStarter(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
@@ -577,6 +577,21 @@ class ProgrammeMembershipServiceTest {
     assertThat("Unexpected isNewStarter value.", isNewStarter, is(false));
   }
 
+  @ParameterizedTest
+  @MethodSource("listMedicalCurriculaSubTypes")
+  void newStarterShouldBeTrueIfPmHasMedicalCurricula(String curriculumSubtype) {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, START_DATE, END_DATE, MANAGING_DEANERY, curriculumSubtype,
+            CURRICULUM_SPECIALTY_CODE)));
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isNewStarter = service.isNewStarter(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isNewStarter value.", isNewStarter, is(true));
+  }
+
   @Test
   void newStarterShouldBeTrueIfItIsTheOnlyPm() {
     TraineeProfile traineeProfile = new TraineeProfile();
@@ -589,12 +604,13 @@ class ProgrammeMembershipServiceTest {
   }
 
   @Test
-  void newStarterShouldBeTrueIfPrecedingPmEndedTooLongAgo() {
+  void newStarterShouldBeTrueIfNoRecentPrecedingPm() {
     List<ProgrammeMembership> pms
         = new java.util.ArrayList<>(List.of(getProgrammeMembershipDefault()));
     pms.add(getProgrammeMembershipDefault("another id",
         PROGRAMME_MEMBERSHIP_TYPE, START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 100),
         START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 1)));
+    //ended more than PROGRAMME_BREAK_DAYS ago
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(pms);
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
@@ -605,11 +621,13 @@ class ProgrammeMembershipServiceTest {
   }
 
   @Test
-  void newStarterShouldBeTrueIfPrecedingPmIsMissingDateInfo() {
+  void newStarterShouldBeTrueIfPrecedingPmMissingDateInfo() {
     List<ProgrammeMembership> pms
         = new java.util.ArrayList<>(List.of(getProgrammeMembershipDefault()));
+    //null startDate
     pms.add(getProgrammeMembershipDefault("another id",
         PROGRAMME_MEMBERSHIP_TYPE, null, START_DATE.minusDays(1)));
+    //null endDate
     pms.add(getProgrammeMembershipDefault("another id2",
         PROGRAMME_MEMBERSHIP_TYPE, START_DATE.minusDays(500), null));
     TraineeProfile traineeProfile = new TraineeProfile();
@@ -622,12 +640,15 @@ class ProgrammeMembershipServiceTest {
   }
 
   @Test
-  void newStarterShouldBeFalseIfOnePrecedingPmEndedNotLongAgoAndIsIntraOrRota() {
+  void newStarterShouldBeFalseIfOneOfPrecedingPmsIsIntraOrRota() {
     List<ProgrammeMembership> pms
         = new java.util.ArrayList<>(List.of(getProgrammeMembershipDefault()));
-    pms.add(getProgrammeMembershipDefault("another id",
+    //preceding PM, but not an intra-deanery / rota PM because no matching curriculum specialty
+    pms.add(getProgrammeMembershipWithOneCurriculum("another id",
         PROGRAMME_MEMBERSHIP_TYPE, START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 100),
-        START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 1)));
+        START_DATE.minusDays(PROGRAMME_BREAK_DAYS - 1), MANAGING_DEANERY,
+        MEDICAL_CURRICULA.get(0), "a different curriculum specialty"));
+    //preceding PM, and an intra-deanery / rota PM
     pms.add(getProgrammeMembershipDefault("another id2",
         PROGRAMME_MEMBERSHIP_TYPE, START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 100),
         START_DATE.minusDays(PROGRAMME_BREAK_DAYS - 1)));
@@ -641,13 +662,39 @@ class ProgrammeMembershipServiceTest {
   }
 
   @Test
+  void newStarterShouldBeFalseIfPrecedingPmWithMultipleCurriculaIsIntraOrRota() {
+    List<ProgrammeMembership> pms
+        = new java.util.ArrayList<>(List.of(getProgrammeMembershipDefault()));
+    //preceding PM with non-matching curriculum specialty code
+    ProgrammeMembership rotaPm = getProgrammeMembershipWithOneCurriculum("another id",
+        PROGRAMME_MEMBERSHIP_TYPE, START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 100),
+        START_DATE.minusDays(PROGRAMME_BREAK_DAYS - 1), MANAGING_DEANERY,
+        MEDICAL_CURRICULA.get(0), "some other specialty code");
+    //curriculum which matches
+    Curriculum c2 = new Curriculum();
+    c2.setCurriculumSubType(MEDICAL_CURRICULA.get(0));
+    c2.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
+    rotaPm.setCurricula(List.of(rotaPm.getCurricula().get(0), c2));
+    pms.add(rotaPm);
+
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(pms);
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isNewStarter = service.isNewStarter(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isNewStarter value.", isNewStarter, is(false));
+  }
+
+  @Test
   void newStarterShouldBeTrueIfPrecedingPmNotIntraOrRota() {
     List<ProgrammeMembership> pms
         = new java.util.ArrayList<>(List.of(getProgrammeMembershipDefault()));
+    //not an intra-deanery / rota PM because different deanery
     pms.add(getProgrammeMembershipWithOneCurriculum("another id",
         PROGRAMME_MEMBERSHIP_TYPE, START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 100),
-        START_DATE.minusDays(PROGRAMME_BREAK_DAYS - 1), MANAGING_DEANERY,
-        MEDICAL_CURRICULA.get(0), "a different curriculum specialty"));
+        START_DATE.minusDays(PROGRAMME_BREAK_DAYS - 1), "some other deanery",
+        MEDICAL_CURRICULA.get(0), CURRICULUM_SPECIALTY_CODE));
 
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(pms);
@@ -662,6 +709,7 @@ class ProgrammeMembershipServiceTest {
   void newStarterShouldBeTrueIfIntraOrRotaMissingDeanery() {
     List<ProgrammeMembership> pms
         = new java.util.ArrayList<>(List.of(getProgrammeMembershipDefault()));
+    //preceding PM with missing deanery
     pms.add(getProgrammeMembershipWithOneCurriculum("another id",
         PROGRAMME_MEMBERSHIP_TYPE, START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 100),
         START_DATE.minusDays(PROGRAMME_BREAK_DAYS - 1), null,
@@ -678,6 +726,7 @@ class ProgrammeMembershipServiceTest {
 
   @Test
   void newStarterShouldBeTrueIfPmMissingDeanery() {
+    //anchor PM has missing deanery
     List<ProgrammeMembership> pms = new java.util.ArrayList<>(List.of(
         getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
             PROGRAMME_MEMBERSHIP_TYPE, START_DATE, END_DATE, null, MEDICAL_CURRICULA.get(0),
@@ -699,6 +748,7 @@ class ProgrammeMembershipServiceTest {
   void newStarterShouldBeTrueIfIntraOrRotaMissingProgrammeMembershipType() {
     List<ProgrammeMembership> pms
         = new java.util.ArrayList<>(List.of(getProgrammeMembershipDefault()));
+    //preceding PM with missing programme membership type
     pms.add(getProgrammeMembershipWithOneCurriculum("another id",
         null, START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 100),
         START_DATE.minusDays(PROGRAMME_BREAK_DAYS - 1), MANAGING_DEANERY,
@@ -714,13 +764,15 @@ class ProgrammeMembershipServiceTest {
   }
 
   @Test
-  void newStarterShouldBeTrueIfPrecedingPmNotInIntraOrRotaSet() {
+  void newStarterShouldBeTrueIfNoPrecedingPmIsIntraOrRota() {
     List<ProgrammeMembership> pms
         = new java.util.ArrayList<>(List.of(getProgrammeMembershipDefault()));
+    //preceding PM with different deanery
     pms.add(getProgrammeMembershipWithOneCurriculum("another id",
         PROGRAMME_MEMBERSHIP_TYPE, START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 100),
         START_DATE.minusDays(PROGRAMME_BREAK_DAYS - 1), "different deanery",
         MEDICAL_CURRICULA.get(0), CURRICULUM_SPECIALTY_CODE));
+    //not preceding PM, though it would be intra / rota PM
     pms.add(getProgrammeMembershipDefault("another id2",
         PROGRAMME_MEMBERSHIP_TYPE, START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 100),
         START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 1)));
@@ -735,10 +787,12 @@ class ProgrammeMembershipServiceTest {
 
   @Test
   void newStarterShouldBeTrueIfPmIsMissingStartDateInfo() {
+    //anchor PM has missing startDate
     List<ProgrammeMembership> pms = new java.util.ArrayList<>(List.of(
         getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
             PROGRAMME_MEMBERSHIP_TYPE, null, END_DATE, MANAGING_DEANERY,
             MEDICAL_CURRICULA.get(0), CURRICULUM_SPECIALTY_CODE)));
+    //intra-deanery / rota PM, but cannot assess whether preceding
     pms.add(getProgrammeMembershipWithOneCurriculum("another id",
         PROGRAMME_MEMBERSHIP_TYPE, START_DATE.minusDays(100),
         START_DATE.minusDays(1), MANAGING_DEANERY, MEDICAL_CURRICULA.get(0),
@@ -781,6 +835,10 @@ class ProgrammeMembershipServiceTest {
 
   static Stream<String> listNonNewStartPmTypes() {
     return NON_NEW_START_PROGRAMME_MEMBERSHIP_TYPES.stream();
+  }
+
+  static Stream<String> listMedicalCurriculaSubTypes() {
+    return MEDICAL_CURRICULA.stream();
   }
 
   /**

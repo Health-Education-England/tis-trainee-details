@@ -245,15 +245,16 @@ public class ProgrammeMembershipService {
         = pmsToConsider.stream()
         .filter(pm -> !pm.getTisId().equals(programmeMembershipId)).toList();
 
-    List<ProgrammeMembership> intraOrRotaPms = getIntraOrRotaPms(programmeMembership, otherPms);
+    //if there are no preceding PMs, it is a new starter
     List<ProgrammeMembership> precedingPms = getRecentPrecedingPms(programmeMembership, otherPms);
-
-    //if there are no intra-deanery transfer or rota PMs, or no preceding PM, it is a new starter
-    if (intraOrRotaPms.isEmpty() || precedingPms.isEmpty()) {
+    if (precedingPms.isEmpty()) {
       return true;
     }
-    //if the preceding PM is one of the intra-deanery or rota PMs, it is not a new starter
-    return !intraOrRotaPms.contains(precedingPms.get(0));
+
+    //if none of the preceding PMs are intra-deanery transfer or rota PMs, it is a new starter
+    List<ProgrammeMembership> intraOrRotaPms = getIntraOrRotaPms(programmeMembership, precedingPms);
+    return intraOrRotaPms.isEmpty();
+    //otherwise it is not a new starter
   }
 
   /**
@@ -342,7 +343,7 @@ public class ProgrammeMembershipService {
    * @param candidatePms The possible programme memberships.
    * @return The filtered list.
    */
-  List<ProgrammeMembership> getRecentPrecedingPms(ProgrammeMembership anchorPm,
+  private List<ProgrammeMembership> getRecentPrecedingPms(ProgrammeMembership anchorPm,
                                                   List<ProgrammeMembership> candidatePms) {
     List<ProgrammeMembership> precedingPms
         = new ArrayList<>(candidatePms.stream()
