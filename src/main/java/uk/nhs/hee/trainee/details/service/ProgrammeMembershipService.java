@@ -25,7 +25,6 @@ import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -68,7 +67,7 @@ public class ProgrammeMembershipService {
    * @return The updated programme membership or empty if a trainee with the ID was not found.
    */
   public Optional<ProgrammeMembership> updateProgrammeMembershipForTrainee(String traineeTisId,
-                                                                           ProgrammeMembership programmeMembership) {
+         ProgrammeMembership programmeMembership) {
     TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
 
     if (traineeProfile == null) {
@@ -314,7 +313,7 @@ public class ProgrammeMembershipService {
             })
             .filter(pm ->
                 pm.getStartDate().isBefore(anchorPm.getStartDate())
-                //dates cannot be null because any offenders are removed in getRecentPrecedingPms()
+            //dates cannot be null because any offenders are removed in getRecentPrecedingPms()
             ).toList();
 
     List<String> anchorPmCurriculumSpecialties = anchorPm.getCurricula().stream()
@@ -355,7 +354,8 @@ public class ProgrammeMembershipService {
               if (pm.getEndDate() == null) {
                 return false;
               } else {
-                return pm.getEndDate().isAfter(anchorPm.getStartDate().minusDays(PROGRAMME_BREAK_DAYS));
+                return pm.getEndDate()
+                    .isAfter(anchorPm.getStartDate().minusDays(PROGRAMME_BREAK_DAYS));
               }
             }).toList();
   }
