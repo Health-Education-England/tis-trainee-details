@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapper;
@@ -40,6 +41,7 @@ import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 
 @Service
 @XRayEnabled
+@Slf4j
 public class ProgrammeMembershipService {
 
   protected static final List<String> MEDICAL_CURRICULA
@@ -210,6 +212,7 @@ public class ProgrammeMembershipService {
     TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
 
     if (traineeProfile == null) {
+      log.info("New starter: [false] trainee profile {} not found", traineeTisId);
       return false;
     }
 
@@ -223,6 +226,8 @@ public class ProgrammeMembershipService {
 
     //it cannot be a new starter if it does not exist, or if it is not a medical one
     if (optionalProgrammeMembership.isEmpty()) {
+      log.info("New starter: [false] programme membership {} is non-medical or does not exist",
+          programmeMembershipId);
       return false;
     }
     ProgrammeMembership programmeMembership = optionalProgrammeMembership.get();
@@ -231,12 +236,16 @@ public class ProgrammeMembershipService {
     if (programmeMembership.getProgrammeMembershipType() == null
         || NON_NEW_START_PROGRAMME_MEMBERSHIP_TYPES.stream()
         .anyMatch(programmeMembership.getProgrammeMembershipType()::equalsIgnoreCase)) {
+      log.info("New starter: [false] programme membership {} has non-applicable type {}",
+          programmeMembershipId, programmeMembership.getProgrammeMembershipType());
       return false;
     }
 
     //it cannot be a new starter if it has already finished
     if (programmeMembership.getEndDate() == null
         || programmeMembership.getEndDate().isBefore(LocalDate.now())) {
+      log.info("New starter: [false] programme membership {} finished {}",
+          programmeMembershipId, programmeMembership.getEndDate());
       return false;
     }
 
@@ -247,11 +256,15 @@ public class ProgrammeMembershipService {
     //if there are no preceding PMs, it is a new starter
     List<ProgrammeMembership> precedingPms = getRecentPrecedingPms(programmeMembership, otherPms);
     if (precedingPms.isEmpty()) {
+      log.info("New starter: [true] there are no preceding programme memberships " +
+          "that ended within {} days", PROGRAMME_BREAK_DAYS);
       return true;
     }
 
     //if none of the preceding PMs are intra-deanery transfer or rota PMs, it is a new starter
     List<ProgrammeMembership> intraOrRotaPms = getIntraOrRotaPms(programmeMembership, precedingPms);
+    log.info("New starter: [{}] there are {} preceding intra-deanery / rota programme memberships ",
+        intraOrRotaPms.isEmpty()? "true" : "false", intraOrRotaPms.size());
     return intraOrRotaPms.isEmpty();
     //otherwise it is not a new starter
   }
