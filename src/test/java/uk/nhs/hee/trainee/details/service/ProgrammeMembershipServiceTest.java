@@ -33,6 +33,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.MEDICAL_CURRICULA;
+import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.NON_NEW_START_PROGRAMME_MEMBERSHIP_TYPES;
+import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PROGRAMME_BREAK_DAYS;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -40,12 +43,18 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapperImpl;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
+import uk.nhs.hee.trainee.details.model.Curriculum;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
@@ -69,6 +78,7 @@ class ProgrammeMembershipServiceTest {
   private static final Instant COJ_SIGNED_AT = Instant.now();
   private static final GoldGuideVersion GOLD_GUIDE_VERSION = GoldGuideVersion.GG9;
   private static final Instant COJ_SYNCED_AT = Instant.now();
+  private static final String CURRICULUM_SPECIALTY_CODE = "X75";
 
   private ProgrammeMembershipService service;
   private TraineeProfileRepository repository;
@@ -499,6 +509,303 @@ class ProgrammeMembershipServiceTest {
     verify(repository, never()).save(traineeProfile);
   }
 
+  @Test
+  void newStarterShouldBeFalseIfTraineeNotFound() {
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(null);
+
+    boolean isNewStarter = service.isNewStarter(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isNewStarter value.", isNewStarter, is(false));
+  }
+
+  @Test
+  void newStarterShouldBeFalseIfPmNotFound() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipDefault("unknown id",
+            PROGRAMME_MEMBERSHIP_TYPE, START_DATE, END_DATE))); //PROGRAMME_TIS_ID != "unknown id"
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isNewStarter = service.isNewStarter(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isNewStarter value.", isNewStarter, is(false));
+  }
+
+  @ParameterizedTest
+  @NullSource
+  @MethodSource("listNonNewStartPmTypes")
+  void newStarterShouldBeFalseIfPmHasWrongType(String pmType) {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipDefault(PROGRAMME_TIS_ID, pmType, START_DATE, END_DATE)));
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isNewStarter = service.isNewStarter(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isNewStarter value.", isNewStarter, is(false));
+  }
+
+  @ParameterizedTest
+  @NullSource
+  @ValueSource(strings = "1970-01-01")
+  void newStarterShouldBeFalseIfPmHasEnded(LocalDate endDate) {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipDefault(PROGRAMME_TIS_ID, PROGRAMME_MEMBERSHIP_TYPE,
+            START_DATE, endDate)));
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isNewStarter = service.isNewStarter(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isNewStarter value.", isNewStarter, is(false));
+  }
+
+  @ParameterizedTest
+  @NullSource
+  @ValueSource(strings = {"another subtype"})
+  void newStarterShouldBeFalseIfPmHasNoMedicalCurricula(String curriculumSubtype) {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, START_DATE, END_DATE, MANAGING_DEANERY, curriculumSubtype,
+            CURRICULUM_SPECIALTY_CODE)));
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isNewStarter = service.isNewStarter(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isNewStarter value.", isNewStarter, is(false));
+  }
+
+  @ParameterizedTest
+  @MethodSource("listMedicalCurriculaSubTypes")
+  void newStarterShouldBeTrueIfPmHasMedicalCurricula(String curriculumSubtype) {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, START_DATE, END_DATE, MANAGING_DEANERY, curriculumSubtype,
+            CURRICULUM_SPECIALTY_CODE)));
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isNewStarter = service.isNewStarter(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isNewStarter value.", isNewStarter, is(true));
+  }
+
+  @Test
+  void newStarterShouldBeTrueIfItIsTheOnlyPm() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(List.of(getProgrammeMembershipDefault()));
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isNewStarter = service.isNewStarter(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isNewStarter value.", isNewStarter, is(true));
+  }
+
+  @Test
+  void newStarterShouldBeTrueIfNoRecentPrecedingPm() {
+    List<ProgrammeMembership> pms
+        = new java.util.ArrayList<>(List.of(getProgrammeMembershipDefault()));
+    pms.add(getProgrammeMembershipDefault("another id",
+        PROGRAMME_MEMBERSHIP_TYPE, START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 100),
+        START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 1)));
+    //ended more than PROGRAMME_BREAK_DAYS ago
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(pms);
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isNewStarter = service.isNewStarter(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isNewStarter value.", isNewStarter, is(true));
+  }
+
+  @Test
+  void newStarterShouldBeTrueIfPrecedingPmMissingDateInfo() {
+    List<ProgrammeMembership> pms
+        = new java.util.ArrayList<>(List.of(getProgrammeMembershipDefault()));
+    //null startDate
+    pms.add(getProgrammeMembershipDefault("another id",
+        PROGRAMME_MEMBERSHIP_TYPE, null, START_DATE.minusDays(1)));
+    //null endDate
+    pms.add(getProgrammeMembershipDefault("another id2",
+        PROGRAMME_MEMBERSHIP_TYPE, START_DATE.minusDays(500), null));
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(pms);
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isNewStarter = service.isNewStarter(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isNewStarter value.", isNewStarter, is(true));
+  }
+
+  @Test
+  void newStarterShouldBeFalseIfOneOfPrecedingPmsIsIntraOrRota() {
+    List<ProgrammeMembership> pms
+        = new java.util.ArrayList<>(List.of(getProgrammeMembershipDefault()));
+    //preceding PM, but not an intra-deanery / rota PM because no matching curriculum specialty
+    pms.add(getProgrammeMembershipWithOneCurriculum("another id",
+        PROGRAMME_MEMBERSHIP_TYPE, START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 100),
+        START_DATE.minusDays(PROGRAMME_BREAK_DAYS - 1), MANAGING_DEANERY,
+        MEDICAL_CURRICULA.get(0), "a different curriculum specialty"));
+    //preceding PM, and an intra-deanery / rota PM
+    pms.add(getProgrammeMembershipDefault("another id2",
+        PROGRAMME_MEMBERSHIP_TYPE, START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 100),
+        START_DATE.minusDays(PROGRAMME_BREAK_DAYS - 1)));
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(pms);
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isNewStarter = service.isNewStarter(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isNewStarter value.", isNewStarter, is(false));
+  }
+
+  @Test
+  void newStarterShouldBeFalseIfPrecedingPmWithMultipleCurriculaIsIntraOrRota() {
+    //preceding PM with non-matching curriculum specialty code
+    ProgrammeMembership rotaPm = getProgrammeMembershipWithOneCurriculum("another id",
+        PROGRAMME_MEMBERSHIP_TYPE, START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 100),
+        START_DATE.minusDays(PROGRAMME_BREAK_DAYS - 1), MANAGING_DEANERY,
+        MEDICAL_CURRICULA.get(0), "some other specialty code");
+    //curriculum which matches
+    Curriculum c2 = new Curriculum();
+    c2.setCurriculumSubType(MEDICAL_CURRICULA.get(0));
+    c2.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
+    rotaPm.setCurricula(List.of(rotaPm.getCurricula().get(0), c2));
+
+    List<ProgrammeMembership> pms
+        = new java.util.ArrayList<>(List.of(getProgrammeMembershipDefault()));
+    pms.add(rotaPm);
+
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(pms);
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isNewStarter = service.isNewStarter(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isNewStarter value.", isNewStarter, is(false));
+  }
+
+  @Test
+  void newStarterShouldBeTrueIfPrecedingPmNotIntraOrRota() {
+    List<ProgrammeMembership> pms
+        = new java.util.ArrayList<>(List.of(getProgrammeMembershipDefault()));
+    //not an intra-deanery / rota PM because different deanery
+    pms.add(getProgrammeMembershipWithOneCurriculum("another id",
+        PROGRAMME_MEMBERSHIP_TYPE, START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 100),
+        START_DATE.minusDays(PROGRAMME_BREAK_DAYS - 1), "some other deanery",
+        MEDICAL_CURRICULA.get(0), CURRICULUM_SPECIALTY_CODE));
+
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(pms);
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isNewStarter = service.isNewStarter(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isNewStarter value.", isNewStarter, is(true));
+  }
+
+  @Test
+  void newStarterShouldBeTrueIfIntraOrRotaMissingDeanery() {
+    List<ProgrammeMembership> pms
+        = new java.util.ArrayList<>(List.of(getProgrammeMembershipDefault()));
+    //preceding PM with missing deanery
+    pms.add(getProgrammeMembershipWithOneCurriculum("another id",
+        PROGRAMME_MEMBERSHIP_TYPE, START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 100),
+        START_DATE.minusDays(PROGRAMME_BREAK_DAYS - 1), null,
+        MEDICAL_CURRICULA.get(0), CURRICULUM_SPECIALTY_CODE));
+
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(pms);
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isNewStarter = service.isNewStarter(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isNewStarter value.", isNewStarter, is(true));
+  }
+
+  @Test
+  void newStarterShouldBeTrueIfPmMissingDeanery() {
+    //anchor PM has missing deanery
+    List<ProgrammeMembership> pms = new java.util.ArrayList<>(List.of(
+        getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, START_DATE, END_DATE, null, MEDICAL_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE)));
+    pms.add(getProgrammeMembershipDefault("another id",
+        PROGRAMME_MEMBERSHIP_TYPE, START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 100),
+        START_DATE.minusDays(PROGRAMME_BREAK_DAYS - 1)));
+
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(pms);
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isNewStarter = service.isNewStarter(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isNewStarter value.", isNewStarter, is(true));
+  }
+
+  @Test
+  void newStarterShouldBeTrueIfIntraOrRotaMissingProgrammeMembershipType() {
+    List<ProgrammeMembership> pms
+        = new java.util.ArrayList<>(List.of(getProgrammeMembershipDefault()));
+    //preceding PM with missing programme membership type
+    pms.add(getProgrammeMembershipWithOneCurriculum("another id",
+        null, START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 100),
+        START_DATE.minusDays(PROGRAMME_BREAK_DAYS - 1), MANAGING_DEANERY,
+        MEDICAL_CURRICULA.get(0), CURRICULUM_SPECIALTY_CODE));
+
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(pms);
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isNewStarter = service.isNewStarter(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isNewStarter value.", isNewStarter, is(true));
+  }
+
+  @Test
+  void newStarterShouldBeTrueIfNoPrecedingPmIsIntraOrRota() {
+    List<ProgrammeMembership> pms
+        = new java.util.ArrayList<>(List.of(getProgrammeMembershipDefault()));
+    //preceding PM with different deanery
+    pms.add(getProgrammeMembershipWithOneCurriculum("another id",
+        PROGRAMME_MEMBERSHIP_TYPE, START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 100),
+        START_DATE.minusDays(PROGRAMME_BREAK_DAYS - 1), "different deanery",
+        MEDICAL_CURRICULA.get(0), CURRICULUM_SPECIALTY_CODE));
+    //not preceding PM, though it would be intra / rota PM
+    pms.add(getProgrammeMembershipDefault("another id2",
+        PROGRAMME_MEMBERSHIP_TYPE, START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 100),
+        START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 1)));
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(pms);
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isNewStarter = service.isNewStarter(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isNewStarter value.", isNewStarter, is(true));
+  }
+
+  @Test
+  void newStarterShouldBeTrueIfPmIsMissingStartDateInfo() {
+    //anchor PM has missing startDate
+    List<ProgrammeMembership> pms = new java.util.ArrayList<>(List.of(
+        getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, null, END_DATE, MANAGING_DEANERY,
+            MEDICAL_CURRICULA.get(0), CURRICULUM_SPECIALTY_CODE)));
+    //intra-deanery / rota PM, but cannot assess whether preceding
+    pms.add(getProgrammeMembershipWithOneCurriculum("another id",
+        PROGRAMME_MEMBERSHIP_TYPE, START_DATE.minusDays(100),
+        START_DATE.minusDays(1), MANAGING_DEANERY, MEDICAL_CURRICULA.get(0),
+        CURRICULUM_SPECIALTY_CODE));
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(pms);
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isNewStarter = service.isNewStarter(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isNewStarter value.", isNewStarter, is(true));
+  }
+
   /**
    * Create an instance of ProgrammeMembership with default dummy values.
    *
@@ -524,5 +831,78 @@ class ProgrammeMembershipServiceTest {
             GOLD_GUIDE_VERSION, COJ_SYNCED_AT.plus(Duration.ofDays(dateAdjustmentDays))));
 
     return programmeMembership;
+  }
+
+  static Stream<String> listNonNewStartPmTypes() {
+    return NON_NEW_START_PROGRAMME_MEMBERSHIP_TYPES.stream();
+  }
+
+  static Stream<String> listMedicalCurriculaSubTypes() {
+    return MEDICAL_CURRICULA.stream();
+  }
+
+  /**
+   * Create a programme membership with a single curriculum for testing isNewStarter conditions.
+   *
+   * @param programmeMembershipTisId The TIS ID to set on the programmeMembership.
+   * @param programmeMembershipType  The programme membership type.
+   * @param startDate                The start date.
+   * @param endDate                  The end date.
+   * @param managingDeanery          The managing deanery.
+   * @param curriculumSubType        The curriculum subtype.
+   * @param curriculumSpecialtyCode  The curriculum specialty code.
+   * @return The programme membership.
+   */
+  private ProgrammeMembership getProgrammeMembershipWithOneCurriculum(
+      String programmeMembershipTisId, String programmeMembershipType, LocalDate startDate,
+      LocalDate endDate, String managingDeanery, String curriculumSubType,
+      String curriculumSpecialtyCode) {
+    ProgrammeMembership programmeMembership = new ProgrammeMembership();
+    programmeMembership.setTisId(programmeMembershipTisId);
+    programmeMembership.setProgrammeTisId(PROGRAMME_TIS_ID);
+    programmeMembership.setProgrammeName(PROGRAMME_NAME);
+    programmeMembership.setProgrammeNumber(PROGRAMME_NUMBER);
+    programmeMembership.setManagingDeanery(managingDeanery);
+    programmeMembership.setProgrammeMembershipType(programmeMembershipType);
+    programmeMembership.setStartDate(startDate);
+    programmeMembership.setEndDate(endDate);
+    programmeMembership.setProgrammeCompletionDate(COMPLETION_DATE);
+
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSubType(curriculumSubType);
+    curriculum.setCurriculumSpecialtyCode(curriculumSpecialtyCode);
+    programmeMembership.setCurricula(List.of(curriculum));
+
+    return programmeMembership;
+  }
+
+  /**
+   * Create a default programme membership with a single curriculum for testing
+   * isNewStarter conditions.
+   *
+   * @param programmeMembershipTisId The TIS ID to set on the programmeMembership.
+   * @param programmeMembershipType  The programme membership type.
+   * @param startDate                The start date.
+   * @param endDate                  The end date.
+   * @return The default programme membership.
+   */
+  private ProgrammeMembership getProgrammeMembershipDefault(
+      String programmeMembershipTisId, String programmeMembershipType, LocalDate startDate,
+      LocalDate endDate) {
+    return getProgrammeMembershipWithOneCurriculum(
+        programmeMembershipTisId, programmeMembershipType, startDate,
+        endDate, MANAGING_DEANERY, MEDICAL_CURRICULA.get(0), CURRICULUM_SPECIALTY_CODE);
+  }
+
+  /**
+   * Create a default programme membership with a single curriculum for testing
+   * isNewStarter conditions.
+   *
+   * @return The default programme membership.
+   */
+  private ProgrammeMembership getProgrammeMembershipDefault() {
+    return getProgrammeMembershipWithOneCurriculum(
+        PROGRAMME_TIS_ID, PROGRAMME_MEMBERSHIP_TYPE, START_DATE,
+        END_DATE, MANAGING_DEANERY, MEDICAL_CURRICULA.get(0), CURRICULUM_SPECIALTY_CODE);
   }
 }

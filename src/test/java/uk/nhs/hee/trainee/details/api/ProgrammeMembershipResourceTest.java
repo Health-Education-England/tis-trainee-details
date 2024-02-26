@@ -28,6 +28,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -42,6 +43,8 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -314,5 +317,35 @@ class ProgrammeMembershipResourceTest {
             .value(is(GoldGuideVersion.GG9.toString())))
         .andExpect(jsonPath("$.conditionsOfJoining.syncedAt")
             .isEmpty());
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void shouldReturnProgrammeMembershipNewStarterWhenTraineeFound(boolean isNewStarter)
+      throws Exception {
+    when(service
+        .isNewStarter("40", "1"))
+        .thenReturn(isNewStarter);
+
+    MvcResult result = mockMvc.perform(
+            get("/api/programme-membership/isnewstarter/{traineeTisId}/{programmeMembershipId}",
+                "40", "1")
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(content().string(String.valueOf(isNewStarter)))
+        .andReturn();
+  }
+
+  @Test
+  void shouldThrowBadRequestWhenProgrammeMembershipNewStarterException() throws Exception {
+    when(service
+        .isNewStarter("triggersError", "1"))
+        .thenThrow(new IllegalArgumentException());
+
+    mockMvc.perform(
+            get("/api/programme-membership/isnewstarter/{traineeTisId}/{programmeMembershipId}",
+                "triggersError", "1")
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest());
   }
 }

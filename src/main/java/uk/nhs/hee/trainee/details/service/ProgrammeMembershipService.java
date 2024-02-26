@@ -23,20 +23,32 @@ package uk.nhs.hee.trainee.details.service;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapper;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
+import uk.nhs.hee.trainee.details.model.Curriculum;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 
 @Service
 @XRayEnabled
+@Slf4j
 public class ProgrammeMembershipService {
+
+  protected static final List<String> MEDICAL_CURRICULA
+      = List.of("DENTAL_CURRICULUM", "DENTAL_POST_CCST", "MEDICAL_CURRICULUM");
+  protected static final List<String> NON_NEW_START_PROGRAMME_MEMBERSHIP_TYPES
+      = List.of("VISITOR", "LAT");
+  protected static final Long PROGRAMME_BREAK_DAYS = 355L;
 
   private final TraineeProfileRepository repository;
   private final ProgrammeMembershipMapper mapper;
@@ -187,5 +199,177 @@ public class ProgrammeMembershipService {
       }
     }
     return Optional.empty();
+  }
+
+  /**
+   * Assess if the programme membership for a trainee is a new starter.
+   *
+   * @param traineeTisId          The TIS id of the trainee.
+   * @param programmeMembershipId The ID of the programme membership to assess.
+   * @return True, or False if the programme membership is not a new starter.
+   */
+  public boolean isNewStarter(String traineeTisId, String programmeMembershipId) {
+    TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
+
+    if (traineeProfile == null) {
+      log.info("New starter: [false] trainee profile {} not found", traineeTisId);
+      return false;
+    }
+
+    //get the list of programme memberships with only medical curricula attached
+    List<ProgrammeMembership> pmsToConsider
+        = getPmsMedicalCurricula(traineeProfile.getProgrammeMemberships());
+
+    //get the programme membership that must be assessed
+    Optional<ProgrammeMembership> optionalProgrammeMembership
+        = pmsToConsider.stream().filter(p -> p.getTisId().equals(programmeMembershipId)).findAny();
+
+    //it cannot be a new starter if it does not exist, or if it is not a medical one
+    if (optionalProgrammeMembership.isEmpty()) {
+      log.info("New starter: [false] programme membership {} is non-medical or does not exist",
+          programmeMembershipId);
+      return false;
+    }
+    ProgrammeMembership programmeMembership = optionalProgrammeMembership.get();
+
+    //it cannot be a new starter if it has a non-applicable programme membership type
+    if (programmeMembership.getProgrammeMembershipType() == null
+        || NON_NEW_START_PROGRAMME_MEMBERSHIP_TYPES.stream()
+        .anyMatch(programmeMembership.getProgrammeMembershipType()::equalsIgnoreCase)) {
+      log.info("New starter: [false] programme membership {} has non-applicable type {}",
+          programmeMembershipId, programmeMembership.getProgrammeMembershipType());
+      return false;
+    }
+
+    //it cannot be a new starter if it has already finished
+    if (programmeMembership.getEndDate() == null
+        || programmeMembership.getEndDate().isBefore(LocalDate.now())) {
+      log.info("New starter: [false] programme membership {} finished {}",
+          programmeMembershipId, programmeMembership.getEndDate());
+      return false;
+    }
+
+    List<ProgrammeMembership> otherPms
+        = pmsToConsider.stream()
+        .filter(pm -> !pm.getTisId().equals(programmeMembershipId)).toList();
+
+    //if there are no preceding PMs, it is a new starter
+    List<ProgrammeMembership> precedingPms = getRecentPrecedingPms(programmeMembership, otherPms);
+    if (precedingPms.isEmpty()) {
+      log.info("New starter: [true] there are no preceding programme memberships "
+          + "that ended within {} days", PROGRAMME_BREAK_DAYS);
+      return true;
+    }
+
+    //if none of the preceding PMs are intra-deanery transfer or rota PMs, it is a new starter
+    List<ProgrammeMembership> intraOrRotaPms = getIntraOrRotaPms(programmeMembership, precedingPms);
+    log.info("New starter: [{}] there are {} preceding intra-deanery / rota programme memberships ",
+        intraOrRotaPms.isEmpty() ? "true" : "false", intraOrRotaPms.size());
+    return intraOrRotaPms.isEmpty();
+    //otherwise it is not a new starter
+  }
+
+  /**
+   * Remove non-medical curricula from a list of programme memberships. Returned programme
+   * memberships will each contain at least one medical curriculum.
+   *
+   * @param pms The list of programme memberships.
+   * @return The filtered list of medical curricula containing programme memberships.
+   */
+  private List<ProgrammeMembership> getPmsMedicalCurricula(List<ProgrammeMembership> pms) {
+    List<ProgrammeMembership> filteredPms = new ArrayList<>();
+    for (ProgrammeMembership programmeMembership : pms) {
+      List<Curriculum> filteredCms = programmeMembership.getCurricula().stream()
+          .filter(c -> {
+            String subtype = c.getCurriculumSubType();
+            if (subtype == null) {
+              return false;
+            } else {
+              return MEDICAL_CURRICULA.stream().anyMatch(subtype::equalsIgnoreCase);
+            }
+          })
+          .toList();
+      if (!filteredCms.isEmpty()) {
+        programmeMembership.setCurricula(filteredCms);
+        filteredPms.add(programmeMembership);
+      }
+    }
+    return filteredPms;
+  }
+
+  /**
+   * Get programme memberships that comprise intra-deanery transfers or rotas for another programme
+   * membership.
+   *
+   * @param anchorPm     The programme membership against which to assess the others.
+   * @param candidatePms The list of candidate programme memberships.
+   * @return The programme memberships that comprise intra-deanery transfers or rotas.
+   */
+  private List<ProgrammeMembership> getIntraOrRotaPms(ProgrammeMembership anchorPm,
+                                                      List<ProgrammeMembership> candidatePms) {
+    List<ProgrammeMembership> newStarterPmsWithSameDeaneryStartedBeforeAnchor =
+        candidatePms.stream()
+            .filter(pm -> {
+              if (pm.getProgrammeMembershipType() == null) {
+                return false;
+              } else {
+                return (NON_NEW_START_PROGRAMME_MEMBERSHIP_TYPES.stream()
+                    .noneMatch(pm.getProgrammeMembershipType()::equalsIgnoreCase));
+              }
+            })
+            .filter(pm -> {
+              if (pm.getManagingDeanery() == null || anchorPm.getManagingDeanery() == null) {
+                return false;
+              } else {
+                return pm.getManagingDeanery().equalsIgnoreCase(anchorPm.getManagingDeanery());
+              }
+            })
+            .filter(pm ->
+                pm.getStartDate().isBefore(anchorPm.getStartDate())
+            //dates cannot be null because any offenders are removed in getRecentPrecedingPms()
+            ).toList();
+
+    List<String> anchorPmCurriculumSpecialties = anchorPm.getCurricula().stream()
+        .map(Curriculum::getCurriculumSpecialtyCode)
+        .filter(Objects::nonNull).toList();
+
+    return new ArrayList<>(newStarterPmsWithSameDeaneryStartedBeforeAnchor.stream()
+        .filter(pm -> {
+          List<String> sharedCurriculumSpecialties = new ArrayList<>(pm.getCurricula().stream()
+              .map(Curriculum::getCurriculumSpecialtyCode)
+              .filter(Objects::nonNull).toList());
+          sharedCurriculumSpecialties.retainAll(anchorPmCurriculumSpecialties);
+
+          return !sharedCurriculumSpecialties.isEmpty();
+        }).toList());
+  }
+
+  /**
+   * Get the list of programme memberships that started before another programme membership and
+   * finished within PROGRAMME_BREAK_DAYS of it, sorted in descending start-date order.
+   *
+   * @param anchorPm     The programme membership against which to assess the others.
+   * @param candidatePms The possible programme memberships.
+   * @return The filtered list.
+   */
+  private List<ProgrammeMembership> getRecentPrecedingPms(ProgrammeMembership anchorPm,
+                                                          List<ProgrammeMembership> candidatePms) {
+    return
+        candidatePms.stream()
+            .filter(pm -> {
+              if (pm.getStartDate() == null || anchorPm.getStartDate() == null) {
+                return false;
+              } else {
+                return pm.getStartDate().isBefore(anchorPm.getStartDate());
+              }
+            })
+            .filter(pm -> {
+              if (pm.getEndDate() == null) {
+                return false;
+              } else {
+                return pm.getEndDate()
+                    .isAfter(anchorPm.getStartDate().minusDays(PROGRAMME_BREAK_DAYS));
+              }
+            }).toList();
   }
 }
