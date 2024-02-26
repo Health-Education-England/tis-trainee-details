@@ -43,6 +43,8 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -317,21 +319,21 @@ class ProgrammeMembershipResourceTest {
             .isEmpty());
   }
 
-  @Test
-  void shouldReturnProgrammeMembershipNewStarterWhenTraineeFound() throws Exception {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void shouldReturnProgrammeMembershipNewStarterWhenTraineeFound(boolean isNewStarter)
+      throws Exception {
     when(service
         .isNewStarter("40", "1"))
-        .thenReturn(true);
+        .thenReturn(isNewStarter);
 
     MvcResult result = mockMvc.perform(
             get("/api/programme-membership/isnewstarter/{traineeTisId}/{programmeMembershipId}",
                 "40", "1")
                 .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
+        .andExpect(content().string(String.valueOf(isNewStarter)))
         .andReturn();
-
-    Boolean resultBoolean = Boolean.parseBoolean(result.getResponse().getContentAsString());
-    assertThat("Unexpected result.", resultBoolean, is(true));
   }
 
   @Test

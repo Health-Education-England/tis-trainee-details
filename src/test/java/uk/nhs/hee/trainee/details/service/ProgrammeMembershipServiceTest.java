@@ -47,7 +47,6 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -548,7 +547,7 @@ class ProgrammeMembershipServiceTest {
 
   @ParameterizedTest
   @NullSource
-  @CsvSource({"1970-01-01"})
+  @ValueSource(strings = "1970-01-01")
   void newStarterShouldBeFalseIfPmHasEnded(LocalDate endDate) {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
