@@ -128,7 +128,8 @@ public class TraineeProfileService {
     if (traineeProfile != null && traineeProfile.getPersonalDetails() != null) {
       String email = traineeProfile.getPersonalDetails().getEmail();
       String familyName = traineeProfile.getPersonalDetails().getSurname();
-      return Optional.of(new UserAccountDetails(email, familyName));
+      String gmcNumber = traineeProfile.getPersonalDetails().getGmcNumber();
+      return Optional.of(new UserAccountDetails(email, familyName, gmcNumber));
     }
     return Optional.empty();
   }

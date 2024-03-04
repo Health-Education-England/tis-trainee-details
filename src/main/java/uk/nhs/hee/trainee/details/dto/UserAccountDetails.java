@@ -26,7 +26,8 @@ package uk.nhs.hee.trainee.details.dto;
  *
  * @param email      The profile email.
  * @param familyName The profile family name.
+ * @param gmcNumber  The profile GMC number.
  */
-public record UserAccountDetails(String email, String familyName) {
+public record UserAccountDetails(String email, String familyName, String gmcNumber) {
 
 }

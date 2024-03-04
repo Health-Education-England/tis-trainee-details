@@ -445,7 +445,7 @@ class TraineeProfileResourceTest {
   @Test
   void getUserAccountShouldReturnAccountDetailsWhenProfileFoundByTisId() throws Exception {
     when(service.getTraineeAccountDetailsByTisId(DEFAULT_TIS_ID_1))
-        .thenReturn(Optional.of(new UserAccountDetails(PERSON_EMAIL, PERSON_SURNAME)));
+        .thenReturn(Optional.of(new UserAccountDetails(PERSON_EMAIL, PERSON_SURNAME, PERSON_GMC)));
 
     mockMvc.perform(get("/api/trainee-profile/account-details/{tisId}", DEFAULT_TIS_ID_1)
         .contentType(MediaType.APPLICATION_JSON))
