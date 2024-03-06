@@ -50,7 +50,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.nhs.hee.trainee.details.dto.UserAccountDetails;
+import uk.nhs.hee.trainee.details.dto.UserDetails;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
 import uk.nhs.hee.trainee.details.model.Curriculum;
@@ -555,7 +555,7 @@ class TraineeProfileServiceTest {
   void shouldReturnEmptyWhenTraineeNotFoundByTisId() {
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(null);
 
-    Optional<UserAccountDetails> detail = service.getTraineeAccountDetailsByTisId(DEFAULT_TIS_ID_1);
+    Optional<UserDetails> detail = service.getTraineeAccountDetailsByTisId(DEFAULT_TIS_ID_1);
 
     assertThat("Unexpected trainee account details.", detail, is(Optional.empty()));
   }
@@ -565,7 +565,7 @@ class TraineeProfileServiceTest {
     traineeProfile.setPersonalDetails(null);
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
 
-    Optional<UserAccountDetails> detail = service.getTraineeAccountDetailsByTisId(DEFAULT_TIS_ID_1);
+    Optional<UserDetails> detail = service.getTraineeAccountDetailsByTisId(DEFAULT_TIS_ID_1);
 
     assertThat("Unexpected trainee account details.", detail, is(Optional.empty()));
   }
@@ -574,11 +574,15 @@ class TraineeProfileServiceTest {
   void shouldFindAccountDetailsByTisId() {
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
 
-    Optional<UserAccountDetails> detail = service.getTraineeAccountDetailsByTisId(DEFAULT_TIS_ID_1);
+    Optional<UserDetails> detail = service.getTraineeAccountDetailsByTisId(DEFAULT_TIS_ID_1);
 
     assertThat("Unexpected missing account details.", detail.isPresent(), is(true));
     assertThat("Unexpected trainee email.", detail.get().email(), is(PERSON_EMAIL));
     assertThat("Unexpected trainee family name.", detail.get().familyName(),
         is(PERSON_SURNAME));
+    assertThat("Unexpected trainee given name.", detail.get().givenName(),
+        is(PERSON_FORENAME));
+    assertThat("Unexpected trainee GMC number.", detail.get().gmcNumber(),
+        is(PERSON_GMC));
   }
 }

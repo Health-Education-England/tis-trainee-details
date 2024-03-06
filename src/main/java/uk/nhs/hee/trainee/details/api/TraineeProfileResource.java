@@ -40,7 +40,7 @@ import org.springframework.web.bind.annotation.RestController;
 import uk.nhs.hee.trainee.details.api.util.AuthTokenUtil;
 import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
 import uk.nhs.hee.trainee.details.dto.TraineeProfileDto;
-import uk.nhs.hee.trainee.details.dto.UserAccountDetails;
+import uk.nhs.hee.trainee.details.dto.UserDetails;
 import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapper;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.service.TraineeProfileService;
@@ -152,7 +152,7 @@ public class TraineeProfileResource {
    * @return The matching trainee user account details, or not found if not found.
    */
   @GetMapping("/account-details/{tisId}")
-  public ResponseEntity<UserAccountDetails> getTraineeAccountDetails(@PathVariable String tisId) {
+  public ResponseEntity<UserDetails> getTraineeAccountDetails(@PathVariable String tisId) {
     return ResponseEntity.of(service.getTraineeAccountDetailsByTisId(tisId));
   }
 }
