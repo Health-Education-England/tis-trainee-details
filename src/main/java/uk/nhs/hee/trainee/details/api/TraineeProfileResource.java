@@ -146,13 +146,13 @@ public class TraineeProfileResource {
   }
 
   /**
-   * Get the account details for a trainee TIS ID.
+   * Get the details for a trainee TIS ID.
    *
    * @param tisId The TIS ID to search by.
-   * @return The matching trainee user account details, or not found if not found.
+   * @return The matching trainee user details, or not found if not found.
    */
-  @GetMapping("/account-details/{tisId}")
-  public ResponseEntity<UserDetails> getTraineeAccountDetails(@PathVariable String tisId) {
-    return ResponseEntity.of(service.getTraineeAccountDetailsByTisId(tisId));
+  @GetMapping("/trainee-details/{tisId}")
+  public ResponseEntity<UserDetails> getTraineeDetails(@PathVariable String tisId) {
+    return ResponseEntity.of(service.getTraineeDetailsByTisId(tisId));
   }
 }

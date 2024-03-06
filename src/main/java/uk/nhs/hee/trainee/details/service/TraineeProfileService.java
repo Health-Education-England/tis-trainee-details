@@ -122,15 +122,16 @@ public class TraineeProfileService {
    * @param tisId The TIS ID of the trainee.
    * @return The trainee email, or optional empty if trainee not found or email missing.
    */
-  public Optional<UserDetails> getTraineeAccountDetailsByTisId(String tisId) {
+  public Optional<UserDetails> getTraineeDetailsByTisId(String tisId) {
     TraineeProfile traineeProfile = repository.findByTraineeTisId(tisId);
 
     if (traineeProfile != null && traineeProfile.getPersonalDetails() != null) {
       String email = traineeProfile.getPersonalDetails().getEmail();
+      String title = traineeProfile.getPersonalDetails().getTitle();
       String familyName = traineeProfile.getPersonalDetails().getSurname();
       String givenName = traineeProfile.getPersonalDetails().getForenames();
       String gmcNumber = traineeProfile.getPersonalDetails().getGmcNumber();
-      return Optional.of(new UserDetails(email, familyName, givenName, gmcNumber));
+      return Optional.of(new UserDetails(email, title, familyName, givenName, gmcNumber));
     }
     return Optional.empty();
   }

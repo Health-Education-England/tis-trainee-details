@@ -555,7 +555,7 @@ class TraineeProfileServiceTest {
   void shouldReturnEmptyWhenTraineeNotFoundByTisId() {
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(null);
 
-    Optional<UserDetails> detail = service.getTraineeAccountDetailsByTisId(DEFAULT_TIS_ID_1);
+    Optional<UserDetails> detail = service.getTraineeDetailsByTisId(DEFAULT_TIS_ID_1);
 
     assertThat("Unexpected trainee account details.", detail, is(Optional.empty()));
   }
@@ -565,7 +565,7 @@ class TraineeProfileServiceTest {
     traineeProfile.setPersonalDetails(null);
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
 
-    Optional<UserDetails> detail = service.getTraineeAccountDetailsByTisId(DEFAULT_TIS_ID_1);
+    Optional<UserDetails> detail = service.getTraineeDetailsByTisId(DEFAULT_TIS_ID_1);
 
     assertThat("Unexpected trainee account details.", detail, is(Optional.empty()));
   }
@@ -574,10 +574,11 @@ class TraineeProfileServiceTest {
   void shouldFindAccountDetailsByTisId() {
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
 
-    Optional<UserDetails> detail = service.getTraineeAccountDetailsByTisId(DEFAULT_TIS_ID_1);
+    Optional<UserDetails> detail = service.getTraineeDetailsByTisId(DEFAULT_TIS_ID_1);
 
     assertThat("Unexpected missing account details.", detail.isPresent(), is(true));
     assertThat("Unexpected trainee email.", detail.get().email(), is(PERSON_EMAIL));
+    assertThat("Unexpected trainee title.", detail.get().title(), is(PERSON_TITLE));
     assertThat("Unexpected trainee family name.", detail.get().familyName(),
         is(PERSON_SURNAME));
     assertThat("Unexpected trainee given name.", detail.get().givenName(),
