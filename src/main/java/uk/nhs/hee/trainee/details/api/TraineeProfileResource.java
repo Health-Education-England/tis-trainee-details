@@ -151,7 +151,7 @@ public class TraineeProfileResource {
    * @param tisId The TIS ID to search by.
    * @return The matching trainee user details, or not found if not found.
    */
-  @GetMapping("/trainee-details/{tisId}")
+  @GetMapping("/account-details/{tisId}")
   public ResponseEntity<UserDetails> getTraineeDetails(@PathVariable String tisId) {
     return ResponseEntity.of(service.getTraineeDetailsByTisId(tisId));
   }

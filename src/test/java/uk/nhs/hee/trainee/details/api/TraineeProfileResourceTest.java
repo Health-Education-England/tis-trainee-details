@@ -438,7 +438,7 @@ class TraineeProfileResourceTest {
 
   @Test
   void getUserAccountShouldReturnNotFoundWhenProfileNotFoundByTisId() throws Exception {
-    mockMvc.perform(get("/api/trainee-profile/trainee-details/non-existent-tisid"))
+    mockMvc.perform(get("/api/trainee-profile/account-details/non-existent-tisid"))
         .andExpect(status().isNotFound());
   }
 
@@ -449,7 +449,7 @@ class TraineeProfileResourceTest {
             new UserDetails(
                 PERSON_EMAIL, PERSON_TITLE, PERSON_SURNAME, PERSON_FORENAME, PERSON_GMC)));
 
-    mockMvc.perform(get("/api/trainee-profile/trainee-details/{tisId}", DEFAULT_TIS_ID_1)
+    mockMvc.perform(get("/api/trainee-profile/account-details/{tisId}", DEFAULT_TIS_ID_1)
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
