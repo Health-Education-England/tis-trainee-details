@@ -40,7 +40,7 @@ import org.springframework.web.bind.annotation.RestController;
 import uk.nhs.hee.trainee.details.api.util.AuthTokenUtil;
 import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
 import uk.nhs.hee.trainee.details.dto.TraineeProfileDto;
-import uk.nhs.hee.trainee.details.dto.UserAccountDetails;
+import uk.nhs.hee.trainee.details.dto.UserDetails;
 import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapper;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.service.TraineeProfileService;
@@ -146,13 +146,13 @@ public class TraineeProfileResource {
   }
 
   /**
-   * Get the account details for a trainee TIS ID.
+   * Get the details for a trainee TIS ID.
    *
    * @param tisId The TIS ID to search by.
-   * @return The matching trainee user account details, or not found if not found.
+   * @return The matching trainee user details, or not found if not found.
    */
   @GetMapping("/account-details/{tisId}")
-  public ResponseEntity<UserAccountDetails> getTraineeAccountDetails(@PathVariable String tisId) {
-    return ResponseEntity.of(service.getTraineeAccountDetailsByTisId(tisId));
+  public ResponseEntity<UserDetails> getTraineeDetails(@PathVariable String tisId) {
+    return ResponseEntity.of(service.getTraineeDetailsByTisId(tisId));
   }
 }

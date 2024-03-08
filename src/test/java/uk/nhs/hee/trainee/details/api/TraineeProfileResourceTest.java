@@ -52,7 +52,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import uk.nhs.hee.trainee.details.TestJwtUtil;
-import uk.nhs.hee.trainee.details.dto.UserAccountDetails;
+import uk.nhs.hee.trainee.details.dto.UserDetails;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 import uk.nhs.hee.trainee.details.dto.signature.Signature;
@@ -444,8 +444,10 @@ class TraineeProfileResourceTest {
 
   @Test
   void getUserAccountShouldReturnAccountDetailsWhenProfileFoundByTisId() throws Exception {
-    when(service.getTraineeAccountDetailsByTisId(DEFAULT_TIS_ID_1))
-        .thenReturn(Optional.of(new UserAccountDetails(PERSON_EMAIL, PERSON_SURNAME)));
+    when(service.getTraineeDetailsByTisId(DEFAULT_TIS_ID_1))
+        .thenReturn(Optional.of(
+            new UserDetails(
+                PERSON_EMAIL, PERSON_TITLE, PERSON_SURNAME, PERSON_FORENAME, PERSON_GMC)));
 
     mockMvc.perform(get("/api/trainee-profile/account-details/{tisId}", DEFAULT_TIS_ID_1)
         .contentType(MediaType.APPLICATION_JSON))

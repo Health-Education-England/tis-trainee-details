@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
-import uk.nhs.hee.trainee.details.dto.UserAccountDetails;
+import uk.nhs.hee.trainee.details.dto.UserDetails;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
@@ -122,13 +122,16 @@ public class TraineeProfileService {
    * @param tisId The TIS ID of the trainee.
    * @return The trainee email, or optional empty if trainee not found or email missing.
    */
-  public Optional<UserAccountDetails> getTraineeAccountDetailsByTisId(String tisId) {
+  public Optional<UserDetails> getTraineeDetailsByTisId(String tisId) {
     TraineeProfile traineeProfile = repository.findByTraineeTisId(tisId);
 
     if (traineeProfile != null && traineeProfile.getPersonalDetails() != null) {
       String email = traineeProfile.getPersonalDetails().getEmail();
+      String title = traineeProfile.getPersonalDetails().getTitle();
       String familyName = traineeProfile.getPersonalDetails().getSurname();
-      return Optional.of(new UserAccountDetails(email, familyName));
+      String givenName = traineeProfile.getPersonalDetails().getForenames();
+      String gmcNumber = traineeProfile.getPersonalDetails().getGmcNumber();
+      return Optional.of(new UserDetails(email, title, familyName, givenName, gmcNumber));
     }
     return Optional.empty();
   }
