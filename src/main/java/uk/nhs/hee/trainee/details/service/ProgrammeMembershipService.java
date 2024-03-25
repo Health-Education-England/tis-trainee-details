@@ -244,8 +244,8 @@ public class ProgrammeMembershipService {
     ProgrammeMembership programmeMembership = getCandidateProgrammeMembership(
         traineeProfile.getProgrammeMemberships(), programmeMembershipId);
     if (programmeMembership == null) {
-      log.info("New starter: [false] programme membership {} does not exist, is non-medical or " +
-              "has wrong type",
+      log.info("New starter: [false] programme membership {} does not exist, is non-medical or "
+              + "has wrong type",
           programmeMembershipId);
       return false;
     }
@@ -297,8 +297,8 @@ public class ProgrammeMembershipService {
     ProgrammeMembership programmeMembership = getCandidateProgrammeMembership(
         traineeProfile.getProgrammeMemberships(), programmeMembershipId);
     if (programmeMembership == null) {
-      log.info("2024 pilot: [false] programme membership {} does not exist, is non-medical or " +
-              "has wrong type",
+      log.info("2024 pilot: [false] programme membership {} does not exist, is non-medical or "
+              + "has wrong type",
           programmeMembershipId);
       return false;
     }
@@ -363,7 +363,7 @@ public class ProgrammeMembershipService {
    * @param programmeMemberships   The list of programme memberships.
    * @param programmeMembershipId The programme membership ID.
    * @return The programme membership, or null if it is not a candidate because it does not exist,
-   * it is non-medical, or is of the wrong type.
+   *         it is non-medical, or is of the wrong type.
    */
   private ProgrammeMembership getCandidateProgrammeMembership(
       List<ProgrammeMembership> programmeMemberships, String programmeMembershipId) {
