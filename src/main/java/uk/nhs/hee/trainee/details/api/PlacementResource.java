@@ -108,15 +108,15 @@ public class PlacementResource {
    * @param placementId  The ID of the placement to assess.
    * @return True if the placement is in the 2024 pilot, otherwise false.
    */
-  @GetMapping("/is2024pilot/{traineeTisId}/{placementId}")
-  public ResponseEntity<Boolean> isIn2024Pilot(
+  @GetMapping("/ispilot2024/{traineeTisId}/{placementId}")
+  public ResponseEntity<Boolean> isInPilot2024(
       @PathVariable(name = "traineeTisId") String traineeTisId,
       @PathVariable(name = "placementId") String placementId) {
     log.info("Assess 2024 pilot status: placement {} of trainee with TIS ID {}",
         placementId, traineeTisId);
     try {
-      boolean is2024Pilot = service.is2024Pilot(traineeTisId, placementId);
-      return ResponseEntity.ok(is2024Pilot);
+      boolean isPilot2024 = service.isPilot2024(traineeTisId, placementId);
+      return ResponseEntity.ok(isPilot2024);
     } catch (IllegalArgumentException | InvalidDataAccessApiUsageException e) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getLocalizedMessage());
     }

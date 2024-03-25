@@ -111,7 +111,7 @@ public class PlacementService {
    * @param placementId  The ID of the placement to assess.
    * @return True, or False if the placement is not in the 2024 pilot.
    */
-  public boolean is2024Pilot(String traineeTisId, String placementId) {
+  public boolean isPilot2024(String traineeTisId, String placementId) {
     TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
 
     if (traineeProfile == null) {
@@ -135,6 +135,6 @@ public class PlacementService {
             pm.getStartDate().isBefore(dayAfterPlacementStart)
                 && pm.getProgrammeCompletionDate().isAfter(dayBeforePlacementStart))
         .anyMatch(pmInPeriod ->
-            programmeMembershipService.is2024Pilot(traineeTisId, pmInPeriod.getTisId()));
+            programmeMembershipService.isPilot2024(traineeTisId, pmInPeriod.getTisId()));
   }
 }

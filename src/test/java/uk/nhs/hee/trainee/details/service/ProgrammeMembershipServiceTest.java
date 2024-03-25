@@ -35,6 +35,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.MEDICAL_CURRICULA;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.NON_RELEVANT_PROGRAMME_MEMBERSHIP_TYPES;
+import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PILOT_2024_LOCAL_OFFICES_ALL_PROGRAMMES;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PROGRAMME_BREAK_DAYS;
 
 import java.time.Duration;
@@ -533,7 +534,7 @@ class ProgrammeMembershipServiceTest {
 
   @ParameterizedTest
   @NullSource
-  @MethodSource("listNonNewStartPmTypes")
+  @MethodSource("listNonRelevantPmTypes")
   void newStarterShouldBeFalseIfPmHasWrongType(String pmType) {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
@@ -806,6 +807,140 @@ class ProgrammeMembershipServiceTest {
     assertThat("Unexpected isNewStarter value.", isNewStarter, is(true));
   }
 
+  @Test
+  void pilot2024ShouldBeFalseIfTraineeNotFound() {
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(null);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected pilot2024 value.", isPilot2024, is(false));
+  }
+
+  @Test
+  void pilot2024ShouldBeFalseIfPmNotFound() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipDefault("unknown id",
+            PROGRAMME_MEMBERSHIP_TYPE, START_DATE, END_DATE))); //PROGRAMME_TIS_ID != "unknown id"
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
+  }
+
+  @ParameterizedTest
+  @NullSource
+  @ValueSource(strings = {"another subtype"})
+  void pilot2024ShouldBeFalseIfPmHasNoMedicalCurricula(String curriculumSubtype) {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, START_DATE, END_DATE, MANAGING_DEANERY, curriculumSubtype,
+            CURRICULUM_SPECIALTY_CODE)));
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
+  }
+
+  @ParameterizedTest
+  @NullSource
+  @MethodSource("listNonRelevantPmTypes")
+  void pilot2024ShouldBeFalseIfPmHasWrongType(String pmType) {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipDefault(PROGRAMME_TIS_ID, pmType, START_DATE, END_DATE)));
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isNewStarter value.", isPilot2024, is(false));
+  }
+
+  @ParameterizedTest
+  @MethodSource("listLoPilot2024AllProgrammes")
+  void pilot2024ShouldBeTrueIfLoWithAllProgrammesAndCorrectStartDate(String lo) {
+    LocalDate dateInRange = LocalDate.of(2024, 8, 1);
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE, lo, MEDICAL_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE)));
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(true));
+  }
+
+  @ParameterizedTest
+  @MethodSource("listLoPilot2024AllProgrammes")
+  void pilot2024ShouldBeFalseIfLoWithAllProgrammesAndWrongStartDate(String lo) {
+    LocalDate dateOutOfRange = LocalDate.of(2024, 7, 1);
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, dateOutOfRange, END_DATE, lo, MEDICAL_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE)));
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
+  void pilot2024ShouldBeTrueForYhWithCorrectDateAndCurriculumSpecialty(String specialty) {
+    LocalDate date = LocalDate.of(2024, 8, 7);
+    String deanery = "Health Education England Yorkshire and the Humber";
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, date, END_DATE, deanery, MEDICAL_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, specialty)));
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(true));
+  }
+
+  @Test
+  void pilot2024ShouldBeFalseForYhWithCorrectDateAndWrongCurriculumSpecialty() {
+    LocalDate date = LocalDate.of(2024, 8, 7);
+    String deanery = "Health Education England Yorkshire and the Humber";
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, date, END_DATE, deanery, MEDICAL_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, "non-matching specialty")));
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
+  void pilot2024ShouldBeFalseForYhWithIncorrectDateAndCorrectCurriculumSpecialty(String specialty) {
+    LocalDate wrongDate = LocalDate.of(2024, 8, 8);
+    String deanery = "Health Education England Yorkshire and the Humber";
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, wrongDate, END_DATE, deanery, MEDICAL_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, specialty)));
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
+  }
+
   /**
    * Create an instance of ProgrammeMembership with default dummy values.
    *
@@ -833,8 +968,12 @@ class ProgrammeMembershipServiceTest {
     return programmeMembership;
   }
 
-  static Stream<String> listNonNewStartPmTypes() {
+  static Stream<String> listNonRelevantPmTypes() {
     return NON_RELEVANT_PROGRAMME_MEMBERSHIP_TYPES.stream();
+  }
+
+  static Stream<String> listLoPilot2024AllProgrammes() {
+    return PILOT_2024_LOCAL_OFFICES_ALL_PROGRAMMES.stream();
   }
 
   static Stream<String> listMedicalCurriculaSubTypes() {
@@ -871,6 +1010,42 @@ class ProgrammeMembershipServiceTest {
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSubType(curriculumSubType);
     curriculum.setCurriculumSpecialtyCode(curriculumSpecialtyCode);
+    programmeMembership.setCurricula(List.of(curriculum));
+
+    return programmeMembership;
+  }
+
+  /**
+   * Create a programme membership with a single curriculum for testing pilot2024 conditions.
+   *
+   * @param programmeMembershipTisId The TIS ID to set on the programmeMembership.
+   * @param programmeMembershipType  The programme membership type.
+   * @param startDate                The start date.
+   * @param endDate                  The end date.
+   * @param managingDeanery          The managing deanery.
+   * @param curriculumSubType        The curriculum subtype.
+   * @param curriculumSpecialtyCode  The curriculum specialty code.
+   * @return The programme membership.
+   */
+  private ProgrammeMembership getProgrammeMembershipWithOneCurriculum(
+      String programmeMembershipTisId, String programmeMembershipType, LocalDate startDate,
+      LocalDate endDate, String managingDeanery, String curriculumSubType,
+      String curriculumSpecialtyCode, String curriculumSpecialty) {
+    ProgrammeMembership programmeMembership = new ProgrammeMembership();
+    programmeMembership.setTisId(programmeMembershipTisId);
+    programmeMembership.setProgrammeTisId(PROGRAMME_TIS_ID);
+    programmeMembership.setProgrammeName(PROGRAMME_NAME);
+    programmeMembership.setProgrammeNumber(PROGRAMME_NUMBER);
+    programmeMembership.setManagingDeanery(managingDeanery);
+    programmeMembership.setProgrammeMembershipType(programmeMembershipType);
+    programmeMembership.setStartDate(startDate);
+    programmeMembership.setEndDate(endDate);
+    programmeMembership.setProgrammeCompletionDate(COMPLETION_DATE);
+
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSubType(curriculumSubType);
+    curriculum.setCurriculumSpecialtyCode(curriculumSpecialtyCode);
+    curriculum.setCurriculumSpecialty(curriculumSpecialty);
     programmeMembership.setCurricula(List.of(curriculum));
 
     return programmeMembership;

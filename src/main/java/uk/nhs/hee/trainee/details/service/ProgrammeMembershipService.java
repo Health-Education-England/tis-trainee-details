@@ -50,6 +50,31 @@ public class ProgrammeMembershipService {
       = List.of("VISITOR", "LAT");
   protected static final Long PROGRAMME_BREAK_DAYS = 355L;
 
+  protected static final List<String> PILOT_2024_LOCAL_OFFICES_ALL_PROGRAMMES
+      = List.of("London LETBs",
+      "Health Education England North Central and East London",
+      "Health Education England South London",
+      "Health Education England North West London",
+      "Health Education England Kent, Surrey and Sussex",
+      "Health Education England East Midlands",
+      "Health Education England West Midlands",
+      "Health Education England East of England",
+      "Health Education England Wessex");
+
+  protected static final List<String> PILOT_2024_NW_SPECIALTIES = List.of(
+      "Cardiothoracic surgery",
+      "Core surgical training",
+      "General surgery",
+      "Neurosurgery",
+      "Ophthalmology",
+      "Oral and maxillofacial surgery",
+      "Otolaryngology",
+      "Paediatric Surgery",
+      "Plastic Surgery",
+      "Trauma and Orthopaedic Surgery",
+      "Urology",
+      "Vascular surgery");
+
   private final TraineeProfileRepository repository;
   private final ProgrammeMembershipMapper mapper;
   private final CachingDelegate cachingDelegate;
@@ -275,7 +300,7 @@ public class ProgrammeMembershipService {
    * @param programmeMembershipId The ID of the programme membership to assess.
    * @return True, or False if the programme membership is not in the 2024 pilot.
    */
-  public boolean is2024Pilot(String traineeTisId, String programmeMembershipId) {
+  public boolean isPilot2024(String traineeTisId, String programmeMembershipId) {
     TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
 
     if (traineeProfile == null) {
@@ -308,19 +333,10 @@ public class ProgrammeMembershipService {
 
     String managingDeanery = programmeMembership.getManagingDeanery();
     LocalDate startDate = programmeMembership.getStartDate();
-    LocalDate dayBefore01082024 = LocalDate.of(2024, 07, 31);
+    LocalDate dayBefore01082024 = LocalDate.of(2024, 7, 31);
     LocalDate dayAfter31102024 = LocalDate.of(2024, 11, 1);
-    if ((managingDeanery.equalsIgnoreCase("London LETBs")
-        || managingDeanery
-        .equalsIgnoreCase("Health Education England North Central and East London")
-        || managingDeanery.equalsIgnoreCase("Health Education England South London")
-        || managingDeanery.equalsIgnoreCase("Health Education England North West London")
-        || managingDeanery
-        .equalsIgnoreCase("Health Education England Kent, Surrey and Sussex")
-        || managingDeanery.equalsIgnoreCase("Health Education England East Midlands")
-        || managingDeanery.equalsIgnoreCase("Health Education England West Midlands")
-        || managingDeanery.equalsIgnoreCase("Health Education England East of England")
-        || managingDeanery.equalsIgnoreCase("Health Education England Wessex"))
+    if ((PILOT_2024_LOCAL_OFFICES_ALL_PROGRAMMES.stream()
+        .anyMatch(lo -> lo.equalsIgnoreCase(managingDeanery)))
         && (startDate.isAfter(dayBefore01082024) && startDate.isBefore(dayAfter31102024))) {
       return true;
     }
@@ -331,7 +347,7 @@ public class ProgrammeMembershipService {
         && programmeMembership.getCurricula().stream()
         .anyMatch(c -> (
             c.getCurriculumSpecialty().equalsIgnoreCase("Internal Medicine Stage One")
-            || c.getCurriculumSpecialty().equalsIgnoreCase("Core surgical training")))) {
+                || c.getCurriculumSpecialty().equalsIgnoreCase("Core surgical training")))) {
       return true;
     }
 
@@ -339,28 +355,13 @@ public class ProgrammeMembershipService {
     if (managingDeanery
         .equalsIgnoreCase("Health Education England North West")
         && (startDate.isAfter(dayBefore01082024) && startDate.isBefore(dayAfter31082024))
-        && (
-        programmeMembership.getCurricula().stream()
-            .anyMatch(c -> (
-                c.getCurriculumSpecialty().equalsIgnoreCase("Cardiothoracic surgery")
-                || c.getCurriculumSpecialty().equalsIgnoreCase("Core surgical training")
-                || c.getCurriculumSpecialty().equalsIgnoreCase("General surgery")
-                || c.getCurriculumSpecialty().equalsIgnoreCase("Neurosurgery")
-                || c.getCurriculumSpecialty().equalsIgnoreCase("Ophthalmology")
-                || c.getCurriculumSpecialty()
-                    .equalsIgnoreCase("Oral and maxillofacial surgery")
-                || c.getCurriculumSpecialty().equalsIgnoreCase("Otolaryngology")
-                || c.getCurriculumSpecialty().equalsIgnoreCase("Paediatric Surgery")
-                || c.getCurriculumSpecialty().equalsIgnoreCase("Plastic Surgery")
-                || c.getCurriculumSpecialty()
-                    .equalsIgnoreCase("Trauma and Orthopaedic Surgery")
-                || c.getCurriculumSpecialty().equalsIgnoreCase("Urology")
-                || c.getCurriculumSpecialty().equalsIgnoreCase("Vascular surgery")))
-            || programmeMembership.getProgrammeName()
-            .equalsIgnoreCase("Cardio-thoracic surgery (run through)")
-            || programmeMembership.getProgrammeName()
-            .equalsIgnoreCase("Oral and maxillo-facial surgery (run through)")
-    )) {
+        && (programmeMembership.getCurricula().stream().anyMatch(c ->
+        PILOT_2024_NW_SPECIALTIES.stream().anyMatch(
+            s -> s.equalsIgnoreCase(c.getCurriculumSpecialty())))
+        || programmeMembership.getProgrammeName()
+        .equalsIgnoreCase("Cardio-thoracic surgery (run through)")
+        || programmeMembership.getProgrammeName()
+        .equalsIgnoreCase("Oral and maxillo-facial surgery (run through)"))) {
       return true;
     }
 
