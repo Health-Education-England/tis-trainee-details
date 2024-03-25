@@ -433,7 +433,7 @@ public class ProgrammeMembershipService {
             })
             .filter(pm ->
                     pm.getStartDate().isBefore(anchorPm.getStartDate())
-                //dates cannot be null because any offenders removed in getRecentPrecedingPms()
+                    //dates cannot be null because any offenders removed in getRecentPrecedingPms()
             ).toList();
 
     List<String> anchorPmCurriculumSpecialties = anchorPm.getCurricula().stream()

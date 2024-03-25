@@ -897,15 +897,15 @@ class ProgrammeMembershipServiceTest {
     assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
   }
 
-  @Test
-  void pilot2024ShouldBeFalseIfNotLoWithAllProgrammesAndCorrectStartDate() {
-    LocalDate dateOutOfRange = LocalDate.of(2024, 8, 1);
-    String otherLocalOffice = "some local office";
+  @ParameterizedTest
+  @MethodSource("listLoPilot2024AllProgrammes")
+  void pilot2024ShouldBeFalseIfLoWithAllProgrammesAndTooLateStartDate(String lo) {
+    LocalDate dateOutOfRange = LocalDate.of(2024, 12, 1);
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, dateOutOfRange, END_DATE, otherLocalOffice,
-            MEDICAL_CURRICULA.get(0), CURRICULUM_SPECIALTY_CODE)));
+            PROGRAMME_MEMBERSHIP_TYPE, dateOutOfRange, END_DATE, lo, MEDICAL_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE)));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
@@ -989,6 +989,24 @@ class ProgrammeMembershipServiceTest {
   @MethodSource("listNwPilot2024AllSpecialties")
   void pilot2024ShouldBeFalseIfNwLoWithIncorrectStartDateAndOkSpecialty(String specialty) {
     LocalDate dateOutOfRange = LocalDate.of(2024, 7, 1);
+    String deanery = "Health Education England North West";
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, dateOutOfRange, END_DATE, deanery, MEDICAL_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, specialty)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
+  }
+
+  @ParameterizedTest
+  @MethodSource("listNwPilot2024AllSpecialties")
+  void pilot2024ShouldBeFalseIfNwLoWithTooLateStartDateAndOkSpecialty(String specialty) {
+    LocalDate dateOutOfRange = LocalDate.of(2024, 12, 1);
     String deanery = "Health Education England North West";
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
