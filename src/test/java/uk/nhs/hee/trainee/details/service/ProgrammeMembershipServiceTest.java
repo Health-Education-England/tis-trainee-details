@@ -1170,6 +1170,7 @@ class ProgrammeMembershipServiceTest {
    * @param managingDeanery          The managing deanery.
    * @param curriculumSubType        The curriculum subtype.
    * @param curriculumSpecialtyCode  The curriculum specialty code.
+   * @param curriculumSpecialty      The curriculum specialty name.
    * @return The programme membership.
    */
   private ProgrammeMembership getProgrammeMembershipWithOneCurriculum(
