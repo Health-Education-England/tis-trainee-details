@@ -46,7 +46,7 @@ public class ProgrammeMembershipService {
 
   protected static final List<String> MEDICAL_CURRICULA
       = List.of("DENTAL_CURRICULUM", "DENTAL_POST_CCST", "MEDICAL_CURRICULUM");
-  protected static final List<String> NON_NEW_START_PROGRAMME_MEMBERSHIP_TYPES
+  protected static final List<String> NON_RELEVANT_PROGRAMME_MEMBERSHIP_TYPES
       = List.of("VISITOR", "LAT");
   protected static final Long PROGRAMME_BREAK_DAYS = 355L;
 
@@ -69,7 +69,7 @@ public class ProgrammeMembershipService {
    * @return The updated programme membership or empty if a trainee with the ID was not found.
    */
   public Optional<ProgrammeMembership> updateProgrammeMembershipForTrainee(String traineeTisId,
-         ProgrammeMembership programmeMembership) {
+                                                                           ProgrammeMembership programmeMembership) {
     TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
 
     if (traineeProfile == null) {
@@ -232,10 +232,8 @@ public class ProgrammeMembershipService {
     }
     ProgrammeMembership programmeMembership = optionalProgrammeMembership.get();
 
-    //it cannot be a new starter if it has a non-applicable programme membership type
-    if (programmeMembership.getProgrammeMembershipType() == null
-        || NON_NEW_START_PROGRAMME_MEMBERSHIP_TYPES.stream()
-        .anyMatch(programmeMembership.getProgrammeMembershipType()::equalsIgnoreCase)) {
+    //it cannot be a new starter if it has a non-relevant programme membership type
+    if (!hasProgrammeMembershipTypeOfInterest(programmeMembership)) {
       log.info("New starter: [false] programme membership {} has non-applicable type {}",
           programmeMembershipId, programmeMembership.getProgrammeMembershipType());
       return false;
@@ -267,6 +265,118 @@ public class ProgrammeMembershipService {
         intraOrRotaPms.isEmpty() ? "true" : "false", intraOrRotaPms.size());
     return intraOrRotaPms.isEmpty();
     //otherwise it is not a new starter
+  }
+
+  /**
+   * Assess if the programme membership for a trainee is in the 2024 pilot. Hopefully a temporary
+   * kludge.
+   *
+   * @param traineeTisId          The TIS id of the trainee.
+   * @param programmeMembershipId The ID of the programme membership to assess.
+   * @return True, or False if the programme membership is not in the 2024 pilot.
+   */
+  public boolean is2024Pilot(String traineeTisId, String programmeMembershipId) {
+    TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
+
+    if (traineeProfile == null) {
+      log.info("2024 pilot: [false] trainee profile {} not found", traineeTisId);
+      return false;
+    }
+
+    //get the list of programme memberships with only medical curricula attached
+    List<ProgrammeMembership> pmsToConsider
+        = getPmsMedicalCurricula(traineeProfile.getProgrammeMemberships());
+
+    //get the programme membership that must be assessed
+    Optional<ProgrammeMembership> optionalProgrammeMembership
+        = pmsToConsider.stream().filter(p -> p.getTisId().equals(programmeMembershipId)).findAny();
+
+    //it cannot be in the 2024 pilot if it does not exist, or if it is not a medical one
+    if (optionalProgrammeMembership.isEmpty()) {
+      log.info("2024 pilot: [false] programme membership {} is non-medical or does not exist",
+          programmeMembershipId);
+      return false;
+    }
+    ProgrammeMembership programmeMembership = optionalProgrammeMembership.get();
+
+    //it cannot be in the 2024 pilot if it has a non-relevant programme membership type
+    if (!hasProgrammeMembershipTypeOfInterest(programmeMembership)) {
+      log.info("2024 pilot: [false] programme membership {} has non-applicable type {}",
+          programmeMembershipId, programmeMembership.getProgrammeMembershipType());
+      return false;
+    }
+
+    String managingDeanery = programmeMembership.getManagingDeanery();
+    LocalDate startDate = programmeMembership.getStartDate();
+    LocalDate dayBefore01082024 = LocalDate.of(2024, 07, 31);
+    LocalDate dayAfter31102024 = LocalDate.of(2024, 11, 1);
+    if ((managingDeanery.equalsIgnoreCase("London LETBs")
+        || managingDeanery
+        .equalsIgnoreCase("Health Education England North Central and East London")
+        || managingDeanery.equalsIgnoreCase("Health Education England South London")
+        || managingDeanery.equalsIgnoreCase("Health Education England North West London")
+        || managingDeanery
+        .equalsIgnoreCase("Health Education England Kent, Surrey and Sussex")
+        || managingDeanery.equalsIgnoreCase("Health Education England East Midlands")
+        || managingDeanery.equalsIgnoreCase("Health Education England West Midlands")
+        || managingDeanery.equalsIgnoreCase("Health Education England East of England")
+        || managingDeanery.equalsIgnoreCase("Health Education England Wessex"))
+        && (startDate.isAfter(dayBefore01082024) && startDate.isBefore(dayAfter31102024))) {
+      return true;
+    }
+
+    if (managingDeanery
+        .equalsIgnoreCase("Health Education England Yorkshire and the Humber")
+        && startDate.isEqual(LocalDate.of(2024, 8, 7))
+        && programmeMembership.getCurricula().stream()
+        .anyMatch(c -> (
+            c.getCurriculumSpecialty().equalsIgnoreCase("Internal Medicine Stage One")
+            || c.getCurriculumSpecialty().equalsIgnoreCase("Core surgical training")))) {
+      return true;
+    }
+
+    LocalDate dayAfter31082024 = LocalDate.of(2024, 9, 1);
+    if (managingDeanery
+        .equalsIgnoreCase("Health Education England North West")
+        && (startDate.isAfter(dayBefore01082024) && startDate.isBefore(dayAfter31082024))
+        && (
+        programmeMembership.getCurricula().stream()
+            .anyMatch(c -> (
+                c.getCurriculumSpecialty().equalsIgnoreCase("Cardiothoracic surgery")
+                || c.getCurriculumSpecialty().equalsIgnoreCase("Core surgical training")
+                || c.getCurriculumSpecialty().equalsIgnoreCase("General surgery")
+                || c.getCurriculumSpecialty().equalsIgnoreCase("Neurosurgery")
+                || c.getCurriculumSpecialty().equalsIgnoreCase("Ophthalmology")
+                || c.getCurriculumSpecialty()
+                    .equalsIgnoreCase("Oral and maxillofacial surgery")
+                || c.getCurriculumSpecialty().equalsIgnoreCase("Otolaryngology")
+                || c.getCurriculumSpecialty().equalsIgnoreCase("Paediatric Surgery")
+                || c.getCurriculumSpecialty().equalsIgnoreCase("Plastic Surgery")
+                || c.getCurriculumSpecialty()
+                    .equalsIgnoreCase("Trauma and Orthopaedic Surgery")
+                || c.getCurriculumSpecialty().equalsIgnoreCase("Urology")
+                || c.getCurriculumSpecialty().equalsIgnoreCase("Vascular surgery")))
+            || programmeMembership.getProgrammeName()
+            .equalsIgnoreCase("Cardio-thoracic surgery (run through)")
+            || programmeMembership.getProgrammeName()
+            .equalsIgnoreCase("Oral and maxillo-facial surgery (run through)")
+    )) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Is the programme membership of a type relevant to new-starters or the 2024 pilot.
+   *
+   * @param programmeMembership The programme membership to assess.
+   * @return True if it is relevant, otherwise False.
+   */
+  private boolean hasProgrammeMembershipTypeOfInterest(ProgrammeMembership programmeMembership) {
+    return programmeMembership.getProgrammeMembershipType() != null
+        && NON_RELEVANT_PROGRAMME_MEMBERSHIP_TYPES.stream()
+        .noneMatch(programmeMembership.getProgrammeMembershipType()::equalsIgnoreCase);
   }
 
   /**
@@ -313,7 +423,7 @@ public class ProgrammeMembershipService {
               if (pm.getProgrammeMembershipType() == null) {
                 return false;
               } else {
-                return (NON_NEW_START_PROGRAMME_MEMBERSHIP_TYPES.stream()
+                return (NON_RELEVANT_PROGRAMME_MEMBERSHIP_TYPES.stream()
                     .noneMatch(pm.getProgrammeMembershipType()::equalsIgnoreCase));
               }
             })
@@ -325,8 +435,8 @@ public class ProgrammeMembershipService {
               }
             })
             .filter(pm ->
-                pm.getStartDate().isBefore(anchorPm.getStartDate())
-            //dates cannot be null because any offenders are removed in getRecentPrecedingPms()
+                    pm.getStartDate().isBefore(anchorPm.getStartDate())
+                //dates cannot be null because any offenders are removed in getRecentPrecedingPms()
             ).toList();
 
     List<String> anchorPmCurriculumSpecialties = anchorPm.getCurricula().stream()

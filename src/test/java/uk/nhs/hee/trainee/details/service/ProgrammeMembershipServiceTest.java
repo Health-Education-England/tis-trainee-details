@@ -34,7 +34,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.MEDICAL_CURRICULA;
-import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.NON_NEW_START_PROGRAMME_MEMBERSHIP_TYPES;
+import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.NON_RELEVANT_PROGRAMME_MEMBERSHIP_TYPES;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PROGRAMME_BREAK_DAYS;
 
 import java.time.Duration;
@@ -834,7 +834,7 @@ class ProgrammeMembershipServiceTest {
   }
 
   static Stream<String> listNonNewStartPmTypes() {
-    return NON_NEW_START_PROGRAMME_MEMBERSHIP_TYPES.stream();
+    return NON_RELEVANT_PROGRAMME_MEMBERSHIP_TYPES.stream();
   }
 
   static Stream<String> listMedicalCurriculaSubTypes() {

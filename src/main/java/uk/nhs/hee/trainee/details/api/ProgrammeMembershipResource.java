@@ -189,4 +189,25 @@ public class ProgrammeMembershipResource {
       // other exceptions are possible, e.g. DataAccessException if MongoDB is down
     }
   }
+
+  /**
+   * Determine whether the given programme membership is in the 2024 pilot group.
+   *
+   * @param traineeTisId          The ID of the trainee.
+   * @param programmeMembershipId The ID of the programme membership to assess.
+   * @return True if the programme membership is in the 2024 pilot, otherwise false.
+   */
+  @GetMapping("/is2024pilot/{traineeTisId}/{programmeMembershipId}")
+  public ResponseEntity<Boolean> isIn2024Pilot(
+      @PathVariable(name = "traineeTisId") String traineeTisId,
+      @PathVariable(name = "programmeMembershipId") String programmeMembershipId) {
+    log.info("Assess 2024 pilot status: programme membership {} of trainee with TIS ID {}",
+        programmeMembershipId, traineeTisId);
+    try {
+      boolean is2024Pilot = service.is2024Pilot(traineeTisId, programmeMembershipId);
+      return ResponseEntity.ok(is2024Pilot);
+    } catch (IllegalArgumentException | InvalidDataAccessApiUsageException e) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getLocalizedMessage());
+    }
+  }
 }

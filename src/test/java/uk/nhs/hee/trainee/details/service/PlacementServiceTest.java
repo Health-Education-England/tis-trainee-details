@@ -61,12 +61,14 @@ class PlacementServiceTest {
 
   private PlacementService service;
   private TraineeProfileRepository repository;
+  private ProgrammeMembershipService programmeMembershipService;
 
   @BeforeEach
   void setUp() {
     repository = mock(TraineeProfileRepository.class);
+    programmeMembershipService = mock(ProgrammeMembershipService.class);
     service = new PlacementService(repository,
-        Mappers.getMapper(PlacementMapper.class));
+        Mappers.getMapper(PlacementMapper.class), programmeMembershipService);
   }
 
   @Test
