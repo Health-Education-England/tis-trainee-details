@@ -94,7 +94,7 @@ public class ProgrammeMembershipService {
    * @return The updated programme membership or empty if a trainee with the ID was not found.
    */
   public Optional<ProgrammeMembership> updateProgrammeMembershipForTrainee(String traineeTisId,
-                                                                           ProgrammeMembership programmeMembership) {
+         ProgrammeMembership programmeMembership) {
     TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
 
     if (traineeProfile == null) {
@@ -352,7 +352,7 @@ public class ProgrammeMembershipService {
     }
 
     LocalDate dayAfter31082024 = LocalDate.of(2024, 9, 1);
-    if (managingDeanery
+    return managingDeanery
         .equalsIgnoreCase("Health Education England North West")
         && (startDate.isAfter(dayBefore01082024) && startDate.isBefore(dayAfter31082024))
         && (programmeMembership.getCurricula().stream().anyMatch(c ->
@@ -361,11 +361,7 @@ public class ProgrammeMembershipService {
         || programmeMembership.getProgrammeName()
         .equalsIgnoreCase("Cardio-thoracic surgery (run through)")
         || programmeMembership.getProgrammeName()
-        .equalsIgnoreCase("Oral and maxillo-facial surgery (run through)"))) {
-      return true;
-    }
-
-    return false;
+        .equalsIgnoreCase("Oral and maxillo-facial surgery (run through)"));
   }
 
   /**
@@ -437,7 +433,7 @@ public class ProgrammeMembershipService {
             })
             .filter(pm ->
                     pm.getStartDate().isBefore(anchorPm.getStartDate())
-                //dates cannot be null because any offenders are removed in getRecentPrecedingPms()
+                //dates cannot be null because any offenders removed in getRecentPrecedingPms()
             ).toList();
 
     List<String> anchorPmCurriculumSpecialties = anchorPm.getCurricula().stream()
