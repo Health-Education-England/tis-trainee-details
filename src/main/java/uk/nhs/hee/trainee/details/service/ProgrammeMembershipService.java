@@ -241,23 +241,12 @@ public class ProgrammeMembershipService {
       return false;
     }
 
-    //get the programme membership that must be assessed
-    Optional<ProgrammeMembership> optionalProgrammeMembership
-        = traineeProfile.getProgrammeMemberships().stream()
-        .filter(p -> p.getTisId().equals(programmeMembershipId)).findAny();
-
-    //it cannot be a new starter if it does not exist, or if it is not a medical one
-    if (optionalProgrammeMembership.isEmpty()) {
-      log.info("New starter: [false] programme membership {} is non-medical or does not exist",
+    ProgrammeMembership programmeMembership = getCandidateProgrammeMembership(
+        traineeProfile.getProgrammeMemberships(), programmeMembershipId);
+    if (programmeMembership == null) {
+      log.info("New starter: [false] programme membership {} does not exist, is non-medical or " +
+              "has wrong type",
           programmeMembershipId);
-      return false;
-    }
-    ProgrammeMembership programmeMembership = optionalProgrammeMembership.get();
-
-    //it cannot be a new starter if it has a non-relevant programme membership type
-    if (!hasProgrammeMembershipTypeOfInterest(programmeMembership)) {
-      log.info("New starter: [false] programme membership {} has non-applicable type {}",
-          programmeMembershipId, programmeMembership.getProgrammeMembershipType());
       return false;
     }
 
@@ -305,23 +294,12 @@ public class ProgrammeMembershipService {
       return false;
     }
 
-    //get the programme membership that must be assessed
-    Optional<ProgrammeMembership> optionalProgrammeMembership
-        = traineeProfile.getProgrammeMemberships().stream()
-        .filter(p -> p.getTisId().equals(programmeMembershipId)).findAny();
-
-    //it cannot be in the 2024 pilot if it does not exist, or if it is not a medical one
-    if (optionalProgrammeMembership.isEmpty()) {
-      log.info("2024 pilot: [false] programme membership {} is non-medical or does not exist",
+    ProgrammeMembership programmeMembership = getCandidateProgrammeMembership(
+        traineeProfile.getProgrammeMemberships(), programmeMembershipId);
+    if (programmeMembership == null) {
+      log.info("2024 pilot: [false] programme membership {} does not exist, is non-medical or " +
+              "has wrong type",
           programmeMembershipId);
-      return false;
-    }
-    ProgrammeMembership programmeMembership = optionalProgrammeMembership.get();
-
-    //it cannot be in the 2024 pilot if it has a non-relevant programme membership type
-    if (!hasProgrammeMembershipTypeOfInterest(programmeMembership)) {
-      log.info("2024 pilot: [false] programme membership {} has non-applicable type {}",
-          programmeMembershipId, programmeMembership.getProgrammeMembershipType());
       return false;
     }
 
@@ -377,6 +355,34 @@ public class ProgrammeMembershipService {
 
     traineeProfile.setProgrammeMemberships(pmsToConsider);
     return traineeProfile;
+  }
+
+  /**
+   * Get the programme membership that is a candidate for new-starter or pilot 2024 assessment.
+   *
+   * @param programmeMemberships   The list of programme memberships.
+   * @param programmeMembershipId The programme membership ID.
+   * @return The programme membership, or null if it is not a candidate because it does not exist,
+   * it is non-medical, or is of the wrong type.
+   */
+  private ProgrammeMembership getCandidateProgrammeMembership(
+      List<ProgrammeMembership> programmeMemberships, String programmeMembershipId) {
+    //get the programme membership that must be assessed
+    Optional<ProgrammeMembership> optionalProgrammeMembership
+        = programmeMemberships.stream()
+        .filter(p -> p.getTisId().equals(programmeMembershipId)).findAny();
+
+    //return null if it does not exist, or if it is not a medical one
+    if (optionalProgrammeMembership.isEmpty()) {
+      return null;
+    }
+
+    ProgrammeMembership programmeMembership = optionalProgrammeMembership.get();
+    //it cannot be a pilot / new-starter canditate if it lacks a relevant programme membership type
+    if (!hasProgrammeMembershipTypeOfInterest(programmeMembership)) {
+      return null;
+    }
+    return programmeMembership;
   }
 
   /**
