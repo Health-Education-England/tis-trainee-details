@@ -29,6 +29,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -98,5 +99,26 @@ public class PlacementResource {
       // TODO: add global exception handlers for these types of exceptions
     }
     return ResponseEntity.ok(true);
+  }
+
+  /**
+   * Determine whether the given placement is in the 2024 pilot group.
+   *
+   * @param traineeTisId The ID of the trainee.
+   * @param placementId  The ID of the placement to assess.
+   * @return True if the placement is in the 2024 pilot, otherwise false.
+   */
+  @GetMapping("/ispilot2024/{traineeTisId}/{placementId}")
+  public ResponseEntity<Boolean> isInPilot2024(
+      @PathVariable(name = "traineeTisId") String traineeTisId,
+      @PathVariable(name = "placementId") String placementId) {
+    log.info("Assess 2024 pilot status: placement {} of trainee with TIS ID {}",
+        placementId, traineeTisId);
+    try {
+      boolean isPilot2024 = service.isPilot2024(traineeTisId, placementId);
+      return ResponseEntity.ok(isPilot2024);
+    } catch (IllegalArgumentException | InvalidDataAccessApiUsageException e) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getLocalizedMessage());
+    }
   }
 }

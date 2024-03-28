@@ -22,8 +22,10 @@
 package uk.nhs.hee.trainee.details.service;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.mapper.PlacementMapper;
 import uk.nhs.hee.trainee.details.model.Placement;
@@ -32,14 +34,18 @@ import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 
 @Service
 @XRayEnabled
+@Slf4j
 public class PlacementService {
 
   private final TraineeProfileRepository repository;
   private final PlacementMapper mapper;
+  private final ProgrammeMembershipService programmeMembershipService;
 
-  PlacementService(TraineeProfileRepository repository, PlacementMapper mapper) {
+  PlacementService(TraineeProfileRepository repository, PlacementMapper mapper,
+                   ProgrammeMembershipService programmeMembershipService) {
     this.repository = repository;
     this.mapper = mapper;
+    this.programmeMembershipService = programmeMembershipService;
   }
 
   /**
@@ -96,5 +102,39 @@ public class PlacementService {
       return true;
     }
     return false;
+  }
+
+  /**
+   * Assess if the placement for a trainee is in the 2024 pilot. Hopefully a temporary kludge.
+   *
+   * @param traineeTisId The TIS id of the trainee.
+   * @param placementId  The ID of the placement to assess.
+   * @return True, or False if the placement is not in the 2024 pilot.
+   */
+  public boolean isPilot2024(String traineeTisId, String placementId) {
+    TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
+
+    if (traineeProfile == null) {
+      log.info("2024 pilot: [false] trainee profile {} not found", traineeTisId);
+      return false;
+    }
+
+    Optional<Placement> optionalPlacement
+        = traineeProfile.getPlacements().stream()
+        .filter(p -> p.getTisId().equals(placementId)).findAny();
+
+    if (optionalPlacement.isEmpty()) {
+      log.info("2024 pilot: [false] placement {} does not exist", placementId);
+      return false;
+    }
+    Placement placement = optionalPlacement.get();
+    LocalDate dayAfterPlacementStart = placement.getStartDate().plusDays(1);
+    LocalDate dayBeforePlacementStart = placement.getStartDate().minusDays(1);
+
+    return traineeProfile.getProgrammeMemberships().stream().filter(pm ->
+            pm.getStartDate().isBefore(dayAfterPlacementStart)
+                && pm.getProgrammeCompletionDate().isAfter(dayBeforePlacementStart))
+        .anyMatch(pmInPeriod ->
+            programmeMembershipService.isPilot2024(traineeTisId, pmInPeriod.getTisId()));
   }
 }

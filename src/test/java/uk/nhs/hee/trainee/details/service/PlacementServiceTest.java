@@ -29,6 +29,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,7 @@ import org.mapstruct.factory.Mappers;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 import uk.nhs.hee.trainee.details.mapper.PlacementMapper;
 import uk.nhs.hee.trainee.details.model.Placement;
+import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.Site;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
@@ -58,15 +60,18 @@ class PlacementServiceTest {
   private static final String NEW_PLACEMENT_ID = "1";
   private static final String EXISTING_PLACEMENT_ID = "2";
   private static final String NOT_EXISTING_PLACEMENT_ID = "3";
+  private static final String PROGRAMME_MEMBERSHIP_ID = "pm-id";
 
   private PlacementService service;
   private TraineeProfileRepository repository;
+  private ProgrammeMembershipService programmeMembershipService;
 
   @BeforeEach
   void setUp() {
     repository = mock(TraineeProfileRepository.class);
+    programmeMembershipService = mock(ProgrammeMembershipService.class);
     service = new PlacementService(repository,
-        Mappers.getMapper(PlacementMapper.class));
+        Mappers.getMapper(PlacementMapper.class), programmeMembershipService);
   }
 
   @Test
@@ -219,6 +224,147 @@ class PlacementServiceTest {
     assertThat("Unexpected result.", result, is(false));
   }
 
+  @Test
+  void pilot2024ShouldBeFalseIfTraineeNotFound() {
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(null);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected pilot2024 value.", isPilot2024, is(false));
+  }
+
+  @Test
+  void pilot2024ShouldBeFalseIfPlacementNotFound() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPlacements(
+        List.of(createPlacement("unknown id", "", 0)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
+  }
+
+  @Test
+  void pilot2024ShouldBeFalseIfTraineeHasNoProgrammeMemberships() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPlacements(
+        List.of(createPlacement(EXISTING_PLACEMENT_ID, "", 0)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
+  }
+
+  @Test
+  void pilot2024ShouldBeFalseIfTraineeProgrammeMembershipsFinishedBeforePlacement() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPlacements(
+        List.of(createPlacement(EXISTING_PLACEMENT_ID, "", 0)));
+    LocalDate dateFinished = START_DATE.minusDays(1);
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembership(null, LocalDate.MIN, dateFinished)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
+  }
+
+  @Test
+  void pilot2024ShouldBeFalseIfTraineeProgrammeMembershipsStartAfterPlacement() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPlacements(
+        List.of(createPlacement(EXISTING_PLACEMENT_ID, "", 0)));
+    LocalDate dateToStart = START_DATE.plusDays(1);
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembership(null, dateToStart, LocalDate.MAX)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
+  }
+
+  @Test
+  void pilot2024ShouldBeTrueIfTraineeProgrammeMembershipIsInPilot() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPlacements(
+        List.of(createPlacement(EXISTING_PLACEMENT_ID, "", 0)));
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembership(PROGRAMME_MEMBERSHIP_ID, LocalDate.MIN, LocalDate.MAX)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+    when(programmeMembershipService.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_MEMBERSHIP_ID))
+        .thenReturn(true);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(true));
+  }
+
+  @Test
+  void pilot2024ShouldBeFalseIfTraineeProgrammeMembershipIsNotInPilot() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPlacements(
+        List.of(createPlacement(EXISTING_PLACEMENT_ID, "", 0)));
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembership(PROGRAMME_MEMBERSHIP_ID, LocalDate.MIN, LocalDate.MAX)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+    when(programmeMembershipService.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_MEMBERSHIP_ID))
+        .thenReturn(false);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
+  }
+
+  @Test
+  void pilot2024ShouldBeTrueIfAnyTraineeProgrammeMembershipIsInPilot() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPlacements(
+        List.of(createPlacement(EXISTING_PLACEMENT_ID, "", 0)));
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembership(PROGRAMME_MEMBERSHIP_ID, LocalDate.MIN, LocalDate.MAX),
+            getProgrammeMembership("not pilot", LocalDate.MIN, LocalDate.MAX)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+    when(programmeMembershipService.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_MEMBERSHIP_ID))
+        .thenReturn(true);
+    when(programmeMembershipService.isPilot2024(TRAINEE_TIS_ID, "not pilot"))
+        .thenReturn(false);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(true));
+  }
+
+  @Test
+  void pilot2024ShouldBeFalseIfAnyTraineeProgrammeMembershipIsInDateButNotPilot() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPlacements(
+        List.of(createPlacement(EXISTING_PLACEMENT_ID, "", 0)));
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembership("pilot", LocalDate.MIN, LocalDate.MIN),
+            getProgrammeMembership("not pilot", LocalDate.MIN, LocalDate.MAX)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+    when(programmeMembershipService.isPilot2024(TRAINEE_TIS_ID, "not pilot"))
+        .thenReturn(false);
+    when(programmeMembershipService.isPilot2024(TRAINEE_TIS_ID, "pilot"))
+        .thenReturn(true);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
+  }
+
   /**
    * Create an instance of Placement with default dummy values.
    *
@@ -247,5 +393,24 @@ class PlacementServiceTest {
     placement.setSite(site);
 
     return placement;
+  }
+
+  /**
+   * Create a programme membership for testing pilot2024 conditions.
+   *
+   * @param programmeMembershipTisId The TIS ID to set on the programmeMembership.
+   * @param startDate                The start date.
+   * @param endDate                  The end date.
+   * @return The programme membership.
+   */
+  private ProgrammeMembership getProgrammeMembership(
+      String programmeMembershipTisId, LocalDate startDate,
+      LocalDate endDate) {
+    ProgrammeMembership programmeMembership = new ProgrammeMembership();
+    programmeMembership.setTisId(programmeMembershipTisId);
+    programmeMembership.setStartDate(startDate);
+    programmeMembership.setProgrammeCompletionDate(endDate);
+
+    return programmeMembership;
   }
 }

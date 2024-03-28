@@ -348,4 +348,34 @@ class ProgrammeMembershipResourceTest {
                 .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isBadRequest());
   }
+
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void shouldReturnProgrammeMembershipPilot2024WhenTraineeFound(boolean isPilot2024)
+      throws Exception {
+    when(service
+        .isPilot2024("40", "1"))
+        .thenReturn(isPilot2024);
+
+    MvcResult result = mockMvc.perform(
+            get("/api/programme-membership/ispilot2024/{traineeTisId}/{programmeMembershipId}",
+                "40", "1")
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(content().string(String.valueOf(isPilot2024)))
+        .andReturn();
+  }
+
+  @Test
+  void shouldThrowBadRequestWhenProgrammeMembershipPilot2024Exception() throws Exception {
+    when(service
+        .isPilot2024("triggersError", "1"))
+        .thenThrow(new IllegalArgumentException());
+
+    mockMvc.perform(
+            get("/api/programme-membership/ispilot2024/{traineeTisId}/{programmeMembershipId}",
+                "triggersError", "1")
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest());
+  }
 }

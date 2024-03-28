@@ -28,6 +28,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -40,6 +41,8 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -211,6 +214,37 @@ class PlacementResourceTest {
 
     mockMvc.perform(
             delete("/api/placement/{traineeTisId}/{placementTisId}", "triggersError", "1")
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest());
+  }
+
+
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void shouldReturnPlacementPilot2024WhenTraineeFound(boolean isPilot2024)
+      throws Exception {
+    when(service
+        .isPilot2024("40", "1"))
+        .thenReturn(isPilot2024);
+
+    MvcResult result = mockMvc.perform(
+            get("/api/placement/ispilot2024/{traineeTisId}/{placementId}",
+                "40", "1")
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(content().string(String.valueOf(isPilot2024)))
+        .andReturn();
+  }
+
+  @Test
+  void shouldThrowBadRequestWhenPlacementPilot2024Exception() throws Exception {
+    when(service
+        .isPilot2024("triggersError", "1"))
+        .thenThrow(new IllegalArgumentException());
+
+    mockMvc.perform(
+            get("/api/placement/ispilot2024/{traineeTisId}/{placementId}",
+                "triggersError", "1")
                 .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isBadRequest());
   }
