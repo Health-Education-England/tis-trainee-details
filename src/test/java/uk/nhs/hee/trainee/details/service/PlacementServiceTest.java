@@ -276,13 +276,15 @@ class PlacementServiceTest {
   }
 
   @Test
-  void pilot2024ShouldBeFalseIfTraineeProgrammeMembershipsStartAfterPlacement() {
+  void pilot2024ShouldBeFalseIfTraineeProgrammeMembershipsStartMonthAfterPlacement() {
     TraineeProfile traineeProfile = new TraineeProfile();
+    LocalDate placementStart = LocalDate.of(2024, 8, 1);
+    LocalDate nextMonth = LocalDate.of(2024, 9, 2);
     traineeProfile.setPlacements(
         List.of(createPlacement(EXISTING_PLACEMENT_ID, "", 0)));
-    LocalDate dateToStart = START_DATE.plusDays(1);
+    traineeProfile.getPlacements().get(0).setStartDate(placementStart);
     traineeProfile.setProgrammeMemberships(
-        List.of(getProgrammeMembership(null, dateToStart, LocalDate.MAX)));
+        List.of(getProgrammeMembership(null, nextMonth, LocalDate.MAX)));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
