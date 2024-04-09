@@ -132,7 +132,7 @@ public class PlacementService {
     LocalDate dayBeforePlacementStart = placement.getStartDate().minusDays(1);
 
     return traineeProfile.getProgrammeMemberships().stream().filter(pm ->
-            pm.getStartDate().isBefore(dayAfterPlacementStart)
+            pm.getStartDate().withDayOfMonth(1).isBefore(dayAfterPlacementStart)
                 && pm.getProgrammeCompletionDate().isAfter(dayBeforePlacementStart))
         .anyMatch(pmInPeriod ->
             programmeMembershipService.isPilot2024(traineeTisId, pmInPeriod.getTisId()));

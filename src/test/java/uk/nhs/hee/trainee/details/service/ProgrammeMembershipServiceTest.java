@@ -915,7 +915,8 @@ class ProgrammeMembershipServiceTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
+  @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training",
+      "General practice"})
   void pilot2024ShouldBeTrueForYhWithCorrectDateAndCurriculumSpecialty(String specialty) {
     LocalDate date = LocalDate.of(2024, 8, 7);
     String deanery = "Health Education England Yorkshire and the Humber";
@@ -950,7 +951,8 @@ class ProgrammeMembershipServiceTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
+  @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training",
+      "General practice"})
   void pilot2024ShouldBeFalseForYhWithIncorrectDateAndCorrectCurriculumSpecialty(String specialty) {
     LocalDate wrongDate = LocalDate.of(2024, 8, 8);
     String deanery = "Health Education England Yorkshire and the Humber";

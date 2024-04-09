@@ -346,6 +346,29 @@ class PlacementServiceTest {
   }
 
   @Test
+  void pilot2024ShouldBeTrueIfAnyTraineeProgrammeMembershipStartingLaterInMonthIsInPilot() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    LocalDate placementStart = LocalDate.of(2024, 8, 1);
+    LocalDate laterInSameMonth = LocalDate.of(2024, 8, 31);
+    traineeProfile.setPlacements(
+        List.of(createPlacement(EXISTING_PLACEMENT_ID, "", 0)));
+    traineeProfile.getPlacements().get(0).setStartDate(placementStart);
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembership(PROGRAMME_MEMBERSHIP_ID, laterInSameMonth, LocalDate.MAX),
+            getProgrammeMembership("not pilot", LocalDate.MIN, LocalDate.MAX)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+    when(programmeMembershipService.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_MEMBERSHIP_ID))
+        .thenReturn(true);
+    when(programmeMembershipService.isPilot2024(TRAINEE_TIS_ID, "not pilot"))
+        .thenReturn(false);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(true));
+  }
+
+  @Test
   void pilot2024ShouldBeFalseIfAnyTraineeProgrammeMembershipIsInDateButNotPilot() {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setPlacements(
