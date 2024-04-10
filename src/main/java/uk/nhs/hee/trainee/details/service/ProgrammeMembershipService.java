@@ -319,7 +319,8 @@ public class ProgrammeMembershipService {
         && programmeMembership.getCurricula().stream()
         .anyMatch(c -> (
             c.getCurriculumSpecialty().equalsIgnoreCase("Internal Medicine Stage One")
-                || c.getCurriculumSpecialty().equalsIgnoreCase("Core surgical training")))) {
+                || c.getCurriculumSpecialty().equalsIgnoreCase("Core surgical training")
+                || c.getCurriculumSpecialty().equalsIgnoreCase("General Practice")))) {
       return true;
     }
 
