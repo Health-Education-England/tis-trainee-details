@@ -324,6 +324,15 @@ public class ProgrammeMembershipService {
       return true;
     }
 
+    if (managingDeanery
+        .equalsIgnoreCase("Health Education England South West")
+        && (startDate.isAfter(dayBefore01082024) && startDate.isBefore(dayAfter31102024))
+        && programmeMembership.getCurricula().stream()
+        .anyMatch(c -> (
+            !c.getCurriculumSpecialty().equalsIgnoreCase("General Practice")))) {
+      return true;
+    }
+
     LocalDate dayAfter31082024 = LocalDate.of(2024, 9, 1);
     return managingDeanery
         .equalsIgnoreCase("Health Education England North West")
