@@ -1023,16 +1023,15 @@ class ProgrammeMembershipServiceTest {
     assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
   }
 
-  @ParameterizedTest
-  @ValueSource(strings = {"General Practice"})
-  void pilot2024ShouldBeFalseIfSwLoWithIncorrectSpecialty(String specialty) {
+  @Test
+  void pilot2024ShouldBeFalseIfSwLoWithGpSpecialty() {
     LocalDate dateInRange = LocalDate.of(2024, 8, 5);
     String deanery = "Health Education England South West";
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
             PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE, deanery, MEDICAL_CURRICULA.get(0),
-            CURRICULUM_SPECIALTY_CODE, specialty)));
+            CURRICULUM_SPECIALTY_CODE, "General Practice")));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
