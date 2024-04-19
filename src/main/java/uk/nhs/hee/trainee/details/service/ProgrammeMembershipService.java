@@ -94,7 +94,7 @@ public class ProgrammeMembershipService {
    * @return The updated programme membership or empty if a trainee with the ID was not found.
    */
   public Optional<ProgrammeMembership> updateProgrammeMembershipForTrainee(String traineeTisId,
-                                                                           ProgrammeMembership programmeMembership) {
+    ProgrammeMembership programmeMembership) {
     TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
 
     if (traineeProfile == null) {
@@ -370,7 +370,7 @@ public class ProgrammeMembershipService {
    * @param programmeMemberships  The list of programme memberships.
    * @param programmeMembershipId The programme membership ID.
    * @return The programme membership, or null if it is not a candidate because it does not exist,
-   * it is non-medical, or is of the wrong type.
+   *         it is non-medical, or is of the wrong type.
    */
   private ProgrammeMembership getCandidateProgrammeMembership(
       List<ProgrammeMembership> programmeMemberships, String programmeMembershipId) {
@@ -461,7 +461,7 @@ public class ProgrammeMembershipService {
             })
             .filter(pm ->
                     pm.getStartDate().isBefore(anchorPm.getStartDate())
-                //dates cannot be null because any offenders removed in getRecentPrecedingPms()
+            //dates cannot be null because any offenders removed in getRecentPrecedingPms()
             ).toList();
 
     List<String> anchorPmCurriculumSpecialties = anchorPm.getCurricula().stream()
