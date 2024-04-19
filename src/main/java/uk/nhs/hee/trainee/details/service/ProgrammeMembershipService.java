@@ -315,12 +315,9 @@ public class ProgrammeMembershipService {
 
     if (managingDeanery
         .equalsIgnoreCase("Health Education England Yorkshire and the Humber")
-        && startDate.isEqual(LocalDate.of(2024, 8, 7))
-        && programmeMembership.getCurricula().stream()
-        .anyMatch(c -> (
-            c.getCurriculumSpecialty().equalsIgnoreCase("Internal Medicine Stage One")
-                || c.getCurriculumSpecialty().equalsIgnoreCase("Core surgical training")
-                || c.getCurriculumSpecialty().equalsIgnoreCase("General Practice")))) {
+        && (startDate.isAfter(dayBefore01082024) && startDate.isBefore(dayAfter31102024))
+        && programmeMembership.getCurricula().stream().noneMatch(
+        c -> c.getCurriculumSpecialty().equalsIgnoreCase("General Practice"))) {
       return true;
     }
 

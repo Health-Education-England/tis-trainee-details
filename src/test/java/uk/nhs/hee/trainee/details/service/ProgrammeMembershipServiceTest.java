@@ -915,10 +915,9 @@ class ProgrammeMembershipServiceTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training",
-      "General practice"})
+  @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
   void pilot2024ShouldBeTrueForYhWithCorrectDateAndCurriculumSpecialty(String specialty) {
-    LocalDate date = LocalDate.of(2024, 8, 7);
+    LocalDate date = LocalDate.of(2024, 8, 15);
     String deanery = "Health Education England Yorkshire and the Humber";
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
@@ -934,14 +933,14 @@ class ProgrammeMembershipServiceTest {
   }
 
   @Test
-  void pilot2024ShouldBeFalseForYhWithCorrectDateAndWrongCurriculumSpecialty() {
+  void pilot2024ShouldBeFalseForYhGeneralPractice() {
     LocalDate date = LocalDate.of(2024, 8, 7);
     String deanery = "Health Education England Yorkshire and the Humber";
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
             PROGRAMME_MEMBERSHIP_TYPE, date, END_DATE, deanery, MEDICAL_CURRICULA.get(0),
-            CURRICULUM_SPECIALTY_CODE, "non-matching specialty")));
+            CURRICULUM_SPECIALTY_CODE, "General Practice")));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
@@ -951,10 +950,9 @@ class ProgrammeMembershipServiceTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training",
-      "General practice"})
+  @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
   void pilot2024ShouldBeFalseForYhWithIncorrectDateAndCorrectCurriculumSpecialty(String specialty) {
-    LocalDate wrongDate = LocalDate.of(2024, 8, 8);
+    LocalDate wrongDate = LocalDate.of(2024, 11, 1);
     String deanery = "Health Education England Yorkshire and the Humber";
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
