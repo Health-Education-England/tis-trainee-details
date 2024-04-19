@@ -94,7 +94,7 @@ public class ProgrammeMembershipService {
    * @return The updated programme membership or empty if a trainee with the ID was not found.
    */
   public Optional<ProgrammeMembership> updateProgrammeMembershipForTrainee(String traineeTisId,
-         ProgrammeMembership programmeMembership) {
+                                                                           ProgrammeMembership programmeMembership) {
     TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
 
     if (traineeProfile == null) {
@@ -317,7 +317,7 @@ public class ProgrammeMembershipService {
         .equalsIgnoreCase("Health Education England Yorkshire and the Humber")
         && (startDate.isAfter(dayBefore01082024) && startDate.isBefore(dayAfter31102024))
         && programmeMembership.getCurricula().stream().noneMatch(
-        c -> c.getCurriculumSpecialty().equalsIgnoreCase("General Practice"))) {
+          c -> c.getCurriculumSpecialty().equalsIgnoreCase("General Practice"))) {
       return true;
     }
 
@@ -367,10 +367,10 @@ public class ProgrammeMembershipService {
   /**
    * Get the programme membership that is a candidate for new-starter or pilot 2024 assessment.
    *
-   * @param programmeMemberships   The list of programme memberships.
+   * @param programmeMemberships  The list of programme memberships.
    * @param programmeMembershipId The programme membership ID.
    * @return The programme membership, or null if it is not a candidate because it does not exist,
-   *         it is non-medical, or is of the wrong type.
+   * it is non-medical, or is of the wrong type.
    */
   private ProgrammeMembership getCandidateProgrammeMembership(
       List<ProgrammeMembership> programmeMemberships, String programmeMembershipId) {
@@ -461,7 +461,7 @@ public class ProgrammeMembershipService {
             })
             .filter(pm ->
                     pm.getStartDate().isBefore(anchorPm.getStartDate())
-            //dates cannot be null because any offenders removed in getRecentPrecedingPms()
+                //dates cannot be null because any offenders removed in getRecentPrecedingPms()
             ).toList();
 
     List<String> anchorPmCurriculumSpecialties = anchorPm.getCurricula().stream()

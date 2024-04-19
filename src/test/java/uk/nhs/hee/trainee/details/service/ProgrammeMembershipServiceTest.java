@@ -951,8 +951,26 @@ class ProgrammeMembershipServiceTest {
 
   @ParameterizedTest
   @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
-  void pilot2024ShouldBeFalseForYhWithIncorrectDateAndCorrectCurriculumSpecialty(String specialty) {
+  void pilot2024ShouldBeFalseForYhWithTooLateDateAndCorrectCurriculumSpecialty(String specialty) {
     LocalDate wrongDate = LocalDate.of(2024, 11, 1);
+    String deanery = "Health Education England Yorkshire and the Humber";
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, wrongDate, END_DATE, deanery, MEDICAL_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, specialty)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
+  void pilot2024ShouldBeFalseForYhWithTooEarlyDateAndCorrectCurriculumSpecialty(String specialty) {
+    LocalDate wrongDate = LocalDate.of(2024, 07, 1);
     String deanery = "Health Education England Yorkshire and the Humber";
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
