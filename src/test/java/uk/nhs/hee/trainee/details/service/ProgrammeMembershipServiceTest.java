@@ -35,9 +35,11 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.MEDICAL_CURRICULA;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.NON_RELEVANT_PROGRAMME_MEMBERSHIP_TYPES;
+import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.NOT_TSS_SPECIALTIES;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PILOT_2024_LOCAL_OFFICES_ALL_PROGRAMMES;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PILOT_2024_NW_SPECIALTIES;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PROGRAMME_BREAK_DAYS;
+import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.TSS_CURRICULA;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -81,6 +83,7 @@ class ProgrammeMembershipServiceTest {
   private static final GoldGuideVersion GOLD_GUIDE_VERSION = GoldGuideVersion.GG9;
   private static final Instant COJ_SYNCED_AT = Instant.now();
   private static final String CURRICULUM_SPECIALTY_CODE = "X75";
+  private static final String CURRICULUM_SPECIALTY = "some valid specialty";
 
   private ProgrammeMembershipService service;
   private TraineeProfileRepository repository;
@@ -524,7 +527,7 @@ class ProgrammeMembershipServiceTest {
   void newStarterShouldBeFalseIfPmNotFound() {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
-        List.of(getProgrammeMembershipDefault("unknown id",
+        List.of(getNewStarterProgrammeMembershipDefault("unknown id",
             PROGRAMME_MEMBERSHIP_TYPE, START_DATE, END_DATE))); //PROGRAMME_TIS_ID != "unknown id"
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
@@ -539,7 +542,7 @@ class ProgrammeMembershipServiceTest {
   void newStarterShouldBeFalseIfPmHasWrongType(String pmType) {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
-        List.of(getProgrammeMembershipDefault(PROGRAMME_TIS_ID, pmType, START_DATE, END_DATE)));
+        List.of(getNewStarterProgrammeMembershipDefault(PROGRAMME_TIS_ID, pmType, START_DATE, END_DATE)));
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
     boolean isNewStarter = service.isNewStarter(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
@@ -553,7 +556,7 @@ class ProgrammeMembershipServiceTest {
   void newStarterShouldBeFalseIfPmHasEnded(LocalDate endDate) {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
-        List.of(getProgrammeMembershipDefault(PROGRAMME_TIS_ID, PROGRAMME_MEMBERSHIP_TYPE,
+        List.of(getNewStarterProgrammeMembershipDefault(PROGRAMME_TIS_ID, PROGRAMME_MEMBERSHIP_TYPE,
             START_DATE, endDate)));
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
@@ -596,7 +599,7 @@ class ProgrammeMembershipServiceTest {
   @Test
   void newStarterShouldBeTrueIfItIsTheOnlyPm() {
     TraineeProfile traineeProfile = new TraineeProfile();
-    traineeProfile.setProgrammeMemberships(List.of(getProgrammeMembershipDefault()));
+    traineeProfile.setProgrammeMemberships(List.of(getNewStarterProgrammeMembershipDefault()));
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
     boolean isNewStarter = service.isNewStarter(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
@@ -607,8 +610,8 @@ class ProgrammeMembershipServiceTest {
   @Test
   void newStarterShouldBeTrueIfNoRecentPrecedingPm() {
     List<ProgrammeMembership> pms
-        = new java.util.ArrayList<>(List.of(getProgrammeMembershipDefault()));
-    pms.add(getProgrammeMembershipDefault("another id",
+        = new java.util.ArrayList<>(List.of(getNewStarterProgrammeMembershipDefault()));
+    pms.add(getNewStarterProgrammeMembershipDefault("another id",
         PROGRAMME_MEMBERSHIP_TYPE, START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 100),
         START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 1)));
     //ended more than PROGRAMME_BREAK_DAYS ago
@@ -624,12 +627,12 @@ class ProgrammeMembershipServiceTest {
   @Test
   void newStarterShouldBeTrueIfPrecedingPmMissingDateInfo() {
     List<ProgrammeMembership> pms
-        = new java.util.ArrayList<>(List.of(getProgrammeMembershipDefault()));
+        = new java.util.ArrayList<>(List.of(getNewStarterProgrammeMembershipDefault()));
     //null startDate
-    pms.add(getProgrammeMembershipDefault("another id",
+    pms.add(getNewStarterProgrammeMembershipDefault("another id",
         PROGRAMME_MEMBERSHIP_TYPE, null, START_DATE.minusDays(1)));
     //null endDate
-    pms.add(getProgrammeMembershipDefault("another id2",
+    pms.add(getNewStarterProgrammeMembershipDefault("another id2",
         PROGRAMME_MEMBERSHIP_TYPE, START_DATE.minusDays(500), null));
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(pms);
@@ -643,14 +646,14 @@ class ProgrammeMembershipServiceTest {
   @Test
   void newStarterShouldBeFalseIfOneOfPrecedingPmsIsIntraOrRota() {
     List<ProgrammeMembership> pms
-        = new java.util.ArrayList<>(List.of(getProgrammeMembershipDefault()));
+        = new java.util.ArrayList<>(List.of(getNewStarterProgrammeMembershipDefault()));
     //preceding PM, but not an intra-deanery / rota PM because no matching curriculum specialty
     pms.add(getProgrammeMembershipWithOneCurriculum("another id",
         PROGRAMME_MEMBERSHIP_TYPE, START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 100),
         START_DATE.minusDays(PROGRAMME_BREAK_DAYS - 1), MANAGING_DEANERY,
         MEDICAL_CURRICULA.get(0), "a different curriculum specialty"));
     //preceding PM, and an intra-deanery / rota PM
-    pms.add(getProgrammeMembershipDefault("another id2",
+    pms.add(getNewStarterProgrammeMembershipDefault("another id2",
         PROGRAMME_MEMBERSHIP_TYPE, START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 100),
         START_DATE.minusDays(PROGRAMME_BREAK_DAYS - 1)));
     TraineeProfile traineeProfile = new TraineeProfile();
@@ -676,7 +679,7 @@ class ProgrammeMembershipServiceTest {
     rotaPm.setCurricula(List.of(rotaPm.getCurricula().get(0), c2));
 
     List<ProgrammeMembership> pms
-        = new java.util.ArrayList<>(List.of(getProgrammeMembershipDefault()));
+        = new java.util.ArrayList<>(List.of(getNewStarterProgrammeMembershipDefault()));
     pms.add(rotaPm);
 
     TraineeProfile traineeProfile = new TraineeProfile();
@@ -691,7 +694,7 @@ class ProgrammeMembershipServiceTest {
   @Test
   void newStarterShouldBeTrueIfPrecedingPmNotIntraOrRota() {
     List<ProgrammeMembership> pms
-        = new java.util.ArrayList<>(List.of(getProgrammeMembershipDefault()));
+        = new java.util.ArrayList<>(List.of(getNewStarterProgrammeMembershipDefault()));
     //not an intra-deanery / rota PM because different deanery
     pms.add(getProgrammeMembershipWithOneCurriculum("another id",
         PROGRAMME_MEMBERSHIP_TYPE, START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 100),
@@ -710,7 +713,7 @@ class ProgrammeMembershipServiceTest {
   @Test
   void newStarterShouldBeTrueIfIntraOrRotaMissingDeanery() {
     List<ProgrammeMembership> pms
-        = new java.util.ArrayList<>(List.of(getProgrammeMembershipDefault()));
+        = new java.util.ArrayList<>(List.of(getNewStarterProgrammeMembershipDefault()));
     //preceding PM with missing deanery
     pms.add(getProgrammeMembershipWithOneCurriculum("another id",
         PROGRAMME_MEMBERSHIP_TYPE, START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 100),
@@ -733,7 +736,7 @@ class ProgrammeMembershipServiceTest {
         getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
             PROGRAMME_MEMBERSHIP_TYPE, START_DATE, END_DATE, null, MEDICAL_CURRICULA.get(0),
             CURRICULUM_SPECIALTY_CODE)));
-    pms.add(getProgrammeMembershipDefault("another id",
+    pms.add(getNewStarterProgrammeMembershipDefault("another id",
         PROGRAMME_MEMBERSHIP_TYPE, START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 100),
         START_DATE.minusDays(PROGRAMME_BREAK_DAYS - 1)));
 
@@ -749,7 +752,7 @@ class ProgrammeMembershipServiceTest {
   @Test
   void newStarterShouldBeTrueIfIntraOrRotaMissingProgrammeMembershipType() {
     List<ProgrammeMembership> pms
-        = new java.util.ArrayList<>(List.of(getProgrammeMembershipDefault()));
+        = new java.util.ArrayList<>(List.of(getNewStarterProgrammeMembershipDefault()));
     //preceding PM with missing programme membership type
     pms.add(getProgrammeMembershipWithOneCurriculum("another id",
         null, START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 100),
@@ -768,14 +771,14 @@ class ProgrammeMembershipServiceTest {
   @Test
   void newStarterShouldBeTrueIfNoPrecedingPmIsIntraOrRota() {
     List<ProgrammeMembership> pms
-        = new java.util.ArrayList<>(List.of(getProgrammeMembershipDefault()));
+        = new java.util.ArrayList<>(List.of(getNewStarterProgrammeMembershipDefault()));
     //preceding PM with different deanery
     pms.add(getProgrammeMembershipWithOneCurriculum("another id",
         PROGRAMME_MEMBERSHIP_TYPE, START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 100),
         START_DATE.minusDays(PROGRAMME_BREAK_DAYS - 1), "different deanery",
         MEDICAL_CURRICULA.get(0), CURRICULUM_SPECIALTY_CODE));
     //not preceding PM, though it would be intra / rota PM
-    pms.add(getProgrammeMembershipDefault("another id2",
+    pms.add(getNewStarterProgrammeMembershipDefault("another id2",
         PROGRAMME_MEMBERSHIP_TYPE, START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 100),
         START_DATE.minusDays(PROGRAMME_BREAK_DAYS + 1)));
     TraineeProfile traineeProfile = new TraineeProfile();
@@ -820,9 +823,11 @@ class ProgrammeMembershipServiceTest {
   @Test
   void pilot2024ShouldBeFalseIfPmNotFound() {
     TraineeProfile traineeProfile = new TraineeProfile();
-    traineeProfile.setProgrammeMemberships(
-        List.of(getProgrammeMembershipDefault("unknown id",
-            PROGRAMME_MEMBERSHIP_TYPE, START_DATE, END_DATE))); //PROGRAMME_TIS_ID != "unknown id"
+    ProgrammeMembership pm = getProgrammeMembershipWithOneCurriculum("unknown id",
+        PROGRAMME_MEMBERSHIP_TYPE, START_DATE, END_DATE, MANAGING_DEANERY, TSS_CURRICULA.get(0),
+        CURRICULUM_SPECIALTY_CODE, CURRICULUM_SPECIALTY);
+
+    traineeProfile.setProgrammeMemberships(List.of(pm)); //PROGRAMME_TIS_ID != "unknown id"
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
@@ -839,7 +844,7 @@ class ProgrammeMembershipServiceTest {
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
             PROGRAMME_MEMBERSHIP_TYPE, START_DATE, END_DATE, MANAGING_DEANERY, curriculumSubtype,
-            CURRICULUM_SPECIALTY_CODE)));
+            CURRICULUM_SPECIALTY_CODE, CURRICULUM_SPECIALTY)));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
@@ -853,8 +858,10 @@ class ProgrammeMembershipServiceTest {
   @MethodSource("listNonRelevantPmTypes")
   void pilot2024ShouldBeFalseIfPmHasWrongType(String pmType) {
     TraineeProfile traineeProfile = new TraineeProfile();
-    traineeProfile.setProgrammeMemberships(
-        List.of(getProgrammeMembershipDefault(PROGRAMME_TIS_ID, pmType, START_DATE, END_DATE)));
+    ProgrammeMembership pm = getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID, pmType,
+        START_DATE, END_DATE, MANAGING_DEANERY, TSS_CURRICULA.get(0), CURRICULUM_SPECIALTY_CODE,
+        CURRICULUM_SPECIALTY);
+    traineeProfile.setProgrammeMemberships(List.of(pm));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
@@ -870,8 +877,8 @@ class ProgrammeMembershipServiceTest {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE, lo, MEDICAL_CURRICULA.get(0),
-            CURRICULUM_SPECIALTY_CODE)));
+            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE, lo, TSS_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, CURRICULUM_SPECIALTY)));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
@@ -887,8 +894,8 @@ class ProgrammeMembershipServiceTest {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, dateOutOfRange, END_DATE, lo, MEDICAL_CURRICULA.get(0),
-            CURRICULUM_SPECIALTY_CODE)));
+            PROGRAMME_MEMBERSHIP_TYPE, dateOutOfRange, END_DATE, lo, TSS_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, CURRICULUM_SPECIALTY)));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
@@ -904,8 +911,8 @@ class ProgrammeMembershipServiceTest {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, dateOutOfRange, END_DATE, lo, MEDICAL_CURRICULA.get(0),
-            CURRICULUM_SPECIALTY_CODE)));
+            PROGRAMME_MEMBERSHIP_TYPE, dateOutOfRange, END_DATE, lo, TSS_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, CURRICULUM_SPECIALTY)));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
@@ -922,7 +929,7 @@ class ProgrammeMembershipServiceTest {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, date, END_DATE, deanery, MEDICAL_CURRICULA.get(0),
+            PROGRAMME_MEMBERSHIP_TYPE, date, END_DATE, deanery, TSS_CURRICULA.get(0),
             CURRICULUM_SPECIALTY_CODE, specialty)));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
@@ -939,7 +946,7 @@ class ProgrammeMembershipServiceTest {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, date, END_DATE, deanery, MEDICAL_CURRICULA.get(0),
+            PROGRAMME_MEMBERSHIP_TYPE, date, END_DATE, deanery, TSS_CURRICULA.get(0),
             CURRICULUM_SPECIALTY_CODE, "General Practice")));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
@@ -957,7 +964,7 @@ class ProgrammeMembershipServiceTest {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, wrongDate, END_DATE, deanery, MEDICAL_CURRICULA.get(0),
+            PROGRAMME_MEMBERSHIP_TYPE, wrongDate, END_DATE, deanery, TSS_CURRICULA.get(0),
             CURRICULUM_SPECIALTY_CODE, specialty)));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
@@ -975,7 +982,7 @@ class ProgrammeMembershipServiceTest {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, wrongDate, END_DATE, deanery, MEDICAL_CURRICULA.get(0),
+            PROGRAMME_MEMBERSHIP_TYPE, wrongDate, END_DATE, deanery, TSS_CURRICULA.get(0),
             CURRICULUM_SPECIALTY_CODE, specialty)));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
@@ -1016,7 +1023,7 @@ class ProgrammeMembershipServiceTest {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE, deanery, MEDICAL_CURRICULA.get(0),
+            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE, deanery, TSS_CURRICULA.get(0),
             CURRICULUM_SPECIALTY_CODE, specialty)));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
@@ -1034,7 +1041,7 @@ class ProgrammeMembershipServiceTest {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE, deanery, MEDICAL_CURRICULA.get(0),
+            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE, deanery, TSS_CURRICULA.get(0),
             CURRICULUM_SPECIALTY_CODE, specialty)));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
@@ -1052,7 +1059,7 @@ class ProgrammeMembershipServiceTest {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE, deanery, MEDICAL_CURRICULA.get(0),
+            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE, deanery, TSS_CURRICULA.get(0),
             CURRICULUM_SPECIALTY_CODE, specialty)));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
@@ -1069,7 +1076,7 @@ class ProgrammeMembershipServiceTest {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE, deanery, MEDICAL_CURRICULA.get(0),
+            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE, deanery, TSS_CURRICULA.get(0),
             CURRICULUM_SPECIALTY_CODE, "General Practice")));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
@@ -1110,7 +1117,7 @@ class ProgrammeMembershipServiceTest {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE, deanery, MEDICAL_CURRICULA.get(0),
+            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE, deanery, TSS_CURRICULA.get(0),
             CURRICULUM_SPECIALTY_CODE, specialty)));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
@@ -1128,7 +1135,7 @@ class ProgrammeMembershipServiceTest {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, dateOutOfRange, END_DATE, deanery, MEDICAL_CURRICULA.get(0),
+            PROGRAMME_MEMBERSHIP_TYPE, dateOutOfRange, END_DATE, deanery, TSS_CURRICULA.get(0),
             CURRICULUM_SPECIALTY_CODE, specialty)));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
@@ -1146,7 +1153,7 @@ class ProgrammeMembershipServiceTest {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, dateOutOfRange, END_DATE, deanery, MEDICAL_CURRICULA.get(0),
+            PROGRAMME_MEMBERSHIP_TYPE, dateOutOfRange, END_DATE, deanery, TSS_CURRICULA.get(0),
             CURRICULUM_SPECIALTY_CODE, specialty)));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
@@ -1161,13 +1168,12 @@ class ProgrammeMembershipServiceTest {
       "Oral and maxillo-facial surgery (run through)"})
   void pilot2024ShouldBeTrueIfNwLoWithCorrectStartDateAndProgramme(String programme) {
     LocalDate dateInRange = LocalDate.of(2024, 8, 1);
-    String invalidSpecialty = "some specialty";
     String deanery = "Health Education England North West";
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE, deanery, MEDICAL_CURRICULA.get(0),
-            CURRICULUM_SPECIALTY_CODE, invalidSpecialty)));
+            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE, deanery, TSS_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, CURRICULUM_SPECIALTY)));
     traineeProfile.getProgrammeMemberships().get(0).setProgrammeName(programme);
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
@@ -1183,12 +1189,11 @@ class ProgrammeMembershipServiceTest {
   void pilot2024ShouldBeFalseIfNwLoWithIncorrectStartDateAndOkProgramme(String programme) {
     LocalDate dateOutOfRange = LocalDate.of(2024, 7, 1);
     String deanery = "Health Education England North West";
-    String invalidSpecialty = "some specialty";
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, dateOutOfRange, END_DATE, deanery, MEDICAL_CURRICULA.get(0),
-            CURRICULUM_SPECIALTY_CODE, invalidSpecialty)));
+            PROGRAMME_MEMBERSHIP_TYPE, dateOutOfRange, END_DATE, deanery, TSS_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, CURRICULUM_SPECIALTY)));
     traineeProfile.getProgrammeMemberships().get(0).setProgrammeName(programme);
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
@@ -1207,7 +1212,7 @@ class ProgrammeMembershipServiceTest {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE, deanery, MEDICAL_CURRICULA.get(0),
+            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE, deanery, TSS_CURRICULA.get(0),
             CURRICULUM_SPECIALTY_CODE, invalidSpecialty)));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
@@ -1215,6 +1220,78 @@ class ProgrammeMembershipServiceTest {
     boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
 
     assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
+  }
+
+  @ParameterizedTest
+  @MethodSource("listTssCurriculaSubTypes")
+  void pilot2024ShouldBeTrueIfTssCurriculumSubtype(String validCurriculumSubtype) {
+    LocalDate dateInRange = LocalDate.of(2024, 8, 1);
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE,
+            PILOT_2024_LOCAL_OFFICES_ALL_PROGRAMMES.get(0), validCurriculumSubtype,
+            CURRICULUM_SPECIALTY_CODE, CURRICULUM_SPECIALTY)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(true));
+  }
+
+  @Test
+  void pilot2024ShouldBeFalseIfNotTssCurriculumSubtype() {
+    LocalDate dateInRange = LocalDate.of(2024, 8, 1);
+    String invalidCurriculumSubtype = "xxx";
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE,
+            PILOT_2024_LOCAL_OFFICES_ALL_PROGRAMMES.get(0), invalidCurriculumSubtype,
+            CURRICULUM_SPECIALTY_CODE, CURRICULUM_SPECIALTY)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
+  }
+
+  @ParameterizedTest
+  @NullSource
+  @MethodSource("listNotTssCurriculaSpecialties")
+  void pilot2024ShouldBeFalseIfInvalidTssCurriculumSpecialty(String invalidCurriculumSpecialty) {
+    LocalDate dateInRange = LocalDate.of(2024, 8, 1);
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE,
+            PILOT_2024_LOCAL_OFFICES_ALL_PROGRAMMES.get(0), TSS_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, invalidCurriculumSpecialty)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
+  }
+
+  @Test
+  void pilot2024ShouldBeTrueIfNotInvalidTssCurriculumSpecialty() {
+    LocalDate dateInRange = LocalDate.of(2024, 8, 1);
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE,
+            PILOT_2024_LOCAL_OFFICES_ALL_PROGRAMMES.get(0), TSS_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, CURRICULUM_SPECIALTY)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(true));
   }
 
   /**
@@ -1258,6 +1335,14 @@ class ProgrammeMembershipServiceTest {
 
   static Stream<String> listMedicalCurriculaSubTypes() {
     return MEDICAL_CURRICULA.stream();
+  }
+
+  static Stream<String> listTssCurriculaSubTypes() {
+    return TSS_CURRICULA.stream();
+  }
+
+  static Stream<String> listNotTssCurriculaSpecialties() {
+    return NOT_TSS_SPECIALTIES.stream();
   }
 
   /**
@@ -1370,7 +1455,7 @@ class ProgrammeMembershipServiceTest {
   }
 
   /**
-   * Create a default programme membership with a single curriculum for testing
+   * Create a default new starter programme membership with a single curriculum for testing
    * isNewStarter conditions.
    *
    * @param programmeMembershipTisId The TIS ID to set on the programmeMembership.
@@ -1379,7 +1464,7 @@ class ProgrammeMembershipServiceTest {
    * @param endDate                  The end date.
    * @return The default programme membership.
    */
-  private ProgrammeMembership getProgrammeMembershipDefault(
+  private ProgrammeMembership getNewStarterProgrammeMembershipDefault(
       String programmeMembershipTisId, String programmeMembershipType, LocalDate startDate,
       LocalDate endDate) {
     return getProgrammeMembershipWithOneCurriculum(
@@ -1388,12 +1473,12 @@ class ProgrammeMembershipServiceTest {
   }
 
   /**
-   * Create a default programme membership with a single curriculum for testing
+   * Create a default new starter programme membership with a single curriculum for testing
    * isNewStarter conditions.
    *
    * @return The default programme membership.
    */
-  private ProgrammeMembership getProgrammeMembershipDefault() {
+  private ProgrammeMembership getNewStarterProgrammeMembershipDefault() {
     return getProgrammeMembershipWithOneCurriculum(
         PROGRAMME_TIS_ID, PROGRAMME_MEMBERSHIP_TYPE, START_DATE,
         END_DATE, MANAGING_DEANERY, MEDICAL_CURRICULA.get(0), CURRICULUM_SPECIALTY_CODE);
