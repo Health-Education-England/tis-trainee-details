@@ -45,7 +45,7 @@ import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 public class ProgrammeMembershipService {
 
   protected static final List<String> MEDICAL_CURRICULA
-      = List.of("DENTAL_CURRICULUM", "DENTAL_POST_CCST");
+      = List.of("DENTAL_CURRICULUM", "DENTAL_POST_CCST", "MEDICAL_CURRICULUM");
   protected static final List<String> TSS_CURRICULA
       = List.of("MEDICAL_CURRICULUM", "MEDICAL_SPR");
   protected static final List<String> NOT_TSS_SPECIALTIES
