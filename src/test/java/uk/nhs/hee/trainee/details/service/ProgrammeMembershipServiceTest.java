@@ -542,7 +542,8 @@ class ProgrammeMembershipServiceTest {
   void newStarterShouldBeFalseIfPmHasWrongType(String pmType) {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
-        List.of(getNewStarterProgrammeMembershipDefault(PROGRAMME_TIS_ID, pmType, START_DATE, END_DATE)));
+        List.of(getNewStarterProgrammeMembershipDefault(PROGRAMME_TIS_ID, pmType, START_DATE,
+            END_DATE)));
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
     boolean isNewStarter = service.isNewStarter(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
