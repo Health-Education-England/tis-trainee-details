@@ -987,6 +987,29 @@ class ProgrammeMembershipServiceTest {
 
   @ParameterizedTest
   @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
+  void pilot2024ShouldBeFalseIfYhLoWithGpSpecialtyInMultipleCurricula(String specialty) {
+    LocalDate dateInRange = LocalDate.of(2024, 8, 15);
+    String deanery = "Health Education England Yorkshire and the Humber";
+    TraineeProfile traineeProfile = new TraineeProfile();
+    Curriculum curriculum = createCurriculum(MEDICAL_CURRICULA.get(0),
+        CURRICULUM_SPECIALTY_CODE, specialty);
+    Curriculum curriculumGp = createCurriculum(MEDICAL_CURRICULA.get(1),
+        CURRICULUM_SPECIALTY_CODE, "General Practice");
+    ProgrammeMembership programmeMembership =
+        getProgrammeMembershipWithMultipleCurriculum(PROGRAMME_TIS_ID, PROGRAMME_MEMBERSHIP_TYPE,
+            dateInRange, END_DATE, deanery, List.of(curriculum, curriculumGp));
+
+    traineeProfile.setProgrammeMemberships(List.of(programmeMembership));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
   void pilot2024ShouldBeTrueIfSwLoWithCorrectStartDateAndSpecialty(String specialty) {
     LocalDate dateInRange = LocalDate.of(2024, 10, 31);
     String deanery = "Health Education England South West";
@@ -1048,6 +1071,29 @@ class ProgrammeMembershipServiceTest {
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
             PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE, deanery, MEDICAL_CURRICULA.get(0),
             CURRICULUM_SPECIALTY_CODE, "General Practice")));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
+  void pilot2024ShouldBeFalseIfSwLoWithGpSpecialtyInMultipleCurricula(String specialty) {
+    LocalDate dateInRange = LocalDate.of(2024, 10, 31);
+    String deanery = "Health Education England South West";
+    TraineeProfile traineeProfile = new TraineeProfile();
+    Curriculum curriculum = createCurriculum(MEDICAL_CURRICULA.get(0),
+        CURRICULUM_SPECIALTY_CODE, specialty);
+    Curriculum curriculumGp = createCurriculum(MEDICAL_CURRICULA.get(1),
+        CURRICULUM_SPECIALTY_CODE, "General Practice");
+    ProgrammeMembership programmeMembership =
+        getProgrammeMembershipWithMultipleCurriculum(PROGRAMME_TIS_ID, PROGRAMME_MEMBERSHIP_TYPE,
+            dateInRange, END_DATE, deanery, List.of(curriculum, curriculumGp));
+
+    traineeProfile.setProgrammeMemberships(List.of(programmeMembership));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
@@ -1277,13 +1323,50 @@ class ProgrammeMembershipServiceTest {
     programmeMembership.setEndDate(endDate);
     programmeMembership.setProgrammeCompletionDate(COMPLETION_DATE);
 
+    Curriculum curriculum =
+        createCurriculum(curriculumSubType, curriculumSpecialtyCode, curriculumSpecialty);
+    programmeMembership.setCurricula(List.of(curriculum));
+
+    return programmeMembership;
+  }
+
+  /**
+   * Create a programme membership with a multiple curricula for testing pilot2024 conditions.
+   *
+   * @param programmeMembershipTisId The TIS ID to set on the programmeMembership.
+   * @param programmeMembershipType  The programme membership type.
+   * @param startDate                The start date.
+   * @param endDate                  The end date.
+   * @param managingDeanery          The managing deanery.
+   * @param curricula        The curricula to set on the programmeMembership.
+   * @return The programme membership.
+   */
+  private ProgrammeMembership getProgrammeMembershipWithMultipleCurriculum(
+      String programmeMembershipTisId, String programmeMembershipType, LocalDate startDate,
+      LocalDate endDate, String managingDeanery, List<Curriculum> curricula) {
+    ProgrammeMembership programmeMembership = new ProgrammeMembership();
+    programmeMembership.setTisId(programmeMembershipTisId);
+    programmeMembership.setProgrammeTisId(PROGRAMME_TIS_ID);
+    programmeMembership.setProgrammeName(PROGRAMME_NAME);
+    programmeMembership.setProgrammeNumber(PROGRAMME_NUMBER);
+    programmeMembership.setManagingDeanery(managingDeanery);
+    programmeMembership.setProgrammeMembershipType(programmeMembershipType);
+    programmeMembership.setStartDate(startDate);
+    programmeMembership.setEndDate(endDate);
+    programmeMembership.setProgrammeCompletionDate(COMPLETION_DATE);
+    programmeMembership.setCurricula(curricula);
+
+    return programmeMembership;
+  }
+
+  private Curriculum createCurriculum(String curriculumSubType,
+                                      String curriculumSpecialtyCode, String curriculumSpecialty) {
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSubType(curriculumSubType);
     curriculum.setCurriculumSpecialtyCode(curriculumSpecialtyCode);
     curriculum.setCurriculumSpecialty(curriculumSpecialty);
-    programmeMembership.setCurricula(List.of(curriculum));
 
-    return programmeMembership;
+    return curriculum;
   }
 
   /**
