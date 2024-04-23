@@ -46,6 +46,10 @@ public class ProgrammeMembershipService {
 
   protected static final List<String> MEDICAL_CURRICULA
       = List.of("DENTAL_CURRICULUM", "DENTAL_POST_CCST", "MEDICAL_CURRICULUM");
+  protected static final List<String> TSS_CURRICULA
+      = List.of("MEDICAL_CURRICULUM", "MEDICAL_SPR");
+  protected static final List<String> NOT_TSS_SPECIALTIES
+      = List.of("Public Health Medicine", "Foundation");
   protected static final List<String> NON_RELEVANT_PROGRAMME_MEMBERSHIP_TYPES
       = List.of("VISITOR", "LAT");
   protected static final Long PROGRAMME_BREAK_DAYS = 355L;
@@ -287,7 +291,7 @@ public class ProgrammeMembershipService {
    * @return True, or False if the programme membership is not in the 2024 pilot.
    */
   public boolean isPilot2024(String traineeTisId, String programmeMembershipId) {
-    TraineeProfile traineeProfile = getProfileWithMedicalProgrammeMemberships(traineeTisId);
+    TraineeProfile traineeProfile = getProfileWithTssProgrammeMemberships(traineeTisId);
 
     if (traineeProfile == null) {
       log.info("2024 pilot: [false] trainee profile {} not found", traineeTisId);
@@ -364,6 +368,27 @@ public class ProgrammeMembershipService {
   }
 
   /**
+   * Get a trainee profile with programme memberships with TSS-relevant curricula.
+   *
+   * @param traineeTisId The TIS id of the trainee.
+   * @return The filtered trainee profile .
+   */
+  public TraineeProfile getProfileWithTssProgrammeMemberships(String traineeTisId) {
+    TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
+
+    if (traineeProfile == null) {
+      return null;
+    }
+
+    //get the list of programme memberships with only TSS-applicable attached
+    List<ProgrammeMembership> pmsToConsider
+        = getPmsTssCurricula(traineeProfile.getProgrammeMemberships());
+
+    traineeProfile.setProgrammeMemberships(pmsToConsider);
+    return traineeProfile;
+  }
+
+  /**
    * Get the programme membership that is a candidate for new-starter or pilot 2024 assessment.
    *
    * @param programmeMemberships  The list of programme memberships.
@@ -384,7 +409,7 @@ public class ProgrammeMembershipService {
     }
 
     ProgrammeMembership programmeMembership = optionalProgrammeMembership.get();
-    //it cannot be a pilot / new-starter canditate if it lacks a relevant programme membership type
+    //it cannot be a pilot / new-starter candidate if it lacks a relevant programme membership type
     if (!hasProgrammeMembershipTypeOfInterest(programmeMembership)) {
       return null;
     }
@@ -420,6 +445,42 @@ public class ProgrammeMembershipService {
               return false;
             } else {
               return MEDICAL_CURRICULA.stream().anyMatch(subtype::equalsIgnoreCase);
+            }
+          })
+          .toList();
+      if (!filteredCms.isEmpty()) {
+        programmeMembership.setCurricula(filteredCms);
+        filteredPms.add(programmeMembership);
+      }
+    }
+    return filteredPms;
+  }
+
+  /**
+   * Remove non-TSS curricula from a list of programme memberships. Returned programme
+   * memberships will each contain at least one TSS curriculum.
+   *
+   * @param pms The list of programme memberships.
+   * @return The filtered list of programme memberships containing TSS-applicable curricula.
+   */
+  private List<ProgrammeMembership> getPmsTssCurricula(List<ProgrammeMembership> pms) {
+    List<ProgrammeMembership> filteredPms = new ArrayList<>();
+    for (ProgrammeMembership programmeMembership : pms) {
+      List<Curriculum> filteredCms = programmeMembership.getCurricula().stream()
+          .filter(c -> {
+            String subtype = c.getCurriculumSubType();
+            if (subtype == null) {
+              return false;
+            } else {
+              return TSS_CURRICULA.stream().anyMatch(subtype::equalsIgnoreCase);
+            }
+          })
+          .filter(c -> {
+            String specialty = c.getCurriculumSpecialty();
+            if (specialty == null) {
+              return false; //should not really happen
+            } else {
+              return NOT_TSS_SPECIALTIES.stream().noneMatch(specialty::equalsIgnoreCase);
             }
           })
           .toList();
