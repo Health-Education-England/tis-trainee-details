@@ -53,6 +53,7 @@ class PlacementServiceTest {
   private static final String SPECIALTY = "specialty-";
   private static final String SUB_SPECIALTY = "subSpecialty-";
   private static final Boolean POST_ALLOWS_SUBSPECIALTY = true;
+  private static final String OTHER_SPECIALTIES = "otherSpecialties-";
   private static final String PLACEMENT_TYPE = "placementType-";
   private static final String TRAINEE_TIS_ID = "40";
   private static final String MODIFIED_SUFFIX = "post";
@@ -104,6 +105,7 @@ class PlacementServiceTest {
     expectedPlacement.setSpecialty(SPECIALTY);
     expectedPlacement.setSubSpecialty(SUB_SPECIALTY);
     expectedPlacement.setPostAllowsSubspecialty(POST_ALLOWS_SUBSPECIALTY);
+    expectedPlacement.setOtherSpecialties(OTHER_SPECIALTIES);
     expectedPlacement.setPlacementType(PLACEMENT_TYPE);
     expectedPlacement.setStatus(Status.CURRENT);
 
@@ -138,6 +140,7 @@ class PlacementServiceTest {
     expectedPlacement.setSpecialty(SPECIALTY);
     expectedPlacement.setSubSpecialty(SUB_SPECIALTY);
     expectedPlacement.setPostAllowsSubspecialty(POST_ALLOWS_SUBSPECIALTY);
+    expectedPlacement.setOtherSpecialties(OTHER_SPECIALTIES);
     expectedPlacement.setPlacementType(PLACEMENT_TYPE);
     expectedPlacement.setStatus(Status.CURRENT);
 
@@ -408,6 +411,7 @@ class PlacementServiceTest {
     placement.setSpecialty(SPECIALTY);
     placement.setSubSpecialty(SUB_SPECIALTY);
     placement.setPostAllowsSubspecialty(POST_ALLOWS_SUBSPECIALTY);
+    placement.setOtherSpecialties(OTHER_SPECIALTIES);
     placement.setPlacementType(PLACEMENT_TYPE);
     placement.setStatus(Status.CURRENT);
 
