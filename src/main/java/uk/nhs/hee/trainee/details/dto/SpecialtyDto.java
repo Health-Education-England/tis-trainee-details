@@ -29,6 +29,7 @@ import lombok.Data;
 @Data
 public class SpecialtyDto {
 
+  private String specialtyId;
   private String name;
 
 }
