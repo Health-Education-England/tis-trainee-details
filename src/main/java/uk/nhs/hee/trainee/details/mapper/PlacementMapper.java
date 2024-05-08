@@ -28,6 +28,9 @@ import org.mapstruct.MappingTarget;
 import uk.nhs.hee.trainee.details.dto.PlacementDto;
 import uk.nhs.hee.trainee.details.model.Placement;
 
+/**
+ * A mapper for Placements.
+ */
 @Mapper(componentModel = "spring", uses = SignatureMapper.class,
     collectionMappingStrategy = CollectionMappingStrategy.TARGET_IMMUTABLE)
 public interface PlacementMapper {

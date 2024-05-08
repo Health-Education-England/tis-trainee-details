@@ -125,8 +125,6 @@ class PlacementResourceTest {
   void shouldUpdatePlacementWhenTraineeFound() throws Exception {
     LocalDate start = LocalDate.now();
     LocalDate end = start.plusYears(1);
-    Specialty specialty = new Specialty();
-    specialty.setName("otherSpecialtyValue");
 
     Placement placement = new Placement();
     placement.setTisId("tisIdValue");
@@ -136,9 +134,12 @@ class PlacementResourceTest {
     placement.setSpecialty("specialtyValue");
     placement.setSubSpecialty("subSpecialtyValue");
     placement.setPostAllowsSubspecialty(true);
-    placement.setOtherSpecialties(Set.of(specialty));
     placement.setPlacementType("placementTypeValue");
     placement.setStatus(Status.CURRENT);
+
+    Specialty specialty = new Specialty();
+    specialty.setName("otherSpecialtyValue");
+    placement.setOtherSpecialties(Set.of(specialty));
 
     Site site = new Site();
     site.setName("siteValue");
