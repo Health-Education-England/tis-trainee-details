@@ -31,7 +31,6 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
@@ -40,7 +39,6 @@ import uk.nhs.hee.trainee.details.mapper.PlacementMapper;
 import uk.nhs.hee.trainee.details.model.Placement;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.Site;
-import uk.nhs.hee.trainee.details.model.Specialty;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 
@@ -55,7 +53,6 @@ class PlacementServiceTest {
   private static final String SPECIALTY = "specialty-";
   private static final String SUB_SPECIALTY = "subSpecialty-";
   private static final Boolean POST_ALLOWS_SUBSPECIALTY = true;
-  private static final String OTHER_SPECIALTY = "otherSpecialty-";
   private static final String PLACEMENT_TYPE = "placementType-";
   private static final String TRAINEE_TIS_ID = "40";
   private static final String MODIFIED_SUFFIX = "post";
@@ -110,10 +107,6 @@ class PlacementServiceTest {
     expectedPlacement.setPlacementType(PLACEMENT_TYPE);
     expectedPlacement.setStatus(Status.CURRENT);
 
-    Specialty otherSpecialty = new Specialty();
-    otherSpecialty.setName(OTHER_SPECIALTY);
-    expectedPlacement.setOtherSpecialties(Set.of(otherSpecialty));
-
     Site site = new Site();
     site.setName(SITE + MODIFIED_SUFFIX);
     site.setKnownAs(SITE_KNOWN_AS + MODIFIED_SUFFIX);
@@ -147,10 +140,6 @@ class PlacementServiceTest {
     expectedPlacement.setPostAllowsSubspecialty(POST_ALLOWS_SUBSPECIALTY);
     expectedPlacement.setPlacementType(PLACEMENT_TYPE);
     expectedPlacement.setStatus(Status.CURRENT);
-
-    Specialty otherSpecialty = new Specialty();
-    otherSpecialty.setName(OTHER_SPECIALTY);
-    expectedPlacement.setOtherSpecialties(Set.of(otherSpecialty));
 
     Site site = new Site();
     site.setName(SITE + MODIFIED_SUFFIX);
@@ -421,10 +410,6 @@ class PlacementServiceTest {
     placement.setPostAllowsSubspecialty(POST_ALLOWS_SUBSPECIALTY);
     placement.setPlacementType(PLACEMENT_TYPE);
     placement.setStatus(Status.CURRENT);
-
-    Specialty otherSpecialty = new Specialty();
-    otherSpecialty.setName(OTHER_SPECIALTY);
-    placement.setOtherSpecialties(Set.of(otherSpecialty));
 
     Site site = new Site();
     site.setName(SITE + stringSuffix);

@@ -47,7 +47,6 @@ public class PlacementDto implements SignedDto {
   private String specialty;
   private String subSpecialty;
   private Boolean postAllowsSubspecialty;
-  private Set<SpecialtyDto> otherSpecialties;
   private String placementType;
   private String employingBody;
   private String trainingBody;
