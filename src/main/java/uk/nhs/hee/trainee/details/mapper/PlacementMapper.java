@@ -21,18 +21,13 @@
 
 package uk.nhs.hee.trainee.details.mapper;
 
-import org.mapstruct.CollectionMappingStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import uk.nhs.hee.trainee.details.dto.PlacementDto;
 import uk.nhs.hee.trainee.details.model.Placement;
 
-/**
- * A mapper for Placements.
- */
-@Mapper(componentModel = "spring", uses = SignatureMapper.class,
-    collectionMappingStrategy = CollectionMappingStrategy.TARGET_IMMUTABLE)
+@Mapper(componentModel = "spring", uses = SignatureMapper.class)
 public interface PlacementMapper {
 
   @Mapping(target = "signature", ignore = true)
