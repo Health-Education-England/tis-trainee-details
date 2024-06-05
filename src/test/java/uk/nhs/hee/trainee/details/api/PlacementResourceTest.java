@@ -235,7 +235,7 @@ class PlacementResourceTest {
         .isPilot2024("40", "1"))
         .thenReturn(isPilot2024);
 
-    MvcResult result = mockMvc.perform(
+    mockMvc.perform(
             get("/api/placement/ispilot2024/{traineeTisId}/{placementId}",
                 "40", "1")
                 .contentType(MediaType.APPLICATION_JSON))
