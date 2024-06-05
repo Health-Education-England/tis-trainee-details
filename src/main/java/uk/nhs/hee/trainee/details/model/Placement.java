@@ -41,6 +41,7 @@ public class Placement {
   private String specialty;
   private String subSpecialty;
   private Boolean postAllowsSubspecialty;
+  private Set<Specialty> otherSpecialties;
   private String placementType;
   private String employingBody;
   private String trainingBody;

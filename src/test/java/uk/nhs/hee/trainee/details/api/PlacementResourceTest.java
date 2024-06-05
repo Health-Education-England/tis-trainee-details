@@ -38,6 +38,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -62,6 +63,7 @@ import uk.nhs.hee.trainee.details.mapper.PlacementMapperImpl;
 import uk.nhs.hee.trainee.details.mapper.SignatureMapperImpl;
 import uk.nhs.hee.trainee.details.model.Placement;
 import uk.nhs.hee.trainee.details.model.Site;
+import uk.nhs.hee.trainee.details.model.Specialty;
 import uk.nhs.hee.trainee.details.service.PlacementService;
 import uk.nhs.hee.trainee.details.service.SignatureService;
 
@@ -135,6 +137,10 @@ class PlacementResourceTest {
     placement.setPlacementType("placementTypeValue");
     placement.setStatus(Status.CURRENT);
 
+    Specialty specialty = new Specialty();
+    specialty.setName("otherSpecialtyValue");
+    placement.setOtherSpecialties(Set.of(specialty));
+
     Site site = new Site();
     site.setName("siteValue");
     site.setKnownAs("siteKnownAsValue");
@@ -170,6 +176,8 @@ class PlacementResourceTest {
         .andExpect(jsonPath("$.specialty").value(is("specialtyValue")))
         .andExpect(jsonPath("$.subSpecialty").value(is("subSpecialtyValue")))
         .andExpect(jsonPath("$.postAllowsSubspecialty").value(is(true)))
+        .andExpect(jsonPath("$.otherSpecialties.length()").value(is(1)))
+        .andExpect(jsonPath("$.otherSpecialties.[0].name").value(is("otherSpecialtyValue")))
         .andExpect(jsonPath("$.placementType").value(is("placementTypeValue")))
         .andExpect(jsonPath("$.status").value(is("CURRENT")))
         .andExpect(jsonPath("$.signature.hmac").value(signature.getHmac()))
@@ -227,7 +235,7 @@ class PlacementResourceTest {
         .isPilot2024("40", "1"))
         .thenReturn(isPilot2024);
 
-    MvcResult result = mockMvc.perform(
+    mockMvc.perform(
             get("/api/placement/ispilot2024/{traineeTisId}/{placementId}",
                 "40", "1")
                 .contentType(MediaType.APPLICATION_JSON))
