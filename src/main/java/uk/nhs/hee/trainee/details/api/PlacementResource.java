@@ -66,7 +66,7 @@ public class PlacementResource {
   public ResponseEntity<PlacementDto> updatePlacement(
       @PathVariable(name = "traineeTisId") String traineeTisId,
       @RequestBody @Validated PlacementDto dto) {
-    log.info("Update placement of trainee with TIS ID {}", traineeTisId);
+    log.info("Update placement of trainee with TIS ID {} with PlacementDto {}", traineeTisId, dto);
     Placement entity = mapper.toEntity(dto);
     Optional<Placement> optionalEntity = service.updatePlacementForTrainee(traineeTisId, entity);
     entity = optionalEntity
