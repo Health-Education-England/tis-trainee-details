@@ -48,6 +48,7 @@ import uk.nhs.hee.trainee.details.model.TraineeProfile;
 @ExtendWith(OutputCaptureExtension.class)
 class NtnGeneratorTest {
 
+  private static final String CURRICULUM_SPECIALTY_CODE = "ABC";
   private static final String CURRICULUM_SUB_TYPE_MC = "MEDICAL_CURRICULUM";
   private static final String CURRICULUM_SUB_TYPE_SS = "SUB_SPECIALTY";
   private static final String GDC_NUMBER = "12345";
@@ -81,6 +82,7 @@ class NtnGeneratorTest {
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
     curriculum.setCurriculumStartDate(START_DATE);
     curriculum.setCurriculumEndDate(END_DATE);
     pm.setCurricula(List.of(curriculum));
@@ -113,6 +115,7 @@ class NtnGeneratorTest {
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
     curriculum.setCurriculumStartDate(START_DATE);
     curriculum.setCurriculumEndDate(END_DATE);
     pm.setCurricula(List.of(curriculum));
@@ -144,6 +147,7 @@ class NtnGeneratorTest {
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
     curriculum.setCurriculumStartDate(START_DATE);
     curriculum.setCurriculumEndDate(END_DATE);
     pm.setCurricula(List.of(curriculum));
@@ -175,6 +179,7 @@ class NtnGeneratorTest {
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
     curriculum.setCurriculumStartDate(START_DATE);
     curriculum.setCurriculumEndDate(END_DATE);
     pm.setCurricula(List.of(curriculum));
@@ -209,6 +214,7 @@ class NtnGeneratorTest {
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
     curriculum.setCurriculumStartDate(START_DATE);
     curriculum.setCurriculumEndDate(END_DATE);
     pm.setCurricula(List.of(curriculum));
@@ -264,14 +270,48 @@ class NtnGeneratorTest {
     LocalDate now = LocalDate.now();
 
     Curriculum past = new Curriculum();
+    past.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
     past.setCurriculumStartDate(now.minusYears(1));
     past.setCurriculumEndDate(now.minusDays(1));
 
     Curriculum future = new Curriculum();
+    future.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
     future.setCurriculumStartDate(now.plusDays(1));
     future.setCurriculumEndDate(now.plusYears(1));
 
     pm.setCurricula(List.of(past, future));
+
+    service.populateNtns(profile);
+
+    String ntn = pm.getNtn();
+    assertThat("Unexpected ntn.", ntn, nullValue());
+    assertThat("Expected log not found.", output.getOut(),
+        containsString("Skipping NTN population as there are no valid curricula."));
+  }
+
+  @ParameterizedTest
+  @NullAndEmptySource
+  @ValueSource(strings = " ")
+  void shouldNotPopulateNtnWhenNoCurriculaSpecialtyCode(String specialtyCode,
+      CapturedOutput output) {
+    TraineeProfile profile = new TraineeProfile();
+
+    PersonalDetails personalDetails = new PersonalDetails();
+    personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
+
+    ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setManagingDeanery(OWNER_NAME);
+    pm.setProgrammeName(PROGRAMME_NAME);
+    pm.setProgrammeNumber(PROGRAMME_NUMBER);
+    pm.setTrainingPathway(TRAINING_PATHWAY);
+    profile.setProgrammeMemberships(List.of(pm));
+
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSpecialtyCode(specialtyCode);
+    curriculum.setCurriculumStartDate(START_DATE);
+    curriculum.setCurriculumEndDate(END_DATE);
+    pm.setCurricula(List.of(curriculum));
 
     service.populateNtns(profile);
 
@@ -299,6 +339,7 @@ class NtnGeneratorTest {
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
     curriculum.setCurriculumStartDate(START_DATE);
     curriculum.setCurriculumEndDate(END_DATE);
     pm.setCurricula(List.of(curriculum));
@@ -378,6 +419,7 @@ class NtnGeneratorTest {
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
     curriculum.setCurriculumStartDate(START_DATE);
     curriculum.setCurriculumEndDate(END_DATE);
     pm.setCurricula(List.of(curriculum));
@@ -411,6 +453,7 @@ class NtnGeneratorTest {
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
     curriculum.setCurriculumStartDate(START_DATE);
     curriculum.setCurriculumEndDate(END_DATE);
     pm.setCurricula(List.of(curriculum));
@@ -619,6 +662,12 @@ class NtnGeneratorTest {
     curriculum3.setCurriculumStartDate(START_DATE);
     curriculum3.setCurriculumEndDate(END_DATE);
 
+    Curriculum curriculum4 = new Curriculum();
+    curriculum4.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
+    curriculum4.setCurriculumSpecialtyCode(null);
+    curriculum4.setCurriculumStartDate(START_DATE);
+    curriculum4.setCurriculumEndDate(END_DATE);
+
     pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3));
 
     service.populateNtns(profile);
@@ -644,6 +693,7 @@ class NtnGeneratorTest {
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
     curriculum.setCurriculumStartDate(START_DATE);
     curriculum.setCurriculumEndDate(END_DATE);
     pm.setCurricula(List.of(curriculum));
@@ -673,6 +723,7 @@ class NtnGeneratorTest {
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
     curriculum.setCurriculumStartDate(START_DATE);
     curriculum.setCurriculumEndDate(END_DATE);
     pm.setCurricula(List.of(curriculum));
@@ -706,6 +757,7 @@ class NtnGeneratorTest {
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
     curriculum.setCurriculumStartDate(START_DATE);
     curriculum.setCurriculumEndDate(END_DATE);
     pm.setCurricula(List.of(curriculum));

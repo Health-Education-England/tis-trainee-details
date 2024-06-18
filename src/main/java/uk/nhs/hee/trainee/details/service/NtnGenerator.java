@@ -222,6 +222,8 @@ public class NtnGenerator {
     LocalDate now = LocalDate.now();
 
     return curricula.stream()
+        .filter(c ->
+            c.getCurriculumSpecialtyCode() != null && !c.getCurriculumSpecialtyCode().isBlank())
         .filter(c -> c.getCurriculumStartDate().isBefore(now))
         .filter(c -> c.getCurriculumEndDate().isAfter(now))
         .sorted(Comparator
@@ -288,6 +290,11 @@ public class NtnGenerator {
     List<Curriculum> validCurricula = filterAndSortCurricula(programmeMembership.getCurricula());
     if (validCurricula.isEmpty()) {
       log.info("Skipping NTN population as there are no valid curricula.");
+      return true;
+    }
+
+    if (programmeMembership.getTrainingPathway() == null) {
+      log.error("Unable to generate NTN as training pathway was null.");
       return true;
     }
 

@@ -48,7 +48,7 @@ public class ProgrammeMembershipDto implements SignedDto {
   private LocalDate programmeCompletionDate;
   private Status status;
   private List<CurriculumDto> curricula;
-  private String trainingPathway; // TODO: sync from TIS
+  private String trainingPathway;
   private ConditionsOfJoiningDto conditionsOfJoining;
   private Signature signature;
 }

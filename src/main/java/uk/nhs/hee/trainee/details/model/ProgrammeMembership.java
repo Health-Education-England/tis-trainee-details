@@ -41,7 +41,7 @@ public class ProgrammeMembership {
   private LocalDate endDate;
   private LocalDate programmeCompletionDate;
   private List<Curriculum> curricula = new ArrayList<>();
-  private String trainingPathway; // TODO: sync from TIS
+  private String trainingPathway;
   private ConditionsOfJoining conditionsOfJoining;
 
   /**
