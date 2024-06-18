@@ -42,9 +42,11 @@ import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 public class TraineeProfileService {
 
   private final TraineeProfileRepository repository;
+  private final NtnGenerator ntnGenerator;
 
-  TraineeProfileService(TraineeProfileRepository repository) {
+  TraineeProfileService(TraineeProfileRepository repository, NtnGenerator ntnGenerator) {
     this.repository = repository;
+    this.ntnGenerator = ntnGenerator;
   }
 
   /**
@@ -83,6 +85,9 @@ public class TraineeProfileService {
           .filter(pm -> pm.getConditionsOfJoining() == null
               || pm.getConditionsOfJoining().signedAt() == null)
           .forEach(pm -> pm.setConditionsOfJoining(coj));
+
+      // TODO: move generation to scheduled job/create/update.
+      ntnGenerator.populateNtns(traineeProfile);
     }
 
     return traineeProfile;

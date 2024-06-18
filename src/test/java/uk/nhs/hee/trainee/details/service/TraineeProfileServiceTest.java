@@ -116,6 +116,9 @@ class TraineeProfileServiceTest {
   @Mock
   private TraineeProfileRepository repository;
 
+  @Mock
+  private NtnGenerator ntnGenerator;
+
   private TraineeProfile traineeProfile = new TraineeProfile();
   private TraineeProfile traineeProfile2 = new TraineeProfile();
   private PersonalDetails personalDetails;
@@ -377,6 +380,15 @@ class TraineeProfileServiceTest {
     assertThat("Unexpected CoJ signed at timestamp", coj.signedAt(), is(now));
     assertThat("Unexpected CoJ version", coj.version(), is(GG9));
     assertThat("Unexpected CoJ synced at", coj.syncedAt(), nullValue());
+  }
+
+  @Test
+  void shouldGenerateNtnsWhenGettingTraineeProfile() {
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(this.traineeProfile);
+
+    service.getTraineeProfileByTraineeTisId(DEFAULT_TIS_ID_1);
+
+    verify(ntnGenerator).populateNtns(traineeProfile);
   }
 
   @Test
