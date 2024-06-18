@@ -321,6 +321,35 @@ class NtnGeneratorTest {
         containsString("Skipping NTN population as there are no valid curricula."));
   }
 
+  @Test
+  void shouldNotPopulateNtnWhenTrainingPathwayNull(CapturedOutput output) {
+    TraineeProfile profile = new TraineeProfile();
+
+    PersonalDetails personalDetails = new PersonalDetails();
+    personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
+
+    ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setManagingDeanery(OWNER_NAME);
+    pm.setProgrammeName(PROGRAMME_NAME);
+    pm.setProgrammeNumber(PROGRAMME_NUMBER);
+    pm.setTrainingPathway(null);
+    profile.setProgrammeMemberships(List.of(pm));
+
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
+    curriculum.setCurriculumStartDate(START_DATE);
+    curriculum.setCurriculumEndDate(END_DATE);
+    pm.setCurricula(List.of(curriculum));
+
+    service.populateNtns(profile);
+
+    String ntn = pm.getNtn();
+    assertThat("Unexpected ntn.", ntn, nullValue());
+    assertThat("Expected log not found.", output.getOut(),
+        containsString("Unable to generate NTN as training pathway was null."));
+  }
+
   @ParameterizedTest
   @NullAndEmptySource
   @ValueSource(strings = {" ", "Unknown Organization"})
