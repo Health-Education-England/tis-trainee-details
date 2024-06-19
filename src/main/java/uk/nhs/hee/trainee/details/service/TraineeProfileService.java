@@ -27,6 +27,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.dto.UserDetails;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
@@ -37,14 +38,17 @@ import uk.nhs.hee.trainee.details.model.Qualification;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 
+@Slf4j
 @Service
 @XRayEnabled
 public class TraineeProfileService {
 
   private final TraineeProfileRepository repository;
+  private final NtnGenerator ntnGenerator;
 
-  TraineeProfileService(TraineeProfileRepository repository) {
+  TraineeProfileService(TraineeProfileRepository repository, NtnGenerator ntnGenerator) {
     this.repository = repository;
+    this.ntnGenerator = ntnGenerator;
   }
 
   /**
@@ -83,6 +87,13 @@ public class TraineeProfileService {
           .filter(pm -> pm.getConditionsOfJoining() == null
               || pm.getConditionsOfJoining().signedAt() == null)
           .forEach(pm -> pm.setConditionsOfJoining(coj));
+
+      // TODO: move generation to scheduled job/create/update.
+      try {
+        ntnGenerator.populateNtns(traineeProfile);
+      } catch (RuntimeException e) {
+        log.error("Caught and ignoring NTN generation runtime error:", e);
+      }
     }
 
     return traineeProfile;
@@ -145,7 +156,7 @@ public class TraineeProfileService {
    * @return The trainee TIS IDs.
    */
   public List<String> getTraineeTisIdsByEmailGmcAndDob(String email, String gmc,
-                                                       LocalDate dob) {
+      LocalDate dob) {
     List<TraineeProfile> traineeProfilesForEmail
         = repository.findAllByTraineeEmail(email.toLowerCase());
 

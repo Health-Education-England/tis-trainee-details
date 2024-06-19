@@ -31,6 +31,7 @@ import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 public class ProgrammeMembership {
 
   private String tisId;
+  private String ntn;
   private String programmeTisId;
   private String programmeName;
   private String programmeNumber;
@@ -40,6 +41,7 @@ public class ProgrammeMembership {
   private LocalDate endDate;
   private LocalDate programmeCompletionDate;
   private List<Curriculum> curricula = new ArrayList<>();
+  private String trainingPathway;
   private ConditionsOfJoining conditionsOfJoining;
 
   /**
