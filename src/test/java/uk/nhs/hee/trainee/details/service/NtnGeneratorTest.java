@@ -58,8 +58,9 @@ class NtnGeneratorTest {
   private static final String PROGRAMME_NUMBER = "PROG123";
   private static final String TRAINING_PATHWAY = "N/A";
 
-  private static final LocalDate START_DATE = LocalDate.now().minusYears(1);
-  private static final LocalDate END_DATE = LocalDate.now().plusYears(1);
+  private static final LocalDate NOW = LocalDate.now();
+  private static final LocalDate PAST = NOW.minusYears(1);
+  private static final LocalDate FUTURE = NOW.plusYears(1);
 
   private NtnGenerator service;
 
@@ -83,8 +84,8 @@ class NtnGeneratorTest {
 
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
-    curriculum.setCurriculumStartDate(START_DATE);
-    curriculum.setCurriculumEndDate(END_DATE);
+    curriculum.setCurriculumStartDate(PAST);
+    curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
     service.populateNtns(profile);
@@ -116,8 +117,8 @@ class NtnGeneratorTest {
 
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
-    curriculum.setCurriculumStartDate(START_DATE);
-    curriculum.setCurriculumEndDate(END_DATE);
+    curriculum.setCurriculumStartDate(PAST);
+    curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
     service.populateNtns(profile);
@@ -148,8 +149,8 @@ class NtnGeneratorTest {
 
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
-    curriculum.setCurriculumStartDate(START_DATE);
-    curriculum.setCurriculumEndDate(END_DATE);
+    curriculum.setCurriculumStartDate(PAST);
+    curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
     service.populateNtns(profile);
@@ -180,8 +181,8 @@ class NtnGeneratorTest {
 
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
-    curriculum.setCurriculumStartDate(START_DATE);
-    curriculum.setCurriculumEndDate(END_DATE);
+    curriculum.setCurriculumStartDate(PAST);
+    curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
     service.populateNtns(profile);
@@ -215,8 +216,8 @@ class NtnGeneratorTest {
 
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
-    curriculum.setCurriculumStartDate(START_DATE);
-    curriculum.setCurriculumEndDate(END_DATE);
+    curriculum.setCurriculumStartDate(PAST);
+    curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
     service.populateNtns(profile);
@@ -267,17 +268,15 @@ class NtnGeneratorTest {
     pm.setTrainingPathway(TRAINING_PATHWAY);
     profile.setProgrammeMemberships(List.of(pm));
 
-    LocalDate now = LocalDate.now();
-
     Curriculum past = new Curriculum();
     past.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
-    past.setCurriculumStartDate(now.minusYears(1));
-    past.setCurriculumEndDate(now.minusDays(1));
+    past.setCurriculumStartDate(PAST);
+    past.setCurriculumEndDate(NOW.minusDays(1));
 
     Curriculum future = new Curriculum();
     future.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
-    future.setCurriculumStartDate(now.plusDays(1));
-    future.setCurriculumEndDate(now.plusYears(1));
+    future.setCurriculumStartDate(NOW.plusDays(1));
+    future.setCurriculumEndDate(FUTURE);
 
     pm.setCurricula(List.of(past, future));
 
@@ -309,8 +308,8 @@ class NtnGeneratorTest {
 
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSpecialtyCode(specialtyCode);
-    curriculum.setCurriculumStartDate(START_DATE);
-    curriculum.setCurriculumEndDate(END_DATE);
+    curriculum.setCurriculumStartDate(PAST);
+    curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
     service.populateNtns(profile);
@@ -338,8 +337,8 @@ class NtnGeneratorTest {
 
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
-    curriculum.setCurriculumStartDate(START_DATE);
-    curriculum.setCurriculumEndDate(END_DATE);
+    curriculum.setCurriculumStartDate(PAST);
+    curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
     service.populateNtns(profile);
@@ -369,8 +368,8 @@ class NtnGeneratorTest {
 
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
-    curriculum.setCurriculumStartDate(START_DATE);
-    curriculum.setCurriculumEndDate(END_DATE);
+    curriculum.setCurriculumStartDate(PAST);
+    curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
     IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
@@ -397,20 +396,26 @@ class NtnGeneratorTest {
     Curriculum curriculum1 = new Curriculum();
     curriculum1.setCurriculumSpecialtyCode("ABC");
     curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
-    curriculum1.setCurriculumStartDate(START_DATE);
-    curriculum1.setCurriculumEndDate(END_DATE);
+    curriculum1.setCurriculumStartDate(PAST);
+    curriculum1.setCurriculumEndDate(FUTURE);
 
     Curriculum curriculum2 = new Curriculum();
     curriculum2.setCurriculumSpecialtyCode("123");
     curriculum2.setCurriculumSubType(CURRICULUM_SUB_TYPE_SS);
-    curriculum2.setCurriculumStartDate(START_DATE);
-    curriculum2.setCurriculumEndDate(END_DATE);
+    curriculum2.setCurriculumStartDate(NOW);
+    curriculum2.setCurriculumEndDate(FUTURE);
 
-    pm.setCurricula(List.of(curriculum1, curriculum2));
+    Curriculum curriculum3 = new Curriculum();
+    curriculum3.setCurriculumSpecialtyCode("XYZ");
+    curriculum3.setCurriculumSubType(CURRICULUM_SUB_TYPE_SS);
+    curriculum3.setCurriculumStartDate(PAST);
+    curriculum3.setCurriculumEndDate(NOW);
+
+    pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3));
 
     service.populateNtns(profile);
 
-    assertThat("Unexpected NTN.", pm.getNtn(), is("LDN/ABC.123/1234567/D"));
+    assertThat("Unexpected NTN.", pm.getNtn(), is("LDN/ABC.XYZ.123/1234567/D"));
   }
 
   @ParameterizedTest
@@ -449,8 +454,8 @@ class NtnGeneratorTest {
 
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
-    curriculum.setCurriculumStartDate(START_DATE);
-    curriculum.setCurriculumEndDate(END_DATE);
+    curriculum.setCurriculumStartDate(PAST);
+    curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
     service.populateNtns(profile);
@@ -483,8 +488,8 @@ class NtnGeneratorTest {
 
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
-    curriculum.setCurriculumStartDate(START_DATE);
-    curriculum.setCurriculumEndDate(END_DATE);
+    curriculum.setCurriculumStartDate(PAST);
+    curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
     service.populateNtns(profile);
@@ -518,26 +523,26 @@ class NtnGeneratorTest {
     Curriculum curriculum1 = new Curriculum();
     curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum1.setCurriculumSpecialtyCode(specialty1);
-    curriculum1.setCurriculumStartDate(START_DATE);
-    curriculum1.setCurriculumEndDate(END_DATE);
+    curriculum1.setCurriculumStartDate(PAST);
+    curriculum1.setCurriculumEndDate(FUTURE);
 
     Curriculum curriculum2 = new Curriculum();
     curriculum2.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum2.setCurriculumSpecialtyCode(specialty2);
-    curriculum2.setCurriculumStartDate(START_DATE);
-    curriculum2.setCurriculumEndDate(END_DATE);
+    curriculum2.setCurriculumStartDate(PAST);
+    curriculum2.setCurriculumEndDate(FUTURE);
 
     Curriculum curriculum3 = new Curriculum();
     curriculum3.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum3.setCurriculumSpecialtyCode(specialty3);
-    curriculum3.setCurriculumStartDate(START_DATE);
-    curriculum3.setCurriculumEndDate(END_DATE);
+    curriculum3.setCurriculumStartDate(PAST);
+    curriculum3.setCurriculumEndDate(FUTURE);
 
     Curriculum curriculum4 = new Curriculum();
     curriculum4.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum4.setCurriculumSpecialtyCode(specialty4);
-    curriculum4.setCurriculumStartDate(START_DATE);
-    curriculum4.setCurriculumEndDate(END_DATE);
+    curriculum4.setCurriculumStartDate(PAST);
+    curriculum4.setCurriculumEndDate(FUTURE);
 
     pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3, curriculum4));
 
@@ -572,16 +577,16 @@ class NtnGeneratorTest {
     curriculum1.setCurriculumName("A sub spec 1");
     curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_SS);
     curriculum1.setCurriculumSpecialtyCode("888");
-    curriculum1.setCurriculumStartDate(START_DATE);
-    curriculum1.setCurriculumEndDate(END_DATE);
+    curriculum1.setCurriculumStartDate(PAST);
+    curriculum1.setCurriculumEndDate(FUTURE);
     curricula.add(curriculum1);
 
     Curriculum curriculum2 = new Curriculum();
     curriculum2.setCurriculumName("A sub spec 2");
     curriculum2.setCurriculumSubType(CURRICULUM_SUB_TYPE_SS);
     curriculum2.setCurriculumSpecialtyCode("999");
-    curriculum2.setCurriculumStartDate(START_DATE);
-    curriculum2.setCurriculumEndDate(END_DATE);
+    curriculum2.setCurriculumStartDate(PAST);
+    curriculum2.setCurriculumEndDate(FUTURE);
     curricula.add(curriculum2);
 
     for (int i = 1; i <= additionalCurriculaCount; i++) {
@@ -589,8 +594,8 @@ class NtnGeneratorTest {
       additionalCurriculum.setCurriculumName("Not sub spec " + i);
       additionalCurriculum.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
       additionalCurriculum.setCurriculumSpecialtyCode(String.format("%03d", i));
-      additionalCurriculum.setCurriculumStartDate(START_DATE);
-      additionalCurriculum.setCurriculumEndDate(END_DATE);
+      additionalCurriculum.setCurriculumStartDate(PAST);
+      additionalCurriculum.setCurriculumEndDate(FUTURE);
       curricula.add(additionalCurriculum);
     }
 
@@ -623,22 +628,22 @@ class NtnGeneratorTest {
     curriculum1.setCurriculumName("AFT");
     curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum1.setCurriculumSpecialtyCode("ACA");
-    curriculum1.setCurriculumStartDate(START_DATE);
-    curriculum1.setCurriculumEndDate(END_DATE);
+    curriculum1.setCurriculumStartDate(PAST);
+    curriculum1.setCurriculumEndDate(FUTURE);
 
     Curriculum curriculum2 = new Curriculum();
     curriculum2.setCurriculumName("Not AFT 2");
     curriculum2.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum2.setCurriculumSpecialtyCode("003");
-    curriculum2.setCurriculumStartDate(START_DATE);
-    curriculum2.setCurriculumEndDate(END_DATE);
+    curriculum2.setCurriculumStartDate(PAST);
+    curriculum2.setCurriculumEndDate(FUTURE);
 
     Curriculum curriculum3 = new Curriculum();
     curriculum3.setCurriculumName("Not AFT 1");
     curriculum3.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum3.setCurriculumSpecialtyCode("777");
-    curriculum3.setCurriculumStartDate(START_DATE);
-    curriculum3.setCurriculumEndDate(END_DATE);
+    curriculum3.setCurriculumStartDate(PAST);
+    curriculum3.setCurriculumEndDate(FUTURE);
 
     pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3));
 
@@ -658,8 +663,8 @@ class NtnGeneratorTest {
       111 | AAA | ZZZ
       111 | ZZZ | AAA
       """)
-  void shouldFilterCurriculaWhenPopulatingNtnWithOrderedSpecialtyConcat(String pastSpecialty,
-      String currentSpecialty, String futureSpecialty) {
+  void shouldFilterCurriculaWhenPopulatingNtnWithOrderedSpecialtyConcatAndCurriculaEnding(
+      String pastSpecialty, String endingSpecialty, String futureSpecialty) {
     TraineeProfile profile = new TraineeProfile();
 
     PersonalDetails personalDetails = new PersonalDetails();
@@ -676,26 +681,83 @@ class NtnGeneratorTest {
     Curriculum curriculum1 = new Curriculum();
     curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum1.setCurriculumSpecialtyCode(pastSpecialty);
-    curriculum1.setCurriculumStartDate(START_DATE);
-    curriculum1.setCurriculumEndDate(START_DATE);
+    curriculum1.setCurriculumStartDate(PAST);
+    curriculum1.setCurriculumEndDate(PAST);
 
     Curriculum curriculum2 = new Curriculum();
     curriculum2.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum2.setCurriculumSpecialtyCode(futureSpecialty);
-    curriculum2.setCurriculumStartDate(END_DATE);
-    curriculum2.setCurriculumEndDate(END_DATE);
+    curriculum2.setCurriculumStartDate(FUTURE);
+    curriculum2.setCurriculumEndDate(FUTURE);
 
     Curriculum curriculum3 = new Curriculum();
     curriculum3.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
-    curriculum3.setCurriculumSpecialtyCode(currentSpecialty);
-    curriculum3.setCurriculumStartDate(START_DATE);
-    curriculum3.setCurriculumEndDate(END_DATE);
+    curriculum3.setCurriculumSpecialtyCode(endingSpecialty);
+    curriculum3.setCurriculumStartDate(PAST);
+    curriculum3.setCurriculumEndDate(NOW);
 
     Curriculum curriculum4 = new Curriculum();
     curriculum4.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum4.setCurriculumSpecialtyCode(null);
-    curriculum4.setCurriculumStartDate(START_DATE);
-    curriculum4.setCurriculumEndDate(END_DATE);
+    curriculum4.setCurriculumStartDate(PAST);
+    curriculum4.setCurriculumEndDate(FUTURE);
+
+    pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3));
+
+    service.populateNtns(profile);
+
+    String ntn = pm.getNtn();
+    String[] ntnParts = ntn.split("/");
+    assertThat("Unexpected parent organization.", ntnParts[1], is(endingSpecialty));
+  }
+
+  @ParameterizedTest
+  @CsvSource(delimiter = '|', textBlock = """
+      AAA | ZZZ | 111
+      AAA | 111 | ZZZ
+      ZZZ | AAA | 111
+      ZZZ | 111 | AAA
+      111 | AAA | ZZZ
+      111 | ZZZ | AAA
+      """)
+  void shouldFilterCurriculaWhenPopulatingNtnWithOrderedSpecialtyConcatAndCurriculaCurrent(
+      String pastSpecialty, String currentSpecialty, String futureSpecialty) {
+    TraineeProfile profile = new TraineeProfile();
+
+    PersonalDetails personalDetails = new PersonalDetails();
+    personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
+
+    ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setManagingDeanery(OWNER_NAME);
+    pm.setProgrammeName(PROGRAMME_NAME);
+    pm.setProgrammeNumber(PROGRAMME_NUMBER);
+    pm.setTrainingPathway(TRAINING_PATHWAY);
+    profile.setProgrammeMemberships(List.of(pm));
+
+    Curriculum curriculum1 = new Curriculum();
+    curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
+    curriculum1.setCurriculumSpecialtyCode(pastSpecialty);
+    curriculum1.setCurriculumStartDate(PAST);
+    curriculum1.setCurriculumEndDate(PAST);
+
+    Curriculum curriculum2 = new Curriculum();
+    curriculum2.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
+    curriculum2.setCurriculumSpecialtyCode(futureSpecialty);
+    curriculum2.setCurriculumStartDate(FUTURE);
+    curriculum2.setCurriculumEndDate(FUTURE);
+
+    Curriculum curriculum3 = new Curriculum();
+    curriculum3.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
+    curriculum3.setCurriculumSpecialtyCode(currentSpecialty);
+    curriculum3.setCurriculumStartDate(PAST);
+    curriculum3.setCurriculumEndDate(FUTURE);
+
+    Curriculum curriculum4 = new Curriculum();
+    curriculum4.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
+    curriculum4.setCurriculumSpecialtyCode(null);
+    curriculum4.setCurriculumStartDate(PAST);
+    curriculum4.setCurriculumEndDate(FUTURE);
 
     pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3));
 
@@ -704,6 +766,63 @@ class NtnGeneratorTest {
     String ntn = pm.getNtn();
     String[] ntnParts = ntn.split("/");
     assertThat("Unexpected parent organization.", ntnParts[1], is(currentSpecialty));
+  }
+
+  @ParameterizedTest
+  @CsvSource(delimiter = '|', textBlock = """
+      AAA | ZZZ | 111
+      AAA | 111 | ZZZ
+      ZZZ | AAA | 111
+      ZZZ | 111 | AAA
+      111 | AAA | ZZZ
+      111 | ZZZ | AAA
+      """)
+  void shouldFilterCurriculaWhenPopulatingNtnWithOrderedSpecialtyConcatAndCurriculaStarting(
+      String pastSpecialty, String startingSpecialty, String futureSpecialty) {
+    TraineeProfile profile = new TraineeProfile();
+
+    PersonalDetails personalDetails = new PersonalDetails();
+    personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
+
+    ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setManagingDeanery(OWNER_NAME);
+    pm.setProgrammeName(PROGRAMME_NAME);
+    pm.setProgrammeNumber(PROGRAMME_NUMBER);
+    pm.setTrainingPathway(TRAINING_PATHWAY);
+    profile.setProgrammeMemberships(List.of(pm));
+
+    Curriculum curriculum1 = new Curriculum();
+    curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
+    curriculum1.setCurriculumSpecialtyCode(pastSpecialty);
+    curriculum1.setCurriculumStartDate(PAST);
+    curriculum1.setCurriculumEndDate(PAST);
+
+    Curriculum curriculum2 = new Curriculum();
+    curriculum2.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
+    curriculum2.setCurriculumSpecialtyCode(futureSpecialty);
+    curriculum2.setCurriculumStartDate(FUTURE);
+    curriculum2.setCurriculumEndDate(FUTURE);
+
+    Curriculum curriculum3 = new Curriculum();
+    curriculum3.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
+    curriculum3.setCurriculumSpecialtyCode(startingSpecialty);
+    curriculum3.setCurriculumStartDate(NOW);
+    curriculum3.setCurriculumEndDate(FUTURE);
+
+    Curriculum curriculum4 = new Curriculum();
+    curriculum4.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
+    curriculum4.setCurriculumSpecialtyCode(null);
+    curriculum4.setCurriculumStartDate(PAST);
+    curriculum4.setCurriculumEndDate(FUTURE);
+
+    pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3));
+
+    service.populateNtns(profile);
+
+    String ntn = pm.getNtn();
+    String[] ntnParts = ntn.split("/");
+    assertThat("Unexpected parent organization.", ntnParts[1], is(startingSpecialty));
   }
 
   @Test
@@ -723,8 +842,8 @@ class NtnGeneratorTest {
 
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
-    curriculum.setCurriculumStartDate(START_DATE);
-    curriculum.setCurriculumEndDate(END_DATE);
+    curriculum.setCurriculumStartDate(PAST);
+    curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
     service.populateNtns(profile);
@@ -753,8 +872,8 @@ class NtnGeneratorTest {
 
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
-    curriculum.setCurriculumStartDate(START_DATE);
-    curriculum.setCurriculumEndDate(END_DATE);
+    curriculum.setCurriculumStartDate(PAST);
+    curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
     service.populateNtns(profile);
@@ -787,8 +906,8 @@ class NtnGeneratorTest {
 
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
-    curriculum.setCurriculumStartDate(START_DATE);
-    curriculum.setCurriculumEndDate(END_DATE);
+    curriculum.setCurriculumStartDate(PAST);
+    curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
     service.populateNtns(profile);
@@ -816,14 +935,14 @@ class NtnGeneratorTest {
     Curriculum curriculum1 = new Curriculum();
     curriculum1.setCurriculumSpecialtyCode("123");
     curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
-    curriculum1.setCurriculumStartDate(START_DATE);
-    curriculum1.setCurriculumEndDate(END_DATE);
+    curriculum1.setCurriculumStartDate(PAST);
+    curriculum1.setCurriculumEndDate(FUTURE);
 
     Curriculum curriculum2 = new Curriculum();
     curriculum2.setCurriculumSpecialtyCode("ACA");
     curriculum2.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
-    curriculum2.setCurriculumStartDate(START_DATE);
-    curriculum2.setCurriculumEndDate(END_DATE);
+    curriculum2.setCurriculumStartDate(PAST);
+    curriculum2.setCurriculumEndDate(FUTURE);
 
     pm.setCurricula(List.of(curriculum1, curriculum2));
 
@@ -835,7 +954,7 @@ class NtnGeneratorTest {
   }
 
   @Test
-  void shouldFilterCurriculaWhenPopulatingNtnWithSuffix() {
+  void shouldFilterCurriculaWhenPopulatingNtnWithSuffixAndCurriculaEnding() {
     TraineeProfile profile = new TraineeProfile();
 
     PersonalDetails personalDetails = new PersonalDetails();
@@ -850,22 +969,115 @@ class NtnGeneratorTest {
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum1 = new Curriculum();
-    curriculum1.setCurriculumSpecialtyCode("123");
+    curriculum1.setCurriculumName("Past");
+    curriculum1.setCurriculumSpecialtyCode("ACA");
     curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
-    curriculum1.setCurriculumStartDate(START_DATE);
-    curriculum1.setCurriculumEndDate(END_DATE);
+    curriculum1.setCurriculumStartDate(PAST);
+    curriculum1.setCurriculumEndDate(PAST);
 
     Curriculum curriculum2 = new Curriculum();
-    curriculum2.setCurriculumSpecialtyCode("ACA");
+    curriculum2.setCurriculumName("Ending");
+    curriculum2.setCurriculumSpecialtyCode("123");
     curriculum2.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
-    curriculum2.setCurriculumStartDate(START_DATE);
-    curriculum2.setCurriculumEndDate(START_DATE);
+    curriculum2.setCurriculumStartDate(PAST);
+    curriculum2.setCurriculumEndDate(NOW);
 
     Curriculum curriculum3 = new Curriculum();
+    curriculum3.setCurriculumName("Future");
     curriculum3.setCurriculumSpecialtyCode("ACA");
     curriculum3.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
-    curriculum3.setCurriculumStartDate(END_DATE);
-    curriculum3.setCurriculumEndDate(END_DATE);
+    curriculum3.setCurriculumStartDate(FUTURE);
+    curriculum3.setCurriculumEndDate(FUTURE);
+
+    pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3));
+
+    service.populateNtns(profile);
+
+    String ntn = pm.getNtn();
+    String[] ntnParts = ntn.split("/");
+    assertThat("Unexpected parent organization.", ntnParts[3], is("D"));
+  }
+
+  @Test
+  void shouldFilterCurriculaWhenPopulatingNtnWithSuffixAndCurriculaCurrent() {
+    TraineeProfile profile = new TraineeProfile();
+
+    PersonalDetails personalDetails = new PersonalDetails();
+    personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
+
+    ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setManagingDeanery(OWNER_NAME);
+    pm.setProgrammeName(PROGRAMME_NAME);
+    pm.setProgrammeNumber(PROGRAMME_NUMBER);
+    pm.setTrainingPathway(TRAINING_PATHWAY);
+    profile.setProgrammeMemberships(List.of(pm));
+
+    Curriculum curriculum1 = new Curriculum();
+    curriculum1.setCurriculumName("Past");
+    curriculum1.setCurriculumSpecialtyCode("ACA");
+    curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
+    curriculum1.setCurriculumStartDate(PAST);
+    curriculum1.setCurriculumEndDate(PAST);
+
+    Curriculum curriculum2 = new Curriculum();
+    curriculum2.setCurriculumName("Current");
+    curriculum2.setCurriculumSpecialtyCode("123");
+    curriculum2.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
+    curriculum2.setCurriculumStartDate(PAST);
+    curriculum2.setCurriculumEndDate(FUTURE);
+
+    Curriculum curriculum3 = new Curriculum();
+    curriculum3.setCurriculumName("Future");
+    curriculum3.setCurriculumSpecialtyCode("ACA");
+    curriculum3.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
+    curriculum3.setCurriculumStartDate(FUTURE);
+    curriculum3.setCurriculumEndDate(FUTURE);
+
+    pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3));
+
+    service.populateNtns(profile);
+
+    String ntn = pm.getNtn();
+    String[] ntnParts = ntn.split("/");
+    assertThat("Unexpected parent organization.", ntnParts[3], is("D"));
+  }
+
+  @Test
+  void shouldFilterCurriculaWhenPopulatingNtnWithSuffixAndCurriculaStarting() {
+    TraineeProfile profile = new TraineeProfile();
+
+    PersonalDetails personalDetails = new PersonalDetails();
+    personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
+
+    ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setManagingDeanery(OWNER_NAME);
+    pm.setProgrammeName(PROGRAMME_NAME);
+    pm.setProgrammeNumber(PROGRAMME_NUMBER);
+    pm.setTrainingPathway(TRAINING_PATHWAY);
+    profile.setProgrammeMemberships(List.of(pm));
+
+    Curriculum curriculum1 = new Curriculum();
+    curriculum1.setCurriculumName("Past");
+    curriculum1.setCurriculumSpecialtyCode("ACA");
+    curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
+    curriculum1.setCurriculumStartDate(PAST);
+    curriculum1.setCurriculumEndDate(PAST);
+
+    Curriculum curriculum2 = new Curriculum();
+    curriculum2.setCurriculumName("Starting");
+    curriculum2.setCurriculumSpecialtyCode("123");
+    curriculum2.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
+    curriculum2.setCurriculumStartDate(NOW);
+    curriculum2.setCurriculumEndDate(FUTURE);
+
+    Curriculum curriculum3 = new Curriculum();
+    curriculum3.setCurriculumName("Future");
+    curriculum3.setCurriculumSpecialtyCode("ACA");
+    curriculum3.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
+    curriculum3.setCurriculumStartDate(FUTURE);
+    curriculum3.setCurriculumEndDate(FUTURE);
 
     pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3));
 

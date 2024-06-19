@@ -224,8 +224,8 @@ public class NtnGenerator {
     return curricula.stream()
         .filter(c ->
             c.getCurriculumSpecialtyCode() != null && !c.getCurriculumSpecialtyCode().isBlank())
-        .filter(c -> c.getCurriculumStartDate().isBefore(now))
-        .filter(c -> c.getCurriculumEndDate().isAfter(now))
+        .filter(c -> !c.getCurriculumStartDate().isAfter(now))
+        .filter(c -> !c.getCurriculumEndDate().isBefore(now))
         .sorted(Comparator
             .comparing(Curriculum::getCurriculumSubType)
             .reversed()
