@@ -138,8 +138,7 @@ public class NtnGenerator {
    */
   private String getSpecialtyConcat(ProgrammeMembership programmeMembership) {
     log.info("Calculating specialty concat.");
-    List<Curriculum> curricula = programmeMembership.getCurricula();
-    List<Curriculum> sortedCurricula = filterAndSortCurricula(curricula);
+    List<Curriculum> sortedCurricula = filterAndSortCurricula(programmeMembership);
 
     StringBuilder sb = new StringBuilder();
 
@@ -199,8 +198,7 @@ public class NtnGenerator {
       case "CCT" -> "C";
       case "CESR" -> "CP";
       default -> {
-        List<Curriculum> curricula = programmeMembership.getCurricula();
-        List<Curriculum> sortedCurricula = filterAndSortCurricula(curricula);
+        List<Curriculum> sortedCurricula = filterAndSortCurricula(programmeMembership);
         String firstSpecialtyCode = sortedCurricula.get(0).getCurriculumSpecialtyCode();
         log.info("Using specialty code '{}' to calculate suffix.", trainingPathway);
 
@@ -213,19 +211,21 @@ public class NtnGenerator {
   }
 
   /**
-   * Filter the given curricula to only those that are current and sort them alphanumerically.
+   * Filter a programme membership's curricula and sort them alphanumerically.
    *
-   * @param curricula The curricula to filter and sort.
-   * @return The current curricula, sorted alphanumerically by subtype and code.
+   * @param programmeMembership The programme membership to filter and sort the curricula of.
+   * @return The NTN valid curricula for this PM, sorted alphanumerically by subtype and code.
    */
-  private List<Curriculum> filterAndSortCurricula(List<Curriculum> curricula) {
+  private List<Curriculum> filterAndSortCurricula(ProgrammeMembership programmeMembership) {
+    LocalDate startDate = programmeMembership.getStartDate();
     LocalDate now = LocalDate.now();
+    LocalDate filterDate = startDate.isAfter(now) ? startDate : now;
 
-    return curricula.stream()
+    return programmeMembership.getCurricula().stream()
         .filter(c ->
             c.getCurriculumSpecialtyCode() != null && !c.getCurriculumSpecialtyCode().isBlank())
-        .filter(c -> !c.getCurriculumStartDate().isAfter(now))
-        .filter(c -> !c.getCurriculumEndDate().isBefore(now))
+        .filter(c -> !c.getCurriculumStartDate().isAfter(filterDate))
+        .filter(c -> !c.getCurriculumEndDate().isBefore(filterDate))
         .sorted(Comparator
             .comparing(Curriculum::getCurriculumSubType)
             .reversed()
@@ -287,7 +287,7 @@ public class NtnGenerator {
       return true;
     }
 
-    List<Curriculum> validCurricula = filterAndSortCurricula(programmeMembership.getCurricula());
+    List<Curriculum> validCurricula = filterAndSortCurricula(programmeMembership);
     if (validCurricula.isEmpty()) {
       log.info("Skipping NTN population as there are no valid curricula.");
       return true;

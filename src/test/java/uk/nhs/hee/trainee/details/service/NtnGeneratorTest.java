@@ -80,6 +80,7 @@ class NtnGeneratorTest {
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
+    pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
@@ -113,6 +114,7 @@ class NtnGeneratorTest {
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
+    pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
@@ -145,6 +147,7 @@ class NtnGeneratorTest {
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(programmeNumber);
     pm.setTrainingPathway(TRAINING_PATHWAY);
+    pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
@@ -177,6 +180,7 @@ class NtnGeneratorTest {
     pm.setProgrammeName(programmeName);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
+    pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
@@ -212,6 +216,7 @@ class NtnGeneratorTest {
     pm.setProgrammeName(programmeName);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
+    pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
@@ -242,6 +247,7 @@ class NtnGeneratorTest {
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
+    pm.setStartDate(NOW);
     pm.setCurricula(List.of());
     profile.setProgrammeMemberships(List.of(pm));
 
@@ -266,6 +272,7 @@ class NtnGeneratorTest {
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
+    pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum past = new Curriculum();
@@ -304,6 +311,7 @@ class NtnGeneratorTest {
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
+    pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
@@ -333,6 +341,7 @@ class NtnGeneratorTest {
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(null);
+    pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
@@ -364,6 +373,7 @@ class NtnGeneratorTest {
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
+    pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
@@ -380,7 +390,7 @@ class NtnGeneratorTest {
   }
 
   @Test
-  void shouldPopulateFullNtn() {
+  void shouldPopulateFullNtnWhenProgrammeIsCurrent() {
     TraineeProfile profile = new TraineeProfile();
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(GMC_NUMBER);
@@ -391,6 +401,7 @@ class NtnGeneratorTest {
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
+    pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum1 = new Curriculum();
@@ -410,6 +421,46 @@ class NtnGeneratorTest {
     curriculum3.setCurriculumSubType(CURRICULUM_SUB_TYPE_SS);
     curriculum3.setCurriculumStartDate(PAST);
     curriculum3.setCurriculumEndDate(NOW);
+
+    pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3));
+
+    service.populateNtns(profile);
+
+    assertThat("Unexpected NTN.", pm.getNtn(), is("LDN/ABC.XYZ.123/1234567/D"));
+  }
+
+  @Test
+  void shouldPopulateFullNtnWhenProgrammeIsFuture() {
+    TraineeProfile profile = new TraineeProfile();
+    PersonalDetails personalDetails = new PersonalDetails();
+    personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
+
+    ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setManagingDeanery(OWNER_NAME);
+    pm.setProgrammeName(PROGRAMME_NAME);
+    pm.setProgrammeNumber(PROGRAMME_NUMBER);
+    pm.setTrainingPathway(TRAINING_PATHWAY);
+    pm.setStartDate(FUTURE);
+    profile.setProgrammeMemberships(List.of(pm));
+
+    Curriculum curriculum1 = new Curriculum();
+    curriculum1.setCurriculumSpecialtyCode("ABC");
+    curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
+    curriculum1.setCurriculumStartDate(NOW);
+    curriculum1.setCurriculumEndDate(FUTURE.plusDays(1));
+
+    Curriculum curriculum2 = new Curriculum();
+    curriculum2.setCurriculumSpecialtyCode("123");
+    curriculum2.setCurriculumSubType(CURRICULUM_SUB_TYPE_SS);
+    curriculum2.setCurriculumStartDate(FUTURE);
+    curriculum2.setCurriculumEndDate(FUTURE.plusDays(1));
+
+    Curriculum curriculum3 = new Curriculum();
+    curriculum3.setCurriculumSpecialtyCode("XYZ");
+    curriculum3.setCurriculumSubType(CURRICULUM_SUB_TYPE_SS);
+    curriculum3.setCurriculumStartDate(NOW);
+    curriculum3.setCurriculumEndDate(FUTURE);
 
     pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3));
 
@@ -450,6 +501,7 @@ class NtnGeneratorTest {
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
+    pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
@@ -484,6 +536,7 @@ class NtnGeneratorTest {
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(programmeNumber);
     pm.setTrainingPathway(TRAINING_PATHWAY);
+    pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
@@ -518,6 +571,7 @@ class NtnGeneratorTest {
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
+    pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum1 = new Curriculum();
@@ -568,6 +622,7 @@ class NtnGeneratorTest {
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
+    pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
     List<Curriculum> curricula = new ArrayList<>();
@@ -622,6 +677,7 @@ class NtnGeneratorTest {
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
+    pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum1 = new Curriculum();
@@ -676,6 +732,7 @@ class NtnGeneratorTest {
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
+    pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum1 = new Curriculum();
@@ -702,7 +759,7 @@ class NtnGeneratorTest {
     curriculum4.setCurriculumStartDate(PAST);
     curriculum4.setCurriculumEndDate(FUTURE);
 
-    pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3));
+    pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3, curriculum4));
 
     service.populateNtns(profile);
 
@@ -733,6 +790,7 @@ class NtnGeneratorTest {
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
+    pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum1 = new Curriculum();
@@ -759,7 +817,7 @@ class NtnGeneratorTest {
     curriculum4.setCurriculumStartDate(PAST);
     curriculum4.setCurriculumEndDate(FUTURE);
 
-    pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3));
+    pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3, curriculum4));
 
     service.populateNtns(profile);
 
@@ -790,6 +848,7 @@ class NtnGeneratorTest {
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
+    pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum1 = new Curriculum();
@@ -816,13 +875,71 @@ class NtnGeneratorTest {
     curriculum4.setCurriculumStartDate(PAST);
     curriculum4.setCurriculumEndDate(FUTURE);
 
-    pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3));
+    pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3, curriculum4));
 
     service.populateNtns(profile);
 
     String ntn = pm.getNtn();
     String[] ntnParts = ntn.split("/");
     assertThat("Unexpected parent organization.", ntnParts[1], is(startingSpecialty));
+  }
+
+  @ParameterizedTest
+  @CsvSource(delimiter = '|', textBlock = """
+      AAA | ZZZ | 111
+      AAA | 111 | ZZZ
+      ZZZ | AAA | 111
+      ZZZ | 111 | AAA
+      111 | AAA | ZZZ
+      111 | ZZZ | AAA
+      """)
+  void shouldFilterCurriculaWhenPopulatingNtnWithOrderedSpecialtyConcatAndProgrammeFuture(
+      String currentSpecialty, String futureSpecialty, String farFutureSpecialty) {
+    TraineeProfile profile = new TraineeProfile();
+
+    PersonalDetails personalDetails = new PersonalDetails();
+    personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
+
+    ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setManagingDeanery(OWNER_NAME);
+    pm.setProgrammeName(PROGRAMME_NAME);
+    pm.setProgrammeNumber(PROGRAMME_NUMBER);
+    pm.setTrainingPathway(TRAINING_PATHWAY);
+    pm.setStartDate(FUTURE);
+    profile.setProgrammeMemberships(List.of(pm));
+
+    Curriculum curriculum1 = new Curriculum();
+    curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
+    curriculum1.setCurriculumSpecialtyCode(currentSpecialty);
+    curriculum1.setCurriculumStartDate(NOW);
+    curriculum1.setCurriculumEndDate(NOW);
+
+    Curriculum curriculum2 = new Curriculum();
+    curriculum2.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
+    curriculum2.setCurriculumSpecialtyCode(futureSpecialty);
+    curriculum2.setCurriculumStartDate(FUTURE);
+    curriculum2.setCurriculumEndDate(FUTURE);
+
+    Curriculum curriculum3 = new Curriculum();
+    curriculum3.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
+    curriculum3.setCurriculumSpecialtyCode(farFutureSpecialty);
+    curriculum3.setCurriculumStartDate(FUTURE.plusDays(1));
+    curriculum3.setCurriculumEndDate(FUTURE.plusDays(1));
+
+    Curriculum curriculum4 = new Curriculum();
+    curriculum4.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
+    curriculum4.setCurriculumSpecialtyCode(null);
+    curriculum4.setCurriculumStartDate(PAST);
+    curriculum4.setCurriculumEndDate(FUTURE);
+
+    pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3, curriculum4));
+
+    service.populateNtns(profile);
+
+    String ntn = pm.getNtn();
+    String[] ntnParts = ntn.split("/");
+    assertThat("Unexpected parent organization.", ntnParts[1], is(futureSpecialty));
   }
 
   @Test
@@ -838,6 +955,7 @@ class NtnGeneratorTest {
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
+    pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
@@ -868,6 +986,7 @@ class NtnGeneratorTest {
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
+    pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
@@ -902,6 +1021,7 @@ class NtnGeneratorTest {
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(trainingPathway);
+    pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
@@ -930,6 +1050,7 @@ class NtnGeneratorTest {
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
+    pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum1 = new Curriculum();
@@ -966,6 +1087,7 @@ class NtnGeneratorTest {
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
+    pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum1 = new Curriculum();
@@ -1011,6 +1133,7 @@ class NtnGeneratorTest {
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
+    pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum1 = new Curriculum();
@@ -1056,6 +1179,7 @@ class NtnGeneratorTest {
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
+    pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum1 = new Curriculum();
@@ -1080,6 +1204,59 @@ class NtnGeneratorTest {
     curriculum3.setCurriculumEndDate(FUTURE);
 
     pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3));
+
+    service.populateNtns(profile);
+
+    String ntn = pm.getNtn();
+    String[] ntnParts = ntn.split("/");
+    assertThat("Unexpected parent organization.", ntnParts[3], is("D"));
+  }
+
+  @Test
+  void shouldFilterCurriculaWhenPopulatingNtnWithSuffixAndProgrammeFuture() {
+    TraineeProfile profile = new TraineeProfile();
+
+    PersonalDetails personalDetails = new PersonalDetails();
+    personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
+
+    ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setManagingDeanery(OWNER_NAME);
+    pm.setProgrammeName(PROGRAMME_NAME);
+    pm.setProgrammeNumber(PROGRAMME_NUMBER);
+    pm.setTrainingPathway(TRAINING_PATHWAY);
+    pm.setStartDate(FUTURE);
+    profile.setProgrammeMemberships(List.of(pm));
+
+    Curriculum curriculum1 = new Curriculum();
+    curriculum1.setCurriculumName("Past");
+    curriculum1.setCurriculumSpecialtyCode("ACA");
+    curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
+    curriculum1.setCurriculumStartDate(PAST);
+    curriculum1.setCurriculumEndDate(PAST);
+
+    Curriculum curriculum2 = new Curriculum();
+    curriculum2.setCurriculumName("Past");
+    curriculum2.setCurriculumSpecialtyCode("ACA");
+    curriculum2.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
+    curriculum2.setCurriculumStartDate(NOW);
+    curriculum2.setCurriculumEndDate(NOW);
+
+    Curriculum curriculum3 = new Curriculum();
+    curriculum3.setCurriculumName("Future");
+    curriculum3.setCurriculumSpecialtyCode("123");
+    curriculum3.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
+    curriculum3.setCurriculumStartDate(FUTURE);
+    curriculum3.setCurriculumEndDate(FUTURE);
+
+    Curriculum curriculum4 = new Curriculum();
+    curriculum4.setCurriculumName("Future + 1");
+    curriculum4.setCurriculumSpecialtyCode("ACA");
+    curriculum4.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
+    curriculum4.setCurriculumStartDate(FUTURE.plusDays(1));
+    curriculum4.setCurriculumEndDate(FUTURE.plusDays(1));
+
+    pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3, curriculum4));
 
     service.populateNtns(profile);
 
