@@ -80,12 +80,14 @@ public class ProgrammeMembershipService {
       "Vascular surgery");
 
   private final TraineeProfileRepository repository;
+  private final NtnGenerator ntnGenerator;
   private final ProgrammeMembershipMapper mapper;
   private final CachingDelegate cachingDelegate;
 
-  ProgrammeMembershipService(TraineeProfileRepository repository,
-                             ProgrammeMembershipMapper mapper, CachingDelegate cachingDelegate) {
+  ProgrammeMembershipService(TraineeProfileRepository repository, NtnGenerator ntnGenerator,
+      ProgrammeMembershipMapper mapper, CachingDelegate cachingDelegate) {
     this.repository = repository;
+    this.ntnGenerator = ntnGenerator;
     this.mapper = mapper;
     this.cachingDelegate = cachingDelegate;
   }
@@ -104,6 +106,8 @@ public class ProgrammeMembershipService {
     if (traineeProfile == null) {
       return Optional.empty();
     }
+
+    ntnGenerator.populateNtn(traineeProfile.getPersonalDetails(), programmeMembership);
 
     List<ProgrammeMembership> existingProgrammeMemberships = traineeProfile
         .getProgrammeMemberships();
@@ -181,7 +185,7 @@ public class ProgrammeMembershipService {
    * @return True, or False if a trainee with the ID was not found.
    */
   public boolean deleteProgrammeMembershipForTrainee(String traineeTisId,
-                                                     String programmeMembershipId) {
+      String programmeMembershipId) {
     TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
 
     if (traineeProfile == null) {
@@ -206,7 +210,7 @@ public class ProgrammeMembershipService {
    *
    * @param programmeMembershipId The ID of the programme membership for signing COJ.
    * @return The updated programme membership or empty if the programme membership with the ID was
-   * not found.
+   *     not found.
    */
   public Optional<ProgrammeMembership> signProgrammeMembershipCoj(
       String traineeTisId, String programmeMembershipId) {
@@ -394,7 +398,7 @@ public class ProgrammeMembershipService {
    * @param programmeMemberships  The list of programme memberships.
    * @param programmeMembershipId The programme membership ID.
    * @return The programme membership, or null if it is not a candidate because it does not exist,
-   *         it is non-medical, or is of the wrong type.
+   *     it is non-medical, or is of the wrong type.
    */
   private ProgrammeMembership getCandidateProgrammeMembership(
       List<ProgrammeMembership> programmeMemberships, String programmeMembershipId) {
@@ -457,8 +461,8 @@ public class ProgrammeMembershipService {
   }
 
   /**
-   * Remove non-TSS curricula from a list of programme memberships. Returned programme
-   * memberships will each contain at least one TSS curriculum.
+   * Remove non-TSS curricula from a list of programme memberships. Returned programme memberships
+   * will each contain at least one TSS curriculum.
    *
    * @param pms The list of programme memberships.
    * @return The filtered list of programme memberships containing TSS-applicable curricula.
@@ -501,7 +505,7 @@ public class ProgrammeMembershipService {
    * @return The programme memberships that comprise intra-deanery transfers or rotas.
    */
   private List<ProgrammeMembership> getIntraOrRotaPms(ProgrammeMembership anchorPm,
-                                                      List<ProgrammeMembership> candidatePms) {
+      List<ProgrammeMembership> candidatePms) {
     List<ProgrammeMembership> newStarterPmsWithSameDeaneryStartedBeforeAnchor =
         candidatePms.stream()
             .filter(pm -> {
@@ -548,7 +552,7 @@ public class ProgrammeMembershipService {
    * @return The filtered list.
    */
   private List<ProgrammeMembership> getRecentPrecedingPms(ProgrammeMembership anchorPm,
-                                                          List<ProgrammeMembership> candidatePms) {
+      List<ProgrammeMembership> candidatePms) {
     return
         candidatePms.stream()
             .filter(pm -> {
