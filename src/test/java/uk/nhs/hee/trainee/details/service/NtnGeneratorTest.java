@@ -529,7 +529,7 @@ class NtnGeneratorTest {
       Health Education England Thames Valley                 | OXF
       Health Education England Wessex                        | WES
       Health Education England West Midlands                 | WMD
-      Health Education England Yorkshire and The Humber      | YHD
+      Health Education England Yorkshire and the Humber      | YHD
       London LETBs                                           | LDN
       Severn Deanery                                         | SEV
       South West Peninsula Deanery                           | PEN
