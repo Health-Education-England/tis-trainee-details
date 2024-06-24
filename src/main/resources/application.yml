@@ -55,7 +55,7 @@ application:
       default: 1440
       uk.nhs.hee.trainee.details.dto.PlacementDto: ${ SIGNATURE_PLACEMENT_EXPIRY:1440 }
       uk.nhs.hee.trainee.details.dto.ProgrammeMembershipDto: ${ SIGNATURE_PROGRAMME_MEMBERSHIP_EXPIRY:1440 }
-
+  timezone: Europe/London
 com:
   amazonaws:
     xray:

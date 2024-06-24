@@ -27,8 +27,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import uk.nhs.hee.trainee.details.dto.UserDetails;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
@@ -224,5 +226,16 @@ public class TraineeProfileService {
 
     // A valid GMC number can consist of 7 numeric or L + 6 numeric
     return gmcNumber.matches("^(\\d{7}|L\\d{6})$");
+  }
+
+  @Transactional
+  public int updateNtns() {
+//    try (Stream<TraineeProfile> profiles = repository.f()) {
+//      profiles.forEach(profile -> {
+//        ntnGenerator.populateNtns(profile);
+//        repository.save(profile);
+//      });
+//    }
+    return 0;
   }
 }

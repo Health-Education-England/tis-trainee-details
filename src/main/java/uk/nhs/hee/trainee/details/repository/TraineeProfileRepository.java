@@ -22,6 +22,7 @@
 package uk.nhs.hee.trainee.details.repository;
 
 import java.util.List;
+import java.util.stream.Stream;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -36,4 +37,7 @@ public interface TraineeProfileRepository extends MongoRepository<TraineeProfile
   List<TraineeProfile> findAllByTraineeEmail(String email);
 
   void deleteByTraineeTisId(String traineeTisId);
+
+  @Query("{ $or: [ 'programmeMemberships.curricula.curriculumStartDate' : ?0 }, { 'programmeMemberships.curricula.curriculumEndDate' : ?1 } ] }")
+  Stream<TraineeProfile> findAllByProgrammeMembershipsStartDateToday();
 }

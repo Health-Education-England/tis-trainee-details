@@ -21,7 +21,10 @@
 
 package uk.nhs.hee.trainee.details.service;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Optional;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -35,7 +38,14 @@ import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
 @Component
 class CachingDelegate {
 
+  private final ZoneId timezone;
+
+  CachingDelegate(@Value("${application.timezone}") ZoneId timezone) {
+    this.timezone = timezone;
+  }
+
   private static final String CONDITIONS_OF_JOINING = "ConditionsOfJoining";
+  private static final String JOB_COMPLETION = "JobCompletion";
 
   /**
    * Cache a Conditions of Joining for later retrieval.
@@ -59,6 +69,28 @@ class CachingDelegate {
   @Cacheable(cacheNames = CONDITIONS_OF_JOINING)
   @CacheEvict(CONDITIONS_OF_JOINING)
   public Optional<ConditionsOfJoining> getConditionsOfJoining(String key) {
+    return Optional.empty();
+  }
+
+  /**
+   * Cache the completion of a scheduled job.
+   *
+   * @param jobName The name of the completed job.
+   * @return The completion date of the job.
+   */
+  @CachePut(cacheNames = JOB_COMPLETION)
+  public LocalDate cacheJobCompletion(String jobName) {
+    return LocalDate.now(timezone);
+  }
+
+  /**
+   * Get the last completion of a scheduled job.
+   *
+   * @param jobName The name of the job.
+   * @return The last completion date, or an empty optional if not found.
+   */
+  @Cacheable(cacheNames = JOB_COMPLETION)
+  public Optional<LocalDate> getLastJobCompletion(String jobName) {
     return Optional.empty();
   }
 }

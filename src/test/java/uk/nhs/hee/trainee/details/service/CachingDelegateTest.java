@@ -25,6 +25,8 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,11 +35,13 @@ import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
 
 class CachingDelegateTest {
 
+  private static final ZoneId LONDON = ZoneId.of("Europe/London");
+
   private CachingDelegate delegate;
 
   @BeforeEach
   void setUp() {
-    delegate = new CachingDelegate();
+    delegate = new CachingDelegate(LONDON);
   }
 
   @Test
@@ -52,5 +56,17 @@ class CachingDelegateTest {
   void shouldGetEmptyConditionsOfJoining() {
     Optional<ConditionsOfJoining> coj = delegate.getConditionsOfJoining("40");
     assertThat("Unexpected Conditions of Joining.", coj, is(Optional.empty()));
+  }
+
+  @Test
+  void shouldReturnCachedJobCompletion() {
+    LocalDate jobCompletion = delegate.cacheJobCompletion("JobName");
+    assertThat("Unexpected job completion date.", jobCompletion, is(LocalDate.now(LONDON)));
+  }
+
+  @Test
+  void shouldGetEmptyJobCompletion() {
+    Optional<LocalDate> jobCompletion = delegate.getLastJobCompletion("JobName");
+    assertThat("Unexpected job completion date.", jobCompletion, is(Optional.empty()));
   }
 }

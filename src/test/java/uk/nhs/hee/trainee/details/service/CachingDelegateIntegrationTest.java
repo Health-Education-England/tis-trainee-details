@@ -25,11 +25,14 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
@@ -38,8 +41,7 @@ import uk.nhs.hee.trainee.details.config.MongoConfiguration;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
 
-@Disabled("These tests pass locally and during PR Analysis but fail in CI/CD workflow,"
-    + "further debugging required but there is a pressing need to get this functionality deployed.")
+// TODO: reconfigure testcontainers
 @SpringBootTest(properties = "embedded.containers.enabled=true")
 @ActiveProfiles({"test", "redis"})
 @Testcontainers(disabledWithoutDocker = true)
@@ -49,7 +51,10 @@ class CachingDelegateIntegrationTest {
   private MongoConfiguration mongoConfiguration;
 
   @Autowired
-  CachingDelegate delegate;
+  private CachingDelegate delegate;
+
+  @Value("${application.timezone")
+  private ZoneId timezone;
 
   @Test
   void shouldReturnEmptyConditionsOfJoiningWhenNotCached() {
@@ -94,5 +99,32 @@ class CachingDelegateIntegrationTest {
 
     Optional<ConditionsOfJoining> cachedOptional = delegate.getConditionsOfJoining(key);
     assertThat("Unexpected cached value.", cachedOptional, is(Optional.empty()));
+  }
+
+  @Test
+  void shouldReturnEmptyJobCompletionWhenNotCached() {
+    String key = UUID.randomUUID().toString();
+
+    Optional<LocalDate> cachedOptional = delegate.getLastJobCompletion(key);
+    assertThat("Unexpected cached value.", cachedOptional, is(Optional.empty()));
+  }
+
+  @Test
+  void shouldReturnCachedJobCompletionAfterCaching() {
+    String key = UUID.randomUUID().toString();
+
+    LocalDate cachedCompletion = delegate.cacheJobCompletion(key);
+    assertThat("Unexpected cached value.", cachedCompletion, is(LocalDate.now(timezone)));
+  }
+
+  @Test
+  void shouldGetCachedJobCompletionWhenCached() {
+    String key = UUID.randomUUID().toString();
+
+    delegate.cacheJobCompletion(key);
+
+    Optional<LocalDate> cachedOptional = delegate.getLastJobCompletion(key);
+    assertThat("Unexpected cached value.", cachedOptional,
+        is(Optional.of(LocalDate.now(timezone))));
   }
 }

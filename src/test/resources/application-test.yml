@@ -7,3 +7,11 @@ cloud:
       static: aws-global
     sqs:
       enabled: false
+
+spring:
+  rabbitmq:
+    host:
+    port:
+    username:
+    password:
+    ssl.enabled:

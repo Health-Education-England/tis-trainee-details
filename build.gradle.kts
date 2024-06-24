@@ -1,7 +1,7 @@
 plugins {
   java
-  id("org.springframework.boot") version "3.3.0"
-  id("io.spring.dependency-management") version "1.1.4"
+  id("org.springframework.boot") version "3.3.1"
+  id("io.spring.dependency-management") version "1.1.5"
 
   // Code Quality
   checkstyle
@@ -24,7 +24,7 @@ repositories {
 
 dependencyManagement {
   imports {
-    mavenBom("org.springframework.cloud:spring-cloud-dependencies:2023.0.0")
+    mavenBom("org.springframework.cloud:spring-cloud-dependencies:2023.0.2")
     mavenBom("io.awspring.cloud:spring-cloud-aws-dependencies:3.1.1")
   }
 }
@@ -39,7 +39,7 @@ dependencies {
 
   testImplementation("org.springframework.boot:spring-boot-starter-test")
   testImplementation("org.springframework.cloud:spring-cloud-starter-bootstrap")
-  testImplementation("com.playtika.testcontainers:embedded-redis:3.1.5")
+  testImplementation("com.playtika.testcontainers:embedded-redis:3.1.7")
   testImplementation("org.testcontainers:junit-jupiter:1.19.8")
 
   // Lombok
@@ -65,6 +65,10 @@ dependencies {
 
   // Rabbit MQ
   implementation("org.springframework.boot:spring-boot-starter-amqp")
+
+  val shedLockVersion = "5.13.0"
+  implementation("net.javacrumbs.shedlock:shedlock-spring:$shedLockVersion")
+  implementation("net.javacrumbs.shedlock:shedlock-provider-redis-spring:$shedLockVersion")
 }
 
 java {
