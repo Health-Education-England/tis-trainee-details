@@ -33,6 +33,9 @@ import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.service.NtnGenerator;
 
+/**
+ * A mapper to convert Trainee Profiles between entity and DTO representations.
+ */
 @Slf4j
 @Mapper(componentModel = "spring", uses = {
     PersonalDetailsMapper.class,
