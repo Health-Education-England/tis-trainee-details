@@ -70,11 +70,13 @@ import uk.nhs.hee.trainee.details.model.Placement;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.Site;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
+import uk.nhs.hee.trainee.details.service.NtnGenerator;
 import uk.nhs.hee.trainee.details.service.SignatureService;
 import uk.nhs.hee.trainee.details.service.TraineeProfileService;
 
-@ContextConfiguration(classes = {TraineeProfileMapperImpl.class, PersonalDetailsMapperImpl.class,
-    PlacementMapperImpl.class, ProgrammeMembershipMapperImpl.class, SignatureMapperImpl.class})
+@ContextConfiguration(classes = {NtnGenerator.class, TraineeProfileMapperImpl.class,
+    PersonalDetailsMapperImpl.class, PlacementMapperImpl.class, ProgrammeMembershipMapperImpl.class,
+    SignatureMapperImpl.class})
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(controllers = TraineeProfileResource.class)
 class TraineeProfileResourceTest {

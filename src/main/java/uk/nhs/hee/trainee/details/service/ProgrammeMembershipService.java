@@ -80,14 +80,12 @@ public class ProgrammeMembershipService {
       "Vascular surgery");
 
   private final TraineeProfileRepository repository;
-  private final NtnGenerator ntnGenerator;
   private final ProgrammeMembershipMapper mapper;
   private final CachingDelegate cachingDelegate;
 
-  ProgrammeMembershipService(TraineeProfileRepository repository, NtnGenerator ntnGenerator,
-      ProgrammeMembershipMapper mapper, CachingDelegate cachingDelegate) {
+  ProgrammeMembershipService(TraineeProfileRepository repository, ProgrammeMembershipMapper mapper,
+      CachingDelegate cachingDelegate) {
     this.repository = repository;
-    this.ntnGenerator = ntnGenerator;
     this.mapper = mapper;
     this.cachingDelegate = cachingDelegate;
   }
@@ -106,8 +104,6 @@ public class ProgrammeMembershipService {
     if (traineeProfile == null) {
       return Optional.empty();
     }
-
-    ntnGenerator.populateNtn(traineeProfile.getPersonalDetails(), programmeMembership);
 
     List<ProgrammeMembership> existingProgrammeMemberships = traineeProfile
         .getProgrammeMemberships();
