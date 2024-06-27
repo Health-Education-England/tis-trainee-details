@@ -104,7 +104,7 @@ public class NtnGenerator {
       case "Health Education England Thames Valley" -> "OXF";
       case "Health Education England Wessex" -> "WES";
       case "Health Education England West Midlands" -> "WMD";
-      case "Health Education England Yorkshire and The Humber" -> "YHD";
+      case "Health Education England Yorkshire and the Humber" -> "YHD";
       case "Severn Deanery" -> "SEV";
       case "South West Peninsula Deanery" -> "PEN";
       default -> null;
