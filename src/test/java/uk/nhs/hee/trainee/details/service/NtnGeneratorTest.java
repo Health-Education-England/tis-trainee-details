@@ -40,10 +40,10 @@ import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
-import uk.nhs.hee.trainee.details.model.Curriculum;
-import uk.nhs.hee.trainee.details.model.PersonalDetails;
-import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
-import uk.nhs.hee.trainee.details.model.TraineeProfile;
+import uk.nhs.hee.trainee.details.dto.CurriculumDto;
+import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
+import uk.nhs.hee.trainee.details.dto.ProgrammeMembershipDto;
+import uk.nhs.hee.trainee.details.dto.TraineeProfileDto;
 
 @ExtendWith(OutputCaptureExtension.class)
 class NtnGeneratorTest {
@@ -71,11 +71,11 @@ class NtnGeneratorTest {
 
   @Test
   void shouldNotPopulateNtnWhenNoPersonalDetails(CapturedOutput output) {
-    TraineeProfile profile = new TraineeProfile();
+    TraineeProfileDto profile = new TraineeProfileDto();
 
     profile.setPersonalDetails(null);
 
-    ProgrammeMembership pm = new ProgrammeMembership();
+    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
     pm.setManagingDeanery(OWNER_NAME);
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
@@ -83,7 +83,7 @@ class NtnGeneratorTest {
     pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
-    Curriculum curriculum = new Curriculum();
+    CurriculumDto curriculum = new CurriculumDto();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
     curriculum.setCurriculumStartDate(PAST);
     curriculum.setCurriculumEndDate(FUTURE);
@@ -102,14 +102,14 @@ class NtnGeneratorTest {
   @NullAndEmptySource
   @ValueSource(strings = {" ", "abcd", "1234"})
   void shouldNotPopulateNtnWhenNoGmcOrGdcNumber(String referenceNumber, CapturedOutput output) {
-    TraineeProfile profile = new TraineeProfile();
+    TraineeProfileDto profile = new TraineeProfileDto();
 
-    PersonalDetails personalDetails = new PersonalDetails();
+    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
     personalDetails.setGmcNumber(referenceNumber);
     personalDetails.setGdcNumber(referenceNumber);
     profile.setPersonalDetails(personalDetails);
 
-    ProgrammeMembership pm = new ProgrammeMembership();
+    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
     pm.setManagingDeanery(OWNER_NAME);
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
@@ -117,7 +117,7 @@ class NtnGeneratorTest {
     pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
-    Curriculum curriculum = new Curriculum();
+    CurriculumDto curriculum = new CurriculumDto();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
     curriculum.setCurriculumStartDate(PAST);
     curriculum.setCurriculumEndDate(FUTURE);
@@ -136,13 +136,13 @@ class NtnGeneratorTest {
   @NullAndEmptySource
   @ValueSource(strings = " ")
   void shouldNotPopulateNtnWhenNoProgrammeNumber(String programmeNumber, CapturedOutput output) {
-    TraineeProfile profile = new TraineeProfile();
+    TraineeProfileDto profile = new TraineeProfileDto();
 
-    PersonalDetails personalDetails = new PersonalDetails();
+    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
     personalDetails.setGmcNumber(GMC_NUMBER);
     profile.setPersonalDetails(personalDetails);
 
-    ProgrammeMembership pm = new ProgrammeMembership();
+    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
     pm.setManagingDeanery(OWNER_NAME);
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(programmeNumber);
@@ -150,7 +150,7 @@ class NtnGeneratorTest {
     pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
-    Curriculum curriculum = new Curriculum();
+    CurriculumDto curriculum = new CurriculumDto();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
     curriculum.setCurriculumStartDate(PAST);
     curriculum.setCurriculumEndDate(FUTURE);
@@ -169,13 +169,13 @@ class NtnGeneratorTest {
   @NullAndEmptySource
   @ValueSource(strings = " ")
   void shouldNotPopulateNtnWhenNoProgrammeName(String programmeName, CapturedOutput output) {
-    TraineeProfile profile = new TraineeProfile();
+    TraineeProfileDto profile = new TraineeProfileDto();
 
-    PersonalDetails personalDetails = new PersonalDetails();
+    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
     personalDetails.setGmcNumber(GMC_NUMBER);
     profile.setPersonalDetails(personalDetails);
 
-    ProgrammeMembership pm = new ProgrammeMembership();
+    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
     pm.setManagingDeanery(OWNER_NAME);
     pm.setProgrammeName(programmeName);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
@@ -183,7 +183,7 @@ class NtnGeneratorTest {
     pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
-    Curriculum curriculum = new Curriculum();
+    CurriculumDto curriculum = new CurriculumDto();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
     curriculum.setCurriculumStartDate(PAST);
     curriculum.setCurriculumEndDate(FUTURE);
@@ -205,13 +205,13 @@ class NtnGeneratorTest {
   })
   void shouldNotPopulateNtnWhenProgrammeIsFoundation(String programmeName,
       CapturedOutput output) {
-    TraineeProfile profile = new TraineeProfile();
+    TraineeProfileDto profile = new TraineeProfileDto();
 
-    PersonalDetails personalDetails = new PersonalDetails();
+    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
     personalDetails.setGmcNumber(GMC_NUMBER);
     profile.setPersonalDetails(personalDetails);
 
-    ProgrammeMembership pm = new ProgrammeMembership();
+    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
     pm.setManagingDeanery(OWNER_NAME);
     pm.setProgrammeName(programmeName);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
@@ -219,7 +219,7 @@ class NtnGeneratorTest {
     pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
-    Curriculum curriculum = new Curriculum();
+    CurriculumDto curriculum = new CurriculumDto();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
     curriculum.setCurriculumStartDate(PAST);
     curriculum.setCurriculumEndDate(FUTURE);
@@ -236,13 +236,13 @@ class NtnGeneratorTest {
 
   @Test
   void shouldNotPopulateNtnWhenNoCurricula(CapturedOutput output) {
-    TraineeProfile profile = new TraineeProfile();
+    TraineeProfileDto profile = new TraineeProfileDto();
 
-    PersonalDetails personalDetails = new PersonalDetails();
+    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
     personalDetails.setGmcNumber(GMC_NUMBER);
     profile.setPersonalDetails(personalDetails);
 
-    ProgrammeMembership pm = new ProgrammeMembership();
+    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
     pm.setManagingDeanery(OWNER_NAME);
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
@@ -261,13 +261,13 @@ class NtnGeneratorTest {
 
   @Test
   void shouldNotPopulateNtnWhenNoCurrentCurricula(CapturedOutput output) {
-    TraineeProfile profile = new TraineeProfile();
+    TraineeProfileDto profile = new TraineeProfileDto();
 
-    PersonalDetails personalDetails = new PersonalDetails();
+    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
     personalDetails.setGmcNumber(GMC_NUMBER);
     profile.setPersonalDetails(personalDetails);
 
-    ProgrammeMembership pm = new ProgrammeMembership();
+    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
     pm.setManagingDeanery(OWNER_NAME);
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
@@ -275,12 +275,12 @@ class NtnGeneratorTest {
     pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
-    Curriculum past = new Curriculum();
+    CurriculumDto past = new CurriculumDto();
     past.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
     past.setCurriculumStartDate(PAST);
     past.setCurriculumEndDate(NOW.minusDays(1));
 
-    Curriculum future = new Curriculum();
+    CurriculumDto future = new CurriculumDto();
     future.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
     future.setCurriculumStartDate(NOW.plusDays(1));
     future.setCurriculumEndDate(FUTURE);
@@ -300,13 +300,13 @@ class NtnGeneratorTest {
   @ValueSource(strings = " ")
   void shouldNotPopulateNtnWhenNoCurriculaSpecialtyCode(String specialtyCode,
       CapturedOutput output) {
-    TraineeProfile profile = new TraineeProfile();
+    TraineeProfileDto profile = new TraineeProfileDto();
 
-    PersonalDetails personalDetails = new PersonalDetails();
+    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
     personalDetails.setGmcNumber(GMC_NUMBER);
     profile.setPersonalDetails(personalDetails);
 
-    ProgrammeMembership pm = new ProgrammeMembership();
+    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
     pm.setManagingDeanery(OWNER_NAME);
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
@@ -314,7 +314,7 @@ class NtnGeneratorTest {
     pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
-    Curriculum curriculum = new Curriculum();
+    CurriculumDto curriculum = new CurriculumDto();
     curriculum.setCurriculumSpecialtyCode(specialtyCode);
     curriculum.setCurriculumStartDate(PAST);
     curriculum.setCurriculumEndDate(FUTURE);
@@ -330,13 +330,13 @@ class NtnGeneratorTest {
 
   @Test
   void shouldNotPopulateNtnWhenTrainingPathwayNull(CapturedOutput output) {
-    TraineeProfile profile = new TraineeProfile();
+    TraineeProfileDto profile = new TraineeProfileDto();
 
-    PersonalDetails personalDetails = new PersonalDetails();
+    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
     personalDetails.setGmcNumber(GMC_NUMBER);
     profile.setPersonalDetails(personalDetails);
 
-    ProgrammeMembership pm = new ProgrammeMembership();
+    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
     pm.setManagingDeanery(OWNER_NAME);
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
@@ -344,7 +344,7 @@ class NtnGeneratorTest {
     pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
-    Curriculum curriculum = new Curriculum();
+    CurriculumDto curriculum = new CurriculumDto();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
     curriculum.setCurriculumStartDate(PAST);
     curriculum.setCurriculumEndDate(FUTURE);
@@ -362,13 +362,13 @@ class NtnGeneratorTest {
   @NullAndEmptySource
   @ValueSource(strings = {" ", "Unknown Organization"})
   void shouldThrowExceptionPopulatingNtnWhenParentOrganizationNull(String ownerName) {
-    TraineeProfile profile = new TraineeProfile();
+    TraineeProfileDto profile = new TraineeProfileDto();
 
-    PersonalDetails personalDetails = new PersonalDetails();
+    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
     personalDetails.setGmcNumber(GMC_NUMBER);
     profile.setPersonalDetails(personalDetails);
 
-    ProgrammeMembership pm = new ProgrammeMembership();
+    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
     pm.setManagingDeanery(ownerName);
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
@@ -376,7 +376,7 @@ class NtnGeneratorTest {
     pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
-    Curriculum curriculum = new Curriculum();
+    CurriculumDto curriculum = new CurriculumDto();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
     curriculum.setCurriculumStartDate(PAST);
     curriculum.setCurriculumEndDate(FUTURE);
@@ -391,12 +391,12 @@ class NtnGeneratorTest {
 
   @Test
   void shouldPopulateFullNtnWhenProgrammeIsCurrent() {
-    TraineeProfile profile = new TraineeProfile();
-    PersonalDetails personalDetails = new PersonalDetails();
+    TraineeProfileDto profile = new TraineeProfileDto();
+    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
     personalDetails.setGmcNumber(GMC_NUMBER);
     profile.setPersonalDetails(personalDetails);
 
-    ProgrammeMembership pm = new ProgrammeMembership();
+    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
     pm.setManagingDeanery(OWNER_NAME);
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
@@ -404,19 +404,19 @@ class NtnGeneratorTest {
     pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
-    Curriculum curriculum1 = new Curriculum();
+    CurriculumDto curriculum1 = new CurriculumDto();
     curriculum1.setCurriculumSpecialtyCode("ABC");
     curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum1.setCurriculumStartDate(PAST);
     curriculum1.setCurriculumEndDate(FUTURE);
 
-    Curriculum curriculum2 = new Curriculum();
+    CurriculumDto curriculum2 = new CurriculumDto();
     curriculum2.setCurriculumSpecialtyCode("123");
     curriculum2.setCurriculumSubType(CURRICULUM_SUB_TYPE_SS);
     curriculum2.setCurriculumStartDate(NOW);
     curriculum2.setCurriculumEndDate(FUTURE);
 
-    Curriculum curriculum3 = new Curriculum();
+    CurriculumDto curriculum3 = new CurriculumDto();
     curriculum3.setCurriculumSpecialtyCode("XYZ");
     curriculum3.setCurriculumSubType(CURRICULUM_SUB_TYPE_SS);
     curriculum3.setCurriculumStartDate(PAST);
@@ -431,12 +431,12 @@ class NtnGeneratorTest {
 
   @Test
   void shouldPopulateFullNtnWhenProgrammeIsFuture() {
-    TraineeProfile profile = new TraineeProfile();
-    PersonalDetails personalDetails = new PersonalDetails();
+    TraineeProfileDto profile = new TraineeProfileDto();
+    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
     personalDetails.setGmcNumber(GMC_NUMBER);
     profile.setPersonalDetails(personalDetails);
 
-    ProgrammeMembership pm = new ProgrammeMembership();
+    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
     pm.setManagingDeanery(OWNER_NAME);
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
@@ -444,19 +444,19 @@ class NtnGeneratorTest {
     pm.setStartDate(FUTURE);
     profile.setProgrammeMemberships(List.of(pm));
 
-    Curriculum curriculum1 = new Curriculum();
+    CurriculumDto curriculum1 = new CurriculumDto();
     curriculum1.setCurriculumSpecialtyCode("ABC");
     curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum1.setCurriculumStartDate(NOW);
     curriculum1.setCurriculumEndDate(FUTURE.plusDays(1));
 
-    Curriculum curriculum2 = new Curriculum();
+    CurriculumDto curriculum2 = new CurriculumDto();
     curriculum2.setCurriculumSpecialtyCode("123");
     curriculum2.setCurriculumSubType(CURRICULUM_SUB_TYPE_SS);
     curriculum2.setCurriculumStartDate(FUTURE);
     curriculum2.setCurriculumEndDate(FUTURE.plusDays(1));
 
-    Curriculum curriculum3 = new Curriculum();
+    CurriculumDto curriculum3 = new CurriculumDto();
     curriculum3.setCurriculumSpecialtyCode("XYZ");
     curriculum3.setCurriculumSubType(CURRICULUM_SUB_TYPE_SS);
     curriculum3.setCurriculumStartDate(NOW);
@@ -471,47 +471,47 @@ class NtnGeneratorTest {
 
   @Test
   void shouldPopulateNtnsWhenTraineeProfileHasMultiplePms() {
-    TraineeProfile traineeProfile = new TraineeProfile();
-    PersonalDetails personalDetails = new PersonalDetails();
+    TraineeProfileDto traineeProfile = new TraineeProfileDto();
+    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
     personalDetails.setGmcNumber(GMC_NUMBER);
     traineeProfile.setPersonalDetails(personalDetails);
 
-    ProgrammeMembership pm1 = new ProgrammeMembership();
+    ProgrammeMembershipDto pm1 = new ProgrammeMembershipDto();
     pm1.setManagingDeanery(OWNER_NAME);
     pm1.setProgrammeName(PROGRAMME_NAME);
     pm1.setProgrammeNumber(PROGRAMME_NUMBER);
     pm1.setTrainingPathway(TRAINING_PATHWAY);
     pm1.setStartDate(PAST);
 
-    Curriculum curriculum1 = new Curriculum();
+    CurriculumDto curriculum1 = new CurriculumDto();
     curriculum1.setCurriculumSpecialtyCode("ABC");
     curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum1.setCurriculumStartDate(PAST);
     curriculum1.setCurriculumEndDate(PAST);
     pm1.setCurricula(List.of(curriculum1));
 
-    ProgrammeMembership pm2 = new ProgrammeMembership();
+    ProgrammeMembershipDto pm2 = new ProgrammeMembershipDto();
     pm2.setManagingDeanery(OWNER_NAME);
     pm2.setProgrammeName(PROGRAMME_NAME);
     pm2.setProgrammeNumber(PROGRAMME_NUMBER);
     pm2.setTrainingPathway(TRAINING_PATHWAY);
     pm2.setStartDate(NOW);
 
-    Curriculum curriculum2 = new Curriculum();
+    CurriculumDto curriculum2 = new CurriculumDto();
     curriculum2.setCurriculumSpecialtyCode("123");
     curriculum2.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum2.setCurriculumStartDate(NOW);
     curriculum2.setCurriculumEndDate(NOW);
     pm2.setCurricula(List.of(curriculum2));
 
-    ProgrammeMembership pm3 = new ProgrammeMembership();
+    ProgrammeMembershipDto pm3 = new ProgrammeMembershipDto();
     pm3.setManagingDeanery(OWNER_NAME);
     pm3.setProgrammeName(PROGRAMME_NAME);
     pm3.setProgrammeNumber(PROGRAMME_NUMBER);
     pm3.setTrainingPathway(TRAINING_PATHWAY);
     pm3.setStartDate(FUTURE);
 
-    Curriculum curriculum3 = new Curriculum();
+    CurriculumDto curriculum3 = new CurriculumDto();
     curriculum3.setCurriculumSpecialtyCode("XYZ");
     curriculum3.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum3.setCurriculumStartDate(FUTURE);
@@ -548,13 +548,13 @@ class NtnGeneratorTest {
       """)
   void shouldPopulateNtnWithParentOrganizationWhenMappedByOwner(String ownerName,
       String ownerCode) {
-    TraineeProfile profile = new TraineeProfile();
+    TraineeProfileDto profile = new TraineeProfileDto();
 
-    PersonalDetails personalDetails = new PersonalDetails();
+    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
     personalDetails.setGmcNumber(GMC_NUMBER);
     profile.setPersonalDetails(personalDetails);
 
-    ProgrammeMembership pm = new ProgrammeMembership();
+    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
     pm.setManagingDeanery(ownerName);
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
@@ -562,7 +562,7 @@ class NtnGeneratorTest {
     pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
-    Curriculum curriculum = new Curriculum();
+    CurriculumDto curriculum = new CurriculumDto();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
     curriculum.setCurriculumStartDate(PAST);
     curriculum.setCurriculumEndDate(FUTURE);
@@ -583,13 +583,13 @@ class NtnGeneratorTest {
       """)
   void shouldPopulateNtnWithParentOrganizationWhenOwnerIsSouthWest(String ownerName,
       String programmeNumber, String ownerCode) {
-    TraineeProfile profile = new TraineeProfile();
+    TraineeProfileDto profile = new TraineeProfileDto();
 
-    PersonalDetails personalDetails = new PersonalDetails();
+    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
     personalDetails.setGmcNumber(GMC_NUMBER);
     profile.setPersonalDetails(personalDetails);
 
-    ProgrammeMembership pm = new ProgrammeMembership();
+    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
     pm.setManagingDeanery(ownerName);
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(programmeNumber);
@@ -597,7 +597,7 @@ class NtnGeneratorTest {
     pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
-    Curriculum curriculum = new Curriculum();
+    CurriculumDto curriculum = new CurriculumDto();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
     curriculum.setCurriculumStartDate(PAST);
     curriculum.setCurriculumEndDate(FUTURE);
@@ -618,13 +618,13 @@ class NtnGeneratorTest {
       """)
   void shouldPopulateNtnWithOrderedSpecialtyConcatWhenMultipleSpecialty(String specialty1,
       String specialty2, String specialty3, String specialty4, String ntnPart) {
-    TraineeProfile profile = new TraineeProfile();
+    TraineeProfileDto profile = new TraineeProfileDto();
 
-    PersonalDetails personalDetails = new PersonalDetails();
+    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
     personalDetails.setGmcNumber(GMC_NUMBER);
     profile.setPersonalDetails(personalDetails);
 
-    ProgrammeMembership pm = new ProgrammeMembership();
+    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
     pm.setManagingDeanery(OWNER_NAME);
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
@@ -632,25 +632,25 @@ class NtnGeneratorTest {
     pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
-    Curriculum curriculum1 = new Curriculum();
+    CurriculumDto curriculum1 = new CurriculumDto();
     curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum1.setCurriculumSpecialtyCode(specialty1);
     curriculum1.setCurriculumStartDate(PAST);
     curriculum1.setCurriculumEndDate(FUTURE);
 
-    Curriculum curriculum2 = new Curriculum();
+    CurriculumDto curriculum2 = new CurriculumDto();
     curriculum2.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum2.setCurriculumSpecialtyCode(specialty2);
     curriculum2.setCurriculumStartDate(PAST);
     curriculum2.setCurriculumEndDate(FUTURE);
 
-    Curriculum curriculum3 = new Curriculum();
+    CurriculumDto curriculum3 = new CurriculumDto();
     curriculum3.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum3.setCurriculumSpecialtyCode(specialty3);
     curriculum3.setCurriculumStartDate(PAST);
     curriculum3.setCurriculumEndDate(FUTURE);
 
-    Curriculum curriculum4 = new Curriculum();
+    CurriculumDto curriculum4 = new CurriculumDto();
     curriculum4.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum4.setCurriculumSpecialtyCode(specialty4);
     curriculum4.setCurriculumStartDate(PAST);
@@ -669,13 +669,13 @@ class NtnGeneratorTest {
   @ValueSource(ints = {1, 2, 3, 4, 10})
   void shouldPopulateNtnWithDotNotatedSpecialtyConcatWhenHasSubSpecialties(
       int additionalCurriculaCount) {
-    TraineeProfile profile = new TraineeProfile();
+    TraineeProfileDto profile = new TraineeProfileDto();
 
-    PersonalDetails personalDetails = new PersonalDetails();
+    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
     personalDetails.setGmcNumber(GMC_NUMBER);
     profile.setPersonalDetails(personalDetails);
 
-    ProgrammeMembership pm = new ProgrammeMembership();
+    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
     pm.setManagingDeanery(OWNER_NAME);
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
@@ -683,10 +683,10 @@ class NtnGeneratorTest {
     pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
-    List<Curriculum> curricula = new ArrayList<>();
+    List<CurriculumDto> curricula = new ArrayList<>();
     pm.setCurricula(curricula);
 
-    Curriculum curriculum1 = new Curriculum();
+    CurriculumDto curriculum1 = new CurriculumDto();
     curriculum1.setCurriculumName("A sub spec 1");
     curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_SS);
     curriculum1.setCurriculumSpecialtyCode("888");
@@ -694,7 +694,7 @@ class NtnGeneratorTest {
     curriculum1.setCurriculumEndDate(FUTURE);
     curricula.add(curriculum1);
 
-    Curriculum curriculum2 = new Curriculum();
+    CurriculumDto curriculum2 = new CurriculumDto();
     curriculum2.setCurriculumName("A sub spec 2");
     curriculum2.setCurriculumSubType(CURRICULUM_SUB_TYPE_SS);
     curriculum2.setCurriculumSpecialtyCode("999");
@@ -703,7 +703,7 @@ class NtnGeneratorTest {
     curricula.add(curriculum2);
 
     for (int i = 1; i <= additionalCurriculaCount; i++) {
-      Curriculum additionalCurriculum = new Curriculum();
+      CurriculumDto additionalCurriculum = new CurriculumDto();
       additionalCurriculum.setCurriculumName("Not sub spec " + i);
       additionalCurriculum.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
       additionalCurriculum.setCurriculumSpecialtyCode(String.format("%03d", i));
@@ -724,13 +724,13 @@ class NtnGeneratorTest {
 
   @Test
   void shouldPopulateNtnWithFixedSpecialtyConcatWhenFirstSpecialtyIsAft() {
-    TraineeProfile profile = new TraineeProfile();
+    TraineeProfileDto profile = new TraineeProfileDto();
 
-    PersonalDetails personalDetails = new PersonalDetails();
+    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
     personalDetails.setGmcNumber(GMC_NUMBER);
     profile.setPersonalDetails(personalDetails);
 
-    ProgrammeMembership pm = new ProgrammeMembership();
+    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
     pm.setManagingDeanery(OWNER_NAME);
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
@@ -738,21 +738,21 @@ class NtnGeneratorTest {
     pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
-    Curriculum curriculum1 = new Curriculum();
+    CurriculumDto curriculum1 = new CurriculumDto();
     curriculum1.setCurriculumName("AFT");
     curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum1.setCurriculumSpecialtyCode("ACA");
     curriculum1.setCurriculumStartDate(PAST);
     curriculum1.setCurriculumEndDate(FUTURE);
 
-    Curriculum curriculum2 = new Curriculum();
+    CurriculumDto curriculum2 = new CurriculumDto();
     curriculum2.setCurriculumName("Not AFT 2");
     curriculum2.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum2.setCurriculumSpecialtyCode("003");
     curriculum2.setCurriculumStartDate(PAST);
     curriculum2.setCurriculumEndDate(FUTURE);
 
-    Curriculum curriculum3 = new Curriculum();
+    CurriculumDto curriculum3 = new CurriculumDto();
     curriculum3.setCurriculumName("Not AFT 1");
     curriculum3.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum3.setCurriculumSpecialtyCode("777");
@@ -779,13 +779,13 @@ class NtnGeneratorTest {
       """)
   void shouldFilterCurriculaWhenPopulatingNtnWithOrderedSpecialtyConcatAndCurriculaEnding(
       String pastSpecialty, String endingSpecialty, String futureSpecialty) {
-    TraineeProfile profile = new TraineeProfile();
+    TraineeProfileDto profile = new TraineeProfileDto();
 
-    PersonalDetails personalDetails = new PersonalDetails();
+    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
     personalDetails.setGmcNumber(GMC_NUMBER);
     profile.setPersonalDetails(personalDetails);
 
-    ProgrammeMembership pm = new ProgrammeMembership();
+    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
     pm.setManagingDeanery(OWNER_NAME);
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
@@ -793,25 +793,25 @@ class NtnGeneratorTest {
     pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
-    Curriculum curriculum1 = new Curriculum();
+    CurriculumDto curriculum1 = new CurriculumDto();
     curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum1.setCurriculumSpecialtyCode(pastSpecialty);
     curriculum1.setCurriculumStartDate(PAST);
     curriculum1.setCurriculumEndDate(PAST);
 
-    Curriculum curriculum2 = new Curriculum();
+    CurriculumDto curriculum2 = new CurriculumDto();
     curriculum2.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum2.setCurriculumSpecialtyCode(futureSpecialty);
     curriculum2.setCurriculumStartDate(FUTURE);
     curriculum2.setCurriculumEndDate(FUTURE);
 
-    Curriculum curriculum3 = new Curriculum();
+    CurriculumDto curriculum3 = new CurriculumDto();
     curriculum3.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum3.setCurriculumSpecialtyCode(endingSpecialty);
     curriculum3.setCurriculumStartDate(PAST);
     curriculum3.setCurriculumEndDate(NOW);
 
-    Curriculum curriculum4 = new Curriculum();
+    CurriculumDto curriculum4 = new CurriculumDto();
     curriculum4.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum4.setCurriculumSpecialtyCode(null);
     curriculum4.setCurriculumStartDate(PAST);
@@ -837,13 +837,13 @@ class NtnGeneratorTest {
       """)
   void shouldFilterCurriculaWhenPopulatingNtnWithOrderedSpecialtyConcatAndCurriculaCurrent(
       String pastSpecialty, String currentSpecialty, String futureSpecialty) {
-    TraineeProfile profile = new TraineeProfile();
+    TraineeProfileDto profile = new TraineeProfileDto();
 
-    PersonalDetails personalDetails = new PersonalDetails();
+    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
     personalDetails.setGmcNumber(GMC_NUMBER);
     profile.setPersonalDetails(personalDetails);
 
-    ProgrammeMembership pm = new ProgrammeMembership();
+    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
     pm.setManagingDeanery(OWNER_NAME);
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
@@ -851,25 +851,25 @@ class NtnGeneratorTest {
     pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
-    Curriculum curriculum1 = new Curriculum();
+    CurriculumDto curriculum1 = new CurriculumDto();
     curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum1.setCurriculumSpecialtyCode(pastSpecialty);
     curriculum1.setCurriculumStartDate(PAST);
     curriculum1.setCurriculumEndDate(PAST);
 
-    Curriculum curriculum2 = new Curriculum();
+    CurriculumDto curriculum2 = new CurriculumDto();
     curriculum2.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum2.setCurriculumSpecialtyCode(futureSpecialty);
     curriculum2.setCurriculumStartDate(FUTURE);
     curriculum2.setCurriculumEndDate(FUTURE);
 
-    Curriculum curriculum3 = new Curriculum();
+    CurriculumDto curriculum3 = new CurriculumDto();
     curriculum3.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum3.setCurriculumSpecialtyCode(currentSpecialty);
     curriculum3.setCurriculumStartDate(PAST);
     curriculum3.setCurriculumEndDate(FUTURE);
 
-    Curriculum curriculum4 = new Curriculum();
+    CurriculumDto curriculum4 = new CurriculumDto();
     curriculum4.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum4.setCurriculumSpecialtyCode(null);
     curriculum4.setCurriculumStartDate(PAST);
@@ -895,13 +895,13 @@ class NtnGeneratorTest {
       """)
   void shouldFilterCurriculaWhenPopulatingNtnWithOrderedSpecialtyConcatAndCurriculaStarting(
       String pastSpecialty, String startingSpecialty, String futureSpecialty) {
-    TraineeProfile profile = new TraineeProfile();
+    TraineeProfileDto profile = new TraineeProfileDto();
 
-    PersonalDetails personalDetails = new PersonalDetails();
+    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
     personalDetails.setGmcNumber(GMC_NUMBER);
     profile.setPersonalDetails(personalDetails);
 
-    ProgrammeMembership pm = new ProgrammeMembership();
+    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
     pm.setManagingDeanery(OWNER_NAME);
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
@@ -909,25 +909,25 @@ class NtnGeneratorTest {
     pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
-    Curriculum curriculum1 = new Curriculum();
+    CurriculumDto curriculum1 = new CurriculumDto();
     curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum1.setCurriculumSpecialtyCode(pastSpecialty);
     curriculum1.setCurriculumStartDate(PAST);
     curriculum1.setCurriculumEndDate(PAST);
 
-    Curriculum curriculum2 = new Curriculum();
+    CurriculumDto curriculum2 = new CurriculumDto();
     curriculum2.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum2.setCurriculumSpecialtyCode(futureSpecialty);
     curriculum2.setCurriculumStartDate(FUTURE);
     curriculum2.setCurriculumEndDate(FUTURE);
 
-    Curriculum curriculum3 = new Curriculum();
+    CurriculumDto curriculum3 = new CurriculumDto();
     curriculum3.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum3.setCurriculumSpecialtyCode(startingSpecialty);
     curriculum3.setCurriculumStartDate(NOW);
     curriculum3.setCurriculumEndDate(FUTURE);
 
-    Curriculum curriculum4 = new Curriculum();
+    CurriculumDto curriculum4 = new CurriculumDto();
     curriculum4.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum4.setCurriculumSpecialtyCode(null);
     curriculum4.setCurriculumStartDate(PAST);
@@ -953,13 +953,13 @@ class NtnGeneratorTest {
       """)
   void shouldFilterCurriculaWhenPopulatingNtnWithOrderedSpecialtyConcatAndProgrammeFuture(
       String currentSpecialty, String futureSpecialty, String farFutureSpecialty) {
-    TraineeProfile profile = new TraineeProfile();
+    TraineeProfileDto profile = new TraineeProfileDto();
 
-    PersonalDetails personalDetails = new PersonalDetails();
+    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
     personalDetails.setGmcNumber(GMC_NUMBER);
     profile.setPersonalDetails(personalDetails);
 
-    ProgrammeMembership pm = new ProgrammeMembership();
+    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
     pm.setManagingDeanery(OWNER_NAME);
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
@@ -967,25 +967,25 @@ class NtnGeneratorTest {
     pm.setStartDate(FUTURE);
     profile.setProgrammeMemberships(List.of(pm));
 
-    Curriculum curriculum1 = new Curriculum();
+    CurriculumDto curriculum1 = new CurriculumDto();
     curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum1.setCurriculumSpecialtyCode(currentSpecialty);
     curriculum1.setCurriculumStartDate(NOW);
     curriculum1.setCurriculumEndDate(NOW);
 
-    Curriculum curriculum2 = new Curriculum();
+    CurriculumDto curriculum2 = new CurriculumDto();
     curriculum2.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum2.setCurriculumSpecialtyCode(futureSpecialty);
     curriculum2.setCurriculumStartDate(FUTURE);
     curriculum2.setCurriculumEndDate(FUTURE);
 
-    Curriculum curriculum3 = new Curriculum();
+    CurriculumDto curriculum3 = new CurriculumDto();
     curriculum3.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum3.setCurriculumSpecialtyCode(farFutureSpecialty);
     curriculum3.setCurriculumStartDate(FUTURE.plusDays(1));
     curriculum3.setCurriculumEndDate(FUTURE.plusDays(1));
 
-    Curriculum curriculum4 = new Curriculum();
+    CurriculumDto curriculum4 = new CurriculumDto();
     curriculum4.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum4.setCurriculumSpecialtyCode(null);
     curriculum4.setCurriculumStartDate(PAST);
@@ -1002,13 +1002,13 @@ class NtnGeneratorTest {
 
   @Test
   void shouldPopulateNtnWithGmcNumberWhenValid() {
-    TraineeProfile profile = new TraineeProfile();
+    TraineeProfileDto profile = new TraineeProfileDto();
 
-    PersonalDetails personalDetails = new PersonalDetails();
+    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
     personalDetails.setGmcNumber(GMC_NUMBER);
     profile.setPersonalDetails(personalDetails);
 
-    ProgrammeMembership pm = new ProgrammeMembership();
+    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
     pm.setManagingDeanery(OWNER_NAME);
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
@@ -1016,7 +1016,7 @@ class NtnGeneratorTest {
     pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
-    Curriculum curriculum = new Curriculum();
+    CurriculumDto curriculum = new CurriculumDto();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
     curriculum.setCurriculumStartDate(PAST);
     curriculum.setCurriculumEndDate(FUTURE);
@@ -1032,14 +1032,14 @@ class NtnGeneratorTest {
   @ParameterizedTest
   @ValueSource(strings = {"abc", "12345678"})
   void shouldPopulateNtnWithGdcNumberWhenValidAndGmcInvalid(String gmcNumber) {
-    TraineeProfile profile = new TraineeProfile();
+    TraineeProfileDto profile = new TraineeProfileDto();
 
-    PersonalDetails personalDetails = new PersonalDetails();
+    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
     personalDetails.setGmcNumber(gmcNumber);
     personalDetails.setGdcNumber(GDC_NUMBER);
     profile.setPersonalDetails(personalDetails);
 
-    ProgrammeMembership pm = new ProgrammeMembership();
+    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
     pm.setManagingDeanery(OWNER_NAME);
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
@@ -1047,7 +1047,7 @@ class NtnGeneratorTest {
     pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
-    Curriculum curriculum = new Curriculum();
+    CurriculumDto curriculum = new CurriculumDto();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
     curriculum.setCurriculumStartDate(PAST);
     curriculum.setCurriculumEndDate(FUTURE);
@@ -1068,13 +1068,13 @@ class NtnGeneratorTest {
       """)
   void shouldPopulateNtnWithSuffixWhenMappedByTrainingPathway(String trainingPathway,
       String suffix) {
-    TraineeProfile profile = new TraineeProfile();
+    TraineeProfileDto profile = new TraineeProfileDto();
 
-    PersonalDetails personalDetails = new PersonalDetails();
+    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
     personalDetails.setGmcNumber(GMC_NUMBER);
     profile.setPersonalDetails(personalDetails);
 
-    ProgrammeMembership pm = new ProgrammeMembership();
+    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
     pm.setManagingDeanery(OWNER_NAME);
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
@@ -1082,7 +1082,7 @@ class NtnGeneratorTest {
     pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
-    Curriculum curriculum = new Curriculum();
+    CurriculumDto curriculum = new CurriculumDto();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
     curriculum.setCurriculumStartDate(PAST);
     curriculum.setCurriculumEndDate(FUTURE);
@@ -1097,13 +1097,13 @@ class NtnGeneratorTest {
 
   @Test
   void shouldPopulateNtnWithSuffixWhenSpecialtyIsAcademic() {
-    TraineeProfile profile = new TraineeProfile();
+    TraineeProfileDto profile = new TraineeProfileDto();
 
-    PersonalDetails personalDetails = new PersonalDetails();
+    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
     personalDetails.setGmcNumber(GMC_NUMBER);
     profile.setPersonalDetails(personalDetails);
 
-    ProgrammeMembership pm = new ProgrammeMembership();
+    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
     pm.setManagingDeanery(OWNER_NAME);
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
@@ -1111,13 +1111,13 @@ class NtnGeneratorTest {
     pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
-    Curriculum curriculum1 = new Curriculum();
+    CurriculumDto curriculum1 = new CurriculumDto();
     curriculum1.setCurriculumSpecialtyCode("123");
     curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum1.setCurriculumStartDate(PAST);
     curriculum1.setCurriculumEndDate(FUTURE);
 
-    Curriculum curriculum2 = new Curriculum();
+    CurriculumDto curriculum2 = new CurriculumDto();
     curriculum2.setCurriculumSpecialtyCode("ACA");
     curriculum2.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum2.setCurriculumStartDate(PAST);
@@ -1134,13 +1134,13 @@ class NtnGeneratorTest {
 
   @Test
   void shouldFilterCurriculaWhenPopulatingNtnWithSuffixAndCurriculaEnding() {
-    TraineeProfile profile = new TraineeProfile();
+    TraineeProfileDto profile = new TraineeProfileDto();
 
-    PersonalDetails personalDetails = new PersonalDetails();
+    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
     personalDetails.setGmcNumber(GMC_NUMBER);
     profile.setPersonalDetails(personalDetails);
 
-    ProgrammeMembership pm = new ProgrammeMembership();
+    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
     pm.setManagingDeanery(OWNER_NAME);
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
@@ -1148,21 +1148,21 @@ class NtnGeneratorTest {
     pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
-    Curriculum curriculum1 = new Curriculum();
+    CurriculumDto curriculum1 = new CurriculumDto();
     curriculum1.setCurriculumName("Past");
     curriculum1.setCurriculumSpecialtyCode("ACA");
     curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum1.setCurriculumStartDate(PAST);
     curriculum1.setCurriculumEndDate(PAST);
 
-    Curriculum curriculum2 = new Curriculum();
+    CurriculumDto curriculum2 = new CurriculumDto();
     curriculum2.setCurriculumName("Ending");
     curriculum2.setCurriculumSpecialtyCode("123");
     curriculum2.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum2.setCurriculumStartDate(PAST);
     curriculum2.setCurriculumEndDate(NOW);
 
-    Curriculum curriculum3 = new Curriculum();
+    CurriculumDto curriculum3 = new CurriculumDto();
     curriculum3.setCurriculumName("Future");
     curriculum3.setCurriculumSpecialtyCode("ACA");
     curriculum3.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
@@ -1180,13 +1180,13 @@ class NtnGeneratorTest {
 
   @Test
   void shouldFilterCurriculaWhenPopulatingNtnWithSuffixAndCurriculaCurrent() {
-    TraineeProfile profile = new TraineeProfile();
+    TraineeProfileDto profile = new TraineeProfileDto();
 
-    PersonalDetails personalDetails = new PersonalDetails();
+    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
     personalDetails.setGmcNumber(GMC_NUMBER);
     profile.setPersonalDetails(personalDetails);
 
-    ProgrammeMembership pm = new ProgrammeMembership();
+    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
     pm.setManagingDeanery(OWNER_NAME);
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
@@ -1194,21 +1194,21 @@ class NtnGeneratorTest {
     pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
-    Curriculum curriculum1 = new Curriculum();
+    CurriculumDto curriculum1 = new CurriculumDto();
     curriculum1.setCurriculumName("Past");
     curriculum1.setCurriculumSpecialtyCode("ACA");
     curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum1.setCurriculumStartDate(PAST);
     curriculum1.setCurriculumEndDate(PAST);
 
-    Curriculum curriculum2 = new Curriculum();
+    CurriculumDto curriculum2 = new CurriculumDto();
     curriculum2.setCurriculumName("Current");
     curriculum2.setCurriculumSpecialtyCode("123");
     curriculum2.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum2.setCurriculumStartDate(PAST);
     curriculum2.setCurriculumEndDate(FUTURE);
 
-    Curriculum curriculum3 = new Curriculum();
+    CurriculumDto curriculum3 = new CurriculumDto();
     curriculum3.setCurriculumName("Future");
     curriculum3.setCurriculumSpecialtyCode("ACA");
     curriculum3.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
@@ -1226,13 +1226,13 @@ class NtnGeneratorTest {
 
   @Test
   void shouldFilterCurriculaWhenPopulatingNtnWithSuffixAndCurriculaStarting() {
-    TraineeProfile profile = new TraineeProfile();
+    TraineeProfileDto profile = new TraineeProfileDto();
 
-    PersonalDetails personalDetails = new PersonalDetails();
+    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
     personalDetails.setGmcNumber(GMC_NUMBER);
     profile.setPersonalDetails(personalDetails);
 
-    ProgrammeMembership pm = new ProgrammeMembership();
+    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
     pm.setManagingDeanery(OWNER_NAME);
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
@@ -1240,21 +1240,21 @@ class NtnGeneratorTest {
     pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
 
-    Curriculum curriculum1 = new Curriculum();
+    CurriculumDto curriculum1 = new CurriculumDto();
     curriculum1.setCurriculumName("Past");
     curriculum1.setCurriculumSpecialtyCode("ACA");
     curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum1.setCurriculumStartDate(PAST);
     curriculum1.setCurriculumEndDate(PAST);
 
-    Curriculum curriculum2 = new Curriculum();
+    CurriculumDto curriculum2 = new CurriculumDto();
     curriculum2.setCurriculumName("Starting");
     curriculum2.setCurriculumSpecialtyCode("123");
     curriculum2.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum2.setCurriculumStartDate(NOW);
     curriculum2.setCurriculumEndDate(FUTURE);
 
-    Curriculum curriculum3 = new Curriculum();
+    CurriculumDto curriculum3 = new CurriculumDto();
     curriculum3.setCurriculumName("Future");
     curriculum3.setCurriculumSpecialtyCode("ACA");
     curriculum3.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
@@ -1272,13 +1272,13 @@ class NtnGeneratorTest {
 
   @Test
   void shouldFilterCurriculaWhenPopulatingNtnWithSuffixAndProgrammeFuture() {
-    TraineeProfile profile = new TraineeProfile();
+    TraineeProfileDto profile = new TraineeProfileDto();
 
-    PersonalDetails personalDetails = new PersonalDetails();
+    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
     personalDetails.setGmcNumber(GMC_NUMBER);
     profile.setPersonalDetails(personalDetails);
 
-    ProgrammeMembership pm = new ProgrammeMembership();
+    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
     pm.setManagingDeanery(OWNER_NAME);
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
@@ -1286,28 +1286,28 @@ class NtnGeneratorTest {
     pm.setStartDate(FUTURE);
     profile.setProgrammeMemberships(List.of(pm));
 
-    Curriculum curriculum1 = new Curriculum();
+    CurriculumDto curriculum1 = new CurriculumDto();
     curriculum1.setCurriculumName("Past");
     curriculum1.setCurriculumSpecialtyCode("ACA");
     curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum1.setCurriculumStartDate(PAST);
     curriculum1.setCurriculumEndDate(PAST);
 
-    Curriculum curriculum2 = new Curriculum();
+    CurriculumDto curriculum2 = new CurriculumDto();
     curriculum2.setCurriculumName("Past");
     curriculum2.setCurriculumSpecialtyCode("ACA");
     curriculum2.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum2.setCurriculumStartDate(NOW);
     curriculum2.setCurriculumEndDate(NOW);
 
-    Curriculum curriculum3 = new Curriculum();
+    CurriculumDto curriculum3 = new CurriculumDto();
     curriculum3.setCurriculumName("Future");
     curriculum3.setCurriculumSpecialtyCode("123");
     curriculum3.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
     curriculum3.setCurriculumStartDate(FUTURE);
     curriculum3.setCurriculumEndDate(FUTURE);
 
-    Curriculum curriculum4 = new Curriculum();
+    CurriculumDto curriculum4 = new CurriculumDto();
     curriculum4.setCurriculumName("Future + 1");
     curriculum4.setCurriculumSpecialtyCode("ACA");
     curriculum4.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);

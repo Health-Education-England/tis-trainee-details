@@ -386,25 +386,6 @@ class TraineeProfileServiceTest {
   }
 
   @Test
-  void shouldGenerateNtnsWhenGettingTraineeProfile() {
-    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(this.traineeProfile);
-
-    service.getTraineeProfileByTraineeTisId(DEFAULT_TIS_ID_1);
-
-    verify(ntnGenerator).populateNtns(traineeProfile);
-  }
-
-  @Test
-  void shouldIgnoreErrorsWhenGenerateNtnsForTraineeProfile() {
-    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(this.traineeProfile);
-    doThrow(RuntimeException.class).when(ntnGenerator).populateNtns(any());
-
-    assertDoesNotThrow(() -> service.getTraineeProfileByTraineeTisId(DEFAULT_TIS_ID_1));
-
-    verify(ntnGenerator).populateNtns(traineeProfile);
-  }
-
-  @Test
   void shouldReturnMultipleTraineeIdsWhenMultipleValidProfileFoundByEmail() {
     when(repository.findAllByTraineeEmail(PERSON_EMAIL))
         .thenReturn(List.of(traineeProfile, traineeProfile2));

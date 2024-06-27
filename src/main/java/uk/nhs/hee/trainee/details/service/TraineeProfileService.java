@@ -44,11 +44,9 @@ import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 public class TraineeProfileService {
 
   private final TraineeProfileRepository repository;
-  private final NtnGenerator ntnGenerator;
 
-  TraineeProfileService(TraineeProfileRepository repository, NtnGenerator ntnGenerator) {
+  TraineeProfileService(TraineeProfileRepository repository) {
     this.repository = repository;
-    this.ntnGenerator = ntnGenerator;
   }
 
   /**
@@ -87,13 +85,6 @@ public class TraineeProfileService {
           .filter(pm -> pm.getConditionsOfJoining() == null
               || pm.getConditionsOfJoining().signedAt() == null)
           .forEach(pm -> pm.setConditionsOfJoining(coj));
-
-      // TODO: move generation to scheduled job/create/update.
-      try {
-        ntnGenerator.populateNtns(traineeProfile);
-      } catch (RuntimeException e) {
-        log.error("Caught and ignoring NTN generation runtime error:", e);
-      }
     }
 
     return traineeProfile;
