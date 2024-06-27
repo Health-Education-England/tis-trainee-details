@@ -1000,6 +1000,64 @@ class NtnGeneratorTest {
     assertThat("Unexpected parent organization.", ntnParts[1], is(futureSpecialty));
   }
 
+  @ParameterizedTest
+  @CsvSource(delimiter = '|', textBlock = """
+      111 | AAA | AAA
+      AAA | 111 | AAA
+      AAA | AAA | 111
+      AAA | 111 | 111
+      111 | AAA | 111
+      111 | 111 | AAA
+      """)
+  void shouldFilterCurriculaWhenPopulatingNtnWithOrderedSpecialtyConcatAndDuplicateSpecialties(
+      String specialty1, String specialty2, String specialty3) {
+    TraineeProfileDto profile = new TraineeProfileDto();
+
+    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
+    personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
+
+    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
+    pm.setManagingDeanery(OWNER_NAME);
+    pm.setProgrammeName(PROGRAMME_NAME);
+    pm.setProgrammeNumber(PROGRAMME_NUMBER);
+    pm.setTrainingPathway(TRAINING_PATHWAY);
+    pm.setStartDate(NOW);
+    profile.setProgrammeMemberships(List.of(pm));
+
+    CurriculumDto curriculum1 = new CurriculumDto();
+    curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
+    curriculum1.setCurriculumSpecialtyCode(specialty1);
+    curriculum1.setCurriculumStartDate(NOW);
+    curriculum1.setCurriculumEndDate(FUTURE);
+
+    CurriculumDto curriculum2 = new CurriculumDto();
+    curriculum2.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
+    curriculum2.setCurriculumSpecialtyCode(specialty2);
+    curriculum2.setCurriculumStartDate(NOW);
+    curriculum2.setCurriculumEndDate(NOW);
+
+    CurriculumDto curriculum3 = new CurriculumDto();
+    curriculum3.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
+    curriculum3.setCurriculumSpecialtyCode(specialty3);
+    curriculum3.setCurriculumStartDate(PAST);
+    curriculum3.setCurriculumEndDate(NOW);
+
+    CurriculumDto curriculum4 = new CurriculumDto();
+    curriculum4.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
+    curriculum4.setCurriculumSpecialtyCode(null);
+    curriculum4.setCurriculumStartDate(PAST);
+    curriculum4.setCurriculumEndDate(FUTURE);
+
+    pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3, curriculum4));
+
+    service.populateNtns(profile);
+
+    String ntn = pm.getNtn();
+    String[] ntnParts = ntn.split("/");
+    assertThat("Unexpected parent organization.", ntnParts[1], is("AAA-111"));
+  }
+
   @Test
   void shouldPopulateNtnWithGmcNumberWhenValid() {
     TraineeProfileDto profile = new TraineeProfileDto();
