@@ -59,7 +59,6 @@ import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapperImpl;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
 import uk.nhs.hee.trainee.details.model.Curriculum;
-import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
@@ -88,16 +87,14 @@ class ProgrammeMembershipServiceTest {
 
   private ProgrammeMembershipService service;
   private TraineeProfileRepository repository;
-  private NtnGenerator ntnGenerator;
   private CachingDelegate cachingDelegate;
 
   @BeforeEach
   void setUp() {
     repository = mock(TraineeProfileRepository.class);
-    ntnGenerator = mock(NtnGenerator.class);
     cachingDelegate = mock(CachingDelegate.class);
-    service = new ProgrammeMembershipService(repository, ntnGenerator,
-        new ProgrammeMembershipMapperImpl(), cachingDelegate);
+    service = new ProgrammeMembershipService(repository, new ProgrammeMembershipMapperImpl(),
+        cachingDelegate);
   }
 
   @Test
@@ -177,22 +174,6 @@ class ProgrammeMembershipServiceTest {
   }
 
   @Test
-  void shouldGenerateNtnWhenAddingProgrammeMembership() {
-    TraineeProfile traineeProfile = new TraineeProfile();
-    PersonalDetails personalDetails = new PersonalDetails();
-    traineeProfile.setPersonalDetails(personalDetails);
-
-    ProgrammeMembership pm = createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_UUID,
-        ORIGINAL_SUFFIX, 0);
-
-    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
-
-    service.updateProgrammeMembershipForTrainee(TRAINEE_TIS_ID, pm);
-
-    verify(ntnGenerator).populateNtn(personalDetails, pm);
-  }
-
-  @Test
   void shouldUpdateProgrammeMembershipWhenTraineeFoundAndProgrammeMembershipExists() {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.getProgrammeMemberships()
@@ -225,23 +206,6 @@ class ProgrammeMembershipServiceTest {
 
     assertThat("Unexpected programme membership.", programmeMembership.get(),
         is(expectedProgrammeMembership));
-  }
-
-  @Test
-  void shouldRegenerateNtnWhenUpdatingProgrammeMembership() {
-    TraineeProfile traineeProfile = new TraineeProfile();
-    PersonalDetails personalDetails = new PersonalDetails();
-    traineeProfile.setPersonalDetails(personalDetails);
-
-    ProgrammeMembership pm = createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_UUID,
-        ORIGINAL_SUFFIX, 0);
-    traineeProfile.getProgrammeMemberships().add(pm);
-
-    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
-
-    service.updateProgrammeMembershipForTrainee(TRAINEE_TIS_ID, pm);
-
-    verify(ntnGenerator).populateNtn(personalDetails, pm);
   }
 
   @Test

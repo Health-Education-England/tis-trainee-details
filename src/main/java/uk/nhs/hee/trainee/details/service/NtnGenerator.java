@@ -61,11 +61,11 @@ public class NtnGenerator {
    * @param personalDetails     The personal details to use for NTN generation.
    * @param programmeMembership The programme membership to generate the NTN for.
    */
-  public void populateNtn(PersonalDetails personalDetails,
+  private void populateNtn(PersonalDetails personalDetails,
       ProgrammeMembership programmeMembership) {
     log.info("Populating NTN for programme membership '{}'.", programmeMembership.getTisId());
 
-    if (isExcluded(personalDetails) || isExcluded(programmeMembership)) {
+    if (isExcluded(programmeMembership)) {
       return;
     }
 

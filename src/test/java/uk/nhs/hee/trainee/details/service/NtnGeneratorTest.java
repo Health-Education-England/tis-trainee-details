@@ -27,10 +27,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -75,12 +71,17 @@ class NtnGeneratorTest {
 
   @Test
   void shouldNotPopulateNtnWhenNoPersonalDetails(CapturedOutput output) {
+    TraineeProfile profile = new TraineeProfile();
+
+    profile.setPersonalDetails(null);
+
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setManagingDeanery(OWNER_NAME);
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
     pm.setStartDate(NOW);
+    profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
@@ -88,7 +89,7 @@ class NtnGeneratorTest {
     curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
-    service.populateNtn(null, pm);
+    service.populateNtns(profile);
 
     String ntn = pm.getNtn();
     assertThat("Unexpected ntn.", ntn, nullValue());
@@ -97,44 +98,16 @@ class NtnGeneratorTest {
         containsString("Skipping NTN population as personal details not available."));
   }
 
-  @Test
-  void shouldShortcutPopulatingNtnsWhenTraineeProfileHasNoPersonalDetails(CapturedOutput output) {
-    ProgrammeMembership pm1 = new ProgrammeMembership();
-    pm1.setManagingDeanery(OWNER_NAME);
-    pm1.setProgrammeName(PROGRAMME_NAME);
-    pm1.setProgrammeNumber(PROGRAMME_NUMBER);
-    pm1.setTrainingPathway(TRAINING_PATHWAY);
-    pm1.setStartDate(NOW);
-
-    Curriculum curriculum = new Curriculum();
-    curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
-    curriculum.setCurriculumStartDate(PAST);
-    curriculum.setCurriculumEndDate(FUTURE);
-    pm1.setCurricula(List.of(curriculum));
-
-    TraineeProfile traineeProfile = new TraineeProfile();
-    traineeProfile.setPersonalDetails(null);
-    traineeProfile.setProgrammeMemberships(List.of(pm1, new ProgrammeMembership()));
-
-    NtnGenerator serviceSpy = spy(service);
-    serviceSpy.populateNtns(traineeProfile);
-
-    String ntn = pm1.getNtn();
-    assertThat("Unexpected ntn.", ntn, nullValue());
-
-    assertThat("Expected log not found.", output.getOut(),
-        containsString("Skipping NTN population as personal details not available."));
-
-    verify(serviceSpy, never()).populateNtn(any(), any());
-  }
-
   @ParameterizedTest
   @NullAndEmptySource
   @ValueSource(strings = {" ", "abcd", "1234"})
   void shouldNotPopulateNtnWhenNoGmcOrGdcNumber(String referenceNumber, CapturedOutput output) {
+    TraineeProfile profile = new TraineeProfile();
+
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(referenceNumber);
     personalDetails.setGdcNumber(referenceNumber);
+    profile.setPersonalDetails(personalDetails);
 
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setManagingDeanery(OWNER_NAME);
@@ -142,6 +115,7 @@ class NtnGeneratorTest {
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
     pm.setStartDate(NOW);
+    profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
@@ -149,7 +123,7 @@ class NtnGeneratorTest {
     curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
-    service.populateNtn(personalDetails, pm);
+    service.populateNtns(profile);
 
     String ntn = pm.getNtn();
     assertThat("Unexpected ntn.", ntn, nullValue());
@@ -162,8 +136,11 @@ class NtnGeneratorTest {
   @NullAndEmptySource
   @ValueSource(strings = " ")
   void shouldNotPopulateNtnWhenNoProgrammeNumber(String programmeNumber, CapturedOutput output) {
+    TraineeProfile profile = new TraineeProfile();
+
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
 
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setManagingDeanery(OWNER_NAME);
@@ -171,6 +148,7 @@ class NtnGeneratorTest {
     pm.setProgrammeNumber(programmeNumber);
     pm.setTrainingPathway(TRAINING_PATHWAY);
     pm.setStartDate(NOW);
+    profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
@@ -178,7 +156,7 @@ class NtnGeneratorTest {
     curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
-    service.populateNtn(personalDetails, pm);
+    service.populateNtns(profile);
 
     String ntn = pm.getNtn();
     assertThat("Unexpected ntn.", ntn, nullValue());
@@ -191,8 +169,11 @@ class NtnGeneratorTest {
   @NullAndEmptySource
   @ValueSource(strings = " ")
   void shouldNotPopulateNtnWhenNoProgrammeName(String programmeName, CapturedOutput output) {
+    TraineeProfile profile = new TraineeProfile();
+
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
 
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setManagingDeanery(OWNER_NAME);
@@ -200,6 +181,7 @@ class NtnGeneratorTest {
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
     pm.setStartDate(NOW);
+    profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
@@ -207,7 +189,7 @@ class NtnGeneratorTest {
     curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
-    service.populateNtn(personalDetails, pm);
+    service.populateNtns(profile);
 
     String ntn = pm.getNtn();
     assertThat("Unexpected ntn.", ntn, nullValue());
@@ -223,8 +205,11 @@ class NtnGeneratorTest {
   })
   void shouldNotPopulateNtnWhenProgrammeIsFoundation(String programmeName,
       CapturedOutput output) {
+    TraineeProfile profile = new TraineeProfile();
+
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
 
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setManagingDeanery(OWNER_NAME);
@@ -232,6 +217,7 @@ class NtnGeneratorTest {
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
     pm.setStartDate(NOW);
+    profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
@@ -239,7 +225,7 @@ class NtnGeneratorTest {
     curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
-    service.populateNtn(personalDetails, pm);
+    service.populateNtns(profile);
 
     String ntn = pm.getNtn();
     assertThat("Unexpected ntn.", ntn, nullValue());
@@ -250,8 +236,11 @@ class NtnGeneratorTest {
 
   @Test
   void shouldNotPopulateNtnWhenNoCurricula(CapturedOutput output) {
+    TraineeProfile profile = new TraineeProfile();
+
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
 
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setManagingDeanery(OWNER_NAME);
@@ -260,8 +249,9 @@ class NtnGeneratorTest {
     pm.setTrainingPathway(TRAINING_PATHWAY);
     pm.setStartDate(NOW);
     pm.setCurricula(List.of());
+    profile.setProgrammeMemberships(List.of(pm));
 
-    service.populateNtn(personalDetails, pm);
+    service.populateNtns(profile);
 
     String ntn = pm.getNtn();
     assertThat("Unexpected ntn.", ntn, nullValue());
@@ -271,8 +261,11 @@ class NtnGeneratorTest {
 
   @Test
   void shouldNotPopulateNtnWhenNoCurrentCurricula(CapturedOutput output) {
+    TraineeProfile profile = new TraineeProfile();
+
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
 
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setManagingDeanery(OWNER_NAME);
@@ -280,6 +273,7 @@ class NtnGeneratorTest {
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
     pm.setStartDate(NOW);
+    profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum past = new Curriculum();
     past.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
@@ -293,7 +287,7 @@ class NtnGeneratorTest {
 
     pm.setCurricula(List.of(past, future));
 
-    service.populateNtn(personalDetails, pm);
+    service.populateNtns(profile);
 
     String ntn = pm.getNtn();
     assertThat("Unexpected ntn.", ntn, nullValue());
@@ -306,8 +300,11 @@ class NtnGeneratorTest {
   @ValueSource(strings = " ")
   void shouldNotPopulateNtnWhenNoCurriculaSpecialtyCode(String specialtyCode,
       CapturedOutput output) {
+    TraineeProfile profile = new TraineeProfile();
+
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
 
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setManagingDeanery(OWNER_NAME);
@@ -315,6 +312,7 @@ class NtnGeneratorTest {
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
     pm.setStartDate(NOW);
+    profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSpecialtyCode(specialtyCode);
@@ -322,7 +320,7 @@ class NtnGeneratorTest {
     curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
-    service.populateNtn(personalDetails, pm);
+    service.populateNtns(profile);
 
     String ntn = pm.getNtn();
     assertThat("Unexpected ntn.", ntn, nullValue());
@@ -332,8 +330,11 @@ class NtnGeneratorTest {
 
   @Test
   void shouldNotPopulateNtnWhenTrainingPathwayNull(CapturedOutput output) {
+    TraineeProfile profile = new TraineeProfile();
+
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
 
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setManagingDeanery(OWNER_NAME);
@@ -341,6 +342,7 @@ class NtnGeneratorTest {
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(null);
     pm.setStartDate(NOW);
+    profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
@@ -348,7 +350,7 @@ class NtnGeneratorTest {
     curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
-    service.populateNtn(personalDetails, pm);
+    service.populateNtns(profile);
 
     String ntn = pm.getNtn();
     assertThat("Unexpected ntn.", ntn, nullValue());
@@ -360,8 +362,11 @@ class NtnGeneratorTest {
   @NullAndEmptySource
   @ValueSource(strings = {" ", "Unknown Organization"})
   void shouldThrowExceptionPopulatingNtnWhenParentOrganizationNull(String ownerName) {
+    TraineeProfile profile = new TraineeProfile();
+
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
 
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setManagingDeanery(ownerName);
@@ -369,6 +374,7 @@ class NtnGeneratorTest {
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
     pm.setStartDate(NOW);
+    profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
@@ -377,7 +383,7 @@ class NtnGeneratorTest {
     pm.setCurricula(List.of(curriculum));
 
     IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-        () -> service.populateNtn(personalDetails, pm));
+        () -> service.populateNtns(profile));
 
     assertThat("Unexpected message.", exception.getMessage(),
         is("Unable to calculate the parent organization."));
@@ -385,8 +391,10 @@ class NtnGeneratorTest {
 
   @Test
   void shouldPopulateFullNtnWhenProgrammeIsCurrent() {
+    TraineeProfile profile = new TraineeProfile();
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
 
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setManagingDeanery(OWNER_NAME);
@@ -394,6 +402,7 @@ class NtnGeneratorTest {
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
     pm.setStartDate(NOW);
+    profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum1 = new Curriculum();
     curriculum1.setCurriculumSpecialtyCode("ABC");
@@ -415,15 +424,17 @@ class NtnGeneratorTest {
 
     pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3));
 
-    service.populateNtn(personalDetails, pm);
+    service.populateNtns(profile);
 
     assertThat("Unexpected NTN.", pm.getNtn(), is("LDN/ABC.XYZ.123/1234567/D"));
   }
 
   @Test
   void shouldPopulateFullNtnWhenProgrammeIsFuture() {
+    TraineeProfile profile = new TraineeProfile();
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
 
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setManagingDeanery(OWNER_NAME);
@@ -431,6 +442,7 @@ class NtnGeneratorTest {
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
     pm.setStartDate(FUTURE);
+    profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum1 = new Curriculum();
     curriculum1.setCurriculumSpecialtyCode("ABC");
@@ -452,7 +464,7 @@ class NtnGeneratorTest {
 
     pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3));
 
-    service.populateNtn(personalDetails, pm);
+    service.populateNtns(profile);
 
     assertThat("Unexpected NTN.", pm.getNtn(), is("LDN/ABC.XYZ.123/1234567/D"));
   }
@@ -536,8 +548,11 @@ class NtnGeneratorTest {
       """)
   void shouldPopulateNtnWithParentOrganizationWhenMappedByOwner(String ownerName,
       String ownerCode) {
+    TraineeProfile profile = new TraineeProfile();
+
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
 
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setManagingDeanery(ownerName);
@@ -545,6 +560,7 @@ class NtnGeneratorTest {
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
     pm.setStartDate(NOW);
+    profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
@@ -552,7 +568,7 @@ class NtnGeneratorTest {
     curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
-    service.populateNtn(personalDetails, pm);
+    service.populateNtns(profile);
 
     String ntn = pm.getNtn();
     String[] ntnParts = ntn.split("/");
@@ -567,8 +583,11 @@ class NtnGeneratorTest {
       """)
   void shouldPopulateNtnWithParentOrganizationWhenOwnerIsSouthWest(String ownerName,
       String programmeNumber, String ownerCode) {
+    TraineeProfile profile = new TraineeProfile();
+
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
 
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setManagingDeanery(ownerName);
@@ -576,6 +595,7 @@ class NtnGeneratorTest {
     pm.setProgrammeNumber(programmeNumber);
     pm.setTrainingPathway(TRAINING_PATHWAY);
     pm.setStartDate(NOW);
+    profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
@@ -583,7 +603,7 @@ class NtnGeneratorTest {
     curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
-    service.populateNtn(personalDetails, pm);
+    service.populateNtns(profile);
 
     String ntn = pm.getNtn();
     String[] ntnParts = ntn.split("/");
@@ -598,8 +618,11 @@ class NtnGeneratorTest {
       """)
   void shouldPopulateNtnWithOrderedSpecialtyConcatWhenMultipleSpecialty(String specialty1,
       String specialty2, String specialty3, String specialty4, String ntnPart) {
+    TraineeProfile profile = new TraineeProfile();
+
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
 
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setManagingDeanery(OWNER_NAME);
@@ -607,6 +630,7 @@ class NtnGeneratorTest {
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
     pm.setStartDate(NOW);
+    profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum1 = new Curriculum();
     curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
@@ -634,7 +658,7 @@ class NtnGeneratorTest {
 
     pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3, curriculum4));
 
-    service.populateNtn(personalDetails, pm);
+    service.populateNtns(profile);
 
     String ntn = pm.getNtn();
     String[] ntnParts = ntn.split("/");
@@ -645,8 +669,11 @@ class NtnGeneratorTest {
   @ValueSource(ints = {1, 2, 3, 4, 10})
   void shouldPopulateNtnWithDotNotatedSpecialtyConcatWhenHasSubSpecialties(
       int additionalCurriculaCount) {
+    TraineeProfile profile = new TraineeProfile();
+
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
 
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setManagingDeanery(OWNER_NAME);
@@ -654,6 +681,7 @@ class NtnGeneratorTest {
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
     pm.setStartDate(NOW);
+    profile.setProgrammeMemberships(List.of(pm));
 
     List<Curriculum> curricula = new ArrayList<>();
     pm.setCurricula(curricula);
@@ -684,7 +712,7 @@ class NtnGeneratorTest {
       curricula.add(additionalCurriculum);
     }
 
-    service.populateNtn(personalDetails, pm);
+    service.populateNtns(profile);
 
     String ntn = pm.getNtn();
     String[] ntnParts = ntn.split("/");
@@ -696,8 +724,11 @@ class NtnGeneratorTest {
 
   @Test
   void shouldPopulateNtnWithFixedSpecialtyConcatWhenFirstSpecialtyIsAft() {
+    TraineeProfile profile = new TraineeProfile();
+
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
 
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setManagingDeanery(OWNER_NAME);
@@ -705,6 +736,7 @@ class NtnGeneratorTest {
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
     pm.setStartDate(NOW);
+    profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum1 = new Curriculum();
     curriculum1.setCurriculumName("AFT");
@@ -729,7 +761,7 @@ class NtnGeneratorTest {
 
     pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3));
 
-    service.populateNtn(personalDetails, pm);
+    service.populateNtns(profile);
 
     String ntn = pm.getNtn();
     String[] ntnParts = ntn.split("/");
@@ -747,8 +779,11 @@ class NtnGeneratorTest {
       """)
   void shouldFilterCurriculaWhenPopulatingNtnWithOrderedSpecialtyConcatAndCurriculaEnding(
       String pastSpecialty, String endingSpecialty, String futureSpecialty) {
+    TraineeProfile profile = new TraineeProfile();
+
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
 
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setManagingDeanery(OWNER_NAME);
@@ -756,6 +791,7 @@ class NtnGeneratorTest {
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
     pm.setStartDate(NOW);
+    profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum1 = new Curriculum();
     curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
@@ -783,7 +819,7 @@ class NtnGeneratorTest {
 
     pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3, curriculum4));
 
-    service.populateNtn(personalDetails, pm);
+    service.populateNtns(profile);
 
     String ntn = pm.getNtn();
     String[] ntnParts = ntn.split("/");
@@ -801,8 +837,11 @@ class NtnGeneratorTest {
       """)
   void shouldFilterCurriculaWhenPopulatingNtnWithOrderedSpecialtyConcatAndCurriculaCurrent(
       String pastSpecialty, String currentSpecialty, String futureSpecialty) {
+    TraineeProfile profile = new TraineeProfile();
+
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
 
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setManagingDeanery(OWNER_NAME);
@@ -810,6 +849,7 @@ class NtnGeneratorTest {
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
     pm.setStartDate(NOW);
+    profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum1 = new Curriculum();
     curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
@@ -837,7 +877,7 @@ class NtnGeneratorTest {
 
     pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3, curriculum4));
 
-    service.populateNtn(personalDetails, pm);
+    service.populateNtns(profile);
 
     String ntn = pm.getNtn();
     String[] ntnParts = ntn.split("/");
@@ -855,8 +895,11 @@ class NtnGeneratorTest {
       """)
   void shouldFilterCurriculaWhenPopulatingNtnWithOrderedSpecialtyConcatAndCurriculaStarting(
       String pastSpecialty, String startingSpecialty, String futureSpecialty) {
+    TraineeProfile profile = new TraineeProfile();
+
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
 
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setManagingDeanery(OWNER_NAME);
@@ -864,6 +907,7 @@ class NtnGeneratorTest {
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
     pm.setStartDate(NOW);
+    profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum1 = new Curriculum();
     curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
@@ -891,7 +935,7 @@ class NtnGeneratorTest {
 
     pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3, curriculum4));
 
-    service.populateNtn(personalDetails, pm);
+    service.populateNtns(profile);
 
     String ntn = pm.getNtn();
     String[] ntnParts = ntn.split("/");
@@ -909,8 +953,11 @@ class NtnGeneratorTest {
       """)
   void shouldFilterCurriculaWhenPopulatingNtnWithOrderedSpecialtyConcatAndProgrammeFuture(
       String currentSpecialty, String futureSpecialty, String farFutureSpecialty) {
+    TraineeProfile profile = new TraineeProfile();
+
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
 
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setManagingDeanery(OWNER_NAME);
@@ -918,6 +965,7 @@ class NtnGeneratorTest {
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
     pm.setStartDate(FUTURE);
+    profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum1 = new Curriculum();
     curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
@@ -945,7 +993,7 @@ class NtnGeneratorTest {
 
     pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3, curriculum4));
 
-    service.populateNtn(personalDetails, pm);
+    service.populateNtns(profile);
 
     String ntn = pm.getNtn();
     String[] ntnParts = ntn.split("/");
@@ -954,8 +1002,11 @@ class NtnGeneratorTest {
 
   @Test
   void shouldPopulateNtnWithGmcNumberWhenValid() {
+    TraineeProfile profile = new TraineeProfile();
+
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
 
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setManagingDeanery(OWNER_NAME);
@@ -963,6 +1014,7 @@ class NtnGeneratorTest {
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
     pm.setStartDate(NOW);
+    profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
@@ -970,7 +1022,7 @@ class NtnGeneratorTest {
     curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
-    service.populateNtn(personalDetails, pm);
+    service.populateNtns(profile);
 
     String ntn = pm.getNtn();
     String[] ntnParts = ntn.split("/");
@@ -980,9 +1032,12 @@ class NtnGeneratorTest {
   @ParameterizedTest
   @ValueSource(strings = {"abc", "12345678"})
   void shouldPopulateNtnWithGdcNumberWhenValidAndGmcInvalid(String gmcNumber) {
+    TraineeProfile profile = new TraineeProfile();
+
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(gmcNumber);
     personalDetails.setGdcNumber(GDC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
 
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setManagingDeanery(OWNER_NAME);
@@ -990,6 +1045,7 @@ class NtnGeneratorTest {
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
     pm.setStartDate(NOW);
+    profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
@@ -997,7 +1053,7 @@ class NtnGeneratorTest {
     curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
-    service.populateNtn(personalDetails, pm);
+    service.populateNtns(profile);
 
     String ntn = pm.getNtn();
     String[] ntnParts = ntn.split("/");
@@ -1012,8 +1068,11 @@ class NtnGeneratorTest {
       """)
   void shouldPopulateNtnWithSuffixWhenMappedByTrainingPathway(String trainingPathway,
       String suffix) {
+    TraineeProfile profile = new TraineeProfile();
+
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
 
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setManagingDeanery(OWNER_NAME);
@@ -1021,6 +1080,7 @@ class NtnGeneratorTest {
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(trainingPathway);
     pm.setStartDate(NOW);
+    profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
@@ -1028,7 +1088,7 @@ class NtnGeneratorTest {
     curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
-    service.populateNtn(personalDetails, pm);
+    service.populateNtns(profile);
 
     String ntn = pm.getNtn();
     String[] ntnParts = ntn.split("/");
@@ -1037,8 +1097,11 @@ class NtnGeneratorTest {
 
   @Test
   void shouldPopulateNtnWithSuffixWhenSpecialtyIsAcademic() {
+    TraineeProfile profile = new TraineeProfile();
+
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
 
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setManagingDeanery(OWNER_NAME);
@@ -1046,6 +1109,7 @@ class NtnGeneratorTest {
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
     pm.setStartDate(NOW);
+    profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum1 = new Curriculum();
     curriculum1.setCurriculumSpecialtyCode("123");
@@ -1061,7 +1125,7 @@ class NtnGeneratorTest {
 
     pm.setCurricula(List.of(curriculum1, curriculum2));
 
-    service.populateNtn(personalDetails, pm);
+    service.populateNtns(profile);
 
     String ntn = pm.getNtn();
     String[] ntnParts = ntn.split("/");
@@ -1070,8 +1134,11 @@ class NtnGeneratorTest {
 
   @Test
   void shouldFilterCurriculaWhenPopulatingNtnWithSuffixAndCurriculaEnding() {
+    TraineeProfile profile = new TraineeProfile();
+
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
 
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setManagingDeanery(OWNER_NAME);
@@ -1079,6 +1146,7 @@ class NtnGeneratorTest {
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
     pm.setStartDate(NOW);
+    profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum1 = new Curriculum();
     curriculum1.setCurriculumName("Past");
@@ -1103,7 +1171,7 @@ class NtnGeneratorTest {
 
     pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3));
 
-    service.populateNtn(personalDetails, pm);
+    service.populateNtns(profile);
 
     String ntn = pm.getNtn();
     String[] ntnParts = ntn.split("/");
@@ -1112,8 +1180,11 @@ class NtnGeneratorTest {
 
   @Test
   void shouldFilterCurriculaWhenPopulatingNtnWithSuffixAndCurriculaCurrent() {
+    TraineeProfile profile = new TraineeProfile();
+
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
 
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setManagingDeanery(OWNER_NAME);
@@ -1121,6 +1192,7 @@ class NtnGeneratorTest {
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
     pm.setStartDate(NOW);
+    profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum1 = new Curriculum();
     curriculum1.setCurriculumName("Past");
@@ -1145,7 +1217,7 @@ class NtnGeneratorTest {
 
     pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3));
 
-    service.populateNtn(personalDetails, pm);
+    service.populateNtns(profile);
 
     String ntn = pm.getNtn();
     String[] ntnParts = ntn.split("/");
@@ -1154,8 +1226,11 @@ class NtnGeneratorTest {
 
   @Test
   void shouldFilterCurriculaWhenPopulatingNtnWithSuffixAndCurriculaStarting() {
+    TraineeProfile profile = new TraineeProfile();
+
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
 
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setManagingDeanery(OWNER_NAME);
@@ -1163,6 +1238,7 @@ class NtnGeneratorTest {
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
     pm.setStartDate(NOW);
+    profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum1 = new Curriculum();
     curriculum1.setCurriculumName("Past");
@@ -1187,7 +1263,7 @@ class NtnGeneratorTest {
 
     pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3));
 
-    service.populateNtn(personalDetails, pm);
+    service.populateNtns(profile);
 
     String ntn = pm.getNtn();
     String[] ntnParts = ntn.split("/");
@@ -1196,8 +1272,11 @@ class NtnGeneratorTest {
 
   @Test
   void shouldFilterCurriculaWhenPopulatingNtnWithSuffixAndProgrammeFuture() {
+    TraineeProfile profile = new TraineeProfile();
+
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
 
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setManagingDeanery(OWNER_NAME);
@@ -1205,6 +1284,7 @@ class NtnGeneratorTest {
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
     pm.setTrainingPathway(TRAINING_PATHWAY);
     pm.setStartDate(FUTURE);
+    profile.setProgrammeMemberships(List.of(pm));
 
     Curriculum curriculum1 = new Curriculum();
     curriculum1.setCurriculumName("Past");
@@ -1236,7 +1316,7 @@ class NtnGeneratorTest {
 
     pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3, curriculum4));
 
-    service.populateNtn(personalDetails, pm);
+    service.populateNtns(profile);
 
     String ntn = pm.getNtn();
     String[] ntnParts = ntn.split("/");
