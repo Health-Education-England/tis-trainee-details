@@ -28,10 +28,10 @@ import java.util.ListIterator;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import uk.nhs.hee.trainee.details.model.Curriculum;
-import uk.nhs.hee.trainee.details.model.PersonalDetails;
-import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
-import uk.nhs.hee.trainee.details.model.TraineeProfile;
+import uk.nhs.hee.trainee.details.dto.CurriculumDto;
+import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
+import uk.nhs.hee.trainee.details.dto.ProgrammeMembershipDto;
+import uk.nhs.hee.trainee.details.dto.TraineeProfileDto;
 
 /**
  * A service for handling trainee NTNs/DRNs.
@@ -45,8 +45,8 @@ public class NtnGenerator {
    *
    * @param traineeProfile The trainee profile to populate with NTNs.
    */
-  public void populateNtns(TraineeProfile traineeProfile) {
-    PersonalDetails personalDetails = traineeProfile.getPersonalDetails();
+  public void populateNtns(TraineeProfileDto traineeProfile) {
+    PersonalDetailsDto personalDetails = traineeProfile.getPersonalDetails();
 
     if (isExcluded(personalDetails)) {
       return;
@@ -61,11 +61,11 @@ public class NtnGenerator {
    * @param personalDetails     The personal details to use for NTN generation.
    * @param programmeMembership The programme membership to generate the NTN for.
    */
-  public void populateNtn(PersonalDetails personalDetails,
-      ProgrammeMembership programmeMembership) {
+  private void populateNtn(PersonalDetailsDto personalDetails,
+      ProgrammeMembershipDto programmeMembership) {
     log.info("Populating NTN for programme membership '{}'.", programmeMembership.getTisId());
 
-    if (isExcluded(personalDetails) || isExcluded(programmeMembership)) {
+    if (isExcluded(programmeMembership)) {
       return;
     }
 
@@ -84,7 +84,7 @@ public class NtnGenerator {
    * @param programmeMembership The programme membership to calculate the parent organization for.
    * @return The calculated parent organization.
    */
-  private String getParentOrganization(ProgrammeMembership programmeMembership) {
+  private String getParentOrganization(ProgrammeMembershipDto programmeMembership) {
     String managingDeanery = programmeMembership.getManagingDeanery();
     log.info("Calculating parent organization for managing deanery '{}'.", managingDeanery);
 
@@ -124,7 +124,7 @@ public class NtnGenerator {
    * @param programmeMembership The SW programme membership.
    * @return The calculated parent organization.
    */
-  private String getSouthWestParentOrganization(ProgrammeMembership programmeMembership) {
+  private String getSouthWestParentOrganization(ProgrammeMembershipDto programmeMembership) {
     String programmeNumber = programmeMembership.getProgrammeNumber();
     log.info("Using programme number '{}' to calculate parent organization.", programmeNumber);
     return programmeNumber.startsWith("SWP") ? "PEN" : programmeNumber.substring(0, 3);
@@ -136,16 +136,16 @@ public class NtnGenerator {
    * @param programmeMembership The programme membership to get the specialty string for.
    * @return The concatenated specialty string.
    */
-  private String getSpecialtyConcat(ProgrammeMembership programmeMembership) {
+  private String getSpecialtyConcat(ProgrammeMembershipDto programmeMembership) {
     log.info("Calculating specialty concat.");
-    List<Curriculum> sortedCurricula = filterAndSortCurricula(programmeMembership);
+    List<CurriculumDto> sortedCurricula = filterAndSortCurricula(programmeMembership);
 
     StringBuilder sb = new StringBuilder();
 
-    for (ListIterator<Curriculum> curriculaIterator = sortedCurricula.listIterator();
+    for (ListIterator<CurriculumDto> curriculaIterator = sortedCurricula.listIterator();
         curriculaIterator.hasNext(); ) {
       int index = curriculaIterator.nextIndex();
-      Curriculum curriculum = curriculaIterator.next();
+      CurriculumDto curriculum = curriculaIterator.next();
       String specialtyCode = curriculum.getCurriculumSpecialtyCode();
 
       if (index > 0) {
@@ -178,7 +178,7 @@ public class NtnGenerator {
    * @param personalDetails The personal details to get the reference number for.
    * @return The GMC/GDC number, depending on which is valid.
    */
-  private String getReferenceNumber(PersonalDetails personalDetails) {
+  private String getReferenceNumber(PersonalDetailsDto personalDetails) {
     String gmcNumber = personalDetails.getGmcNumber();
     return gmcNumber.matches("\\d{7}") ? gmcNumber : personalDetails.getGdcNumber();
   }
@@ -189,7 +189,7 @@ public class NtnGenerator {
    * @param programmeMembership The programme membership to get the suffix for.
    * @return The calculated suffix for the programme membership's NTN.
    */
-  private String getSuffix(ProgrammeMembership programmeMembership) {
+  private String getSuffix(ProgrammeMembershipDto programmeMembership) {
     log.info("Calculating suffix.");
     String trainingPathway = programmeMembership.getTrainingPathway();
     log.info("Using training pathway '{}' to calculate suffix.", trainingPathway);
@@ -198,7 +198,7 @@ public class NtnGenerator {
       case "CCT" -> "C";
       case "CESR" -> "CP";
       default -> {
-        List<Curriculum> sortedCurricula = filterAndSortCurricula(programmeMembership);
+        List<CurriculumDto> sortedCurricula = filterAndSortCurricula(programmeMembership);
         String firstSpecialtyCode = sortedCurricula.get(0).getCurriculumSpecialtyCode();
         log.info("Using specialty code '{}' to calculate suffix.", trainingPathway);
 
@@ -216,7 +216,7 @@ public class NtnGenerator {
    * @param programmeMembership The programme membership to filter and sort the curricula of.
    * @return The NTN valid curricula for this PM, sorted alphanumerically by subtype and code.
    */
-  private List<Curriculum> filterAndSortCurricula(ProgrammeMembership programmeMembership) {
+  private List<CurriculumDto> filterAndSortCurricula(ProgrammeMembershipDto programmeMembership) {
     LocalDate startDate = programmeMembership.getStartDate();
     LocalDate now = LocalDate.now();
     LocalDate filterDate = startDate.isAfter(now) ? startDate : now;
@@ -227,9 +227,9 @@ public class NtnGenerator {
         .filter(c -> !c.getCurriculumStartDate().isAfter(filterDate))
         .filter(c -> !c.getCurriculumEndDate().isBefore(filterDate))
         .sorted(Comparator
-            .comparing(Curriculum::getCurriculumSubType)
+            .comparing(CurriculumDto::getCurriculumSubType)
             .reversed()
-            .thenComparing(Curriculum::getCurriculumSpecialtyCode)
+            .thenComparing(CurriculumDto::getCurriculumSpecialtyCode)
             .reversed()
         )
         .toList();
@@ -241,7 +241,7 @@ public class NtnGenerator {
    * @param personalDetails The personal details to check.
    * @return true if NTN generated cannot continue, else false.
    */
-  private boolean isExcluded(PersonalDetails personalDetails) {
+  private boolean isExcluded(PersonalDetailsDto personalDetails) {
     if (personalDetails == null) {
       log.info("Skipping NTN population as personal details not available.");
       return true;
@@ -267,7 +267,7 @@ public class NtnGenerator {
    * @param programmeMembership The programme membership to check.
    * @return true if NTN generated cannot continue, else false.
    */
-  private boolean isExcluded(ProgrammeMembership programmeMembership) {
+  private boolean isExcluded(ProgrammeMembershipDto programmeMembership) {
     String programmeNumber = programmeMembership.getProgrammeNumber();
     if (programmeNumber == null || programmeNumber.isBlank()) {
       log.info("Skipping NTN population as programme number is blank.");
@@ -287,7 +287,7 @@ public class NtnGenerator {
       return true;
     }
 
-    List<Curriculum> validCurricula = filterAndSortCurricula(programmeMembership);
+    List<CurriculumDto> validCurricula = filterAndSortCurricula(programmeMembership);
     if (validCurricula.isEmpty()) {
       log.info("Skipping NTN population as there are no valid curricula.");
       return true;

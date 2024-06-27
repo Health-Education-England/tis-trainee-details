@@ -21,29 +21,56 @@
 
 package uk.nhs.hee.trainee.details.mapper;
 
+import lombok.extern.slf4j.Slf4j;
+import org.mapstruct.AfterMapping;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
+import org.springframework.beans.factory.annotation.Autowired;
 import uk.nhs.hee.trainee.details.dto.TraineeProfileDto;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
+import uk.nhs.hee.trainee.details.service.NtnGenerator;
 
+/**
+ * A mapper to convert Trainee Profiles between entity and DTO representations.
+ */
+@Slf4j
 @Mapper(componentModel = "spring", uses = {
     PersonalDetailsMapper.class,
     PlacementMapper.class,
     ProgrammeMembershipMapper.class
 })
-public interface TraineeProfileMapper {
+public abstract class TraineeProfileMapper {
 
-  TraineeProfileDto toDto(TraineeProfile traineeProfile);
+  @Autowired
+  protected NtnGenerator ntnGenerator;
+
+  public abstract TraineeProfileDto toDto(TraineeProfile traineeProfile);
+
+  /**
+   * Generate NTN for all programme memberships in the profile.
+   *
+   * @param dto The trainee profile to generate NTNs for.
+   */
+  @AfterMapping
+  protected void generateNtns(@MappingTarget TraineeProfileDto dto) {
+    try {
+      ntnGenerator.populateNtns(dto);
+    } catch (RuntimeException e) {
+      // Failure to populate the NTN should never block the profile being returned.
+      log.error("Caught and ignoring NTN generation runtime error:", e);
+    }
+  }
 
   @Mapping(target = "version", ignore = true)
-  TraineeProfile toEntity(TraineeProfileDto traineeProfileDto);
+  public abstract TraineeProfile toEntity(TraineeProfileDto traineeProfileDto);
 
   @BeanMapping(ignoreByDefault = true)
   @Mapping(target = "personalDetails.publicHealthNumber", source = "publicHealthNumber")
-  void updateBasicDetails(@MappingTarget TraineeProfile target, PersonalDetails source);
+  public abstract void updateBasicDetails(@MappingTarget TraineeProfile target,
+      PersonalDetails source);
 
   @BeanMapping(ignoreByDefault = true)
   @Mapping(target = "personalDetails.title", source = "title")
@@ -59,24 +86,29 @@ public interface TraineeProfileMapper {
   @Mapping(target = "personalDetails.address3", source = "address3")
   @Mapping(target = "personalDetails.address4", source = "address4")
   @Mapping(target = "personalDetails.postCode", source = "postCode")
-  void updateContactDetails(@MappingTarget TraineeProfile target, PersonalDetails source);
+  public abstract void updateContactDetails(@MappingTarget TraineeProfile target,
+      PersonalDetails source);
 
   @BeanMapping(ignoreByDefault = true)
   @Mapping(target = "personalDetails.gdcNumber", source = "gdcNumber")
   @Mapping(target = "personalDetails.gdcStatus", source = "gdcStatus")
-  void updateGdcDetails(@MappingTarget TraineeProfile target, PersonalDetails source);
+  public abstract void updateGdcDetails(@MappingTarget TraineeProfile target,
+      PersonalDetails source);
 
   @BeanMapping(ignoreByDefault = true)
   @Mapping(target = "personalDetails.gmcNumber", source = "gmcNumber")
   @Mapping(target = "personalDetails.gmcStatus", source = "gmcStatus")
-  void updateGmcDetails(@MappingTarget TraineeProfile target, PersonalDetails source);
+  public abstract void updateGmcDetails(@MappingTarget TraineeProfile target,
+      PersonalDetails source);
 
   @BeanMapping(ignoreByDefault = true)
   @Mapping(target = "personalDetails.personOwner", source = "personOwner")
-  void updatePersonOwner(@MappingTarget TraineeProfile target, PersonalDetails source);
+  public abstract void updatePersonOwner(@MappingTarget TraineeProfile target,
+      PersonalDetails source);
 
   @BeanMapping(ignoreByDefault = true)
   @Mapping(target = "personalDetails.dateOfBirth", source = "dateOfBirth")
   @Mapping(target = "personalDetails.gender", source = "gender")
-  void updatePersonalInfo(@MappingTarget TraineeProfile target, PersonalDetails source);
+  public abstract void updatePersonalInfo(@MappingTarget TraineeProfile target,
+      PersonalDetails source);
 }
