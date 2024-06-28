@@ -23,9 +23,11 @@ package uk.nhs.hee.trainee.details.service;
 
 import java.time.LocalDate;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Objects;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.dto.CurriculumDto;
@@ -221,6 +223,8 @@ public class NtnGenerator {
     LocalDate now = LocalDate.now();
     LocalDate filterDate = startDate.isAfter(now) ? startDate : now;
 
+    Set<String> uniqueSpecialtyCodes = new HashSet<>();
+
     return programmeMembership.getCurricula().stream()
         .filter(c ->
             c.getCurriculumSpecialtyCode() != null && !c.getCurriculumSpecialtyCode().isBlank())
@@ -232,6 +236,7 @@ public class NtnGenerator {
             .thenComparing(CurriculumDto::getCurriculumSpecialtyCode)
             .reversed()
         )
+        .filter(c -> uniqueSpecialtyCodes.add(c.getCurriculumSpecialtyCode()))
         .toList();
   }
 
