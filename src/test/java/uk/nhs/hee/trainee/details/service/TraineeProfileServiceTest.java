@@ -117,7 +117,7 @@ class TraineeProfileServiceTest {
   private TraineeProfileRepository repository;
 
   @Mock
-  private NtnGenerator ntnGenerator;
+  private TrainingNumberGenerator trainingNumberGenerator;
 
   private TraineeProfile traineeProfile = new TraineeProfile();
   private TraineeProfile traineeProfile2 = new TraineeProfile();

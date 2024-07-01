@@ -36,36 +36,38 @@ import uk.nhs.hee.trainee.details.dto.ProgrammeMembershipDto;
 import uk.nhs.hee.trainee.details.dto.TraineeProfileDto;
 
 /**
- * A service for handling trainee NTNs/DRNs.
+ * A service for handling trainee training numbers (NTNs/DRNs).
  */
 @Slf4j
 @Service
-public class NtnGenerator {
+public class TrainingNumberGenerator {
 
   /**
-   * Populate the NTN for all programme memberships in the trainee profile.
+   * Populate the training numbers for all programme memberships in the trainee profile.
    *
-   * @param traineeProfile The trainee profile to populate with NTNs.
+   * @param traineeProfile The trainee profile to populate with training number.
    */
-  public void populateNtns(TraineeProfileDto traineeProfile) {
+  public void populateTrainingNumbers(TraineeProfileDto traineeProfile) {
     PersonalDetailsDto personalDetails = traineeProfile.getPersonalDetails();
 
     if (isExcluded(personalDetails)) {
       return;
     }
 
-    traineeProfile.getProgrammeMemberships().forEach(pm -> populateNtn(personalDetails, pm));
+    traineeProfile.getProgrammeMemberships()
+        .forEach(pm -> popualteTrainingNumber(personalDetails, pm));
   }
 
   /**
-   * Populate the NTN for the given programme membership.
+   * Populate the trainingNumber for the given programme membership.
    *
-   * @param personalDetails     The personal details to use for NTN generation.
-   * @param programmeMembership The programme membership to generate the NTN for.
+   * @param personalDetails     The personal details to use for training number generation.
+   * @param programmeMembership The programme membership to generate the training number for.
    */
-  private void populateNtn(PersonalDetailsDto personalDetails,
+  private void popualteTrainingNumber(PersonalDetailsDto personalDetails,
       ProgrammeMembershipDto programmeMembership) {
-    log.info("Populating NTN for programme membership '{}'.", programmeMembership.getTisId());
+    log.info("Populating training number for programme membership '{}'.",
+        programmeMembership.getTisId());
 
     if (isExcluded(programmeMembership)) {
       return;
@@ -75,9 +77,10 @@ public class NtnGenerator {
     String specialtyConcat = getSpecialtyConcat(programmeMembership);
     String referenceNumber = getReferenceNumber(personalDetails);
     String suffix = getSuffix(programmeMembership);
-    String ntn = parentOrganization + "/" + specialtyConcat + "/" + referenceNumber + "/" + suffix;
-    programmeMembership.setNtn(ntn);
-    log.info("Populated NTN: {}.", ntn);
+    String trainingNumber =
+        parentOrganization + "/" + specialtyConcat + "/" + referenceNumber + "/" + suffix;
+    programmeMembership.setTrainingNumber(trainingNumber);
+    log.info("Populated training number: {}.", trainingNumber);
   }
 
   /**
@@ -133,7 +136,7 @@ public class NtnGenerator {
   }
 
   /**
-   * Get the concatenated specialty string for the programme membership's NTN.
+   * Get the concatenated specialty string for the programme membership's training number.
    *
    * @param programmeMembership The programme membership to get the specialty string for.
    * @return The concatenated specialty string.
@@ -186,10 +189,10 @@ public class NtnGenerator {
   }
 
   /**
-   * Get the NTN suffix for the given programme membership.
+   * Get the training number suffix for the given programme membership.
    *
    * @param programmeMembership The programme membership to get the suffix for.
-   * @return The calculated suffix for the programme membership's NTN.
+   * @return The calculated suffix for the programme membership's training number.
    */
   private String getSuffix(ProgrammeMembershipDto programmeMembership) {
     log.info("Calculating suffix.");
@@ -216,7 +219,7 @@ public class NtnGenerator {
    * Filter a programme membership's curricula and sort them alphanumerically.
    *
    * @param programmeMembership The programme membership to filter and sort the curricula of.
-   * @return The NTN valid curricula for this PM, sorted alphanumerically by subtype and code.
+   * @return The valid curricula for this PM, sorted alphanumerically by subtype and code.
    */
   private List<CurriculumDto> filterAndSortCurricula(ProgrammeMembershipDto programmeMembership) {
     LocalDate startDate = programmeMembership.getStartDate();
@@ -241,14 +244,14 @@ public class NtnGenerator {
   }
 
   /**
-   * Check whether the given personal details excludes NTN generation.
+   * Check whether the given personal details excludes training number generation.
    *
    * @param personalDetails The personal details to check.
-   * @return true if NTN generated cannot continue, else false.
+   * @return true if training number generated cannot continue, else false.
    */
   private boolean isExcluded(PersonalDetailsDto personalDetails) {
     if (personalDetails == null) {
-      log.info("Skipping NTN population as personal details not available.");
+      log.info("Skipping training number population as personal details not available.");
       return true;
     }
 
@@ -258,7 +261,7 @@ public class NtnGenerator {
       String gdcNumber = personalDetails.getGdcNumber();
 
       if (gdcNumber == null || !gdcNumber.matches("\\d{5}.*")) {
-        log.info("Skipping NTN population as reference number not valid.");
+        log.info("Skipping training number population as reference number not valid.");
         return true;
       }
     }
@@ -267,39 +270,39 @@ public class NtnGenerator {
   }
 
   /**
-   * Check whether the given programme membership is excluded for NTN generation.
+   * Check whether the given programme membership is excluded for training number generation.
    *
    * @param programmeMembership The programme membership to check.
-   * @return true if NTN generated cannot continue, else false.
+   * @return true if training number generated cannot continue, else false.
    */
   private boolean isExcluded(ProgrammeMembershipDto programmeMembership) {
     String programmeNumber = programmeMembership.getProgrammeNumber();
     if (programmeNumber == null || programmeNumber.isBlank()) {
-      log.info("Skipping NTN population as programme number is blank.");
+      log.info("Skipping training number population as programme number is blank.");
       return true;
     }
 
     String programmeName = programmeMembership.getProgrammeName();
     if (programmeName == null || programmeName.isBlank()) {
-      log.info("Skipping NTN population as programme name is blank.");
+      log.info("Skipping training number population as programme name is blank.");
       return true;
     }
 
     String lowerProgrammeName = programmeName.toLowerCase();
     if (lowerProgrammeName.contains("foundation")) {
-      log.info("Skipping NTN population as programme name '{}' is excluded.",
+      log.info("Skipping training number population as programme name '{}' is excluded.",
           programmeMembership.getProgrammeName());
       return true;
     }
 
     List<CurriculumDto> validCurricula = filterAndSortCurricula(programmeMembership);
     if (validCurricula.isEmpty()) {
-      log.info("Skipping NTN population as there are no valid curricula.");
+      log.info("Skipping training number population as there are no valid curricula.");
       return true;
     }
 
     if (programmeMembership.getTrainingPathway() == null) {
-      log.error("Unable to generate NTN as training pathway was null.");
+      log.error("Unable to generate training number as training pathway was null.");
       return true;
     }
 

@@ -46,7 +46,7 @@ import uk.nhs.hee.trainee.details.dto.ProgrammeMembershipDto;
 import uk.nhs.hee.trainee.details.dto.TraineeProfileDto;
 
 @ExtendWith(OutputCaptureExtension.class)
-class NtnGeneratorTest {
+class TrainingNumberGeneratorTest {
 
   private static final String CURRICULUM_SPECIALTY_CODE = "ABC";
   private static final String CURRICULUM_SUB_TYPE_MC = "MEDICAL_CURRICULUM";
@@ -62,15 +62,15 @@ class NtnGeneratorTest {
   private static final LocalDate PAST = NOW.minusYears(1);
   private static final LocalDate FUTURE = NOW.plusYears(1);
 
-  private NtnGenerator service;
+  private TrainingNumberGenerator service;
 
   @BeforeEach
   void setUp() {
-    service = new NtnGenerator();
+    service = new TrainingNumberGenerator();
   }
 
   @Test
-  void shouldNotPopulateNtnWhenNoPersonalDetails(CapturedOutput output) {
+  void shouldNotPopulateTrainingNumberWhenNoPersonalDetails(CapturedOutput output) {
     TraineeProfileDto profile = new TraineeProfileDto();
 
     profile.setPersonalDetails(null);
@@ -89,19 +89,20 @@ class NtnGeneratorTest {
     curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
-    service.populateNtns(profile);
+    service.populateTrainingNumbers(profile);
 
-    String ntn = pm.getNtn();
-    assertThat("Unexpected ntn.", ntn, nullValue());
+    String trainingNumber = pm.getTrainingNumber();
+    assertThat("Unexpected training number.", trainingNumber, nullValue());
 
     assertThat("Expected log not found.", output.getOut(),
-        containsString("Skipping NTN population as personal details not available."));
+        containsString("Skipping training number population as personal details not available."));
   }
 
   @ParameterizedTest
   @NullAndEmptySource
   @ValueSource(strings = {" ", "abcd", "1234"})
-  void shouldNotPopulateNtnWhenNoGmcOrGdcNumber(String referenceNumber, CapturedOutput output) {
+  void shouldNotPopulateTrainingNumberWhenNoGmcOrGdcNumber(String referenceNumber,
+      CapturedOutput output) {
     TraineeProfileDto profile = new TraineeProfileDto();
 
     PersonalDetailsDto personalDetails = new PersonalDetailsDto();
@@ -123,19 +124,20 @@ class NtnGeneratorTest {
     curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
-    service.populateNtns(profile);
+    service.populateTrainingNumbers(profile);
 
-    String ntn = pm.getNtn();
-    assertThat("Unexpected ntn.", ntn, nullValue());
+    String trainingNumber = pm.getTrainingNumber();
+    assertThat("Unexpected training number.", trainingNumber, nullValue());
 
     assertThat("Expected log not found.", output.getOut(),
-        containsString("Skipping NTN population as reference number not valid."));
+        containsString("Skipping training number population as reference number not valid."));
   }
 
   @ParameterizedTest
   @NullAndEmptySource
   @ValueSource(strings = " ")
-  void shouldNotPopulateNtnWhenNoProgrammeNumber(String programmeNumber, CapturedOutput output) {
+  void shouldNotPopulateTrainingNumberWhenNoProgrammeNumber(String programmeNumber,
+      CapturedOutput output) {
     TraineeProfileDto profile = new TraineeProfileDto();
 
     PersonalDetailsDto personalDetails = new PersonalDetailsDto();
@@ -156,54 +158,19 @@ class NtnGeneratorTest {
     curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
-    service.populateNtns(profile);
+    service.populateTrainingNumbers(profile);
 
-    String ntn = pm.getNtn();
-    assertThat("Unexpected ntn.", ntn, nullValue());
+    String trainingNumber = pm.getTrainingNumber();
+    assertThat("Unexpected training number.", trainingNumber, nullValue());
 
     assertThat("Expected log not found.", output.getOut(),
-        containsString("Skipping NTN population as programme number is blank."));
+        containsString("Skipping training number population as programme number is blank."));
   }
 
   @ParameterizedTest
   @NullAndEmptySource
   @ValueSource(strings = " ")
-  void shouldNotPopulateNtnWhenNoProgrammeName(String programmeName, CapturedOutput output) {
-    TraineeProfileDto profile = new TraineeProfileDto();
-
-    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
-    personalDetails.setGmcNumber(GMC_NUMBER);
-    profile.setPersonalDetails(personalDetails);
-
-    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
-    pm.setManagingDeanery(OWNER_NAME);
-    pm.setProgrammeName(programmeName);
-    pm.setProgrammeNumber(PROGRAMME_NUMBER);
-    pm.setTrainingPathway(TRAINING_PATHWAY);
-    pm.setStartDate(NOW);
-    profile.setProgrammeMemberships(List.of(pm));
-
-    CurriculumDto curriculum = new CurriculumDto();
-    curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
-    curriculum.setCurriculumStartDate(PAST);
-    curriculum.setCurriculumEndDate(FUTURE);
-    pm.setCurricula(List.of(curriculum));
-
-    service.populateNtns(profile);
-
-    String ntn = pm.getNtn();
-    assertThat("Unexpected ntn.", ntn, nullValue());
-
-    assertThat("Expected log not found.", output.getOut(),
-        containsString("Skipping NTN population as programme name is blank."));
-  }
-
-  @ParameterizedTest
-  @ValueSource(strings = {
-      "foundation", "FOUNDATION", "prefix foundation", "foundation suffix",
-      "prefix foundation suffix"
-  })
-  void shouldNotPopulateNtnWhenProgrammeIsFoundation(String programmeName,
+  void shouldNotPopulateTrainingNumberWhenNoProgrammeName(String programmeName,
       CapturedOutput output) {
     TraineeProfileDto profile = new TraineeProfileDto();
 
@@ -225,17 +192,54 @@ class NtnGeneratorTest {
     curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
-    service.populateNtns(profile);
+    service.populateTrainingNumbers(profile);
 
-    String ntn = pm.getNtn();
-    assertThat("Unexpected ntn.", ntn, nullValue());
+    String trainingNumber = pm.getTrainingNumber();
+    assertThat("Unexpected training number.", trainingNumber, nullValue());
+
+    assertThat("Expected log not found.", output.getOut(),
+        containsString("Skipping training number population as programme name is blank."));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {
+      "foundation", "FOUNDATION", "prefix foundation", "foundation suffix",
+      "prefix foundation suffix"
+  })
+  void shouldNotPopulateTrainingNumberWhenProgrammeIsFoundation(String programmeName,
+      CapturedOutput output) {
+    TraineeProfileDto profile = new TraineeProfileDto();
+
+    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
+    personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
+
+    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
+    pm.setManagingDeanery(OWNER_NAME);
+    pm.setProgrammeName(programmeName);
+    pm.setProgrammeNumber(PROGRAMME_NUMBER);
+    pm.setTrainingPathway(TRAINING_PATHWAY);
+    pm.setStartDate(NOW);
+    profile.setProgrammeMemberships(List.of(pm));
+
+    CurriculumDto curriculum = new CurriculumDto();
+    curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
+    curriculum.setCurriculumStartDate(PAST);
+    curriculum.setCurriculumEndDate(FUTURE);
+    pm.setCurricula(List.of(curriculum));
+
+    service.populateTrainingNumbers(profile);
+
+    String trainingNumber = pm.getTrainingNumber();
+    assertThat("Unexpected training number.", trainingNumber, nullValue());
 
     assertThat("Expected log not found.", output.getOut(), containsString(
-        "Skipping NTN population as programme name '" + programmeName + "' is excluded."));
+        "Skipping training number population as programme name '" + programmeName
+            + "' is excluded."));
   }
 
   @Test
-  void shouldNotPopulateNtnWhenNoCurricula(CapturedOutput output) {
+  void shouldNotPopulateTrainingNumberWhenNoCurricula(CapturedOutput output) {
     TraineeProfileDto profile = new TraineeProfileDto();
 
     PersonalDetailsDto personalDetails = new PersonalDetailsDto();
@@ -251,16 +255,16 @@ class NtnGeneratorTest {
     pm.setCurricula(List.of());
     profile.setProgrammeMemberships(List.of(pm));
 
-    service.populateNtns(profile);
+    service.populateTrainingNumbers(profile);
 
-    String ntn = pm.getNtn();
-    assertThat("Unexpected ntn.", ntn, nullValue());
+    String trainingNumber = pm.getTrainingNumber();
+    assertThat("Unexpected training number.", trainingNumber, nullValue());
     assertThat("Expected log not found.", output.getOut(),
-        containsString("Skipping NTN population as there are no valid curricula."));
+        containsString("Skipping training number population as there are no valid curricula."));
   }
 
   @Test
-  void shouldNotPopulateNtnWhenNoCurrentCurricula(CapturedOutput output) {
+  void shouldNotPopulateTrainingNumberWhenNoCurrentCurricula(CapturedOutput output) {
     TraineeProfileDto profile = new TraineeProfileDto();
 
     PersonalDetailsDto personalDetails = new PersonalDetailsDto();
@@ -287,18 +291,18 @@ class NtnGeneratorTest {
 
     pm.setCurricula(List.of(past, future));
 
-    service.populateNtns(profile);
+    service.populateTrainingNumbers(profile);
 
-    String ntn = pm.getNtn();
-    assertThat("Unexpected ntn.", ntn, nullValue());
+    String trainingNumber = pm.getTrainingNumber();
+    assertThat("Unexpected training number.", trainingNumber, nullValue());
     assertThat("Expected log not found.", output.getOut(),
-        containsString("Skipping NTN population as there are no valid curricula."));
+        containsString("Skipping training number population as there are no valid curricula."));
   }
 
   @ParameterizedTest
   @NullAndEmptySource
   @ValueSource(strings = " ")
-  void shouldNotPopulateNtnWhenNoCurriculaSpecialtyCode(String specialtyCode,
+  void shouldNotPopulateTrainingNumberWhenNoCurriculaSpecialtyCode(String specialtyCode,
       CapturedOutput output) {
     TraineeProfileDto profile = new TraineeProfileDto();
 
@@ -320,16 +324,16 @@ class NtnGeneratorTest {
     curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
-    service.populateNtns(profile);
+    service.populateTrainingNumbers(profile);
 
-    String ntn = pm.getNtn();
-    assertThat("Unexpected ntn.", ntn, nullValue());
+    String trainingNumber = pm.getTrainingNumber();
+    assertThat("Unexpected training number.", trainingNumber, nullValue());
     assertThat("Expected log not found.", output.getOut(),
-        containsString("Skipping NTN population as there are no valid curricula."));
+        containsString("Skipping training number population as there are no valid curricula."));
   }
 
   @Test
-  void shouldNotPopulateNtnWhenTrainingPathwayNull(CapturedOutput output) {
+  void shouldNotPopulateTrainingNumberWhenTrainingPathwayNull(CapturedOutput output) {
     TraineeProfileDto profile = new TraineeProfileDto();
 
     PersonalDetailsDto personalDetails = new PersonalDetailsDto();
@@ -350,18 +354,18 @@ class NtnGeneratorTest {
     curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
-    service.populateNtns(profile);
+    service.populateTrainingNumbers(profile);
 
-    String ntn = pm.getNtn();
-    assertThat("Unexpected ntn.", ntn, nullValue());
+    String trainingNumber = pm.getTrainingNumber();
+    assertThat("Unexpected training number.", trainingNumber, nullValue());
     assertThat("Expected log not found.", output.getOut(),
-        containsString("Unable to generate NTN as training pathway was null."));
+        containsString("Unable to generate training number as training pathway was null."));
   }
 
   @ParameterizedTest
   @NullAndEmptySource
   @ValueSource(strings = {" ", "Unknown Organization"})
-  void shouldThrowExceptionPopulatingNtnWhenParentOrganizationNull(String ownerName) {
+  void shouldThrowExceptionPopulatingTrainingNumberWhenParentOrganizationNull(String ownerName) {
     TraineeProfileDto profile = new TraineeProfileDto();
 
     PersonalDetailsDto personalDetails = new PersonalDetailsDto();
@@ -383,14 +387,14 @@ class NtnGeneratorTest {
     pm.setCurricula(List.of(curriculum));
 
     IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-        () -> service.populateNtns(profile));
+        () -> service.populateTrainingNumbers(profile));
 
     assertThat("Unexpected message.", exception.getMessage(),
         is("Unable to calculate the parent organization."));
   }
 
   @Test
-  void shouldPopulateFullNtnWhenProgrammeIsCurrent() {
+  void shouldPopulateFullTrainingNumberWhenProgrammeIsCurrent() {
     TraineeProfileDto profile = new TraineeProfileDto();
     PersonalDetailsDto personalDetails = new PersonalDetailsDto();
     personalDetails.setGmcNumber(GMC_NUMBER);
@@ -424,13 +428,14 @@ class NtnGeneratorTest {
 
     pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3));
 
-    service.populateNtns(profile);
+    service.populateTrainingNumbers(profile);
 
-    assertThat("Unexpected NTN.", pm.getNtn(), is("LDN/ABC.XYZ.123/1234567/D"));
+    assertThat("Unexpected training number.", pm.getTrainingNumber(),
+        is("LDN/ABC.XYZ.123/1234567/D"));
   }
 
   @Test
-  void shouldPopulateFullNtnWhenProgrammeIsFuture() {
+  void shouldPopulateFullTrainingNumberWhenProgrammeIsFuture() {
     TraineeProfileDto profile = new TraineeProfileDto();
     PersonalDetailsDto personalDetails = new PersonalDetailsDto();
     personalDetails.setGmcNumber(GMC_NUMBER);
@@ -464,13 +469,14 @@ class NtnGeneratorTest {
 
     pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3));
 
-    service.populateNtns(profile);
+    service.populateTrainingNumbers(profile);
 
-    assertThat("Unexpected NTN.", pm.getNtn(), is("LDN/ABC.XYZ.123/1234567/D"));
+    assertThat("Unexpected training number.", pm.getTrainingNumber(),
+        is("LDN/ABC.XYZ.123/1234567/D"));
   }
 
   @Test
-  void shouldPopulateNtnsWhenTraineeProfileHasMultiplePms() {
+  void shouldPopulateTrainingNumbersWhenTraineeProfileHasMultiplePms() {
     TraineeProfileDto traineeProfile = new TraineeProfileDto();
     PersonalDetailsDto personalDetails = new PersonalDetailsDto();
     personalDetails.setGmcNumber(GMC_NUMBER);
@@ -520,11 +526,11 @@ class NtnGeneratorTest {
 
     traineeProfile.setProgrammeMemberships(List.of(pm1, pm2, pm3));
 
-    service.populateNtns(traineeProfile);
+    service.populateTrainingNumbers(traineeProfile);
 
-    assertThat("Unexpected NTN.", pm1.getNtn(), nullValue());
-    assertThat("Unexpected NTN.", pm2.getNtn(), is("LDN/123/1234567/D"));
-    assertThat("Unexpected NTN.", pm3.getNtn(), is("LDN/XYZ/1234567/D"));
+    assertThat("Unexpected training number.", pm1.getTrainingNumber(), nullValue());
+    assertThat("Unexpected training number.", pm2.getTrainingNumber(), is("LDN/123/1234567/D"));
+    assertThat("Unexpected training number.", pm3.getTrainingNumber(), is("LDN/XYZ/1234567/D"));
   }
 
   @ParameterizedTest
@@ -546,7 +552,7 @@ class NtnGeneratorTest {
       Severn Deanery                                         | SEV
       South West Peninsula Deanery                           | PEN
       """)
-  void shouldPopulateNtnWithParentOrganizationWhenMappedByOwner(String ownerName,
+  void shouldPopulateTrainingNumberWithParentOrganizationWhenMappedByOwner(String ownerName,
       String ownerCode) {
     TraineeProfileDto profile = new TraineeProfileDto();
 
@@ -568,11 +574,11 @@ class NtnGeneratorTest {
     curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
-    service.populateNtns(profile);
+    service.populateTrainingNumbers(profile);
 
-    String ntn = pm.getNtn();
-    String[] ntnParts = ntn.split("/");
-    assertThat("Unexpected parent organization.", ntnParts[0], is(ownerCode));
+    String trainingNumber = pm.getTrainingNumber();
+    String[] trainingNumberParts = trainingNumber.split("/");
+    assertThat("Unexpected parent organization.", trainingNumberParts[0], is(ownerCode));
   }
 
   @ParameterizedTest
@@ -581,7 +587,7 @@ class NtnGeneratorTest {
       Health Education England South West | ABCYXZ | ABC
       Health Education England South West | XYZABC | XYZ
       """)
-  void shouldPopulateNtnWithParentOrganizationWhenOwnerIsSouthWest(String ownerName,
+  void shouldPopulateTrainingNumberWithParentOrganizationWhenOwnerIsSouthWest(String ownerName,
       String programmeNumber, String ownerCode) {
     TraineeProfileDto profile = new TraineeProfileDto();
 
@@ -603,11 +609,11 @@ class NtnGeneratorTest {
     curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
-    service.populateNtns(profile);
+    service.populateTrainingNumbers(profile);
 
-    String ntn = pm.getNtn();
-    String[] ntnParts = ntn.split("/");
-    assertThat("Unexpected parent organization.", ntnParts[0], is(ownerCode));
+    String trainingNumber = pm.getTrainingNumber();
+    String[] trainingNumberParts = trainingNumber.split("/");
+    assertThat("Unexpected parent organization.", trainingNumberParts[0], is(ownerCode));
   }
 
   @ParameterizedTest
@@ -616,8 +622,9 @@ class NtnGeneratorTest {
       999 | 111 | ZZZ | AAA | ZZZ-AAA-999-111
       001 | 010 | 100 | 111 | 111-100-010-001
       """)
-  void shouldPopulateNtnWithOrderedSpecialtyConcatWhenMultipleSpecialty(String specialty1,
-      String specialty2, String specialty3, String specialty4, String ntnPart) {
+  void shouldPopulateTrainingNumberWithOrderedSpecialtyConcatWhenMultipleSpecialty(
+      String specialty1,
+      String specialty2, String specialty3, String specialty4, String trainingNumberPart) {
     TraineeProfileDto profile = new TraineeProfileDto();
 
     PersonalDetailsDto personalDetails = new PersonalDetailsDto();
@@ -658,16 +665,16 @@ class NtnGeneratorTest {
 
     pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3, curriculum4));
 
-    service.populateNtns(profile);
+    service.populateTrainingNumbers(profile);
 
-    String ntn = pm.getNtn();
-    String[] ntnParts = ntn.split("/");
-    assertThat("Unexpected parent organization.", ntnParts[1], is(ntnPart));
+    String trainingNumber = pm.getTrainingNumber();
+    String[] trainingNumberParts = trainingNumber.split("/");
+    assertThat("Unexpected parent organization.", trainingNumberParts[1], is(trainingNumberPart));
   }
 
   @ParameterizedTest
   @ValueSource(ints = {1, 2, 3, 4, 10})
-  void shouldPopulateNtnWithDotNotatedSpecialtyConcatWhenHasSubSpecialties(
+  void shouldPopulateTrainingNumberWithDotNotatedSpecialtyConcatWhenHasSubSpecialties(
       int additionalCurriculaCount) {
     TraineeProfileDto profile = new TraineeProfileDto();
 
@@ -712,18 +719,18 @@ class NtnGeneratorTest {
       curricula.add(additionalCurriculum);
     }
 
-    service.populateNtns(profile);
+    service.populateTrainingNumbers(profile);
 
-    String ntn = pm.getNtn();
-    String[] ntnParts = ntn.split("/");
-    assertThat("Unexpected parent organization.", ntnParts[1], endsWith(".999.888"));
+    String trainingNumber = pm.getTrainingNumber();
+    String[] trainingNumberParts = trainingNumber.split("/");
+    assertThat("Unexpected parent organization.", trainingNumberParts[1], endsWith(".999.888"));
 
-    long dotCount = ntnParts[1].chars().filter(ch -> ch == '.').count();
+    long dotCount = trainingNumberParts[1].chars().filter(ch -> ch == '.').count();
     assertThat("Unexpected sub specialty count.", dotCount, is(2L));
   }
 
   @Test
-  void shouldPopulateNtnWithFixedSpecialtyConcatWhenFirstSpecialtyIsAft() {
+  void shouldPopulateTrainingNumberWithFixedSpecialtyConcatWhenFirstSpecialtyIsAft() {
     TraineeProfileDto profile = new TraineeProfileDto();
 
     PersonalDetailsDto personalDetails = new PersonalDetailsDto();
@@ -761,11 +768,11 @@ class NtnGeneratorTest {
 
     pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3));
 
-    service.populateNtns(profile);
+    service.populateTrainingNumbers(profile);
 
-    String ntn = pm.getNtn();
-    String[] ntnParts = ntn.split("/");
-    assertThat("Unexpected parent organization.", ntnParts[1], is("ACA-FND"));
+    String trainingNumber = pm.getTrainingNumber();
+    String[] trainingNumberParts = trainingNumber.split("/");
+    assertThat("Unexpected parent organization.", trainingNumberParts[1], is("ACA-FND"));
   }
 
   @ParameterizedTest
@@ -777,8 +784,8 @@ class NtnGeneratorTest {
       111 | AAA | ZZZ
       111 | ZZZ | AAA
       """)
-  void shouldFilterCurriculaWhenPopulatingNtnWithOrderedSpecialtyConcatAndCurriculaEnding(
-      String pastSpecialty, String endingSpecialty, String futureSpecialty) {
+  void shouldFilterCurriculaWhenPopulatingTrainingNumberAndCurriculaEnding(String pastSpecialty,
+      String endingSpecialty, String futureSpecialty) {
     TraineeProfileDto profile = new TraineeProfileDto();
 
     PersonalDetailsDto personalDetails = new PersonalDetailsDto();
@@ -819,11 +826,11 @@ class NtnGeneratorTest {
 
     pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3, curriculum4));
 
-    service.populateNtns(profile);
+    service.populateTrainingNumbers(profile);
 
-    String ntn = pm.getNtn();
-    String[] ntnParts = ntn.split("/");
-    assertThat("Unexpected parent organization.", ntnParts[1], is(endingSpecialty));
+    String trainingNumber = pm.getTrainingNumber();
+    String[] trainingNumberParts = trainingNumber.split("/");
+    assertThat("Unexpected parent organization.", trainingNumberParts[1], is(endingSpecialty));
   }
 
   @ParameterizedTest
@@ -835,8 +842,8 @@ class NtnGeneratorTest {
       111 | AAA | ZZZ
       111 | ZZZ | AAA
       """)
-  void shouldFilterCurriculaWhenPopulatingNtnWithOrderedSpecialtyConcatAndCurriculaCurrent(
-      String pastSpecialty, String currentSpecialty, String futureSpecialty) {
+  void shouldFilterCurriculaWhenPopulatingTrainingNumberCurriculaCurrent(String pastSpecialty,
+      String currentSpecialty, String futureSpecialty) {
     TraineeProfileDto profile = new TraineeProfileDto();
 
     PersonalDetailsDto personalDetails = new PersonalDetailsDto();
@@ -877,11 +884,11 @@ class NtnGeneratorTest {
 
     pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3, curriculum4));
 
-    service.populateNtns(profile);
+    service.populateTrainingNumbers(profile);
 
-    String ntn = pm.getNtn();
-    String[] ntnParts = ntn.split("/");
-    assertThat("Unexpected parent organization.", ntnParts[1], is(currentSpecialty));
+    String trainingNumber = pm.getTrainingNumber();
+    String[] trainingNumberParts = trainingNumber.split("/");
+    assertThat("Unexpected parent organization.", trainingNumberParts[1], is(currentSpecialty));
   }
 
   @ParameterizedTest
@@ -893,8 +900,8 @@ class NtnGeneratorTest {
       111 | AAA | ZZZ
       111 | ZZZ | AAA
       """)
-  void shouldFilterCurriculaWhenPopulatingNtnWithOrderedSpecialtyConcatAndCurriculaStarting(
-      String pastSpecialty, String startingSpecialty, String futureSpecialty) {
+  void shouldFilterCurriculaWhenPopulatingTrainingNumberAndCurriculaStarting(String pastSpecialty,
+      String startingSpecialty, String futureSpecialty) {
     TraineeProfileDto profile = new TraineeProfileDto();
 
     PersonalDetailsDto personalDetails = new PersonalDetailsDto();
@@ -935,11 +942,11 @@ class NtnGeneratorTest {
 
     pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3, curriculum4));
 
-    service.populateNtns(profile);
+    service.populateTrainingNumbers(profile);
 
-    String ntn = pm.getNtn();
-    String[] ntnParts = ntn.split("/");
-    assertThat("Unexpected parent organization.", ntnParts[1], is(startingSpecialty));
+    String trainingNumber = pm.getTrainingNumber();
+    String[] trainingNumberParts = trainingNumber.split("/");
+    assertThat("Unexpected parent organization.", trainingNumberParts[1], is(startingSpecialty));
   }
 
   @ParameterizedTest
@@ -951,8 +958,8 @@ class NtnGeneratorTest {
       111 | AAA | ZZZ
       111 | ZZZ | AAA
       """)
-  void shouldFilterCurriculaWhenPopulatingNtnWithOrderedSpecialtyConcatAndProgrammeFuture(
-      String currentSpecialty, String futureSpecialty, String farFutureSpecialty) {
+  void shouldFilterCurriculaWhenPopulatingTrainingNumberAndProgrammeFuture(String currentSpecialty,
+      String futureSpecialty, String farFutureSpecialty) {
     TraineeProfileDto profile = new TraineeProfileDto();
 
     PersonalDetailsDto personalDetails = new PersonalDetailsDto();
@@ -993,11 +1000,11 @@ class NtnGeneratorTest {
 
     pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3, curriculum4));
 
-    service.populateNtns(profile);
+    service.populateTrainingNumbers(profile);
 
-    String ntn = pm.getNtn();
-    String[] ntnParts = ntn.split("/");
-    assertThat("Unexpected parent organization.", ntnParts[1], is(futureSpecialty));
+    String trainingNumber = pm.getTrainingNumber();
+    String[] trainingNumberParts = trainingNumber.split("/");
+    assertThat("Unexpected parent organization.", trainingNumberParts[1], is(futureSpecialty));
   }
 
   @ParameterizedTest
@@ -1009,8 +1016,8 @@ class NtnGeneratorTest {
       111 | AAA | 111
       111 | 111 | AAA
       """)
-  void shouldFilterCurriculaWhenPopulatingNtnWithOrderedSpecialtyConcatAndDuplicateSpecialties(
-      String specialty1, String specialty2, String specialty3) {
+  void shouldFilterCurriculaWhenPopulatingTrainingNumberAndDuplicateSpecialties(String specialty1,
+      String specialty2, String specialty3) {
     TraineeProfileDto profile = new TraineeProfileDto();
 
     PersonalDetailsDto personalDetails = new PersonalDetailsDto();
@@ -1051,15 +1058,15 @@ class NtnGeneratorTest {
 
     pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3, curriculum4));
 
-    service.populateNtns(profile);
+    service.populateTrainingNumbers(profile);
 
-    String ntn = pm.getNtn();
-    String[] ntnParts = ntn.split("/");
-    assertThat("Unexpected parent organization.", ntnParts[1], is("AAA-111"));
+    String trainingNumber = pm.getTrainingNumber();
+    String[] trainingNumberParts = trainingNumber.split("/");
+    assertThat("Unexpected parent organization.", trainingNumberParts[1], is("AAA-111"));
   }
 
   @Test
-  void shouldPopulateNtnWithGmcNumberWhenValid() {
+  void shouldPopulateTrainingNumberWithGmcNumberWhenValid() {
     TraineeProfileDto profile = new TraineeProfileDto();
 
     PersonalDetailsDto personalDetails = new PersonalDetailsDto();
@@ -1080,16 +1087,16 @@ class NtnGeneratorTest {
     curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
-    service.populateNtns(profile);
+    service.populateTrainingNumbers(profile);
 
-    String ntn = pm.getNtn();
-    String[] ntnParts = ntn.split("/");
-    assertThat("Unexpected parent organization.", ntnParts[2], is(GMC_NUMBER));
+    String trainingNumber = pm.getTrainingNumber();
+    String[] trainingNumberParts = trainingNumber.split("/");
+    assertThat("Unexpected parent organization.", trainingNumberParts[2], is(GMC_NUMBER));
   }
 
   @ParameterizedTest
   @ValueSource(strings = {"abc", "12345678"})
-  void shouldPopulateNtnWithGdcNumberWhenValidAndGmcInvalid(String gmcNumber) {
+  void shouldPopulateTrainingNumberWithGdcNumberWhenValidAndGmcInvalid(String gmcNumber) {
     TraineeProfileDto profile = new TraineeProfileDto();
 
     PersonalDetailsDto personalDetails = new PersonalDetailsDto();
@@ -1111,11 +1118,11 @@ class NtnGeneratorTest {
     curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
-    service.populateNtns(profile);
+    service.populateTrainingNumbers(profile);
 
-    String ntn = pm.getNtn();
-    String[] ntnParts = ntn.split("/");
-    assertThat("Unexpected parent organization.", ntnParts[2], is(GDC_NUMBER));
+    String trainingNumber = pm.getTrainingNumber();
+    String[] trainingNumberParts = trainingNumber.split("/");
+    assertThat("Unexpected parent organization.", trainingNumberParts[2], is(GDC_NUMBER));
   }
 
   @ParameterizedTest
@@ -1124,7 +1131,7 @@ class NtnGeneratorTest {
       CESR | CP
       N/A  | D
       """)
-  void shouldPopulateNtnWithSuffixWhenMappedByTrainingPathway(String trainingPathway,
+  void shouldPopulateTrainingNumberWithSuffixWhenMappedByTrainingPathway(String trainingPathway,
       String suffix) {
     TraineeProfileDto profile = new TraineeProfileDto();
 
@@ -1146,15 +1153,15 @@ class NtnGeneratorTest {
     curriculum.setCurriculumEndDate(FUTURE);
     pm.setCurricula(List.of(curriculum));
 
-    service.populateNtns(profile);
+    service.populateTrainingNumbers(profile);
 
-    String ntn = pm.getNtn();
-    String[] ntnParts = ntn.split("/");
-    assertThat("Unexpected parent organization.", ntnParts[3], is(suffix));
+    String trainingNumber = pm.getTrainingNumber();
+    String[] trainingNumberParts = trainingNumber.split("/");
+    assertThat("Unexpected parent organization.", trainingNumberParts[3], is(suffix));
   }
 
   @Test
-  void shouldPopulateNtnWithSuffixWhenSpecialtyIsAcademic() {
+  void shouldPopulateTrainingNumberWithSuffixWhenSpecialtyIsAcademic() {
     TraineeProfileDto profile = new TraineeProfileDto();
 
     PersonalDetailsDto personalDetails = new PersonalDetailsDto();
@@ -1183,15 +1190,15 @@ class NtnGeneratorTest {
 
     pm.setCurricula(List.of(curriculum1, curriculum2));
 
-    service.populateNtns(profile);
+    service.populateTrainingNumbers(profile);
 
-    String ntn = pm.getNtn();
-    String[] ntnParts = ntn.split("/");
-    assertThat("Unexpected parent organization.", ntnParts[3], is("C"));
+    String trainingNumber = pm.getTrainingNumber();
+    String[] trainingNumberParts = trainingNumber.split("/");
+    assertThat("Unexpected parent organization.", trainingNumberParts[3], is("C"));
   }
 
   @Test
-  void shouldFilterCurriculaWhenPopulatingNtnWithSuffixAndCurriculaEnding() {
+  void shouldFilterCurriculaWhenPopulatingTrainingNumberWithSuffixAndCurriculaEnding() {
     TraineeProfileDto profile = new TraineeProfileDto();
 
     PersonalDetailsDto personalDetails = new PersonalDetailsDto();
@@ -1229,15 +1236,15 @@ class NtnGeneratorTest {
 
     pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3));
 
-    service.populateNtns(profile);
+    service.populateTrainingNumbers(profile);
 
-    String ntn = pm.getNtn();
-    String[] ntnParts = ntn.split("/");
-    assertThat("Unexpected parent organization.", ntnParts[3], is("D"));
+    String trainingNumber = pm.getTrainingNumber();
+    String[] trainingNumberParts = trainingNumber.split("/");
+    assertThat("Unexpected parent organization.", trainingNumberParts[3], is("D"));
   }
 
   @Test
-  void shouldFilterCurriculaWhenPopulatingNtnWithSuffixAndCurriculaCurrent() {
+  void shouldFilterCurriculaWhenPopulatingTrainingNumberWithSuffixAndCurriculaCurrent() {
     TraineeProfileDto profile = new TraineeProfileDto();
 
     PersonalDetailsDto personalDetails = new PersonalDetailsDto();
@@ -1275,15 +1282,15 @@ class NtnGeneratorTest {
 
     pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3));
 
-    service.populateNtns(profile);
+    service.populateTrainingNumbers(profile);
 
-    String ntn = pm.getNtn();
-    String[] ntnParts = ntn.split("/");
-    assertThat("Unexpected parent organization.", ntnParts[3], is("D"));
+    String trainingNumber = pm.getTrainingNumber();
+    String[] trainingNumberParts = trainingNumber.split("/");
+    assertThat("Unexpected parent organization.", trainingNumberParts[3], is("D"));
   }
 
   @Test
-  void shouldFilterCurriculaWhenPopulatingNtnWithSuffixAndCurriculaStarting() {
+  void shouldFilterCurriculaWhenPopulatingTrainingNumberWithSuffixAndCurriculaStarting() {
     TraineeProfileDto profile = new TraineeProfileDto();
 
     PersonalDetailsDto personalDetails = new PersonalDetailsDto();
@@ -1321,15 +1328,15 @@ class NtnGeneratorTest {
 
     pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3));
 
-    service.populateNtns(profile);
+    service.populateTrainingNumbers(profile);
 
-    String ntn = pm.getNtn();
-    String[] ntnParts = ntn.split("/");
-    assertThat("Unexpected parent organization.", ntnParts[3], is("D"));
+    String trainingNumber = pm.getTrainingNumber();
+    String[] trainingNumberParts = trainingNumber.split("/");
+    assertThat("Unexpected parent organization.", trainingNumberParts[3], is("D"));
   }
 
   @Test
-  void shouldFilterCurriculaWhenPopulatingNtnWithSuffixAndProgrammeFuture() {
+  void shouldFilterCurriculaWhenPopulatingTrainingNumberWithSuffixAndProgrammeFuture() {
     TraineeProfileDto profile = new TraineeProfileDto();
 
     PersonalDetailsDto personalDetails = new PersonalDetailsDto();
@@ -1374,10 +1381,10 @@ class NtnGeneratorTest {
 
     pm.setCurricula(List.of(curriculum1, curriculum2, curriculum3, curriculum4));
 
-    service.populateNtns(profile);
+    service.populateTrainingNumbers(profile);
 
-    String ntn = pm.getNtn();
-    String[] ntnParts = ntn.split("/");
-    assertThat("Unexpected parent organization.", ntnParts[3], is("D"));
+    String trainingNumber = pm.getTrainingNumber();
+    String[] trainingNumberParts = trainingNumber.split("/");
+    assertThat("Unexpected parent organization.", trainingNumberParts[3], is("D"));
   }
 }

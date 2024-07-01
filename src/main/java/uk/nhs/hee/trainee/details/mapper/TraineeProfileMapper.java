@@ -31,7 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import uk.nhs.hee.trainee.details.dto.TraineeProfileDto;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
-import uk.nhs.hee.trainee.details.service.NtnGenerator;
+import uk.nhs.hee.trainee.details.service.TrainingNumberGenerator;
 
 /**
  * A mapper to convert Trainee Profiles between entity and DTO representations.
@@ -45,22 +45,22 @@ import uk.nhs.hee.trainee.details.service.NtnGenerator;
 public abstract class TraineeProfileMapper {
 
   @Autowired
-  protected NtnGenerator ntnGenerator;
+  protected TrainingNumberGenerator trainingNumberGenerator;
 
   public abstract TraineeProfileDto toDto(TraineeProfile traineeProfile);
 
   /**
-   * Generate NTN for all programme memberships in the profile.
+   * Generate training numbers for all programme memberships in the profile.
    *
-   * @param dto The trainee profile to generate NTNs for.
+   * @param dto The trainee profile to generate training numbers for.
    */
   @AfterMapping
-  protected void generateNtns(@MappingTarget TraineeProfileDto dto) {
+  protected void generateTrainingNumbers(@MappingTarget TraineeProfileDto dto) {
     try {
-      ntnGenerator.populateNtns(dto);
+      trainingNumberGenerator.populateTrainingNumbers(dto);
     } catch (RuntimeException e) {
-      // Failure to populate the NTN should never block the profile being returned.
-      log.error("Caught and ignoring NTN generation runtime error:", e);
+      // Failure to populate the training number should never block the profile being returned.
+      log.error("Caught and ignoring training number generation runtime error:", e);
     }
   }
 
