@@ -37,7 +37,7 @@ public class ProgrammeMembershipDto implements SignedDto {
 
   @NotNull
   private String tisId;
-  private String ntn;
+  private String trainingNumber;
   private String programmeTisId;
   private String programmeName;
   private String programmeNumber;

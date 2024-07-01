@@ -31,7 +31,6 @@ import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 public class ProgrammeMembership {
 
   private String tisId;
-  private String ntn;
   private String programmeTisId;
   private String programmeName;
   private String programmeNumber;

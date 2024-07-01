@@ -70,11 +70,11 @@ import uk.nhs.hee.trainee.details.model.Placement;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.Site;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
-import uk.nhs.hee.trainee.details.service.NtnGenerator;
 import uk.nhs.hee.trainee.details.service.SignatureService;
 import uk.nhs.hee.trainee.details.service.TraineeProfileService;
+import uk.nhs.hee.trainee.details.service.TrainingNumberGenerator;
 
-@ContextConfiguration(classes = {NtnGenerator.class, TraineeProfileMapperImpl.class,
+@ContextConfiguration(classes = {TrainingNumberGenerator.class, TraineeProfileMapperImpl.class,
     PersonalDetailsMapperImpl.class, PlacementMapperImpl.class, ProgrammeMembershipMapperImpl.class,
     SignatureMapperImpl.class})
 @ExtendWith(SpringExtension.class)
@@ -452,7 +452,7 @@ class TraineeProfileResourceTest {
                 PERSON_EMAIL, PERSON_TITLE, PERSON_SURNAME, PERSON_FORENAME, PERSON_GMC)));
 
     mockMvc.perform(get("/api/trainee-profile/account-details/{tisId}", DEFAULT_TIS_ID_1)
-        .contentType(MediaType.APPLICATION_JSON))
+            .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.email").value(PERSON_EMAIL))

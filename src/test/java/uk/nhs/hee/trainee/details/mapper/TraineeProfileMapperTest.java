@@ -37,7 +37,7 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.nhs.hee.trainee.details.dto.TraineeProfileDto;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
-import uk.nhs.hee.trainee.details.service.NtnGenerator;
+import uk.nhs.hee.trainee.details.service.TrainingNumberGenerator;
 
 @ExtendWith(MockitoExtension.class)
 class TraineeProfileMapperTest {
@@ -53,30 +53,30 @@ class TraineeProfileMapperTest {
   ProgrammeMembershipMapper programmeMembershipMapper = new ProgrammeMembershipMapperImpl();
 
   @Mock
-  private NtnGenerator ntnGenerator;
+  private TrainingNumberGenerator trainingNumberGenerator;
 
   @Test
-  void shouldGenerateNtnsWhenGettingTraineeProfile() {
+  void shouldGenerateTrainingNumberssWhenGettingTraineeProfile() {
     TraineeProfile entity = new TraineeProfile();
 
     TraineeProfileDto dto = mapper.toDto(entity);
 
     ArgumentCaptor<TraineeProfileDto> dtoCaptor = ArgumentCaptor.captor();
-    verify(ntnGenerator).populateNtns(dtoCaptor.capture());
+    verify(trainingNumberGenerator).populateTrainingNumbers(dtoCaptor.capture());
 
     assertThat("Unexpected dto.", dtoCaptor.getValue(), sameInstance(dto));
   }
 
   @Test
-  void shouldIgnoreErrorsWhenGenerateNtnsForTraineeProfile() {
-    doThrow(RuntimeException.class).when(ntnGenerator).populateNtns(any());
+  void shouldIgnoreErrorsWhenGenerateTrainingNumbersForTraineeProfile() {
+    doThrow(RuntimeException.class).when(trainingNumberGenerator).populateTrainingNumbers(any());
 
     TraineeProfile entity = new TraineeProfile();
 
     TraineeProfileDto dto = assertDoesNotThrow(() -> mapper.toDto(entity));
 
     ArgumentCaptor<TraineeProfileDto> dtoCaptor = ArgumentCaptor.captor();
-    verify(ntnGenerator).populateNtns(dtoCaptor.capture());
+    verify(trainingNumberGenerator).populateTrainingNumbers(dtoCaptor.capture());
 
     assertThat("Unexpected dto.", dtoCaptor.getValue(), sameInstance(dto));
   }
