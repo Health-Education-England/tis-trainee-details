@@ -51,5 +51,6 @@ public class ProgrammeMembershipDto implements SignedDto {
   private List<CurriculumDto> curricula;
   private String trainingPathway;
   private ConditionsOfJoiningDto conditionsOfJoining;
+  private HeeUserDto responsibleOfficer;
   private Signature signature;
 }
