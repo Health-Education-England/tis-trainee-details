@@ -43,6 +43,7 @@ public class ProgrammeMembership {
   private List<Curriculum> curricula = new ArrayList<>();
   private String trainingPathway;
   private ConditionsOfJoining conditionsOfJoining;
+  private HeeUser responsibleOfficer;
 
   /**
    * Get programme status according to programme startDate and endDate.

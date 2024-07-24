@@ -59,6 +59,7 @@ import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapperImpl;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
 import uk.nhs.hee.trainee.details.model.Curriculum;
+import uk.nhs.hee.trainee.details.model.HeeUser;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
@@ -85,6 +86,11 @@ class ProgrammeMembershipServiceTest {
   private static final Instant COJ_SYNCED_AT = Instant.now();
   private static final String CURRICULUM_SPECIALTY_CODE = "X75";
   private static final String CURRICULUM_SPECIALTY = "some valid specialty";
+  private static final String RO_FIRSTNAME = "first name-";
+  private static final String RO_LASTNAME = "last name-";
+  private static final String RO_EMAIL = "email-";
+  private static final String RO_PHONE = "phone-";
+  private static final String RO_GMC = "gmc-";
 
   private ProgrammeMembershipService service;
   private TraineeProfileRepository repository;
@@ -137,6 +143,7 @@ class ProgrammeMembershipServiceTest {
     expectedProgrammeMembership.setConditionsOfJoining(
         new ConditionsOfJoining(COJ_SIGNED_AT.plus(Duration.ofDays(100)), GOLD_GUIDE_VERSION,
             COJ_SYNCED_AT.plus(Duration.ofDays(100))));
+    expectedProgrammeMembership.setResponsibleOfficer(getResponsibleOfficerUser(MODIFIED_SUFFIX));
 
     assertThat("Unexpected programme membership.", programmeMembership.get(),
         is(expectedProgrammeMembership));
@@ -171,6 +178,7 @@ class ProgrammeMembershipServiceTest {
     expectedProgrammeMembership.setConditionsOfJoining(
         new ConditionsOfJoining(COJ_SIGNED_AT.plus(Duration.ofDays(100)), GOLD_GUIDE_VERSION,
             COJ_SYNCED_AT.plus(Duration.ofDays(100))));
+    expectedProgrammeMembership.setResponsibleOfficer(getResponsibleOfficerUser(MODIFIED_SUFFIX));
 
     assertThat("Unexpected programme membership.", programmeMembership.get(),
         is(expectedProgrammeMembership));
@@ -207,6 +215,7 @@ class ProgrammeMembershipServiceTest {
     expectedProgrammeMembership.setConditionsOfJoining(
         new ConditionsOfJoining(COJ_SIGNED_AT.plus(Duration.ofDays(100)), GOLD_GUIDE_VERSION,
             COJ_SYNCED_AT.plus(Duration.ofDays(100))));
+    expectedProgrammeMembership.setResponsibleOfficer(getResponsibleOfficerUser(MODIFIED_SUFFIX));
 
     assertThat("Unexpected programme membership.", programmeMembership.get(),
         is(expectedProgrammeMembership));
@@ -1324,6 +1333,8 @@ class ProgrammeMembershipServiceTest {
         new ConditionsOfJoining(COJ_SIGNED_AT.plus(Duration.ofDays(dateAdjustmentDays)),
             GOLD_GUIDE_VERSION, COJ_SYNCED_AT.plus(Duration.ofDays(dateAdjustmentDays))));
 
+    programmeMembership.setResponsibleOfficer(getResponsibleOfficerUser(stringSuffix));
+
     return programmeMembership;
   }
 
@@ -1384,6 +1395,8 @@ class ProgrammeMembershipServiceTest {
     curriculum.setCurriculumSpecialtyCode(curriculumSpecialtyCode);
     programmeMembership.setCurricula(List.of(curriculum));
 
+    programmeMembership.setResponsibleOfficer(getResponsibleOfficerUser(""));
+
     return programmeMembership;
   }
 
@@ -1420,6 +1433,8 @@ class ProgrammeMembershipServiceTest {
         createCurriculum(curriculumSubType, curriculumSpecialtyCode, curriculumSpecialty);
     programmeMembership.setCurricula(List.of(curriculum));
 
+    programmeMembership.setResponsibleOfficer(getResponsibleOfficerUser(""));
+
     return programmeMembership;
   }
 
@@ -1449,6 +1464,8 @@ class ProgrammeMembershipServiceTest {
     programmeMembership.setEndDate(endDate);
     programmeMembership.setProgrammeCompletionDate(COMPLETION_DATE);
     programmeMembership.setCurricula(curricula);
+
+    programmeMembership.setResponsibleOfficer(getResponsibleOfficerUser(""));
 
     return programmeMembership;
   }
@@ -1491,5 +1508,22 @@ class ProgrammeMembershipServiceTest {
     return getProgrammeMembershipWithOneCurriculum(
         PROGRAMME_TIS_ID, PROGRAMME_MEMBERSHIP_TYPE, START_DATE,
         END_DATE, MANAGING_DEANERY, MEDICAL_CURRICULA.get(0), CURRICULUM_SPECIALTY_CODE);
+  }
+
+  /**
+   * Create a default responsible officer HEE user.
+   *
+   * @param stringSuffix The suffix to apply to field values.
+   * @return The HEE user.
+   */
+  private HeeUser getResponsibleOfficerUser(String stringSuffix) {
+    HeeUser heeUser = new HeeUser();
+    heeUser.setFirstName(RO_FIRSTNAME + stringSuffix);
+    heeUser.setLastName(RO_LASTNAME + stringSuffix);
+    heeUser.setPhoneNumber(RO_PHONE + stringSuffix);
+    heeUser.setGmcId(RO_GMC + stringSuffix);
+    heeUser.setEmailAddress(RO_EMAIL + stringSuffix);
+
+    return heeUser;
   }
 }

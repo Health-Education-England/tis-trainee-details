@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright 2020 Crown Copyright (Health Education England)
+ * Copyright 2024 Crown Copyright (Health Education England)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -19,38 +19,18 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package uk.nhs.hee.trainee.details.dto;
+package uk.nhs.hee.trainee.details.model;
 
-import jakarta.validation.constraints.NotNull;
-import java.time.LocalDate;
-import java.util.List;
 import lombok.Data;
-import uk.nhs.hee.trainee.details.dto.enumeration.Status;
-import uk.nhs.hee.trainee.details.dto.signature.Signature;
-import uk.nhs.hee.trainee.details.dto.signature.SignedDto;
 
 /**
- * A DTO for programme membership information.
+ * A class for HEE user details.
  */
 @Data
-public class ProgrammeMembershipDto implements SignedDto {
-
-  @NotNull
-  private String tisId;
-  private String trainingNumber;
-  private String programmeTisId;
-  private String programmeName;
-  private String programmeNumber;
-  private String managingDeanery;
-  private String designatedBody;
-  private String programmeMembershipType;
-  private LocalDate startDate;
-  private LocalDate endDate;
-  private LocalDate programmeCompletionDate;
-  private Status status;
-  private List<CurriculumDto> curricula;
-  private String trainingPathway;
-  private ConditionsOfJoiningDto conditionsOfJoining;
-  private HeeUserDto responsibleOfficer;
-  private Signature signature;
+public class HeeUser {
+  private String emailAddress;
+  private String firstName;
+  private String lastName;
+  private String gmcId;
+  private String phoneNumber;
 }

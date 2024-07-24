@@ -65,6 +65,7 @@ import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapper;
 import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapperImpl;
 import uk.nhs.hee.trainee.details.mapper.SignatureMapperImpl;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
+import uk.nhs.hee.trainee.details.model.HeeUser;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.service.ProgrammeMembershipService;
 import uk.nhs.hee.trainee.details.service.RabbitPublishService;
@@ -150,6 +151,14 @@ class ProgrammeMembershipResourceTest {
     programmeMembership.setEndDate(end);
     programmeMembership.setProgrammeCompletionDate(completion);
 
+    HeeUser heeUser = new HeeUser();
+    heeUser.setFirstName("firstnameValue");
+    heeUser.setLastName("lastnameValue");
+    heeUser.setEmailAddress("emailValue");
+    heeUser.setPhoneNumber("phoneValue");
+    heeUser.setGmcId("gmcValue");
+    programmeMembership.setResponsibleOfficer(heeUser);
+
     when(service.updateProgrammeMembershipForTrainee(eq("40"), any(ProgrammeMembership.class)))
         .thenReturn(Optional.of(programmeMembership));
 
@@ -179,6 +188,11 @@ class ProgrammeMembershipResourceTest {
         .andExpect(jsonPath("$.startDate").value(is(start.toString())))
         .andExpect(jsonPath("$.endDate").value(is(end.toString())))
         .andExpect(jsonPath("$.programmeCompletionDate").value(is(completion.toString())))
+        .andExpect(jsonPath("$.responsibleOfficer.firstName").value(is("firstnameValue")))
+        .andExpect(jsonPath("$.responsibleOfficer.lastName").value(is("lastnameValue")))
+        .andExpect(jsonPath("$.responsibleOfficer.emailAddress").value(is("emailValue")))
+        .andExpect(jsonPath("$.responsibleOfficer.gmcId").value(is("gmcValue")))
+        .andExpect(jsonPath("$.responsibleOfficer.phoneNumber").value(is("phoneValue")))
         .andExpect(jsonPath("$.signature.hmac").value(signature.getHmac()))
         .andExpect(jsonPath("$.signature.signedAt").value(signature.getSignedAt().toString()))
         .andExpect(jsonPath("$.signature.validUntil").value(signature.getValidUntil().toString()));
