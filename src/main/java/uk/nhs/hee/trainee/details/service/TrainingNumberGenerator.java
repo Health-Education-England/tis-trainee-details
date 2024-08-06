@@ -55,7 +55,7 @@ public class TrainingNumberGenerator {
     }
 
     traineeProfile.getProgrammeMemberships()
-        .forEach(pm -> popualteTrainingNumber(personalDetails, pm));
+        .forEach(pm -> populateTrainingNumber(personalDetails, pm));
   }
 
   /**
@@ -64,7 +64,7 @@ public class TrainingNumberGenerator {
    * @param personalDetails     The personal details to use for training number generation.
    * @param programmeMembership The programme membership to generate the training number for.
    */
-  private void popualteTrainingNumber(PersonalDetailsDto personalDetails,
+  private void populateTrainingNumber(PersonalDetailsDto personalDetails,
       ProgrammeMembershipDto programmeMembership) {
     log.info("Populating training number for programme membership '{}'.",
         programmeMembership.getTisId());
@@ -104,14 +104,11 @@ public class TrainingNumberGenerator {
           "London LETBs" -> "LDN";
       case "Health Education England North East" -> "NTH";
       case "Health Education England North West" -> "NWE";
-      case "Health Education England South West" ->
-          getSouthWestParentOrganization(programmeMembership);
+      case "Health Education England South West" -> "SWN";
       case "Health Education England Thames Valley" -> "OXF";
       case "Health Education England Wessex" -> "WES";
       case "Health Education England West Midlands" -> "WMD";
       case "Health Education England Yorkshire and the Humber" -> "YHD";
-      case "Severn Deanery" -> "SEV";
-      case "South West Peninsula Deanery" -> "PEN";
       default -> null;
     };
 
@@ -121,18 +118,6 @@ public class TrainingNumberGenerator {
 
     log.info("Calculated parent organization: '{}'.", parentOrganization);
     return parentOrganization;
-  }
-
-  /**
-   * Get the parent organization for a programme in the South West.
-   *
-   * @param programmeMembership The SW programme membership.
-   * @return The calculated parent organization.
-   */
-  private String getSouthWestParentOrganization(ProgrammeMembershipDto programmeMembership) {
-    String programmeNumber = programmeMembership.getProgrammeNumber();
-    log.info("Using programme number '{}' to calculate parent organization.", programmeNumber);
-    return programmeNumber.startsWith("SWP") ? "PEN" : programmeNumber.substring(0, 3);
   }
 
   /**

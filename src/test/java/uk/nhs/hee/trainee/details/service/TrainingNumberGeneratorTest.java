@@ -544,13 +544,12 @@ class TrainingNumberGeneratorTest {
       Health Education England North West                    | NWE
       Health Education England North West London             | LDN
       Health Education England South London                  | LDN
+      Health Education England South West                    | SWN
       Health Education England Thames Valley                 | OXF
       Health Education England Wessex                        | WES
       Health Education England West Midlands                 | WMD
       Health Education England Yorkshire and the Humber      | YHD
       London LETBs                                           | LDN
-      Severn Deanery                                         | SEV
-      South West Peninsula Deanery                           | PEN
       """)
   void shouldPopulateTrainingNumberWithParentOrganizationWhenMappedByOwner(String ownerName,
       String ownerCode) {
@@ -564,41 +563,6 @@ class TrainingNumberGeneratorTest {
     pm.setManagingDeanery(ownerName);
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
-    pm.setTrainingPathway(TRAINING_PATHWAY);
-    pm.setStartDate(NOW);
-    profile.setProgrammeMemberships(List.of(pm));
-
-    CurriculumDto curriculum = new CurriculumDto();
-    curriculum.setCurriculumSpecialtyCode(CURRICULUM_SPECIALTY_CODE);
-    curriculum.setCurriculumStartDate(PAST);
-    curriculum.setCurriculumEndDate(FUTURE);
-    pm.setCurricula(List.of(curriculum));
-
-    service.populateTrainingNumbers(profile);
-
-    String trainingNumber = pm.getTrainingNumber();
-    String[] trainingNumberParts = trainingNumber.split("/");
-    assertThat("Unexpected parent organization.", trainingNumberParts[0], is(ownerCode));
-  }
-
-  @ParameterizedTest
-  @CsvSource(delimiter = '|', textBlock = """
-      Health Education England South West | SWPABC | PEN
-      Health Education England South West | ABCYXZ | ABC
-      Health Education England South West | XYZABC | XYZ
-      """)
-  void shouldPopulateTrainingNumberWithParentOrganizationWhenOwnerIsSouthWest(String ownerName,
-      String programmeNumber, String ownerCode) {
-    TraineeProfileDto profile = new TraineeProfileDto();
-
-    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
-    personalDetails.setGmcNumber(GMC_NUMBER);
-    profile.setPersonalDetails(personalDetails);
-
-    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
-    pm.setManagingDeanery(ownerName);
-    pm.setProgrammeName(PROGRAMME_NAME);
-    pm.setProgrammeNumber(programmeNumber);
     pm.setTrainingPathway(TRAINING_PATHWAY);
     pm.setStartDate(NOW);
     profile.setProgrammeMemberships(List.of(pm));
