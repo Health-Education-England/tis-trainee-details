@@ -22,7 +22,6 @@
 package uk.nhs.hee.trainee.details.event;
 
 import io.awspring.cloud.sqs.annotation.SqsListener;
-import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
@@ -58,10 +57,8 @@ public class GmcDetailsListener {
 
     PersonalDetailsDto dto = event.update().personalDetails();
     PersonalDetails entity = mapper.toEntity(dto);
-    Optional<PersonalDetails> optionalEntity = service.updateGmcDetailsByTisId(tisId, entity);
-
-    if (optionalEntity.isEmpty()) {
-      throw new IllegalArgumentException("Trainee not found.");
-    }
+    service
+        .updateGmcDetailsByTisId(tisId, entity, false)
+        .orElseThrow(() -> new IllegalArgumentException("Trainee not found."));
   }
 }
