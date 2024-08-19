@@ -22,13 +22,19 @@
 package uk.nhs.hee.trainee.details.api;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
+import java.io.IOException;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import uk.nhs.hee.trainee.details.api.util.AuthTokenUtil;
 import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
 import uk.nhs.hee.trainee.details.mapper.PersonalDetailsMapper;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
@@ -63,5 +69,33 @@ public class BasicDetailsResource {
     PersonalDetails entity = mapper.toEntity(dto);
     entity = service.createProfileOrUpdateBasicDetailsByTisId(tisId, entity);
     return ResponseEntity.ok(mapper.toDto(entity));
+  }
+
+  /**
+   * Update the GMC number for the authenticated trainee.
+   *
+   * @param token     The authentication token.
+   * @param gmcNumber The new GMC number.
+   * @return The updated PersonalDetails.
+   */
+  @PutMapping("/gmc-number/{gmcNumber}")
+  public ResponseEntity<PersonalDetailsDto> updateGmcNumber(
+      @RequestHeader(HttpHeaders.AUTHORIZATION) String token, @PathVariable String gmcNumber) {
+    String tisId;
+    try {
+      tisId = AuthTokenUtil.getTraineeTisId(token);
+    } catch (IOException e) {
+      log.warn("Unable to read tisId from token.", e);
+      return ResponseEntity.badRequest().build();
+    }
+
+    log.info("Updating GMC number of trainee {}.", tisId);
+    PersonalDetails gmcDetails = new PersonalDetails();
+    gmcDetails.setGmcNumber(gmcNumber);
+    gmcDetails.setGmcStatus("status");
+
+    Optional<PersonalDetails> entity = service.updateGmcDetailsByTisId(tisId, gmcDetails, true);
+    Optional<PersonalDetailsDto> dto = entity.map(mapper::toDto);
+    return ResponseEntity.of(dto);
   }
 }

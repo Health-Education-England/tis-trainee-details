@@ -62,7 +62,8 @@ class GmcDetailsListenerTest {
     Update update = new Update(dto);
     PersonalDetailsUpdateEvent event = new PersonalDetailsUpdateEvent(TIS_ID, update);
 
-    when(service.updateGmcDetailsByTisId(eq(TIS_ID), any())).thenReturn(Optional.empty());
+    when(service.updateGmcDetailsByTisId(eq(TIS_ID), any(), eq(false)))
+        .thenReturn(Optional.empty());
 
     assertThrows(IllegalArgumentException.class, () -> listener.updateGmcDetails(event));
   }
@@ -77,8 +78,8 @@ class GmcDetailsListenerTest {
     PersonalDetailsUpdateEvent event = new PersonalDetailsUpdateEvent(TIS_ID, update);
 
     ArgumentCaptor<PersonalDetails> entityCaptor = ArgumentCaptor.forClass(PersonalDetails.class);
-    when(service.updateGmcDetailsByTisId(eq(TIS_ID), entityCaptor.capture())).then(
-        inv -> Optional.of(inv.getArgument(1)));
+    when(service.updateGmcDetailsByTisId(eq(TIS_ID), entityCaptor.capture(), eq(false)))
+        .thenAnswer(inv -> Optional.of(inv.getArgument(1)));
 
     listener.updateGmcDetails(event);
 

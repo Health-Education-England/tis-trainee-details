@@ -88,13 +88,21 @@ public class PersonalDetailsService {
   /**
    * Update the GMC details for the trainee with the given TIS ID.
    *
-   * @param tisId           The TIS id of the trainee.
-   * @param personalDetails The personal details to add to the trainee.
+   * @param tisId               The TIS id of the trainee.
+   * @param personalDetails     The personal details to add to the trainee.
+   * @param isProvidedByTrainee Whether the GMC details are provided by the trainee.
    * @return The updated personal details or empty if a trainee with the ID was not found.
    */
-  public Optional<PersonalDetails> updateGmcDetailsByTisId(String tisId,
-      PersonalDetails personalDetails) {
-    return updatePersonalDetailsByTisId(tisId, personalDetails, mapper::updateGmcDetails);
+  public Optional<PersonalDetails> updateGmcDetailsByTisId(
+      String tisId, PersonalDetails personalDetails, boolean isProvidedByTrainee) {
+    Optional<PersonalDetails> updatedPersonalDetails =
+        updatePersonalDetailsByTisId(tisId, personalDetails, mapper::updateGmcDetails);
+
+    if (isProvidedByTrainee) {
+      log.info("Trainee {} updated their GMC number to {}.", tisId, personalDetails.getGmcNumber());
+    }
+
+    return updatedPersonalDetails;
   }
 
   /**

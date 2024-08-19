@@ -21,6 +21,7 @@
 
 package uk.nhs.hee.trainee.details.service;
 
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.CoreMatchers.sameInstance;
@@ -37,12 +38,16 @@ import java.time.LocalDate;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapperImpl;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 
+@ExtendWith(OutputCaptureExtension.class)
 class PersonalDetailsServiceTest {
 
   private static final String TITLE = "title-";
@@ -222,8 +227,8 @@ class PersonalDetailsServiceTest {
 
   @Test
   void shouldNotUpdateGmcDetailsWhenTraineeIdNotFound() {
-    Optional<PersonalDetails> personalDetails = service
-        .updateGmcDetailsByTisId("notFound", new PersonalDetails());
+    Optional<PersonalDetails> personalDetails = service.updateGmcDetailsByTisId("notFound",
+        new PersonalDetails(), false);
 
     assertThat("Unexpected optional isEmpty flag.", personalDetails.isEmpty(), is(true));
     verify(repository).findByTraineeTisId("notFound");
@@ -238,8 +243,8 @@ class PersonalDetailsServiceTest {
     when(repository.findByTraineeTisId("40")).thenReturn(traineeProfile);
     when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
 
-    Optional<PersonalDetails> personalDetails = service
-        .updateGmcDetailsByTisId("40", createPersonalDetails(MODIFIED_SUFFIX, 100));
+    Optional<PersonalDetails> personalDetails = service.updateGmcDetailsByTisId("40",
+        createPersonalDetails(MODIFIED_SUFFIX, 100), false);
 
     assertThat("Unexpected optional isEmpty flag.", personalDetails.isEmpty(), is(false));
 
@@ -257,8 +262,8 @@ class PersonalDetailsServiceTest {
     when(repository.findByTraineeTisId("40")).thenReturn(traineeProfile);
     when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
 
-    Optional<PersonalDetails> personalDetails = service
-        .updateGmcDetailsByTisId("40", createPersonalDetails(MODIFIED_SUFFIX, 100));
+    Optional<PersonalDetails> personalDetails = service.updateGmcDetailsByTisId("40",
+        createPersonalDetails(MODIFIED_SUFFIX, 100), false);
 
     assertThat("Unexpected optional isEmpty flag.", personalDetails.isEmpty(), is(false));
 
@@ -269,6 +274,36 @@ class PersonalDetailsServiceTest {
     assertThat("Unexpected personal details.", personalDetails.get(), is(expectedPersonalDetails));
   }
 
+  // TODO: replace with real test once GMC event is published.
+  @Test
+  void shouldNotLogMessageWhenGmcDetailsNotUpdatedByTrainee(CapturedOutput output) {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPersonalDetails(createPersonalDetails(ORIGINAL_SUFFIX, 0));
+
+    when(repository.findByTraineeTisId("40")).thenReturn(traineeProfile);
+    when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
+
+    service.updateGmcDetailsByTisId("40", createPersonalDetails(MODIFIED_SUFFIX, 100), false);
+
+    assertThat("Unexpected logging.", output.getOut(), is(""));
+  }
+
+  // TODO: replace with real test once GMC event is published.
+  @Test
+  void shouldLogMessageWhenGmcDetailsUpdatedByTrainee(CapturedOutput output) {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPersonalDetails(createPersonalDetails(ORIGINAL_SUFFIX, 0));
+
+    when(repository.findByTraineeTisId("40")).thenReturn(traineeProfile);
+    when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
+
+    service.updateGmcDetailsByTisId("40", createPersonalDetails(MODIFIED_SUFFIX, 100), true);
+
+    assertThat(
+        "Unexpected logging.",
+        output.getOut(),
+        containsString("Trainee 40 updated their GMC number to gmcNumber-post."));
+  }
 
   @Test
   void shouldNotUpdateContactDetailsWhenTraineeIdNotFound() {
