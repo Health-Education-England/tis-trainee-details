@@ -47,7 +47,7 @@ dependencies {
   annotationProcessor("org.projectlombok:lombok")
 
   // Mapstruct
-  val mapstructVersion = "1.5.5.Final"
+  val mapstructVersion = "1.6.0"
   implementation("org.mapstruct:mapstruct:${mapstructVersion}")
   annotationProcessor("org.mapstruct:mapstruct-processor:${mapstructVersion}")
 
