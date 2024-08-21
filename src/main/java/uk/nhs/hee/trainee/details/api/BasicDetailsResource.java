@@ -27,6 +27,7 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -35,7 +36,9 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import uk.nhs.hee.trainee.details.api.util.AuthTokenUtil;
+import uk.nhs.hee.trainee.details.dto.GmcDetailsDto;
 import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
+import uk.nhs.hee.trainee.details.dto.validation.UserUpdate;
 import uk.nhs.hee.trainee.details.mapper.PersonalDetailsMapper;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.service.PersonalDetailsService;
@@ -74,13 +77,14 @@ public class BasicDetailsResource {
   /**
    * Update the GMC number for the authenticated trainee.
    *
-   * @param token     The authentication token.
-   * @param gmcNumber The new GMC number.
+   * @param token      The authentication token.
+   * @param gmcDetails The new GMC details.
    * @return The updated PersonalDetails.
    */
-  @PutMapping("/gmc-number/{gmcNumber}")
+  @PutMapping("/gmc-number")
   public ResponseEntity<PersonalDetailsDto> updateGmcNumber(
-      @RequestHeader(HttpHeaders.AUTHORIZATION) String token, @PathVariable String gmcNumber) {
+      @RequestHeader(HttpHeaders.AUTHORIZATION) String token,
+      @Validated(UserUpdate.class) @RequestBody GmcDetailsDto gmcDetails) {
     String tisId;
     try {
       tisId = AuthTokenUtil.getTraineeTisId(token);
@@ -90,11 +94,14 @@ public class BasicDetailsResource {
     }
 
     log.info("Updating GMC number of trainee {}.", tisId);
-    PersonalDetails gmcDetails = new PersonalDetails();
-    gmcDetails.setGmcNumber(gmcNumber);
-    gmcDetails.setGmcStatus("status");
+    PersonalDetails personalDetails = new PersonalDetails();
+    personalDetails.setGmcNumber(gmcDetails.gmcNumber());
 
-    Optional<PersonalDetails> entity = service.updateGmcDetailsByTisId(tisId, gmcDetails, true);
+    // Default all GMCs to registered until we can properly prompt/determine the correct status.
+    personalDetails.setGmcStatus("Registered with Licence");
+
+    Optional<PersonalDetails> entity = service.updateGmcDetailsByTisId(tisId, personalDetails,
+        true);
     Optional<PersonalDetailsDto> dto = entity.map(mapper::toDto);
     return ResponseEntity.of(dto);
   }

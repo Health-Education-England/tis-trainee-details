@@ -22,6 +22,7 @@
 package uk.nhs.hee.trainee.details.api;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -39,18 +40,24 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import uk.nhs.hee.trainee.details.TestJwtUtil;
+import uk.nhs.hee.trainee.details.dto.GmcDetailsDto;
 import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
 import uk.nhs.hee.trainee.details.mapper.PersonalDetailsMapper;
 import uk.nhs.hee.trainee.details.mapper.PersonalDetailsMapperImpl;
@@ -63,6 +70,9 @@ import uk.nhs.hee.trainee.details.service.SignatureService;
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(BasicDetailsResource.class)
 class BasicDetailsResourceTest {
+
+  private static final String GMC_NUMBER = "1234567";
+  private static final String DEFAULT_GMC_STATUS = "Registered with Licence";
 
   @Autowired
   private MappingJackson2HttpMessageConverter jacksonMessageConverter;
@@ -87,6 +97,7 @@ class BasicDetailsResourceTest {
     BasicDetailsResource resource = new BasicDetailsResource(service, personalDetailsMapper);
     mockMvc = MockMvcBuilders.standaloneSetup(resource)
         .setMessageConverters(jacksonMessageConverter)
+        .setControllerAdvice(new RestResponseEntityExceptionHandler())
         .build();
   }
 
@@ -108,70 +119,233 @@ class BasicDetailsResourceTest {
 
   @Test
   void getShouldNotUpdateGmcNumberWhenTokenNotFound() throws Exception {
+    GmcDetailsDto gmcDetails = GmcDetailsDto.builder()
+        .gmcNumber(GMC_NUMBER)
+        .build();
+
     this.mockMvc
-        .perform(
-            put("/api/basic-details/gmc-number/1234567").contentType(MediaType.APPLICATION_JSON))
+        .perform(put("/api/basic-details/gmc-number")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(mapper.writeValueAsBytes(gmcDetails)))
         .andExpect(status().isBadRequest());
   }
 
   @Test
   void getShouldNotUpdateGmcNumberWhenPayloadNotMap() throws Exception {
+    GmcDetailsDto gmcDetails = GmcDetailsDto.builder()
+        .gmcNumber(GMC_NUMBER)
+        .build();
+
     String token = TestJwtUtil.generateToken("[]");
 
-    this.mockMvc.perform(put("/api/basic-details/gmc-number/1234567")
+    this.mockMvc.perform(put("/api/basic-details/gmc-number")
             .contentType(MediaType.APPLICATION_JSON)
+            .content(mapper.writeValueAsBytes(gmcDetails))
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isBadRequest());
   }
 
   @Test
   void getShouldNotUpdateGmcNumberWhenTisIdNotInToken() throws Exception {
+    GmcDetailsDto gmcDetails = GmcDetailsDto.builder()
+        .gmcNumber(GMC_NUMBER)
+        .build();
+
     String token = TestJwtUtil.generateToken("{}");
 
-    this.mockMvc.perform(put("/api/basic-details/gmc-number/1234567")
+    this.mockMvc.perform(put("/api/basic-details/gmc-number")
             .contentType(MediaType.APPLICATION_JSON)
+            .content(mapper.writeValueAsBytes(gmcDetails))
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isNotFound());
   }
 
   @Test
   void getShouldNotUpdateGmcNumberWhenTisIdNotExists() throws Exception {
+    GmcDetailsDto gmcDetails = GmcDetailsDto.builder()
+        .gmcNumber(GMC_NUMBER)
+        .build();
+
     String token = TestJwtUtil.generateTokenForTisId("40");
 
     when(service.updateGmcDetailsByTisId(any(), any(), anyBoolean())).thenReturn(Optional.empty());
 
-    this.mockMvc.perform(put("/api/basic-details/gmc-number/1234567")
+    this.mockMvc.perform(put("/api/basic-details/gmc-number")
             .contentType(MediaType.APPLICATION_JSON)
+            .content(mapper.writeValueAsBytes(gmcDetails))
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isNotFound());
   }
 
   @Test
-  void shouldUpdateGmcNumberWhenAuthorizedWhenTisIdInToken() throws Exception {
+  void shouldUpdateGmcNumberWhenAuthorized() throws Exception {
+    GmcDetailsDto gmcDetails = GmcDetailsDto.builder()
+        .gmcNumber(GMC_NUMBER)
+        .build();
+
     String token = TestJwtUtil.generateTokenForTisId("40");
 
     ArgumentCaptor<PersonalDetails> personalDetailsCaptor = ArgumentCaptor.captor();
     when(service.updateGmcDetailsByTisId(eq("40"), personalDetailsCaptor.capture(), anyBoolean()))
         .thenAnswer(inv -> Optional.of(inv.getArgument(1)));
 
-    this.mockMvc.perform(put("/api/basic-details/gmc-number/1234567")
+    this.mockMvc.perform(put("/api/basic-details/gmc-number")
             .contentType(MediaType.APPLICATION_JSON)
+            .content(mapper.writeValueAsBytes(gmcDetails))
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.gmcNumber", is("1234567")));
 
     PersonalDetails entity = personalDetailsCaptor.getValue();
     assertThat("Unexpected GMC number.", entity.getGmcNumber(), is("1234567"));
+    assertThat("Unexpected GMC status.", entity.getGmcStatus(), is(DEFAULT_GMC_STATUS));
   }
 
   @Test
-  void shouldSetGmcNumberProvidedByTraineeWhenAuthorizedWhenTisIdInToken() throws Exception {
+  void shouldSetGmcNumberProvidedByTraineeWhenAuthorized() throws Exception {
+    GmcDetailsDto gmcDetails = GmcDetailsDto.builder()
+        .gmcNumber(GMC_NUMBER)
+        .build();
+
     String token = TestJwtUtil.generateTokenForTisId("40");
 
-    this.mockMvc.perform(put("/api/basic-details/gmc-number/1234567")
+    this.mockMvc.perform(put("/api/basic-details/gmc-number")
         .contentType(MediaType.APPLICATION_JSON)
+        .content(mapper.writeValueAsBytes(gmcDetails))
         .header(HttpHeaders.AUTHORIZATION, token));
 
     verify(service).updateGmcDetailsByTisId(any(), any(), eq(true));
+  }
+
+  @Test
+  void shouldNotUpdateGmcNumberWhenGmcNumberNull() throws Exception {
+    GmcDetailsDto gmcDetails = GmcDetailsDto.builder()
+        .build();
+
+    String token = TestJwtUtil.generateTokenForTisId("40");
+
+    this.mockMvc.perform(put("/api/basic-details/gmc-number")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(mapper.writeValueAsBytes(gmcDetails))
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isBadRequest())
+        .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE))
+        .andExpect(jsonPath("$.type", is("about:blank")))
+        .andExpect(jsonPath("$.title", is("Validation failure")))
+        .andExpect(jsonPath("$.status", is(HttpStatus.BAD_REQUEST.value())))
+        .andExpect(jsonPath("$.instance", is("/api/basic-details/gmc-number")))
+        .andExpect(jsonPath("$.errors").isArray())
+        .andExpect(jsonPath("$.errors", hasSize(1)))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/gmcNumber")))
+        .andExpect(jsonPath("$.errors[0].detail", is("must not be null")));
+  }
+
+  @ParameterizedTest
+  @EmptySource
+  @ValueSource(strings = {"123456", "12345678", "abcdefg"})
+  void shouldNotUpdateGmcNumberWhenGmcNumberNotValid(String gmcNumber) throws Exception {
+    GmcDetailsDto gmcDetails = GmcDetailsDto.builder()
+        .gmcNumber(gmcNumber)
+        .build();
+
+    String token = TestJwtUtil.generateTokenForTisId("40");
+
+    this.mockMvc.perform(put("/api/basic-details/gmc-number")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(mapper.writeValueAsBytes(gmcDetails))
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isBadRequest())
+        .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE))
+        .andExpect(jsonPath("$.type", is("about:blank")))
+        .andExpect(jsonPath("$.title", is("Validation failure")))
+        .andExpect(jsonPath("$.status", is(HttpStatus.BAD_REQUEST.value())))
+        .andExpect(jsonPath("$.instance", is("/api/basic-details/gmc-number")))
+        .andExpect(jsonPath("$.errors").isArray())
+        .andExpect(jsonPath("$.errors", hasSize(1)))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/gmcNumber")))
+        .andExpect(jsonPath("$.errors[0].detail", is("must be 7 digits")));
+  }
+
+  @Test
+  void shouldNotUpdateGmcNumberWhenGmcStatusNotNull() throws Exception {
+    GmcDetailsDto gmcDetails = GmcDetailsDto.builder()
+        .gmcNumber(GMC_NUMBER)
+        .gmcStatus("notNull")
+        .build();
+
+    String token = TestJwtUtil.generateTokenForTisId("40");
+
+    this.mockMvc.perform(put("/api/basic-details/gmc-number")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(mapper.writeValueAsBytes(gmcDetails))
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isBadRequest())
+        .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE))
+        .andExpect(jsonPath("$.type", is("about:blank")))
+        .andExpect(jsonPath("$.title", is("Validation failure")))
+        .andExpect(jsonPath("$.status", is(HttpStatus.BAD_REQUEST.value())))
+        .andExpect(jsonPath("$.instance", is("/api/basic-details/gmc-number")))
+        .andExpect(jsonPath("$.errors").isArray())
+        .andExpect(jsonPath("$.errors", hasSize(1)))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/gmcStatus")))
+        .andExpect(jsonPath("$.errors[0].detail", is("must be null")));
+  }
+
+  @Test
+  void shouldNotUpdateGmcNumberWhenGmcNumberNullAndGmcStatusNotValid()
+      throws Exception {
+    GmcDetailsDto gmcDetails = GmcDetailsDto.builder()
+        .gmcStatus("notNull")
+        .build();
+
+    String token = TestJwtUtil.generateTokenForTisId("40");
+
+    this.mockMvc.perform(put("/api/basic-details/gmc-number")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(mapper.writeValueAsBytes(gmcDetails))
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andDo(MockMvcResultHandlers.print())
+        .andExpect(status().isBadRequest())
+        .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE))
+        .andExpect(jsonPath("$.type", is("about:blank")))
+        .andExpect(jsonPath("$.title", is("Validation failure")))
+        .andExpect(jsonPath("$.status", is(HttpStatus.BAD_REQUEST.value())))
+        .andExpect(jsonPath("$.instance", is("/api/basic-details/gmc-number")))
+        .andExpect(jsonPath("$.errors").isArray())
+        .andExpect(jsonPath("$.errors", hasSize(2)))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/gmcNumber")))
+        .andExpect(jsonPath("$.errors[0].detail", is("must not be null")))
+        .andExpect(jsonPath("$.errors[1].pointer", is("#/gmcStatus")))
+        .andExpect(jsonPath("$.errors[1].detail", is("must be null")));
+  }
+
+  @ParameterizedTest
+  @EmptySource
+  @ValueSource(strings = {"123456", "12345678", "abcdefg"})
+  void shouldNotUpdateGmcNumberWhenGmcNumberNotValidAndGmcStatusNotValid(String gmcNumber)
+      throws Exception {
+    GmcDetailsDto gmcDetails = GmcDetailsDto.builder()
+        .gmcNumber(gmcNumber)
+        .gmcStatus("notNull")
+        .build();
+
+    String token = TestJwtUtil.generateTokenForTisId("40");
+
+    this.mockMvc.perform(put("/api/basic-details/gmc-number")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(mapper.writeValueAsBytes(gmcDetails))
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isBadRequest())
+        .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE))
+        .andExpect(jsonPath("$.type", is("about:blank")))
+        .andExpect(jsonPath("$.title", is("Validation failure")))
+        .andExpect(jsonPath("$.status", is(HttpStatus.BAD_REQUEST.value())))
+        .andExpect(jsonPath("$.instance", is("/api/basic-details/gmc-number")))
+        .andExpect(jsonPath("$.errors").isArray())
+        .andExpect(jsonPath("$.errors", hasSize(2)))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/gmcNumber")))
+        .andExpect(jsonPath("$.errors[0].detail", is("must be 7 digits")))
+        .andExpect(jsonPath("$.errors[1].pointer", is("#/gmcStatus")))
+        .andExpect(jsonPath("$.errors[1].detail", is("must be null")));
   }
 }
