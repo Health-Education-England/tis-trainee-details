@@ -127,7 +127,8 @@ public class TrainingNumberGenerator {
     };
 
     //override for military trainees
-    if (programmeMembership.getProgrammeMembershipType().equalsIgnoreCase("MILITARY")) {
+    if (programmeMembership.getProgrammeMembershipType() != null
+        && programmeMembership.getProgrammeMembershipType().equalsIgnoreCase("MILITARY")) {
       parentOrganization = "TSD";
     }
 
