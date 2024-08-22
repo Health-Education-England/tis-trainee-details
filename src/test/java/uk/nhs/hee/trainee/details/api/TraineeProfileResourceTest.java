@@ -89,7 +89,7 @@ class TraineeProfileResourceTest {
   private static final String PERSON_KNOWNAS = "Ivy";
   private static final String PERSON_MAIDENNAME = "N/A";
   private static final String PERSON_TITLE = "Mr";
-  private static final String PERSON_PERSONOWNER = "Health Education England Thames Valley";
+  private static final String PERSON_PERSONOWNER = "Thames Valley";
   private static final LocalDate PERSON_DATEOFBIRTH = LocalDate.parse("1991-11-11",
       DateTimeFormatter.ofPattern("yyyy-MM-dd"));
   private static final String PERSON_GENDER = "Male";

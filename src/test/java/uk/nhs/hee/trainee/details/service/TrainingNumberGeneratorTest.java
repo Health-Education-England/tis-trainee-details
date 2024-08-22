@@ -537,18 +537,31 @@ class TrainingNumberGeneratorTest {
   @CsvSource(delimiter = '|', textBlock = """
       Defence Postgraduate Medical Deanery                   | TSD
       Health Education England East Midlands                 | EMD
+      East Midlands                                          | EMD
       Health Education England East of England               | EAN
+      East of England                                        | EAN
       Health Education England Kent, Surrey and Sussex       | KSS
+      Kent, Surrey and Sussex                                | KSS
       Health Education England North Central and East London | LDN
+      North Central and East London                          | LDN
       Health Education England North East                    | NTH
+      North East                                             | NTH
       Health Education England North West                    | NWE
+      North West                                             | NWE
       Health Education England North West London             | LDN
+      North West London                                      | LDN
       Health Education England South London                  | LDN
+      South London                                           | LDN
       Health Education England South West                    | SWN
+      South West                                             | SWN
       Health Education England Thames Valley                 | OXF
+      Thames Valley                                          | OXF
       Health Education England Wessex                        | WES
+      Wessex                                                 | WES
       Health Education England West Midlands                 | WMD
+      West Midlands                                          | WMD
       Health Education England Yorkshire and the Humber      | YHD
+      Yorkshire and the Humber                               | YHD
       London LETBs                                           | LDN
       """)
   void shouldPopulateTrainingNumberWithParentOrganizationWhenMappedByOwner(String ownerName,

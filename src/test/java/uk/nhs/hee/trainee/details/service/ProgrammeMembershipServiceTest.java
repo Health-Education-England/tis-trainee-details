@@ -935,9 +935,13 @@ class ProgrammeMembershipServiceTest {
     assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
   }
 
+  /**
+   * @deprecated remove once Local Office renaming is complete, the new name is covered below.
+   */
+  @Deprecated
   @ParameterizedTest
   @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
-  void pilot2024ShouldBeTrueForYhWithCorrectDateAndCurriculumSpecialty(String specialty) {
+  void pilot2024ShouldBeTrueForYhWithCorrectDateAndCurriculumSpecialty_old(String specialty) {
     LocalDate date = LocalDate.of(2024, 8, 15);
     String deanery = "Health Education England Yorkshire and the Humber";
     TraineeProfile traineeProfile = new TraineeProfile();
@@ -953,8 +957,30 @@ class ProgrammeMembershipServiceTest {
     assertThat("Unexpected isPilot2024 value.", isPilot2024, is(true));
   }
 
+  @ParameterizedTest
+  @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
+  void pilot2024ShouldBeTrueForYhWithCorrectDateAndCurriculumSpecialty(String specialty) {
+    LocalDate date = LocalDate.of(2024, 8, 15);
+    String deanery = "Yorkshire and the Humber";
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, date, END_DATE, deanery, TSS_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, specialty)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(true));
+  }
+
+  /**
+   * @deprecated remove once Local Office renaming is complete, the new name is covered below.
+   */
+  @Deprecated
   @Test
-  void pilot2024ShouldBeFalseForYhGeneralPractice() {
+  void pilot2024ShouldBeFalseForYhGeneralPractice_old() {
     LocalDate date = LocalDate.of(2024, 8, 7);
     String deanery = "Health Education England Yorkshire and the Humber";
     TraineeProfile traineeProfile = new TraineeProfile();
@@ -970,9 +996,30 @@ class ProgrammeMembershipServiceTest {
     assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
   }
 
+  @Test
+  void pilot2024ShouldBeFalseForYhGeneralPractice() {
+    LocalDate date = LocalDate.of(2024, 8, 7);
+    String deanery = "Yorkshire and the Humber";
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, date, END_DATE, deanery, TSS_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, "General Practice")));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
+  }
+
+  /**
+   * @deprecated remove once Local Office renaming is complete, the new name is covered below.
+   */
+  @Deprecated
   @ParameterizedTest
   @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
-  void pilot2024ShouldBeFalseForYhWithTooLateDateAndCorrectCurriculumSpecialty(String specialty) {
+  void pilot2024ShouldBeFalseForYhWithTooLateDateAndCorrectCurriculumSpecialty_old(String specialty) {
     LocalDate wrongDate = LocalDate.of(2024, 11, 1);
     String deanery = "Health Education England Yorkshire and the Humber";
     TraineeProfile traineeProfile = new TraineeProfile();
@@ -990,8 +1037,30 @@ class ProgrammeMembershipServiceTest {
 
   @ParameterizedTest
   @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
-  void pilot2024ShouldBeFalseForYhWithTooEarlyDateAndCorrectCurriculumSpecialty(String specialty) {
-    LocalDate wrongDate = LocalDate.of(2024, 07, 1);
+  void pilot2024ShouldBeFalseForYhWithTooLateDateAndCorrectCurriculumSpecialty(String specialty) {
+    LocalDate wrongDate = LocalDate.of(2024, 11, 1);
+    String deanery = "Yorkshire and the Humber";
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, wrongDate, END_DATE, deanery, TSS_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, specialty)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
+  }
+
+  /**
+   * @deprecated remove once Local Office renaming is complete, the new name is covered below.
+   */
+  @Deprecated
+  @ParameterizedTest
+  @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
+  void pilot2024ShouldBeFalseForYhWithTooEarlyDateAndCorrectCurriculumSpecialty_old(String specialty) {
+    LocalDate wrongDate = LocalDate.of(2024, 7, 1);
     String deanery = "Health Education England Yorkshire and the Humber";
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
@@ -1008,7 +1077,29 @@ class ProgrammeMembershipServiceTest {
 
   @ParameterizedTest
   @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
-  void pilot2024ShouldBeFalseIfYhLoWithGpSpecialtyInMultipleCurricula(String specialty) {
+  void pilot2024ShouldBeFalseForYhWithTooEarlyDateAndCorrectCurriculumSpecialty(String specialty) {
+    LocalDate wrongDate = LocalDate.of(2024, 7, 1);
+    String deanery = "Yorkshire and the Humber";
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, wrongDate, END_DATE, deanery, TSS_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, specialty)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
+  }
+
+  /**
+   * @deprecated remove once Local Office renaming is complete, the new name is covered below.
+   */
+  @Deprecated
+  @ParameterizedTest
+  @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
+  void pilot2024ShouldBeFalseIfYhLoWithGpSpecialtyInMultipleCurricula_old(String specialty) {
     LocalDate dateInRange = LocalDate.of(2024, 8, 15);
     String deanery = "Health Education England Yorkshire and the Humber";
     TraineeProfile traineeProfile = new TraineeProfile();
@@ -1031,7 +1122,34 @@ class ProgrammeMembershipServiceTest {
 
   @ParameterizedTest
   @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
-  void pilot2024ShouldBeTrueIfSwLoWithCorrectStartDateAndSpecialty(String specialty) {
+  void pilot2024ShouldBeFalseIfYhLoWithGpSpecialtyInMultipleCurricula(String specialty) {
+    LocalDate dateInRange = LocalDate.of(2024, 8, 15);
+    String deanery = "Yorkshire and the Humber";
+    TraineeProfile traineeProfile = new TraineeProfile();
+    Curriculum curriculum = createCurriculum(MEDICAL_CURRICULA.get(0),
+        CURRICULUM_SPECIALTY_CODE, specialty);
+    Curriculum curriculumGp = createCurriculum(MEDICAL_CURRICULA.get(1),
+        CURRICULUM_SPECIALTY_CODE, "General Practice");
+    ProgrammeMembership programmeMembership =
+        getProgrammeMembershipWithMultipleCurriculum(PROGRAMME_TIS_ID, PROGRAMME_MEMBERSHIP_TYPE,
+            dateInRange, END_DATE, deanery, List.of(curriculum, curriculumGp));
+
+    traineeProfile.setProgrammeMemberships(List.of(programmeMembership));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
+  }
+
+  /**
+   * @deprecated remove once Local Office renaming is complete, the new name is covered below.
+   */
+  @Deprecated
+  @ParameterizedTest
+  @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
+  void pilot2024ShouldBeTrueIfSwLoWithCorrectStartDateAndSpecialty_old(String specialty) {
     LocalDate dateInRange = LocalDate.of(2024, 10, 31);
     String deanery = "Health Education England South West";
     TraineeProfile traineeProfile = new TraineeProfile();
@@ -1049,7 +1167,29 @@ class ProgrammeMembershipServiceTest {
 
   @ParameterizedTest
   @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
-  void pilot2024ShouldBeFalseIfSwLoWithTooEarlyStartDate(String specialty) {
+  void pilot2024ShouldBeTrueIfSwLoWithCorrectStartDateAndSpecialty(String specialty) {
+    LocalDate dateInRange = LocalDate.of(2024, 10, 31);
+    String deanery = "South West";
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE, deanery, TSS_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, specialty)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(true));
+  }
+
+  /**
+   * @deprecated remove once Local Office renaming is complete, the new name is covered below.
+   */
+  @Deprecated
+  @ParameterizedTest
+  @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
+  void pilot2024ShouldBeFalseIfSwLoWithTooEarlyStartDate_old(String specialty) {
     LocalDate dateInRange = LocalDate.of(2024, 6, 2);
     String deanery = "Health Education England South West";
     TraineeProfile traineeProfile = new TraineeProfile();
@@ -1067,7 +1207,29 @@ class ProgrammeMembershipServiceTest {
 
   @ParameterizedTest
   @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
-  void pilot2024ShouldBeFalseIfSwLoWithTooLateStartDate(String specialty) {
+  void pilot2024ShouldBeFalseIfSwLoWithTooEarlyStartDate(String specialty) {
+    LocalDate dateInRange = LocalDate.of(2024, 6, 2);
+    String deanery = "South West";
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE, deanery, TSS_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, specialty)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
+  }
+
+  /**
+   * @deprecated remove once Local Office renaming is complete, the new name is covered below.
+   */
+  @Deprecated
+  @ParameterizedTest
+  @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
+  void pilot2024ShouldBeFalseIfSwLoWithTooLateStartDate_old(String specialty) {
     LocalDate dateInRange = LocalDate.of(2024, 11, 1);
     String deanery = "Health Education England South West";
     TraineeProfile traineeProfile = new TraineeProfile();
@@ -1082,9 +1244,30 @@ class ProgrammeMembershipServiceTest {
 
     assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
   }
+  @ParameterizedTest
+  @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
+  void pilot2024ShouldBeFalseIfSwLoWithTooLateStartDate(String specialty) {
+    LocalDate dateInRange = LocalDate.of(2024, 11, 1);
+    String deanery = "South West";
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE, deanery, TSS_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, specialty)));
 
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
+  }
+
+  /**
+   * @deprecated remove once Local Office renaming is complete, the new name is covered below.
+   */
+  @Deprecated
   @Test
-  void pilot2024ShouldBeFalseIfSwLoWithGpSpecialty() {
+  void pilot2024ShouldBeFalseIfSwLoWithGpSpecialty_old() {
     LocalDate dateInRange = LocalDate.of(2024, 8, 5);
     String deanery = "Health Education England South West";
     TraineeProfile traineeProfile = new TraineeProfile();
@@ -1100,9 +1283,30 @@ class ProgrammeMembershipServiceTest {
     assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
   }
 
+  @Test
+  void pilot2024ShouldBeFalseIfSwLoWithGpSpecialty() {
+    LocalDate dateInRange = LocalDate.of(2024, 8, 5);
+    String deanery = "South West";
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE, deanery, TSS_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, "General Practice")));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
+  }
+
+  /**
+   * @deprecated remove once Local Office renaming is complete, the new name is covered below.
+   */
+  @Deprecated
   @ParameterizedTest
   @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
-  void pilot2024ShouldBeFalseIfSwLoWithGpSpecialtyInMultipleCurricula(String specialty) {
+  void pilot2024ShouldBeFalseIfSwLoWithGpSpecialtyInMultipleCurricula_old(String specialty) {
     LocalDate dateInRange = LocalDate.of(2024, 10, 31);
     String deanery = "Health Education England South West";
     TraineeProfile traineeProfile = new TraineeProfile();
@@ -1124,8 +1328,35 @@ class ProgrammeMembershipServiceTest {
   }
 
   @ParameterizedTest
+  @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
+  void pilot2024ShouldBeFalseIfSwLoWithGpSpecialtyInMultipleCurricula(String specialty) {
+    LocalDate dateInRange = LocalDate.of(2024, 10, 31);
+    String deanery = "South West";
+    TraineeProfile traineeProfile = new TraineeProfile();
+    Curriculum curriculum = createCurriculum(MEDICAL_CURRICULA.get(0),
+        CURRICULUM_SPECIALTY_CODE, specialty);
+    Curriculum curriculumGp = createCurriculum(MEDICAL_CURRICULA.get(1),
+        CURRICULUM_SPECIALTY_CODE, "General Practice");
+    ProgrammeMembership programmeMembership =
+        getProgrammeMembershipWithMultipleCurriculum(PROGRAMME_TIS_ID, PROGRAMME_MEMBERSHIP_TYPE,
+            dateInRange, END_DATE, deanery, List.of(curriculum, curriculumGp));
+
+    traineeProfile.setProgrammeMemberships(List.of(programmeMembership));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
+  }
+
+  /**
+   * @deprecated remove once Local Office renaming is complete, the new name is covered below.
+   */
+  @Deprecated
+  @ParameterizedTest
   @MethodSource("listNwPilot2024AllSpecialties")
-  void pilot2024ShouldBeTrueIfNwLoWithCorrectStartDateAndSpecialty(String specialty) {
+  void pilot2024ShouldBeTrueIfNwLoWithCorrectStartDateAndSpecialty_old(String specialty) {
     LocalDate dateInRange = LocalDate.of(2024, 8, 1);
     String deanery = "Health Education England North West";
     TraineeProfile traineeProfile = new TraineeProfile();
@@ -1143,8 +1374,70 @@ class ProgrammeMembershipServiceTest {
 
   @ParameterizedTest
   @MethodSource("listNwPilot2024AllSpecialties")
+  void pilot2024ShouldBeTrueIfNwLoWithCorrectStartDateAndSpecialty(String specialty) {
+    LocalDate dateInRange = LocalDate.of(2024, 8, 1);
+    String deanery = "North West";
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE, deanery, TSS_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, specialty)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(true));
+  }
+
+  /**
+   * @deprecated remove once Local Office renaming is complete, the new name is covered below.
+   */
+  @Deprecated
+  @ParameterizedTest
+  @MethodSource("listNwPilot2024AllSpecialties")
+  void pilot2024ShouldBeFalseIfNwLoWithIncorrectStartDateAndOkSpecialty_old(String specialty) {
+    LocalDate dateOutOfRange = LocalDate.of(2024, 7, 1);
+    String deanery = "Health Education England North West";
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, dateOutOfRange, END_DATE, deanery, TSS_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, specialty)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
+  }
+
+  @ParameterizedTest
+  @MethodSource("listNwPilot2024AllSpecialties")
   void pilot2024ShouldBeFalseIfNwLoWithIncorrectStartDateAndOkSpecialty(String specialty) {
     LocalDate dateOutOfRange = LocalDate.of(2024, 7, 1);
+    String deanery = "North West";
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, dateOutOfRange, END_DATE, deanery, TSS_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, specialty)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
+  }
+
+  /**
+   * @deprecated remove once Local Office renaming is complete, the new name is covered below.
+   */
+  @Deprecated
+  @ParameterizedTest
+  @MethodSource("listNwPilot2024AllSpecialties")
+  void pilot2024ShouldBeFalseIfNwLoWithTooLateStartDateAndOkSpecialty_old(String specialty) {
+    LocalDate dateOutOfRange = LocalDate.of(2024, 12, 1);
     String deanery = "Health Education England North West";
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
@@ -1163,7 +1456,7 @@ class ProgrammeMembershipServiceTest {
   @MethodSource("listNwPilot2024AllSpecialties")
   void pilot2024ShouldBeFalseIfNwLoWithTooLateStartDateAndOkSpecialty(String specialty) {
     LocalDate dateOutOfRange = LocalDate.of(2024, 12, 1);
-    String deanery = "Health Education England North West";
+    String deanery = "North West";
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
@@ -1177,10 +1470,14 @@ class ProgrammeMembershipServiceTest {
     assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
   }
 
+  /**
+   * @deprecated remove once Local Office renaming is complete, the new name is covered below.
+   */
+  @Deprecated
   @ParameterizedTest
   @ValueSource(strings = {"Cardio-thoracic surgery (run through)",
       "Oral and maxillo-facial surgery (run through)"})
-  void pilot2024ShouldBeTrueIfNwLoWithCorrectStartDateAndProgramme(String programme) {
+  void pilot2024ShouldBeTrueIfNwLoWithCorrectStartDateAndProgramme_old(String programme) {
     LocalDate dateInRange = LocalDate.of(2024, 8, 1);
     String deanery = "Health Education England North West";
     TraineeProfile traineeProfile = new TraineeProfile();
@@ -1200,7 +1497,31 @@ class ProgrammeMembershipServiceTest {
   @ParameterizedTest
   @ValueSource(strings = {"Cardio-thoracic surgery (run through)",
       "Oral and maxillo-facial surgery (run through)"})
-  void pilot2024ShouldBeFalseIfNwLoWithIncorrectStartDateAndOkProgramme(String programme) {
+  void pilot2024ShouldBeTrueIfNwLoWithCorrectStartDateAndProgramme(String programme) {
+    LocalDate dateInRange = LocalDate.of(2024, 8, 1);
+    String deanery = "North West";
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE, deanery, TSS_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, CURRICULUM_SPECIALTY)));
+    traineeProfile.getProgrammeMemberships().get(0).setProgrammeName(programme);
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(true));
+  }
+
+  /**
+   * @deprecated remove once Local Office renaming is complete, the new name is covered below.
+   */
+  @Deprecated
+  @ParameterizedTest
+  @ValueSource(strings = {"Cardio-thoracic surgery (run through)",
+      "Oral and maxillo-facial surgery (run through)"})
+  void pilot2024ShouldBeFalseIfNwLoWithIncorrectStartDateAndOkProgramme_old(String programme) {
     LocalDate dateOutOfRange = LocalDate.of(2024, 7, 1);
     String deanery = "Health Education England North West";
     TraineeProfile traineeProfile = new TraineeProfile();
@@ -1217,12 +1538,55 @@ class ProgrammeMembershipServiceTest {
     assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
   }
 
+  @ParameterizedTest
+  @ValueSource(strings = {"Cardio-thoracic surgery (run through)",
+      "Oral and maxillo-facial surgery (run through)"})
+  void pilot2024ShouldBeFalseIfNwLoWithIncorrectStartDateAndOkProgramme(String programme) {
+    LocalDate dateOutOfRange = LocalDate.of(2024, 7, 1);
+    String deanery = "North West";
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, dateOutOfRange, END_DATE, deanery, TSS_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, CURRICULUM_SPECIALTY)));
+    traineeProfile.getProgrammeMemberships().get(0).setProgrammeName(programme);
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
+  }
+
+  /**
+   * @deprecated remove once Local Office renaming is complete, the new name is covered below.
+   */
+  @Deprecated
+  @Test
+  void pilot2024ShouldBeFalseIfConditionsNotMet_old() {
+    //obviously there are a number of scenarios that could (should) be tested here
+    LocalDate dateInRange = LocalDate.of(2024, 8, 1);
+    String invalidSpecialty = "some specialty";
+    String deanery = "Health Education England North West";
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE, deanery, TSS_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, invalidSpecialty)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
+  }
+
   @Test
   void pilot2024ShouldBeFalseIfConditionsNotMet() {
     //obviously there are a number of scenarios that could (should) be tested here
     LocalDate dateInRange = LocalDate.of(2024, 8, 1);
     String invalidSpecialty = "some specialty";
-    String deanery = "Health Education England North West";
+    String deanery = "North West";
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
