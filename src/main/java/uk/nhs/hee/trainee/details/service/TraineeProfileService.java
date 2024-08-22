@@ -31,7 +31,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.dto.UserDetails;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
-import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.model.Qualification;
@@ -158,39 +157,6 @@ public class TraineeProfileService {
                 && traineeProfile.getPersonalDetails().getDateOfBirth().equals(dob))
         .map(TraineeProfile::getTraineeTisId)
         .toList();
-  }
-
-  /**
-   * Remove past programmes from the trainee profile.
-   *
-   * @param traineeProfile The trainee profile to modify.
-   * @return The modified trainee profile.
-   */
-  public TraineeProfile hidePastProgrammes(TraineeProfile traineeProfile) {
-    traineeProfile.getProgrammeMemberships().removeIf(c -> c.getStatus() == Status.PAST);
-    return traineeProfile;
-  }
-
-  /**
-   * Remove deprecated programmes from the trainee profile.
-   *
-   * @param traineeProfile The trainee profile to modify.
-   * @return The modified trainee profile.
-   */
-  public TraineeProfile hideDeprecatedProgrammes(TraineeProfile traineeProfile) {
-    traineeProfile.getProgrammeMemberships().removeIf(c -> c.getTisId().matches("[0-9,]+"));
-    return traineeProfile;
-  }
-
-  /**
-   * Remove past placements from the trainee profile.
-   *
-   * @param traineeProfile The trainee profile to modify.
-   * @return The modified trainee profile.
-   */
-  public TraineeProfile hidePastPlacements(TraineeProfile traineeProfile) {
-    traineeProfile.getPlacements().removeIf(c -> c.getStatus() == Status.PAST);
-    return traineeProfile;
   }
 
   /**

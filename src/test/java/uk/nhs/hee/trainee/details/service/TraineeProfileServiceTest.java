@@ -24,7 +24,6 @@ package uk.nhs.hee.trainee.details.service;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -236,27 +235,6 @@ class TraineeProfileServiceTest {
     TraineeProfile returnedTraineeProfile = service
         .getTraineeProfileByTraineeTisId(DEFAULT_TIS_ID_1);
     assertThat(returnedTraineeProfile, is(traineeProfile));
-  }
-
-  @Test
-  void hidePastProgrammesShouldHidePastProgrammes() {
-    var programmeMembership2 = new ProgrammeMembership();
-    programmeMembership2.setStartDate(LocalDate.now().minusYears(2));
-    programmeMembership2.setEndDate(LocalDate.now().minusYears(1));
-
-    List<ProgrammeMembership> programmeMemberships = traineeProfile.getProgrammeMemberships();
-    programmeMemberships.add(programmeMembership2);
-
-    TraineeProfile returnedTraineeProfile = service.hidePastProgrammes(traineeProfile);
-    assertThat(returnedTraineeProfile.getProgrammeMemberships().size(), is(1));
-    assertThat(returnedTraineeProfile.getProgrammeMemberships(), hasItem(programmeMembership));
-  }
-
-  @Test
-  void hidePastPlacementsShouldHidePastPlacements() {
-    TraineeProfile returnedTraineeProfile = service.hidePastPlacements(traineeProfile);
-    assertThat(returnedTraineeProfile.getPlacements(), hasItem(placement1));
-    assertThat(returnedTraineeProfile.getPlacements(), not(hasItem(placement2)));
   }
 
   @Test

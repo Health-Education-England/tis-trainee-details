@@ -85,8 +85,6 @@ public class TraineeProfileResource {
       return ResponseEntity.notFound().build();
     }
 
-    traineeProfile = service.hidePastProgrammes(traineeProfile);
-    traineeProfile = service.hidePastPlacements(traineeProfile);
     return ResponseEntity.ok(mapper.toDto(traineeProfile));
   }
 

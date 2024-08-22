@@ -276,9 +276,6 @@ class TraineeProfileResourceTest {
   @Test
   void getShouldReturnTraineeProfileWhenTisIdExists() throws Exception {
     when(service.getTraineeProfileByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
-    when(service.hidePastProgrammes(traineeProfile)).thenReturn(traineeProfile);
-    when(service.hideDeprecatedProgrammes(traineeProfile)).thenReturn(traineeProfile);
-    when(service.hidePastPlacements(traineeProfile)).thenReturn(traineeProfile);
 
     Signature signature = new Signature(Duration.ofMinutes(60));
     signature.setHmac("not-really-a-hmac");
