@@ -393,16 +393,15 @@ class TrainingNumberGeneratorTest {
         is("Unable to calculate the parent organization."));
   }
 
-  @ParameterizedTest
-  @ValueSource(strings = {"MILITARY", "military"})
-  void shouldUseTsdPrefixWhenMilitaryProgrammeMembershipType(String pmType) {
+  @Test
+  void shouldUseTsdPrefixWhenMilitaryProgrammeMembershipType() {
     TraineeProfileDto profile = new TraineeProfileDto();
     PersonalDetailsDto personalDetails = new PersonalDetailsDto();
     personalDetails.setGmcNumber(GMC_NUMBER);
     profile.setPersonalDetails(personalDetails);
 
     ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
-    pm.setProgrammeMembershipType(pmType);
+    pm.setProgrammeMembershipType("MILITARY");
     pm.setManagingDeanery(OWNER_NAME);
     pm.setProgrammeName(PROGRAMME_NAME);
     pm.setProgrammeNumber(PROGRAMME_NUMBER);
