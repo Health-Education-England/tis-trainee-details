@@ -239,27 +239,6 @@ class TraineeProfileServiceTest {
   }
 
   @Test
-  void hidePastProgrammesShouldHidePastProgrammes() {
-    var programmeMembership2 = new ProgrammeMembership();
-    programmeMembership2.setStartDate(LocalDate.now().minusYears(2));
-    programmeMembership2.setEndDate(LocalDate.now().minusYears(1));
-
-    List<ProgrammeMembership> programmeMemberships = traineeProfile.getProgrammeMemberships();
-    programmeMemberships.add(programmeMembership2);
-
-    TraineeProfile returnedTraineeProfile = service.hidePastProgrammes(traineeProfile);
-    assertThat(returnedTraineeProfile.getProgrammeMemberships().size(), is(1));
-    assertThat(returnedTraineeProfile.getProgrammeMemberships(), hasItem(programmeMembership));
-  }
-
-  @Test
-  void hidePastPlacementsShouldHidePastPlacements() {
-    TraineeProfile returnedTraineeProfile = service.hidePastPlacements(traineeProfile);
-    assertThat(returnedTraineeProfile.getPlacements(), hasItem(placement1));
-    assertThat(returnedTraineeProfile.getPlacements(), not(hasItem(placement2)));
-  }
-
-  @Test
   void shouldSortQualificationsInDescendingOrder() {
     Qualification qualification1 = new Qualification();
     qualification1.setDateAttained(LocalDate.now());

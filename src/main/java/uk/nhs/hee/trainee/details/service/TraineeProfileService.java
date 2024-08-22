@@ -161,39 +161,6 @@ public class TraineeProfileService {
   }
 
   /**
-   * Remove past programmes from the trainee profile.
-   *
-   * @param traineeProfile The trainee profile to modify.
-   * @return The modified trainee profile.
-   */
-  public TraineeProfile hidePastProgrammes(TraineeProfile traineeProfile) {
-    traineeProfile.getProgrammeMemberships().removeIf(c -> c.getStatus() == Status.PAST);
-    return traineeProfile;
-  }
-
-  /**
-   * Remove deprecated programmes from the trainee profile.
-   *
-   * @param traineeProfile The trainee profile to modify.
-   * @return The modified trainee profile.
-   */
-  public TraineeProfile hideDeprecatedProgrammes(TraineeProfile traineeProfile) {
-    traineeProfile.getProgrammeMemberships().removeIf(c -> c.getTisId().matches("[0-9,]+"));
-    return traineeProfile;
-  }
-
-  /**
-   * Remove past placements from the trainee profile.
-   *
-   * @param traineeProfile The trainee profile to modify.
-   * @return The modified trainee profile.
-   */
-  public TraineeProfile hidePastPlacements(TraineeProfile traineeProfile) {
-    traineeProfile.getPlacements().removeIf(c -> c.getStatus() == Status.PAST);
-    return traineeProfile;
-  }
-
-  /**
    * Delete a trainee profile.
    *
    * @param traineeTisId The TIS ID of the trainee to delete the profile for.
