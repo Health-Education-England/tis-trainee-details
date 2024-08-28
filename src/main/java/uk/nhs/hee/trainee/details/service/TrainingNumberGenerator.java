@@ -184,7 +184,8 @@ public class TrainingNumberGenerator {
    */
   private String getReferenceNumber(PersonalDetailsDto personalDetails) {
     String gmcNumber = personalDetails.getGmcNumber();
-    return gmcNumber.matches("\\d{7}") ? gmcNumber : personalDetails.getGdcNumber();
+    return gmcNumber != null && gmcNumber.matches("\\d{7}") ? gmcNumber
+        : personalDetails.getGdcNumber();
   }
 
   /**

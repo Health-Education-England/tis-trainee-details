@@ -1072,6 +1072,7 @@ class TrainingNumberGeneratorTest {
   }
 
   @ParameterizedTest
+  @NullAndEmptySource
   @ValueSource(strings = {"abc", "12345678"})
   void shouldPopulateTrainingNumberWithGdcNumberWhenValidAndGmcInvalid(String gmcNumber) {
     TraineeProfileDto profile = new TraineeProfileDto();
