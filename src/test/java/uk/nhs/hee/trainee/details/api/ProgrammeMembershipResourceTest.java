@@ -26,6 +26,8 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -67,8 +69,8 @@ import uk.nhs.hee.trainee.details.mapper.SignatureMapperImpl;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
 import uk.nhs.hee.trainee.details.model.HeeUser;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
+import uk.nhs.hee.trainee.details.service.EventPublishService;
 import uk.nhs.hee.trainee.details.service.ProgrammeMembershipService;
-import uk.nhs.hee.trainee.details.service.RabbitPublishService;
 import uk.nhs.hee.trainee.details.service.SignatureService;
 
 @ContextConfiguration(classes = {ProgrammeMembershipMapperImpl.class, SignatureMapperImpl.class})
@@ -93,7 +95,7 @@ class ProgrammeMembershipResourceTest {
   private ProgrammeMembershipService service;
 
   @MockBean
-  private RabbitPublishService rabbitPublishService;
+  private EventPublishService eventPublishService;
 
   @MockBean
   private SignatureService signatureService;
@@ -101,7 +103,7 @@ class ProgrammeMembershipResourceTest {
   @BeforeEach
   void setUp() {
     ProgrammeMembershipResource resource = new ProgrammeMembershipResource(service,
-        programmeMembershipMapper, rabbitPublishService);
+        programmeMembershipMapper, eventPublishService);
     mockMvc = MockMvcBuilders.standaloneSetup(resource)
         .setMessageConverters(jacksonMessageConverter)
         .build();
@@ -287,6 +289,26 @@ class ProgrammeMembershipResourceTest {
   }
 
   @Test
+  void getShouldReturnBadRequestWhenTokenNotMap() throws Exception {
+    String token = TestJwtUtil.generateToken("[]");
+
+    mockMvc.perform(post("/api/programme-membership/{programmeMembershipId}/sign-coj", 0)
+            .contentType(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void getShouldReturnNotFoundWhenTisIdNotInToken() throws Exception {
+    String token = TestJwtUtil.generateToken("{}");
+
+    mockMvc.perform(post("/api/programme-membership/{programmeMembershipId}/sign-coj", 0)
+            .contentType(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
   void shouldReturnNotFoundStatusInSignCojWhenPmNotFound() throws Exception {
     when(service.signProgrammeMembershipCoj("tisIdValue", "0"))
         .thenReturn(Optional.empty());
@@ -335,6 +357,50 @@ class ProgrammeMembershipResourceTest {
             .isEmpty());
   }
 
+  @Test
+  void shouldNotPublishCojSignedEventWhenTraineePmNotFound() throws Exception {
+    when(service.signProgrammeMembershipCoj("tisIdValue", "40"))
+        .thenReturn(Optional.empty());
+
+    ProgrammeMembershipDto dto = new ProgrammeMembershipDto();
+    dto.setTisId("tisIdValue");
+
+    String token = TestJwtUtil.generateTokenForTisId("tisIdValue");
+    mockMvc.perform(post("/api/programme-membership/{programmeMembershipId}/sign-coj", 40)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(mapper.writeValueAsBytes(dto))
+        .header(HttpHeaders.AUTHORIZATION, token));
+
+    verifyNoInteractions(eventPublishService);
+  }
+
+  @Test
+  void shouldPublishCojSignedEventWhenTraineePmFound() throws Exception {
+    final Instant signedAt = Instant.now();
+
+    ProgrammeMembership programmeMembership = new ProgrammeMembership();
+    programmeMembership.setTisId("tisIdValue");
+    programmeMembership.setProgrammeTisId("programmeTisIdValue");
+    programmeMembership.setProgrammeName("programmeNameValue");
+    programmeMembership.setProgrammeNumber("programmeNumberValue");
+    programmeMembership.setConditionsOfJoining(
+        new ConditionsOfJoining(signedAt, GoldGuideVersion.getLatest(), null));
+
+    when(service.signProgrammeMembershipCoj("tisIdValue", "40"))
+        .thenReturn(Optional.of(programmeMembership));
+
+    ProgrammeMembershipDto dto = new ProgrammeMembershipDto();
+    dto.setTisId("tisIdValue");
+
+    String token = TestJwtUtil.generateTokenForTisId("tisIdValue");
+    mockMvc.perform(post("/api/programme-membership/{programmeMembershipId}/sign-coj", 40)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(mapper.writeValueAsBytes(dto))
+        .header(HttpHeaders.AUTHORIZATION, token));
+
+    verify(eventPublishService).publishCojSignedEvent(programmeMembership);
+  }
+
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
   void shouldReturnProgrammeMembershipNewStarterWhenTraineeFound(boolean isNewStarter)
@@ -343,13 +409,12 @@ class ProgrammeMembershipResourceTest {
         .isNewStarter("40", "1"))
         .thenReturn(isNewStarter);
 
-    MvcResult result = mockMvc.perform(
+    mockMvc.perform(
             get("/api/programme-membership/isnewstarter/{traineeTisId}/{programmeMembershipId}",
                 "40", "1")
                 .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
-        .andExpect(content().string(String.valueOf(isNewStarter)))
-        .andReturn();
+        .andExpect(content().string(String.valueOf(isNewStarter)));
   }
 
   @Test
@@ -373,13 +438,12 @@ class ProgrammeMembershipResourceTest {
         .isPilot2024("40", "1"))
         .thenReturn(isPilot2024);
 
-    MvcResult result = mockMvc.perform(
+    mockMvc.perform(
             get("/api/programme-membership/ispilot2024/{traineeTisId}/{programmeMembershipId}",
                 "40", "1")
                 .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
-        .andExpect(content().string(String.valueOf(isPilot2024)))
-        .andReturn();
+        .andExpect(content().string(String.valueOf(isPilot2024)));
   }
 
   @Test

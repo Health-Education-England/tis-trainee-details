@@ -94,14 +94,15 @@ public class BasicDetailsResource {
     }
 
     log.info("Updating GMC number of trainee {}.", tisId);
-    PersonalDetails personalDetails = new PersonalDetails();
-    personalDetails.setGmcNumber(gmcDetails.gmcNumber());
 
     // Default all GMCs to registered until we can properly prompt/determine the correct status.
-    personalDetails.setGmcStatus("Registered with Licence");
+    GmcDetailsDto updatedGmcDetails = GmcDetailsDto.builder()
+        .gmcNumber(gmcDetails.gmcNumber())
+        .gmcStatus("Registered with Licence")
+        .build();
 
-    Optional<PersonalDetails> entity = service.updateGmcDetailsByTisId(tisId, personalDetails,
-        true);
+    Optional<PersonalDetails> entity = service.updateGmcDetailsWithTraineeProvidedDetails(tisId,
+        updatedGmcDetails);
     Optional<PersonalDetailsDto> dto = entity.map(mapper::toDto);
     return ResponseEntity.of(dto);
   }

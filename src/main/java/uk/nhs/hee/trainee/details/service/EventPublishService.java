@@ -22,11 +22,18 @@
 package uk.nhs.hee.trainee.details.service;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
+import io.awspring.cloud.sns.core.SnsNotification;
+import io.awspring.cloud.sns.core.SnsTemplate;
 import io.awspring.cloud.sqs.operations.SqsTemplate;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import uk.nhs.hee.trainee.details.dto.GmcDetailsDto;
+import uk.nhs.hee.trainee.details.event.CojSignedEvent;
+import uk.nhs.hee.trainee.details.event.GmcDetailsProvidedEvent;
 import uk.nhs.hee.trainee.details.event.ProfileCreateEvent;
+import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
+import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 
 /**
@@ -37,13 +44,57 @@ import uk.nhs.hee.trainee.details.model.TraineeProfile;
 @XRayEnabled
 public class EventPublishService {
 
-  private final SqsTemplate messagingTemplate;
+  private final SnsTemplate snsTemplate;
+  private final String cojSignedTopic;
+  private final String gmcDetailsProvidedTopic;
+
+  private final SqsTemplate sqsTemplate;
   private final String eventQueueUrl;
 
-  EventPublishService(SqsTemplate messagingTemplate,
+  EventPublishService(SnsTemplate snsTemplate, SqsTemplate sqsTemplate,
+      @Value("${application.aws.sns.coj-signed}") String cojSignedTopic,
+      @Value("${application.aws.sns.gmc-details-provided}") String gmcDetailsProvidedTopic,
       @Value("${application.aws.sqs.event}") String eventQueueUrl) {
-    this.messagingTemplate = messagingTemplate;
+    this.snsTemplate = snsTemplate;
+    this.sqsTemplate = sqsTemplate;
+    this.cojSignedTopic = cojSignedTopic;
+    this.gmcDetailsProvidedTopic = gmcDetailsProvidedTopic;
     this.eventQueueUrl = eventQueueUrl;
+  }
+
+  /**
+   * Publish a CoJ signed event.
+   *
+   * @param programmeMembership The signed {@link ProgrammeMembership}.
+   */
+  public void publishCojSignedEvent(ProgrammeMembership programmeMembership) {
+    String programmeMembershipId = programmeMembership.getTisId();
+    log.info("Sending CoJ signed event for programme membership id '{}'", programmeMembershipId);
+
+    ConditionsOfJoining conditionsOfJoining = programmeMembership.getConditionsOfJoining();
+    CojSignedEvent event = new CojSignedEvent(programmeMembershipId, conditionsOfJoining);
+
+    SnsNotification<CojSignedEvent> notification = SnsNotification.builder(event)
+        .groupId(programmeMembershipId)
+        .build();
+    snsTemplate.sendNotification(cojSignedTopic, notification);
+  }
+
+  /**
+   * Publish a GMC Details provided event.
+   *
+   * @param traineeId  The ID of the trainee being updated.
+   * @param gmcDetails The provided GMC details.
+   */
+  public void publishGmcDetailsProvidedEvent(String traineeId, GmcDetailsDto gmcDetails) {
+    log.info("Sending GMC Details update event for trainee id '{}'", traineeId);
+
+    GmcDetailsProvidedEvent event = new GmcDetailsProvidedEvent(traineeId, gmcDetails);
+    SnsNotification<GmcDetailsProvidedEvent> notification = SnsNotification.builder(event)
+        .groupId(traineeId)
+        .build();
+
+    snsTemplate.sendNotification(gmcDetailsProvidedTopic, notification);
   }
 
   /**
@@ -55,6 +106,6 @@ public class EventPublishService {
     log.info("Sending profile creation event for trainee id '{}'", profile.getTraineeTisId());
 
     ProfileCreateEvent event = new ProfileCreateEvent(profile.getTraineeTisId());
-    messagingTemplate.send(eventQueueUrl, event);
+    sqsTemplate.send(eventQueueUrl, event);
   }
 }
