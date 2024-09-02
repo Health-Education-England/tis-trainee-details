@@ -25,9 +25,9 @@ package uk.nhs.hee.trainee.details.dto.enumeration;
  * An enumeration of supported Gold Guide versions.
  */
 public enum GoldGuideVersion {
-  GG9;
+  GG9, GG10;
 
   public static GoldGuideVersion getLatest() {
-    return GG9;
+    return GG10;
   }
 }

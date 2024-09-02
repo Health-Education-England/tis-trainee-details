@@ -64,7 +64,7 @@ class CachingDelegateIntegrationTest {
     String key = UUID.randomUUID().toString();
 
     ConditionsOfJoining coj
-        = new ConditionsOfJoining(Instant.now(), GoldGuideVersion.GG9, Instant.now());
+        = new ConditionsOfJoining(Instant.now(), GoldGuideVersion.GG10, Instant.now());
     ConditionsOfJoining cachedCoj = delegate.cacheConditionsOfJoining(key, coj);
     assertThat("Unexpected cached value.", cachedCoj, is(coj));
   }
@@ -74,7 +74,7 @@ class CachingDelegateIntegrationTest {
     String key = UUID.randomUUID().toString();
 
     ConditionsOfJoining coj
-        = new ConditionsOfJoining(Instant.now(), GoldGuideVersion.GG9, Instant.now());
+        = new ConditionsOfJoining(Instant.now(), GoldGuideVersion.GG10, Instant.now());
     delegate.cacheConditionsOfJoining(key, coj);
 
     Optional<ConditionsOfJoining> cachedOptional = delegate.getConditionsOfJoining(key);
@@ -86,7 +86,7 @@ class CachingDelegateIntegrationTest {
     String key = UUID.randomUUID().toString();
 
     ConditionsOfJoining coj
-        = new ConditionsOfJoining(Instant.now(), GoldGuideVersion.GG9, Instant.now());
+        = new ConditionsOfJoining(Instant.now(), GoldGuideVersion.GG10, Instant.now());
     delegate.cacheConditionsOfJoining(key, coj);
 
     // Ignore this result, the cached value should be evicted.

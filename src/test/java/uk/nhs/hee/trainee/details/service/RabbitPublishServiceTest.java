@@ -73,7 +73,7 @@ class RabbitPublishServiceTest {
     programmeMembership.setTisId(TIS_ID);
     Instant signedAt = Instant.now();
     ConditionsOfJoining conditionsOfJoining
-        = new ConditionsOfJoining(signedAt, GoldGuideVersion.GG9, null);
+        = new ConditionsOfJoining(signedAt, GoldGuideVersion.GG10, null);
     programmeMembership.setConditionsOfJoining(conditionsOfJoining);
 
     rabbitPublishService.publishCojSignedEvent(programmeMembership);
@@ -91,7 +91,7 @@ class RabbitPublishServiceTest {
     assertThat("Unexpected CoJ Signed At",
         conditionsOfJoiningSent.signedAt(), is(signedAt));
     assertThat("Unexpected CoJ Version",
-        conditionsOfJoiningSent.version(), is(GoldGuideVersion.GG9));
+        conditionsOfJoiningSent.version(), is(GoldGuideVersion.GG10));
     assertThat("Unexpected CoJ synced at", conditionsOfJoiningSent.syncedAt(),
         nullValue());
   }
@@ -102,7 +102,7 @@ class RabbitPublishServiceTest {
     programmeMembership.setTisId(TIS_ID);
     Instant signedAt = Instant.now();
     ConditionsOfJoining conditionsOfJoining
-        = new ConditionsOfJoining(signedAt, GoldGuideVersion.GG9, null);
+        = new ConditionsOfJoining(signedAt, GoldGuideVersion.GG10, null);
     programmeMembership.setConditionsOfJoining(conditionsOfJoining);
 
     rabbitPublishService.publishCojSignedEvent(programmeMembership);
@@ -150,7 +150,7 @@ class RabbitPublishServiceTest {
     programmeMembership.setTisId(TIS_ID);
     Instant signedAt = Instant.now();
     ConditionsOfJoining conditionsOfJoining
-        = new ConditionsOfJoining(signedAt, GoldGuideVersion.GG9, null);
+        = new ConditionsOfJoining(signedAt, GoldGuideVersion.GG10, null);
     programmeMembership.setConditionsOfJoining(conditionsOfJoining);
 
     assertDoesNotThrow(() -> rabbitPublishService.publishCojSignedEvent(programmeMembership),
