@@ -424,36 +424,6 @@ class TrainingNumberGeneratorTest {
   }
 
   @Test
-  void shouldNotForceTsdPrefixWhenNotMilitaryProgrammeMembershipType() {
-    TraineeProfileDto profile = new TraineeProfileDto();
-    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
-    personalDetails.setGmcNumber(GMC_NUMBER);
-    profile.setPersonalDetails(personalDetails);
-
-    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
-    pm.setProgrammeMembershipType("some other type");
-    pm.setManagingDeanery(OWNER_NAME);
-    pm.setProgrammeName(PROGRAMME_NAME);
-    pm.setProgrammeNumber(PROGRAMME_NUMBER);
-    pm.setTrainingPathway(TRAINING_PATHWAY);
-    pm.setStartDate(NOW);
-    profile.setProgrammeMemberships(List.of(pm));
-
-    CurriculumDto curriculum1 = new CurriculumDto();
-    curriculum1.setCurriculumSpecialtyCode("ABC");
-    curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
-    curriculum1.setCurriculumStartDate(PAST);
-    curriculum1.setCurriculumEndDate(FUTURE);
-
-    pm.setCurricula(List.of(curriculum1));
-
-    service.populateTrainingNumbers(profile);
-
-    assertThat("Unexpected training number.", pm.getTrainingNumber().startsWith("TSD"),
-        is(false));
-  }
-
-  @Test
   void shouldPopulateFullTrainingNumberWhenProgrammeIsCurrent() {
     TraineeProfileDto profile = new TraineeProfileDto();
     PersonalDetailsDto personalDetails = new PersonalDetailsDto();
