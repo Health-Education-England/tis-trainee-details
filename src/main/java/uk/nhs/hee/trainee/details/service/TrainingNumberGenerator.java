@@ -126,6 +126,11 @@ public class TrainingNumberGenerator {
       default -> null;
     };
 
+    //override for military trainees
+    if (Objects.equals(programmeMembership.getProgrammeMembershipType(), "MILITARY")) {
+      parentOrganization = "TSD";
+    }
+
     if (parentOrganization == null) {
       throw new IllegalArgumentException("Unable to calculate the parent organization.");
     }
