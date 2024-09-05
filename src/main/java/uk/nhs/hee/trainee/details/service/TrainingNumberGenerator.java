@@ -21,6 +21,7 @@
 
 package uk.nhs.hee.trainee.details.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -42,6 +43,12 @@ import uk.nhs.hee.trainee.details.dto.TraineeProfileDto;
 @Service
 public class TrainingNumberGenerator {
 
+  private final SignatureService signatureService;
+
+  public TrainingNumberGenerator(SignatureService signatureService) {
+    this.signatureService = signatureService;
+  }
+
   /**
    * Populate the training numbers for all programme memberships in the trainee profile.
    *
@@ -55,7 +62,17 @@ public class TrainingNumberGenerator {
     }
 
     traineeProfile.getProgrammeMemberships()
-        .forEach(pm -> populateTrainingNumber(personalDetails, pm));
+        .forEach(pm -> {
+          populateTrainingNumber(personalDetails, pm);
+          if (pm.getSignature() != null) { // Realistically should never be null, but it saves some effort in edge cases?
+            try {
+              signatureService.signDto(pm);
+            } catch (JsonProcessingException e) {
+              log.error("Unable to sign programme membership {}.", pm.getTisId());
+              throw new RuntimeException(e);
+            }
+          }
+        });
   }
 
   /**
