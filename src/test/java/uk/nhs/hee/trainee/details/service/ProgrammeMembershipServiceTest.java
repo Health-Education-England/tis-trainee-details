@@ -306,7 +306,7 @@ class ProgrammeMembershipServiceTest {
     ProgrammeMembership newProgrammeMembership = createProgrammeMembership(
         EXISTING_PROGRAMME_MEMBERSHIP_UUID, MODIFIED_SUFFIX, 100);
     ConditionsOfJoining newConditionsOfJoining
-        = new ConditionsOfJoining(null, GoldGuideVersion.GG9, null);
+        = new ConditionsOfJoining(null, GoldGuideVersion.GG10, null);
     newProgrammeMembership.setConditionsOfJoining(newConditionsOfJoining);
 
     Optional<ProgrammeMembership> programmeMembership = service
@@ -390,7 +390,7 @@ class ProgrammeMembershipServiceTest {
     ProgrammeMembership programmeMembership = createProgrammeMembership(
         EXISTING_PROGRAMME_MEMBERSHIP_UUID, ORIGINAL_SUFFIX, 0);
     programmeMembership.setConditionsOfJoining(
-        new ConditionsOfJoining(null, GoldGuideVersion.GG9, null));
+        new ConditionsOfJoining(null, GoldGuideVersion.GG10, null));
 
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.getProgrammeMemberships().add(programmeMembership);
