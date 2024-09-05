@@ -64,7 +64,8 @@ public class TrainingNumberGenerator {
     traineeProfile.getProgrammeMemberships()
         .forEach(pm -> {
           populateTrainingNumber(personalDetails, pm);
-          if (pm.getSignature() != null) { // Realistically should never be null, but it saves some effort in edge cases?
+          if (pm.getSignature() != null) {
+            // Realistically should never be null, but it saves some effort in edge cases
             try {
               signatureService.signDto(pm);
             } catch (JsonProcessingException e) {
