@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "uk.nhs.hee.trainee.details"
-version = "1.9.3"
+version = "1.10.1"
 
 configurations {
   compileOnly {
@@ -25,7 +25,7 @@ repositories {
 dependencyManagement {
   imports {
     mavenBom("org.springframework.cloud:spring-cloud-dependencies:2023.0.0")
-    mavenBom("io.awspring.cloud:spring-cloud-aws-dependencies:3.1.1")
+    mavenBom("io.awspring.cloud:spring-cloud-aws-dependencies:3.1.0")
   }
 }
 
