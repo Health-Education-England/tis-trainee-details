@@ -25,7 +25,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -168,7 +167,7 @@ class BasicDetailsResourceTest {
 
     String token = TestJwtUtil.generateTokenForTisId("40");
 
-    when(service.updateGmcDetailsByTisId(any(), any(), anyBoolean())).thenReturn(Optional.empty());
+    when(service.updateGmcDetailsByTisId(any(), any())).thenReturn(Optional.empty());
 
     this.mockMvc.perform(put("/api/basic-details/gmc-number")
             .contentType(MediaType.APPLICATION_JSON)
@@ -185,9 +184,15 @@ class BasicDetailsResourceTest {
 
     String token = TestJwtUtil.generateTokenForTisId("40");
 
-    ArgumentCaptor<PersonalDetails> personalDetailsCaptor = ArgumentCaptor.captor();
-    when(service.updateGmcDetailsByTisId(eq("40"), personalDetailsCaptor.capture(), anyBoolean()))
-        .thenAnswer(inv -> Optional.of(inv.getArgument(1)));
+    ArgumentCaptor<GmcDetailsDto> gmcDetailsCaptor = ArgumentCaptor.captor();
+    when(service.updateGmcDetailsWithTraineeProvidedDetails(eq("40"), gmcDetailsCaptor.capture()))
+        .thenAnswer(inv -> {
+          GmcDetailsDto gmcDetailsArg = inv.getArgument(1);
+          PersonalDetails personalDetails = new PersonalDetails();
+          personalDetails.setGmcNumber(gmcDetailsArg.gmcNumber());
+          personalDetails.setGmcStatus(gmcDetailsArg.gmcStatus());
+          return Optional.of(personalDetails);
+        });
 
     this.mockMvc.perform(put("/api/basic-details/gmc-number")
             .contentType(MediaType.APPLICATION_JSON)
@@ -196,9 +201,9 @@ class BasicDetailsResourceTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.gmcNumber", is("1234567")));
 
-    PersonalDetails entity = personalDetailsCaptor.getValue();
-    assertThat("Unexpected GMC number.", entity.getGmcNumber(), is("1234567"));
-    assertThat("Unexpected GMC status.", entity.getGmcStatus(), is(DEFAULT_GMC_STATUS));
+    GmcDetailsDto updatedDetails = gmcDetailsCaptor.getValue();
+    assertThat("Unexpected GMC number.", updatedDetails.gmcNumber(), is("1234567"));
+    assertThat("Unexpected GMC status.", updatedDetails.gmcStatus(), is(DEFAULT_GMC_STATUS));
   }
 
   @Test
@@ -214,7 +219,7 @@ class BasicDetailsResourceTest {
         .content(mapper.writeValueAsBytes(gmcDetails))
         .header(HttpHeaders.AUTHORIZATION, token));
 
-    verify(service).updateGmcDetailsByTisId(any(), any(), eq(true));
+    verify(service).updateGmcDetailsWithTraineeProvidedDetails(any(), any());
   }
 
   @Test

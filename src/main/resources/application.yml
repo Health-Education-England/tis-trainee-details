@@ -17,14 +17,6 @@ spring:
         enabled: ${REDIS_SSL:false}
       user: ${REDIS_USER:default}
       password: ${REDIS_PASSWORD:password}
-  rabbitmq:
-    host: ${TRAINEE_DETAILS_RABBITMQ_HOST}
-    port: ${TRAINEE_DETAILS_RABBITMQ_PORT}
-    username: ${TRAINEE_DETAILS_RABBITMQ_USERNAME}
-    password: ${TRAINEE_DETAILS_RABBITMQ_PASSWORD}
-    ssl.enabled: ${TRAINEE_DETAILS_RABBITMQ_USE_SSL}
-    publisher-confirm-type: correlated
-    max-message-age-unconfirmed: 10000
 
 logging:
   level:
@@ -36,6 +28,9 @@ sentry:
 
 application:
   aws:
+    sns:
+      coj-signed: ${TOPIC_ARN_COJ_SIGNED}
+      gmc-details-provided: ${TOPIC_ARN_GMC_DETAILS_PROVIDED}
     sqs:
       event: ${EVENT_QUEUE_URL:}
       basic-details-update: ${BASIC_DETAILS_UPDATE_QUEUE_URL:}
@@ -45,10 +40,6 @@ application:
       personal-info-update: ${PERSONAL_INFO_UPDATE_QUEUE_URL:}
       person-owner-update: ${PERSON_OWNER_UPDATE_QUEUE_URL:}
   environment: ${ENVIRONMENT:local}
-  rabbit:
-    coj-signed:
-      exchange: ${COJ_SIGNED_RABBIT_EXCHANGE:}
-      routing-key: ${COJ_SIGNED_RABBIT_ROUTING_KEY:}
   signature:
     secret-key: ${SIGNATURE_SECRET_KEY}
     expire-after:  # Minutes

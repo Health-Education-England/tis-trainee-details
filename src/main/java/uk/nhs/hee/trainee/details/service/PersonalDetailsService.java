@@ -26,6 +26,7 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import uk.nhs.hee.trainee.details.dto.GmcDetailsDto;
 import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapper;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
@@ -86,23 +87,40 @@ public class PersonalDetailsService {
   }
 
   /**
-   * Update the GMC details for the trainee with the given TIS ID.
+   * Update the GMC details of a trainee using the details.
    *
-   * @param tisId               The TIS id of the trainee.
-   * @param personalDetails     The personal details to add to the trainee.
-   * @param isProvidedByTrainee Whether the GMC details are provided by the trainee.
+   * @param tisId      The TIS id of the trainee.
+   * @param gmcDetails The GMC details to update the personal detail with.
    * @return The updated personal details or empty if a trainee with the ID was not found.
    */
-  public Optional<PersonalDetails> updateGmcDetailsByTisId(
-      String tisId, PersonalDetails personalDetails, boolean isProvidedByTrainee) {
-    Optional<PersonalDetails> updatedPersonalDetails =
-        updatePersonalDetailsByTisId(tisId, personalDetails, mapper::updateGmcDetails);
+  public Optional<PersonalDetails> updateGmcDetailsWithTraineeProvidedDetails(String tisId,
+      GmcDetailsDto gmcDetails) {
+    PersonalDetails personalDetails = new PersonalDetails();
+    personalDetails.setGmcNumber(gmcDetails.gmcNumber());
 
-    if (isProvidedByTrainee) {
-      log.info("Trainee {} updated their GMC number to {}.", tisId, personalDetails.getGmcNumber());
-    }
+    // Default all GMCs to registered until we can properly prompt/determine the correct status.
+    personalDetails.setGmcStatus("Registered with Licence");
 
-    return updatedPersonalDetails;
+    Optional<PersonalDetails> updatedDetails = updateGmcDetailsByTisId(tisId, personalDetails);
+
+    updatedDetails.ifPresent(details -> {
+      log.info("Trainee {} updated their GMC number to {}.", tisId, details.getGmcNumber());
+      eventService.publishGmcDetailsProvidedEvent(tisId, gmcDetails);
+    });
+
+    return updatedDetails;
+  }
+
+  /**
+   * Update the GMC details for the trainee with the given TIS ID.
+   *
+   * @param tisId           The TIS id of the trainee.
+   * @param personalDetails The personal details to add to the trainee.
+   * @return The updated personal details or empty if a trainee with the ID was not found.
+   */
+  public Optional<PersonalDetails> updateGmcDetailsByTisId(String tisId,
+      PersonalDetails personalDetails) {
+    return updatePersonalDetailsByTisId(tisId, personalDetails, mapper::updateGmcDetails);
   }
 
   /**
@@ -118,7 +136,8 @@ public class PersonalDetailsService {
 
     if (personalDetails.getPersonOwner() == null) {
       log.info("Person owner null for profile ID '{}', retaining existing owner.", tisId);
-      updateFunction = (profile, details) -> {};
+      updateFunction = (profile, details) -> {
+      };
     } else {
       updateFunction = mapper::updatePersonOwner;
     }

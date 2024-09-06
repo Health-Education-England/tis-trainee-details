@@ -21,13 +21,13 @@
 
 package uk.nhs.hee.trainee.details.service;
 
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -38,16 +38,13 @@ import java.time.LocalDate;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.springframework.boot.test.system.CapturedOutput;
-import org.springframework.boot.test.system.OutputCaptureExtension;
+import uk.nhs.hee.trainee.details.dto.GmcDetailsDto;
 import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapperImpl;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 
-@ExtendWith(OutputCaptureExtension.class)
 class PersonalDetailsServiceTest {
 
   private static final String TITLE = "title-";
@@ -228,7 +225,7 @@ class PersonalDetailsServiceTest {
   @Test
   void shouldNotUpdateGmcDetailsWhenTraineeIdNotFound() {
     Optional<PersonalDetails> personalDetails = service.updateGmcDetailsByTisId("notFound",
-        new PersonalDetails(), false);
+        new PersonalDetails());
 
     assertThat("Unexpected optional isEmpty flag.", personalDetails.isEmpty(), is(true));
     verify(repository).findByTraineeTisId("notFound");
@@ -244,7 +241,7 @@ class PersonalDetailsServiceTest {
     when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
 
     Optional<PersonalDetails> personalDetails = service.updateGmcDetailsByTisId("40",
-        createPersonalDetails(MODIFIED_SUFFIX, 100), false);
+        createPersonalDetails(MODIFIED_SUFFIX, 100));
 
     assertThat("Unexpected optional isEmpty flag.", personalDetails.isEmpty(), is(false));
 
@@ -263,7 +260,7 @@ class PersonalDetailsServiceTest {
     when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
 
     Optional<PersonalDetails> personalDetails = service.updateGmcDetailsByTisId("40",
-        createPersonalDetails(MODIFIED_SUFFIX, 100), false);
+        createPersonalDetails(MODIFIED_SUFFIX, 100));
 
     assertThat("Unexpected optional isEmpty flag.", personalDetails.isEmpty(), is(false));
 
@@ -274,35 +271,42 @@ class PersonalDetailsServiceTest {
     assertThat("Unexpected personal details.", personalDetails.get(), is(expectedPersonalDetails));
   }
 
-  // TODO: replace with real test once GMC event is published.
   @Test
-  void shouldNotLogMessageWhenGmcDetailsNotUpdatedByTrainee(CapturedOutput output) {
+  void shouldNotPublishEventWhenGmcDetailsNotProvidedByTrainee() {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setPersonalDetails(createPersonalDetails(ORIGINAL_SUFFIX, 0));
 
     when(repository.findByTraineeTisId("40")).thenReturn(traineeProfile);
     when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
 
-    service.updateGmcDetailsByTisId("40", createPersonalDetails(MODIFIED_SUFFIX, 100), false);
+    service.updateGmcDetailsByTisId("40", createPersonalDetails(MODIFIED_SUFFIX, 100));
 
-    assertThat("Unexpected logging.", output.getOut(), is(""));
+    verifyNoInteractions(eventService);
   }
 
-  // TODO: replace with real test once GMC event is published.
   @Test
-  void shouldLogMessageWhenGmcDetailsUpdatedByTrainee(CapturedOutput output) {
+  void shouldPublishEventWhenGmcDetailsProvidedByTrainee() {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setPersonalDetails(createPersonalDetails(ORIGINAL_SUFFIX, 0));
 
     when(repository.findByTraineeTisId("40")).thenReturn(traineeProfile);
     when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
 
-    service.updateGmcDetailsByTisId("40", createPersonalDetails(MODIFIED_SUFFIX, 100), true);
+    GmcDetailsDto gmcDetails = GmcDetailsDto.builder()
+        .gmcNumber(GMC_NUMBER + MODIFIED_SUFFIX)
+        .gmcStatus(GMC_STATUS + MODIFIED_SUFFIX)
+        .build();
 
-    assertThat(
-        "Unexpected logging.",
-        output.getOut(),
-        containsString("Trainee 40 updated their GMC number to gmcNumber-post."));
+    service.updateGmcDetailsWithTraineeProvidedDetails("40", gmcDetails);
+
+    ArgumentCaptor<GmcDetailsDto> gmcDetailsCaptor = ArgumentCaptor.captor();
+    verify(eventService).publishGmcDetailsProvidedEvent(eq("40"), gmcDetailsCaptor.capture());
+
+    GmcDetailsDto eventDetails = gmcDetailsCaptor.getValue();
+    assertThat("Unexpected GMC number.", eventDetails.gmcNumber(),
+        is(GMC_NUMBER + MODIFIED_SUFFIX));
+    assertThat("Unexpected GMC status.", eventDetails.gmcStatus(),
+        is(GMC_STATUS + MODIFIED_SUFFIX));
   }
 
   @Test
