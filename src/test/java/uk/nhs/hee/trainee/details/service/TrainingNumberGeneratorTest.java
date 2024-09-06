@@ -27,8 +27,16 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,6 +52,7 @@ import uk.nhs.hee.trainee.details.dto.CurriculumDto;
 import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
 import uk.nhs.hee.trainee.details.dto.ProgrammeMembershipDto;
 import uk.nhs.hee.trainee.details.dto.TraineeProfileDto;
+import uk.nhs.hee.trainee.details.dto.signature.Signature;
 
 @ExtendWith(OutputCaptureExtension.class)
 class TrainingNumberGeneratorTest {
@@ -63,10 +72,12 @@ class TrainingNumberGeneratorTest {
   private static final LocalDate FUTURE = NOW.plusYears(1);
 
   private TrainingNumberGenerator service;
+  private SignatureService signatureServiceMock;
 
   @BeforeEach
   void setUp() {
-    service = new TrainingNumberGenerator();
+    signatureServiceMock = mock(SignatureService.class);
+    service = new TrainingNumberGenerator(signatureServiceMock);
   }
 
   @Test
@@ -1394,5 +1405,91 @@ class TrainingNumberGeneratorTest {
     String trainingNumber = pm.getTrainingNumber();
     String[] trainingNumberParts = trainingNumber.split("/");
     assertThat("Unexpected parent organization.", trainingNumberParts[3], is("D"));
+  }
+
+  @Test
+  void shouldReSignProgrammeMembershipAfterSettingTrainingNumber() throws JsonProcessingException {
+    TraineeProfileDto profile = new TraineeProfileDto();
+    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
+    personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
+
+    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
+    pm.setManagingDeanery(OWNER_NAME);
+    pm.setProgrammeName(PROGRAMME_NAME);
+    pm.setProgrammeNumber(PROGRAMME_NUMBER);
+    pm.setTrainingPathway(TRAINING_PATHWAY);
+    pm.setStartDate(NOW);
+    pm.setSignature(new Signature(Duration.of(1, ChronoUnit.DAYS)));
+    profile.setProgrammeMemberships(List.of(pm));
+
+    CurriculumDto curriculum1 = new CurriculumDto();
+    curriculum1.setCurriculumSpecialtyCode("ABC");
+    curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
+    curriculum1.setCurriculumStartDate(PAST);
+    curriculum1.setCurriculumEndDate(FUTURE);
+
+    pm.setCurricula(List.of(curriculum1));
+
+    service.populateTrainingNumbers(profile);
+    verify(signatureServiceMock).signDto(profile.getProgrammeMemberships().get(0));
+  }
+
+  @Test
+  void shouldNotReSignProgrammeMembershipWithoutOriginalSignatureAfterSettingTrainingNumber() {
+    TraineeProfileDto profile = new TraineeProfileDto();
+    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
+    personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
+
+    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
+    pm.setManagingDeanery(OWNER_NAME);
+    pm.setProgrammeName(PROGRAMME_NAME);
+    pm.setProgrammeNumber(PROGRAMME_NUMBER);
+    pm.setTrainingPathway(TRAINING_PATHWAY);
+    pm.setStartDate(NOW);
+    //no signature
+    profile.setProgrammeMemberships(List.of(pm));
+
+    CurriculumDto curriculum1 = new CurriculumDto();
+    curriculum1.setCurriculumSpecialtyCode("ABC");
+    curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
+    curriculum1.setCurriculumStartDate(PAST);
+    curriculum1.setCurriculumEndDate(FUTURE);
+
+    pm.setCurricula(List.of(curriculum1));
+
+    service.populateTrainingNumbers(profile);
+    verifyNoInteractions(signatureServiceMock);
+  }
+
+  @Test
+  void shouldThrowRuntimeExceptionIfErrorReSigningProgrammeMembershipAfterSettingTrainingNumber()
+      throws JsonProcessingException {
+    TraineeProfileDto profile = new TraineeProfileDto();
+    PersonalDetailsDto personalDetails = new PersonalDetailsDto();
+    personalDetails.setGmcNumber(GMC_NUMBER);
+    profile.setPersonalDetails(personalDetails);
+
+    ProgrammeMembershipDto pm = new ProgrammeMembershipDto();
+    pm.setManagingDeanery(OWNER_NAME);
+    pm.setProgrammeName(PROGRAMME_NAME);
+    pm.setProgrammeNumber(PROGRAMME_NUMBER);
+    pm.setTrainingPathway(TRAINING_PATHWAY);
+    pm.setStartDate(NOW);
+    pm.setSignature(new Signature(Duration.of(1, ChronoUnit.DAYS)));
+    profile.setProgrammeMemberships(List.of(pm));
+
+    CurriculumDto curriculum1 = new CurriculumDto();
+    curriculum1.setCurriculumSpecialtyCode("ABC");
+    curriculum1.setCurriculumSubType(CURRICULUM_SUB_TYPE_MC);
+    curriculum1.setCurriculumStartDate(PAST);
+    curriculum1.setCurriculumEndDate(FUTURE);
+
+    pm.setCurricula(List.of(curriculum1));
+
+    doThrow(JsonProcessingException.class).when(signatureServiceMock).signDto(any());
+
+    assertThrows(RuntimeException.class, () -> service.populateTrainingNumbers(profile));
   }
 }
