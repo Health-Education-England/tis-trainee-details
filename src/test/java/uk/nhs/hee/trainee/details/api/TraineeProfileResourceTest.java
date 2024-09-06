@@ -210,7 +210,7 @@ class TraineeProfileResourceTest {
     programmeMembership.setProgrammeNumber(PROGRAMME_NUMBER);
     programmeMembership.setCurricula(List.of(curriculum));
     programmeMembership.setConditionsOfJoining(
-        new ConditionsOfJoining(NOW, GoldGuideVersion.GG9, COJ_SYNCED_AT));
+        new ConditionsOfJoining(NOW, GoldGuideVersion.GG10, COJ_SYNCED_AT));
   }
 
   /**
@@ -329,7 +329,7 @@ class TraineeProfileResourceTest {
         .andExpect(jsonPath("$.programmeMemberships[*].conditionsOfJoining.signedAt").value(
             NOW.toString()))
         .andExpect(jsonPath("$.programmeMemberships[*].conditionsOfJoining.version").value(
-            GoldGuideVersion.GG9.toString()))
+            GoldGuideVersion.GG10.toString()))
         .andExpect(
             jsonPath("$.programmeMemberships[*].conditionsOfJoining.syncedAt")
                 .value(COJ_SYNCED_AT.toString()))
