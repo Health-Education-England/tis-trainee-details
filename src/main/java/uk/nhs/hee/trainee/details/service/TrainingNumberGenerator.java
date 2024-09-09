@@ -112,35 +112,21 @@ public class TrainingNumberGenerator {
     log.info("Calculating parent organization for managing deanery '{}'.", managingDeanery);
 
     String parentOrganization = managingDeanery == null ? null : switch (managingDeanery) {
-      // TODO: remove Health Education England deanery once renaming is complete.
       case "Defence Postgraduate Medical Deanery" -> "TSD";
-      case "Health Education England East Midlands",
-          "East Midlands" -> "EMD";
-      case "Health Education England East of England",
-          "East of England" -> "EAN";
-      case "Health Education England Kent, Surrey and Sussex",
-          "Kent, Surrey and Sussex" -> "KSS";
-      case "Health Education England North Central and East London",
-          "North Central and East London",
-          "Health Education England South London",
+      case "East Midlands" -> "EMD";
+      case "East of England" -> "EAN";
+      case "Kent, Surrey and Sussex" -> "KSS";
+      case "North Central and East London",
           "South London",
-          "Health Education England North West London",
           "North West London",
           "London LETBs" -> "LDN";
-      case "Health Education England North East",
-          "North East" -> "NTH";
-      case "Health Education England North West",
-          "North West" -> "NWE";
-      case "Health Education England South West",
-          "South West" -> "SWN";
-      case "Health Education England Thames Valley",
-          "Thames Valley" -> "OXF";
-      case "Health Education England Wessex",
-          "Wessex" -> "WES";
-      case "Health Education England West Midlands",
-          "West Midlands" -> "WMD";
-      case "Health Education England Yorkshire and the Humber",
-          "Yorkshire and the Humber" -> "YHD";
+      case "North East" -> "NTH";
+      case "North West" -> "NWE";
+      case "South West" -> "SWN";
+      case "Thames Valley" -> "OXF";
+      case "Wessex" -> "WES";
+      case "West Midlands" -> "WMD";
+      case "Yorkshire and the Humber" -> "YHD";
       default -> null;
     };
 
