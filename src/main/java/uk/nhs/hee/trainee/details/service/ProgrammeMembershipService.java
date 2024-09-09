@@ -54,24 +54,15 @@ public class ProgrammeMembershipService {
       = List.of("VISITOR", "LAT");
   protected static final Long PROGRAMME_BREAK_DAYS = 355L;
 
-  // TODO: remove Health Education England deaneries once renaming is complete.
   protected static final List<String> PILOT_2024_LOCAL_OFFICES_ALL_PROGRAMMES
       = List.of("London LETBs",
-      "Health Education England North Central and East London",
       "North Central and East London",
-      "Health Education England South London",
       "South London",
-      "Health Education England North West London",
       "North West London",
-      "Health Education England Kent, Surrey and Sussex",
       "Kent, Surrey and Sussex",
-      "Health Education England East Midlands",
       "East Midlands",
-      "Health Education England West Midlands",
       "West Midlands",
-      "Health Education England East of England",
       "East of England",
-      "Health Education England Wessex",
       "Wessex");
 
   protected static final List<String> PILOT_2024_NW_SPECIALTIES = List.of(
@@ -326,28 +317,22 @@ public class ProgrammeMembershipService {
       return true;
     }
 
-    // TODO: remove Health Education England deanery once renaming is complete.
-    if ((managingDeanery.equalsIgnoreCase("Health Education England Yorkshire and the Humber")
-        || managingDeanery.equalsIgnoreCase("Yorkshire and the Humber"))
+    if (managingDeanery.equalsIgnoreCase("Yorkshire and the Humber")
         && (startDate.isAfter(dayBefore01082024) && startDate.isBefore(dayAfter31102024))
         && programmeMembership.getCurricula().stream().noneMatch(
         c -> c.getCurriculumSpecialty().equalsIgnoreCase("General Practice"))) {
       return true;
     }
 
-    // TODO: remove Health Education England deanery once renaming is complete.
-    if ((managingDeanery.equalsIgnoreCase("Health Education England South West")
-        || managingDeanery.equalsIgnoreCase("South West"))
+    if (managingDeanery.equalsIgnoreCase("South West")
         && (startDate.isAfter(dayBefore01082024) && startDate.isBefore(dayAfter31102024))
         && programmeMembership.getCurricula().stream().noneMatch(
         c -> c.getCurriculumSpecialty().equalsIgnoreCase("General Practice"))) {
       return true;
     }
 
-    // TODO: remove Health Education England deanery once renaming is complete.
     LocalDate dayAfter31082024 = LocalDate.of(2024, 9, 1);
-    return (managingDeanery.equalsIgnoreCase("Health Education England North West")
-        || managingDeanery.equalsIgnoreCase("North West"))
+    return managingDeanery.equalsIgnoreCase("North West")
         && (startDate.isAfter(dayBefore01082024) && startDate.isBefore(dayAfter31082024))
         && (programmeMembership.getCurricula().stream().anyMatch(c ->
         PILOT_2024_NW_SPECIALTIES.stream().anyMatch(
