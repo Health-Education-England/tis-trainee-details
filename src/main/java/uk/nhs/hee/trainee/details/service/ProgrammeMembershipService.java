@@ -63,28 +63,17 @@ public class ProgrammeMembershipService {
       "East Midlands",
       "West Midlands",
       "East of England",
-      "Wessex");
-
-  protected static final List<String> PILOT_2024_NW_SPECIALTIES = List.of(
-      "Cardiothoracic surgery",
-      "Core surgical training",
-      "General surgery",
-      "Neurosurgery",
-      "Ophthalmology",
-      "Oral and maxillofacial surgery",
-      "Otolaryngology",
-      "Paediatric Surgery",
-      "Plastic Surgery",
-      "Trauma and Orthopaedic Surgery",
-      "Urology",
-      "Vascular surgery");
+      "Wessex",
+      "Yorkshire and the Humber",
+      "South West",
+      "North West");
 
   private final TraineeProfileRepository repository;
   private final ProgrammeMembershipMapper mapper;
   private final CachingDelegate cachingDelegate;
 
   ProgrammeMembershipService(TraineeProfileRepository repository, ProgrammeMembershipMapper mapper,
-      CachingDelegate cachingDelegate) {
+                             CachingDelegate cachingDelegate) {
     this.repository = repository;
     this.mapper = mapper;
     this.cachingDelegate = cachingDelegate;
@@ -310,37 +299,15 @@ public class ProgrammeMembershipService {
     String managingDeanery = programmeMembership.getManagingDeanery();
     LocalDate startDate = programmeMembership.getStartDate();
     LocalDate dayBefore01082024 = LocalDate.of(2024, 7, 31);
-    LocalDate dayAfter31102024 = LocalDate.of(2024, 11, 1);
     if ((PILOT_2024_LOCAL_OFFICES_ALL_PROGRAMMES.stream()
         .anyMatch(lo -> lo.equalsIgnoreCase(managingDeanery)))
-        && (startDate.isAfter(dayBefore01082024) && startDate.isBefore(dayAfter31102024))) {
+        && (startDate.isAfter(dayBefore01082024))) {
       return true;
     }
 
-    if (managingDeanery.equalsIgnoreCase("Yorkshire and the Humber")
-        && (startDate.isAfter(dayBefore01082024) && startDate.isBefore(dayAfter31102024))
-        && programmeMembership.getCurricula().stream().noneMatch(
-        c -> c.getCurriculumSpecialty().equalsIgnoreCase("General Practice"))) {
-      return true;
-    }
-
-    if (managingDeanery.equalsIgnoreCase("South West")
-        && (startDate.isAfter(dayBefore01082024) && startDate.isBefore(dayAfter31102024))
-        && programmeMembership.getCurricula().stream().noneMatch(
-        c -> c.getCurriculumSpecialty().equalsIgnoreCase("General Practice"))) {
-      return true;
-    }
-
-    LocalDate dayAfter31082024 = LocalDate.of(2024, 9, 1);
-    return managingDeanery.equalsIgnoreCase("North West")
-        && (startDate.isAfter(dayBefore01082024) && startDate.isBefore(dayAfter31082024))
-        && (programmeMembership.getCurricula().stream().anyMatch(c ->
-        PILOT_2024_NW_SPECIALTIES.stream().anyMatch(
-            s -> s.equalsIgnoreCase(c.getCurriculumSpecialty())))
-        || programmeMembership.getProgrammeName()
-        .equalsIgnoreCase("Cardio-thoracic surgery (run through)")
-        || programmeMembership.getProgrammeName()
-        .equalsIgnoreCase("Oral and maxillo-facial surgery (run through)"));
+    LocalDate dayBefore01022025 = LocalDate.of(2025, 1, 31);
+    return (managingDeanery.equalsIgnoreCase("Thames Valley")
+        && startDate.isAfter(dayBefore01022025));
   }
 
   /**
@@ -391,7 +358,7 @@ public class ProgrammeMembershipService {
    * @param programmeMemberships  The list of programme memberships.
    * @param programmeMembershipId The programme membership ID.
    * @return The programme membership, or null if it is not a candidate because it does not exist,
-   *     it is non-medical, or is of the wrong type.
+   * it is non-medical, or is of the wrong type.
    */
   private ProgrammeMembership getCandidateProgrammeMembership(
       List<ProgrammeMembership> programmeMemberships, String programmeMembershipId) {
@@ -498,7 +465,7 @@ public class ProgrammeMembershipService {
    * @return The programme memberships that comprise intra-deanery transfers or rotas.
    */
   private List<ProgrammeMembership> getIntraOrRotaPms(ProgrammeMembership anchorPm,
-      List<ProgrammeMembership> candidatePms) {
+                                                      List<ProgrammeMembership> candidatePms) {
     List<ProgrammeMembership> newStarterPmsWithSameDeaneryStartedBeforeAnchor =
         candidatePms.stream()
             .filter(pm -> {
@@ -545,7 +512,7 @@ public class ProgrammeMembershipService {
    * @return The filtered list.
    */
   private List<ProgrammeMembership> getRecentPrecedingPms(ProgrammeMembership anchorPm,
-      List<ProgrammeMembership> candidatePms) {
+                                                          List<ProgrammeMembership> candidatePms) {
     return
         candidatePms.stream()
             .filter(pm -> {

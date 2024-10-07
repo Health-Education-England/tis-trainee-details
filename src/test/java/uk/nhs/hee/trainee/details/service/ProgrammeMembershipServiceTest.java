@@ -37,7 +37,6 @@ import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.MEDI
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.NON_RELEVANT_PROGRAMME_MEMBERSHIP_TYPES;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.NOT_TSS_SPECIALTIES;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PILOT_2024_LOCAL_OFFICES_ALL_PROGRAMMES;
-import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PILOT_2024_NW_SPECIALTIES;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PROGRAMME_BREAK_DAYS;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.TSS_CURRICULA;
 
@@ -920,31 +919,13 @@ class ProgrammeMembershipServiceTest {
 
   @ParameterizedTest
   @MethodSource("listLoPilot2024AllProgrammes")
-  void pilot2024ShouldBeFalseIfLoWithAllProgrammesAndTooLateStartDate(String lo) {
-    LocalDate dateOutOfRange = LocalDate.of(2024, 12, 1);
+  void pilot2024ShouldBeTrueIfLoWithAllProgrammesAndFutureStartDate(String lo) {
+    LocalDate dateFuture = LocalDate.now().plusYears(1);
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, dateOutOfRange, END_DATE, lo, TSS_CURRICULA.get(0),
+            PROGRAMME_MEMBERSHIP_TYPE, dateFuture, END_DATE, lo, TSS_CURRICULA.get(0),
             CURRICULUM_SPECIALTY_CODE, CURRICULUM_SPECIALTY)));
-
-    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
-
-    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
-
-    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
-  }
-
-  @ParameterizedTest
-  @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
-  void pilot2024ShouldBeTrueForYhWithCorrectDateAndCurriculumSpecialty(String specialty) {
-    LocalDate date = LocalDate.of(2024, 8, 15);
-    String deanery = "Yorkshire and the Humber";
-    TraineeProfile traineeProfile = new TraineeProfile();
-    traineeProfile.setProgrammeMemberships(
-        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, date, END_DATE, deanery, TSS_CURRICULA.get(0),
-            CURRICULUM_SPECIALTY_CODE, specialty)));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
@@ -954,127 +935,14 @@ class ProgrammeMembershipServiceTest {
   }
 
   @Test
-  void pilot2024ShouldBeFalseForYhGeneralPractice() {
-    LocalDate date = LocalDate.of(2024, 8, 7);
-    String deanery = "Yorkshire and the Humber";
+  void pilot2024ShouldBeFalseIfTvLoWithTooEarlyStartDate() {
+    LocalDate dateOutOfRange = LocalDate.of(2025, 1, 31);
+    String deanery = "Thames Valley";
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, date, END_DATE, deanery, TSS_CURRICULA.get(0),
-            CURRICULUM_SPECIALTY_CODE, "General Practice")));
-
-    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
-
-    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
-
-    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
-  }
-
-  @ParameterizedTest
-  @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
-  void pilot2024ShouldBeFalseForYhWithTooLateDateAndCorrectCurriculumSpecialty(String specialty) {
-    LocalDate wrongDate = LocalDate.of(2024, 11, 1);
-    String deanery = "Yorkshire and the Humber";
-    TraineeProfile traineeProfile = new TraineeProfile();
-    traineeProfile.setProgrammeMemberships(
-        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, wrongDate, END_DATE, deanery, TSS_CURRICULA.get(0),
-            CURRICULUM_SPECIALTY_CODE, specialty)));
-
-    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
-
-    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
-
-    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
-  }
-
-  @ParameterizedTest
-  @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
-  void pilot2024ShouldBeFalseForYhWithTooEarlyDateAndCorrectCurriculumSpecialty(String specialty) {
-    LocalDate wrongDate = LocalDate.of(2024, 7, 1);
-    String deanery = "Yorkshire and the Humber";
-    TraineeProfile traineeProfile = new TraineeProfile();
-    traineeProfile.setProgrammeMemberships(
-        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, wrongDate, END_DATE, deanery, TSS_CURRICULA.get(0),
-            CURRICULUM_SPECIALTY_CODE, specialty)));
-
-    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
-
-    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
-
-    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
-  }
-
-  @ParameterizedTest
-  @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
-  void pilot2024ShouldBeFalseIfYhLoWithGpSpecialtyInMultipleCurricula(String specialty) {
-    LocalDate dateInRange = LocalDate.of(2024, 8, 15);
-    String deanery = "Yorkshire and the Humber";
-    TraineeProfile traineeProfile = new TraineeProfile();
-    Curriculum curriculum = createCurriculum(MEDICAL_CURRICULA.get(0),
-        CURRICULUM_SPECIALTY_CODE, specialty);
-    Curriculum curriculumGp = createCurriculum(MEDICAL_CURRICULA.get(1),
-        CURRICULUM_SPECIALTY_CODE, "General Practice");
-    ProgrammeMembership programmeMembership =
-        getProgrammeMembershipWithMultipleCurriculum(PROGRAMME_TIS_ID, PROGRAMME_MEMBERSHIP_TYPE,
-            dateInRange, END_DATE, deanery, List.of(curriculum, curriculumGp));
-
-    traineeProfile.setProgrammeMemberships(List.of(programmeMembership));
-
-    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
-
-    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
-
-    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
-  }
-
-  @ParameterizedTest
-  @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
-  void pilot2024ShouldBeTrueIfSwLoWithCorrectStartDateAndSpecialty(String specialty) {
-    LocalDate dateInRange = LocalDate.of(2024, 10, 31);
-    String deanery = "South West";
-    TraineeProfile traineeProfile = new TraineeProfile();
-    traineeProfile.setProgrammeMemberships(
-        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE, deanery, TSS_CURRICULA.get(0),
-            CURRICULUM_SPECIALTY_CODE, specialty)));
-
-    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
-
-    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
-
-    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(true));
-  }
-
-  @ParameterizedTest
-  @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
-  void pilot2024ShouldBeFalseIfSwLoWithTooEarlyStartDate(String specialty) {
-    LocalDate dateInRange = LocalDate.of(2024, 6, 2);
-    String deanery = "South West";
-    TraineeProfile traineeProfile = new TraineeProfile();
-    traineeProfile.setProgrammeMemberships(
-        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE, deanery, TSS_CURRICULA.get(0),
-            CURRICULUM_SPECIALTY_CODE, specialty)));
-
-    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
-
-    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
-
-    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
-  }
-
-  @ParameterizedTest
-  @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
-  void pilot2024ShouldBeFalseIfSwLoWithTooLateStartDate(String specialty) {
-    LocalDate dateInRange = LocalDate.of(2024, 11, 1);
-    String deanery = "South West";
-    TraineeProfile traineeProfile = new TraineeProfile();
-    traineeProfile.setProgrammeMemberships(
-        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE, deanery, TSS_CURRICULA.get(0),
-            CURRICULUM_SPECIALTY_CODE, specialty)));
+            PROGRAMME_MEMBERSHIP_TYPE, dateOutOfRange, END_DATE, deanery, TSS_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, CURRICULUM_SPECIALTY)));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
@@ -1084,137 +952,20 @@ class ProgrammeMembershipServiceTest {
   }
 
   @Test
-  void pilot2024ShouldBeFalseIfSwLoWithGpSpecialty() {
-    LocalDate dateInRange = LocalDate.of(2024, 8, 5);
-    String deanery = "South West";
+  void pilot2024ShouldBeTrueIfTvLoWithCorrectStartDate() {
+    LocalDate dateInRange = LocalDate.of(2025, 2, 1);
+    String deanery = "Thames Valley";
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
             PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE, deanery, TSS_CURRICULA.get(0),
-            CURRICULUM_SPECIALTY_CODE, "General Practice")));
-
-    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
-
-    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
-
-    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
-  }
-
-  @ParameterizedTest
-  @ValueSource(strings = {"Internal Medicine Stage One", "Core surgical training"})
-  void pilot2024ShouldBeFalseIfSwLoWithGpSpecialtyInMultipleCurricula(String specialty) {
-    LocalDate dateInRange = LocalDate.of(2024, 10, 31);
-    String deanery = "South West";
-    TraineeProfile traineeProfile = new TraineeProfile();
-    Curriculum curriculum = createCurriculum(MEDICAL_CURRICULA.get(0),
-        CURRICULUM_SPECIALTY_CODE, specialty);
-    Curriculum curriculumGp = createCurriculum(MEDICAL_CURRICULA.get(1),
-        CURRICULUM_SPECIALTY_CODE, "General Practice");
-    ProgrammeMembership programmeMembership =
-        getProgrammeMembershipWithMultipleCurriculum(PROGRAMME_TIS_ID, PROGRAMME_MEMBERSHIP_TYPE,
-            dateInRange, END_DATE, deanery, List.of(curriculum, curriculumGp));
-
-    traineeProfile.setProgrammeMemberships(List.of(programmeMembership));
-
-    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
-
-    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
-
-    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
-  }
-
-  @ParameterizedTest
-  @MethodSource("listNwPilot2024AllSpecialties")
-  void pilot2024ShouldBeTrueIfNwLoWithCorrectStartDateAndSpecialty(String specialty) {
-    LocalDate dateInRange = LocalDate.of(2024, 8, 1);
-    String deanery = "North West";
-    TraineeProfile traineeProfile = new TraineeProfile();
-    traineeProfile.setProgrammeMemberships(
-        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE, deanery, TSS_CURRICULA.get(0),
-            CURRICULUM_SPECIALTY_CODE, specialty)));
+            CURRICULUM_SPECIALTY_CODE, CURRICULUM_SPECIALTY)));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
     boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
 
     assertThat("Unexpected isPilot2024 value.", isPilot2024, is(true));
-  }
-
-  @ParameterizedTest
-  @MethodSource("listNwPilot2024AllSpecialties")
-  void pilot2024ShouldBeFalseIfNwLoWithIncorrectStartDateAndOkSpecialty(String specialty) {
-    LocalDate dateOutOfRange = LocalDate.of(2024, 7, 1);
-    String deanery = "North West";
-    TraineeProfile traineeProfile = new TraineeProfile();
-    traineeProfile.setProgrammeMemberships(
-        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, dateOutOfRange, END_DATE, deanery, TSS_CURRICULA.get(0),
-            CURRICULUM_SPECIALTY_CODE, specialty)));
-
-    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
-
-    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
-
-    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
-  }
-
-  @ParameterizedTest
-  @MethodSource("listNwPilot2024AllSpecialties")
-  void pilot2024ShouldBeFalseIfNwLoWithTooLateStartDateAndOkSpecialty(String specialty) {
-    LocalDate dateOutOfRange = LocalDate.of(2024, 12, 1);
-    String deanery = "North West";
-    TraineeProfile traineeProfile = new TraineeProfile();
-    traineeProfile.setProgrammeMemberships(
-        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, dateOutOfRange, END_DATE, deanery, TSS_CURRICULA.get(0),
-            CURRICULUM_SPECIALTY_CODE, specialty)));
-
-    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
-
-    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
-
-    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
-  }
-
-  @ParameterizedTest
-  @ValueSource(strings = {"Cardio-thoracic surgery (run through)",
-      "Oral and maxillo-facial surgery (run through)"})
-  void pilot2024ShouldBeTrueIfNwLoWithCorrectStartDateAndProgramme(String programme) {
-    LocalDate dateInRange = LocalDate.of(2024, 8, 1);
-    String deanery = "North West";
-    TraineeProfile traineeProfile = new TraineeProfile();
-    traineeProfile.setProgrammeMemberships(
-        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE, deanery, TSS_CURRICULA.get(0),
-            CURRICULUM_SPECIALTY_CODE, CURRICULUM_SPECIALTY)));
-    traineeProfile.getProgrammeMemberships().get(0).setProgrammeName(programme);
-
-    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
-
-    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
-
-    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(true));
-  }
-
-  @ParameterizedTest
-  @ValueSource(strings = {"Cardio-thoracic surgery (run through)",
-      "Oral and maxillo-facial surgery (run through)"})
-  void pilot2024ShouldBeFalseIfNwLoWithIncorrectStartDateAndOkProgramme(String programme) {
-    LocalDate dateOutOfRange = LocalDate.of(2024, 7, 1);
-    String deanery = "North West";
-    TraineeProfile traineeProfile = new TraineeProfile();
-    traineeProfile.setProgrammeMemberships(
-        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, dateOutOfRange, END_DATE, deanery, TSS_CURRICULA.get(0),
-            CURRICULUM_SPECIALTY_CODE, CURRICULUM_SPECIALTY)));
-    traineeProfile.getProgrammeMemberships().get(0).setProgrammeName(programme);
-
-    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
-
-    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
-
-    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
   }
 
   @Test
@@ -1222,7 +973,7 @@ class ProgrammeMembershipServiceTest {
     //obviously there are a number of scenarios that could (should) be tested here
     LocalDate dateInRange = LocalDate.of(2024, 8, 1);
     String invalidSpecialty = "some specialty";
-    String deanery = "North West";
+    String deanery = "North East";
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
@@ -1346,10 +1097,6 @@ class ProgrammeMembershipServiceTest {
     return PILOT_2024_LOCAL_OFFICES_ALL_PROGRAMMES.stream();
   }
 
-  static Stream<String> listNwPilot2024AllSpecialties() {
-    return PILOT_2024_NW_SPECIALTIES.stream();
-  }
-
   static Stream<String> listMedicalCurriculaSubTypes() {
     return MEDICAL_CURRICULA.stream();
   }
@@ -1432,38 +1179,6 @@ class ProgrammeMembershipServiceTest {
     Curriculum curriculum =
         createCurriculum(curriculumSubType, curriculumSpecialtyCode, curriculumSpecialty);
     programmeMembership.setCurricula(List.of(curriculum));
-
-    programmeMembership.setResponsibleOfficer(getResponsibleOfficerUser(""));
-
-    return programmeMembership;
-  }
-
-  /**
-   * Create a programme membership with a multiple curricula for testing pilot2024 conditions.
-   *
-   * @param programmeMembershipTisId The TIS ID to set on the programmeMembership.
-   * @param programmeMembershipType  The programme membership type.
-   * @param startDate                The start date.
-   * @param endDate                  The end date.
-   * @param managingDeanery          The managing deanery.
-   * @param curricula                The curricula to set on the programmeMembership.
-   * @return The programme membership.
-   */
-  private ProgrammeMembership getProgrammeMembershipWithMultipleCurriculum(
-      String programmeMembershipTisId, String programmeMembershipType, LocalDate startDate,
-      LocalDate endDate, String managingDeanery, List<Curriculum> curricula) {
-    ProgrammeMembership programmeMembership = new ProgrammeMembership();
-    programmeMembership.setTisId(programmeMembershipTisId);
-    programmeMembership.setProgrammeTisId(PROGRAMME_TIS_ID);
-    programmeMembership.setProgrammeName(PROGRAMME_NAME);
-    programmeMembership.setProgrammeNumber(PROGRAMME_NUMBER);
-    programmeMembership.setManagingDeanery(managingDeanery);
-    programmeMembership.setDesignatedBody(DESIGNATED_BODY);
-    programmeMembership.setProgrammeMembershipType(programmeMembershipType);
-    programmeMembership.setStartDate(startDate);
-    programmeMembership.setEndDate(endDate);
-    programmeMembership.setProgrammeCompletionDate(COMPLETION_DATE);
-    programmeMembership.setCurricula(curricula);
 
     programmeMembership.setResponsibleOfficer(getResponsibleOfficerUser(""));
 
