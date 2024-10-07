@@ -277,7 +277,7 @@ class PlacementResourceTest {
   @Test
   void shouldThrowBadRequestWhenPlacementPilotRollout2024Exception() throws Exception {
     when(service
-        .isPilot2024("triggersError", "1"))
+        .isPilotRollout2024("triggersError", "1"))
         .thenThrow(new IllegalArgumentException());
 
     mockMvc.perform(
