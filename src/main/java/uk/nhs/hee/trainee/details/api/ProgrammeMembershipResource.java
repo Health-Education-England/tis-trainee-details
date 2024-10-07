@@ -210,4 +210,25 @@ public class ProgrammeMembershipResource {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getLocalizedMessage());
     }
   }
+
+  /**
+   * Determine whether the given programme membership is in the 2024 pilot rollout group.
+   *
+   * @param traineeTisId          The ID of the trainee.
+   * @param programmeMembershipId The ID of the programme membership to assess.
+   * @return True if the programme membership is in the 2024 pilot rollout, otherwise false.
+   */
+  @GetMapping("/isrollout2024/{traineeTisId}/{programmeMembershipId}")
+  public ResponseEntity<Boolean> isInPilotRollout2024(
+      @PathVariable(name = "traineeTisId") String traineeTisId,
+      @PathVariable(name = "programmeMembershipId") String programmeMembershipId) {
+    log.info("Assess 2024 pilot rollout status: programme membership {} of trainee with TIS ID {}",
+        programmeMembershipId, traineeTisId);
+    try {
+      boolean isPilotRollout2024 = service.isPilotRollout2024(traineeTisId, programmeMembershipId);
+      return ResponseEntity.ok(isPilotRollout2024);
+    } catch (IllegalArgumentException | InvalidDataAccessApiUsageException e) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getLocalizedMessage());
+    }
+  }
 }

@@ -121,4 +121,25 @@ public class PlacementResource {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getLocalizedMessage());
     }
   }
+
+  /**
+   * Determine whether the given placement is in the 2024 pilot rollout group.
+   *
+   * @param traineeTisId The ID of the trainee.
+   * @param placementId  The ID of the placement to assess.
+   * @return True if the placement is in the 2024 pilot rollout, otherwise false.
+   */
+  @GetMapping("/isrollout2024/{traineeTisId}/{placementId}")
+  public ResponseEntity<Boolean> isInPilotRollout2024(
+      @PathVariable(name = "traineeTisId") String traineeTisId,
+      @PathVariable(name = "placementId") String placementId) {
+    log.info("Assess 2024 pilot rollout status: placement {} of trainee with TIS ID {}",
+        placementId, traineeTisId);
+    try {
+      boolean isPilotRollout2024 = service.isPilotRollout2024(traineeTisId, placementId);
+      return ResponseEntity.ok(isPilotRollout2024);
+    } catch (IllegalArgumentException | InvalidDataAccessApiUsageException e) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getLocalizedMessage());
+    }
+  }
 }

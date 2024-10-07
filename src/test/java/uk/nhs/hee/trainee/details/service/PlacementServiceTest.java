@@ -401,6 +401,172 @@ class PlacementServiceTest {
     assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
   }
 
+  @Test
+  void rollout2024ShouldBeFalseIfTraineeNotFound() {
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(null);
+
+    boolean isPilotRollout2024 = service.isPilotRollout2024(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected pilotRollout2024 value.", isPilotRollout2024, is(false));
+  }
+
+  @Test
+  void rollout2024ShouldBeFalseIfPlacementNotFound() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPlacements(
+        List.of(createPlacement("unknown id", "", 0)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilotRollout2024 = service.isPilotRollout2024(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected isPilotRollout2024 value.", isPilotRollout2024, is(false));
+  }
+
+  @Test
+  void rollout2024ShouldBeFalseIfTraineeHasNoProgrammeMemberships() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPlacements(
+        List.of(createPlacement(EXISTING_PLACEMENT_ID, "", 0)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilotRollout2024 = service.isPilotRollout2024(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected isPilotRollout2024 value.", isPilotRollout2024, is(false));
+  }
+
+  @Test
+  void rollout2024ShouldBeFalseIfTraineeProgrammeMembershipsFinishedBeforePlacement() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPlacements(
+        List.of(createPlacement(EXISTING_PLACEMENT_ID, "", 0)));
+    LocalDate dateFinished = START_DATE.minusDays(1);
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembership(null, LocalDate.MIN, dateFinished)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilotRollout2024 = service.isPilotRollout2024(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected isPilotRollout2024 value.", isPilotRollout2024, is(false));
+  }
+
+  @Test
+  void rollout2024ShouldBeFalseIfTraineeProgrammeMembershipsStartMonthAfterPlacement() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    LocalDate placementStart = LocalDate.of(2024, 8, 1);
+    LocalDate nextMonth = LocalDate.of(2024, 9, 2);
+    traineeProfile.setPlacements(
+        List.of(createPlacement(EXISTING_PLACEMENT_ID, "", 0)));
+    traineeProfile.getPlacements().get(0).setStartDate(placementStart);
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembership(null, nextMonth, LocalDate.MAX)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilotRollout2024 = service.isPilotRollout2024(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected isPilotRollout2024 value.", isPilotRollout2024, is(false));
+  }
+
+  @Test
+  void rollout2024ShouldBeTrueIfTraineeProgrammeMembershipIsInPilotRollout() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPlacements(
+        List.of(createPlacement(EXISTING_PLACEMENT_ID, "", 0)));
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembership(PROGRAMME_MEMBERSHIP_ID, LocalDate.MIN, LocalDate.MAX)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+    when(programmeMembershipService.isPilotRollout2024(TRAINEE_TIS_ID, PROGRAMME_MEMBERSHIP_ID))
+        .thenReturn(true);
+
+    boolean isPilotRollout2024 = service.isPilotRollout2024(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected isPilotRollout2024 value.", isPilotRollout2024, is(true));
+  }
+
+  @Test
+  void rollout2024ShouldBeFalseIfTraineeProgrammeMembershipIsNotInPilotRollout() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPlacements(
+        List.of(createPlacement(EXISTING_PLACEMENT_ID, "", 0)));
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembership(PROGRAMME_MEMBERSHIP_ID, LocalDate.MIN, LocalDate.MAX)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+    when(programmeMembershipService.isPilotRollout2024(TRAINEE_TIS_ID, PROGRAMME_MEMBERSHIP_ID))
+        .thenReturn(false);
+
+    boolean isPilotRollout2024 = service.isPilotRollout2024(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected isPilotRollout2024 value.", isPilotRollout2024, is(false));
+  }
+
+  @Test
+  void rollout2024ShouldBeTrueIfAnyTraineeProgrammeMembershipIsInPilotRollout() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPlacements(
+        List.of(createPlacement(EXISTING_PLACEMENT_ID, "", 0)));
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembership(PROGRAMME_MEMBERSHIP_ID, LocalDate.MIN, LocalDate.MAX),
+            getProgrammeMembership("not rollout", LocalDate.MIN, LocalDate.MAX)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+    when(programmeMembershipService.isPilotRollout2024(TRAINEE_TIS_ID, PROGRAMME_MEMBERSHIP_ID))
+        .thenReturn(true);
+    when(programmeMembershipService.isPilotRollout2024(TRAINEE_TIS_ID, "not rollout"))
+        .thenReturn(false);
+
+    boolean isPilotRollout2024 = service.isPilotRollout2024(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected isPilotRollout2024 value.", isPilotRollout2024, is(true));
+  }
+
+  @Test
+  void rollout2024ShouldBeTrueIfAnyTraineeProgrammeMembershipStartingLaterInMonthInPilotRollout() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    LocalDate placementStart = LocalDate.of(2024, 8, 1);
+    LocalDate laterInSameMonth = LocalDate.of(2024, 8, 31);
+    traineeProfile.setPlacements(
+        List.of(createPlacement(EXISTING_PLACEMENT_ID, "", 0)));
+    traineeProfile.getPlacements().get(0).setStartDate(placementStart);
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembership(PROGRAMME_MEMBERSHIP_ID, laterInSameMonth, LocalDate.MAX),
+            getProgrammeMembership("not rollout", LocalDate.MIN, LocalDate.MAX)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+    when(programmeMembershipService.isPilotRollout2024(TRAINEE_TIS_ID, PROGRAMME_MEMBERSHIP_ID))
+        .thenReturn(true);
+    when(programmeMembershipService.isPilotRollout2024(TRAINEE_TIS_ID, "not rollout"))
+        .thenReturn(false);
+
+    boolean isPilotRollout2024 = service.isPilotRollout2024(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected isPilotRollout2024 value.", isPilotRollout2024, is(true));
+  }
+
+  @Test
+  void rollout2024ShouldBeFalseIfAnyTraineeProgrammeMembershipIsInDateButNotPilotRollout() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPlacements(
+        List.of(createPlacement(EXISTING_PLACEMENT_ID, "", 0)));
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembership("rollout", LocalDate.MIN, LocalDate.MIN),
+            getProgrammeMembership("not rollout", LocalDate.MIN, LocalDate.MAX)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+    when(programmeMembershipService.isPilotRollout2024(TRAINEE_TIS_ID, "not rollout"))
+        .thenReturn(false);
+    when(programmeMembershipService.isPilotRollout2024(TRAINEE_TIS_ID, "rollout"))
+        .thenReturn(true);
+
+    boolean isPilotRollout2024 = service.isPilotRollout2024(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected isPilotRollout2024 value.", isPilotRollout2024, is(false));
+  }
+
   /**
    * Create an instance of Placement with default dummy values.
    *
@@ -410,7 +576,7 @@ class PlacementServiceTest {
    * @return The dummy entity.
    */
   private Placement createPlacement(String tisId, String stringSuffix,
-      int dateAdjustmentDays) {
+                                    int dateAdjustmentDays) {
     Placement placement = new Placement();
     placement.setTisId(tisId);
     placement.setStartDate(START_DATE.plusDays(dateAdjustmentDays));

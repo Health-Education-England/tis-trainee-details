@@ -137,4 +137,39 @@ public class PlacementService {
         .anyMatch(pmInPeriod ->
             programmeMembershipService.isPilot2024(traineeTisId, pmInPeriod.getTisId()));
   }
+
+  /**
+   * Assess if the placement for a trainee is in the 2024 pilot rollout. Hopefully a temporary
+   * kludge.
+   *
+   * @param traineeTisId The TIS id of the trainee.
+   * @param placementId  The ID of the placement to assess.
+   * @return True, or False if the placement is not in the 2024 pilot rollout.
+   */
+  public boolean isPilotRollout2024(String traineeTisId, String placementId) {
+    TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
+
+    if (traineeProfile == null) {
+      log.info("2024 pilot rollout: [false] trainee profile {} not found", traineeTisId);
+      return false;
+    }
+
+    Optional<Placement> optionalPlacement
+        = traineeProfile.getPlacements().stream()
+        .filter(p -> p.getTisId().equals(placementId)).findAny();
+
+    if (optionalPlacement.isEmpty()) {
+      log.info("2024 pilot rollout: [false] placement {} does not exist", placementId);
+      return false;
+    }
+    Placement placement = optionalPlacement.get();
+    LocalDate dayAfterPlacementStart = placement.getStartDate().plusDays(1);
+    LocalDate dayBeforePlacementStart = placement.getStartDate().minusDays(1);
+
+    return traineeProfile.getProgrammeMemberships().stream().filter(pm ->
+            pm.getStartDate().withDayOfMonth(1).isBefore(dayAfterPlacementStart)
+                && pm.getProgrammeCompletionDate().isAfter(dayBeforePlacementStart))
+        .anyMatch(pmInPeriod ->
+            programmeMembershipService.isPilotRollout2024(traineeTisId, pmInPeriod.getTisId()));
+  }
 }
