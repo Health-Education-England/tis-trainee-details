@@ -73,7 +73,7 @@ public class ProgrammeMembershipService {
   private final CachingDelegate cachingDelegate;
 
   ProgrammeMembershipService(TraineeProfileRepository repository, ProgrammeMembershipMapper mapper,
-                             CachingDelegate cachingDelegate) {
+      CachingDelegate cachingDelegate) {
     this.repository = repository;
     this.mapper = mapper;
     this.cachingDelegate = cachingDelegate;
@@ -358,7 +358,7 @@ public class ProgrammeMembershipService {
    * @param programmeMemberships  The list of programme memberships.
    * @param programmeMembershipId The programme membership ID.
    * @return The programme membership, or null if it is not a candidate because it does not exist,
-   * it is non-medical, or is of the wrong type.
+   *     it is non-medical, or is of the wrong type.
    */
   private ProgrammeMembership getCandidateProgrammeMembership(
       List<ProgrammeMembership> programmeMemberships, String programmeMembershipId) {
@@ -465,7 +465,7 @@ public class ProgrammeMembershipService {
    * @return The programme memberships that comprise intra-deanery transfers or rotas.
    */
   private List<ProgrammeMembership> getIntraOrRotaPms(ProgrammeMembership anchorPm,
-                                                      List<ProgrammeMembership> candidatePms) {
+      List<ProgrammeMembership> candidatePms) {
     List<ProgrammeMembership> newStarterPmsWithSameDeaneryStartedBeforeAnchor =
         candidatePms.stream()
             .filter(pm -> {
@@ -512,7 +512,7 @@ public class ProgrammeMembershipService {
    * @return The filtered list.
    */
   private List<ProgrammeMembership> getRecentPrecedingPms(ProgrammeMembership anchorPm,
-                                                          List<ProgrammeMembership> candidatePms) {
+      List<ProgrammeMembership> candidatePms) {
     return
         candidatePms.stream()
             .filter(pm -> {
