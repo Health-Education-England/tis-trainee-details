@@ -66,7 +66,8 @@ public class ProgrammeMembershipService {
       "Wessex",
       "Yorkshire and the Humber",
       "South West",
-      "North West");
+      "North West",
+      "Thames Valley");
 
   private final TraineeProfileRepository repository;
   private final ProgrammeMembershipMapper mapper;
@@ -298,16 +299,12 @@ public class ProgrammeMembershipService {
 
     String managingDeanery = programmeMembership.getManagingDeanery();
     LocalDate startDate = programmeMembership.getStartDate();
-    LocalDate dayBefore01082024 = LocalDate.of(2024, 7, 31);
-    if ((PILOT_2024_LOCAL_OFFICES_ALL_PROGRAMMES.stream()
+    LocalDate notificationEpoch = managingDeanery.equalsIgnoreCase("Thames Valley")
+        ? LocalDate.of(2025, 1, 31)
+        : LocalDate.of(2024, 7, 31);
+    return ((PILOT_2024_LOCAL_OFFICES_ALL_PROGRAMMES.stream()
         .anyMatch(lo -> lo.equalsIgnoreCase(managingDeanery)))
-        && (startDate.isAfter(dayBefore01082024))) {
-      return true;
-    }
-
-    LocalDate dayBefore01022025 = LocalDate.of(2025, 1, 31);
-    return (managingDeanery.equalsIgnoreCase("Thames Valley")
-        && startDate.isAfter(dayBefore01022025));
+        && (startDate.isAfter(notificationEpoch)));
   }
 
   /**

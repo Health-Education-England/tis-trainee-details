@@ -884,7 +884,7 @@ class ProgrammeMembershipServiceTest {
   }
 
   @ParameterizedTest
-  @MethodSource("listLoPilot2024AllProgrammes")
+  @MethodSource("listLoOriginalPilot2024AllProgrammes")
   void pilot2024ShouldBeTrueIfLoWithAllProgrammesAndCorrectStartDate(String lo) {
     LocalDate dateInRange = LocalDate.of(2024, 8, 1);
     TraineeProfile traineeProfile = new TraineeProfile();
@@ -901,7 +901,7 @@ class ProgrammeMembershipServiceTest {
   }
 
   @ParameterizedTest
-  @MethodSource("listLoPilot2024AllProgrammes")
+  @MethodSource("listLoOriginalPilot2024AllProgrammes")
   void pilot2024ShouldBeFalseIfLoWithAllProgrammesAndWrongStartDate(String lo) {
     LocalDate dateOutOfRange = LocalDate.of(2024, 7, 1);
     TraineeProfile traineeProfile = new TraineeProfile();
@@ -918,7 +918,7 @@ class ProgrammeMembershipServiceTest {
   }
 
   @ParameterizedTest
-  @MethodSource("listLoPilot2024AllProgrammes")
+  @MethodSource("listLoOriginalPilot2024AllProgrammes")
   void pilot2024ShouldBeTrueIfLoWithAllProgrammesAndFutureStartDate(String lo) {
     LocalDate dateFuture = LocalDate.now().plusYears(1);
     TraineeProfile traineeProfile = new TraineeProfile();
@@ -1093,8 +1093,9 @@ class ProgrammeMembershipServiceTest {
     return NON_RELEVANT_PROGRAMME_MEMBERSHIP_TYPES.stream();
   }
 
-  static Stream<String> listLoPilot2024AllProgrammes() {
-    return PILOT_2024_LOCAL_OFFICES_ALL_PROGRAMMES.stream();
+  static Stream<String> listLoOriginalPilot2024AllProgrammes() {
+    return PILOT_2024_LOCAL_OFFICES_ALL_PROGRAMMES.stream()
+        .filter(p -> !p.equalsIgnoreCase("Thames Valley"));
   }
 
   static Stream<String> listMedicalCurriculaSubTypes() {
