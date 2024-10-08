@@ -392,7 +392,7 @@ public class ProgrammeMembershipService {
 
     LocalDate notificationEpoch = managingDeanery.equalsIgnoreCase("Thames Valley")
         ? LocalDate.of(2025, 1, 31)
-        : LocalDate.of(2024, 7, 31);
+        : LocalDate.of(2024, 10, 31);
     return ((PILOT_2024_ROLLOUT_LOCAL_OFFICES.stream()
         .anyMatch(lo -> lo.equalsIgnoreCase(managingDeanery)))
         && startDate.isAfter(notificationEpoch));
