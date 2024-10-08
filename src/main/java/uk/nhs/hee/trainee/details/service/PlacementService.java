@@ -104,6 +104,24 @@ public class PlacementService {
     return false;
   }
 
+  private Optional<Placement> pilotPreflightChecks(String traineeTisId, String placementId) {
+    TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
+
+    if (traineeProfile == null) {
+      log.info("2024 pilot / rollout: [false] trainee profile {} not found", traineeTisId);
+      return Optional.empty();
+    }
+
+    Optional<Placement> optionalPlacement
+        = traineeProfile.getPlacements().stream()
+        .filter(p -> p.getTisId().equals(placementId)).findAny();
+
+    if (optionalPlacement.isEmpty()) {
+      log.info("2024 pilot / rollout: [false] placement {} does not exist", placementId);
+    }
+    return optionalPlacement;
+  }
+
   /**
    * Assess if the placement for a trainee is in the 2024 pilot. Hopefully a temporary kludge.
    *
@@ -112,25 +130,16 @@ public class PlacementService {
    * @return True, or False if the placement is not in the 2024 pilot.
    */
   public boolean isPilot2024(String traineeTisId, String placementId) {
-    TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
-
-    if (traineeProfile == null) {
-      log.info("2024 pilot: [false] trainee profile {} not found", traineeTisId);
-      return false;
-    }
-
-    Optional<Placement> optionalPlacement
-        = traineeProfile.getPlacements().stream()
-        .filter(p -> p.getTisId().equals(placementId)).findAny();
+    Optional<Placement> optionalPlacement = pilotPreflightChecks(traineeTisId, placementId);
 
     if (optionalPlacement.isEmpty()) {
-      log.info("2024 pilot: [false] placement {} does not exist", placementId);
       return false;
     }
     Placement placement = optionalPlacement.get();
     LocalDate dayAfterPlacementStart = placement.getStartDate().plusDays(1);
     LocalDate dayBeforePlacementStart = placement.getStartDate().minusDays(1);
 
+    TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
     return traineeProfile.getProgrammeMemberships().stream().filter(pm ->
             pm.getStartDate().withDayOfMonth(1).isBefore(dayAfterPlacementStart)
                 && pm.getProgrammeCompletionDate().isAfter(dayBeforePlacementStart))
@@ -147,25 +156,16 @@ public class PlacementService {
    * @return True, or False if the placement is not in the 2024 pilot rollout.
    */
   public boolean isPilotRollout2024(String traineeTisId, String placementId) {
-    TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
-
-    if (traineeProfile == null) {
-      log.info("2024 pilot rollout: [false] trainee profile {} not found", traineeTisId);
-      return false;
-    }
-
-    Optional<Placement> optionalPlacement
-        = traineeProfile.getPlacements().stream()
-        .filter(p -> p.getTisId().equals(placementId)).findAny();
+    Optional<Placement> optionalPlacement = pilotPreflightChecks(traineeTisId, placementId);
 
     if (optionalPlacement.isEmpty()) {
-      log.info("2024 pilot rollout: [false] placement {} does not exist", placementId);
       return false;
     }
     Placement placement = optionalPlacement.get();
     LocalDate dayAfterPlacementStart = placement.getStartDate().plusDays(1);
     LocalDate dayBeforePlacementStart = placement.getStartDate().minusDays(1);
 
+    TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
     return traineeProfile.getProgrammeMemberships().stream().filter(pm ->
             pm.getStartDate().withDayOfMonth(1).isBefore(dayAfterPlacementStart)
                 && pm.getProgrammeCompletionDate().isAfter(dayBeforePlacementStart))

@@ -1387,11 +1387,11 @@ class ProgrammeMembershipServiceTest {
   @ParameterizedTest
   @MethodSource("listLoPilot2024AllProgrammes")
   void rollout2024ShouldBeFalseIfLoWithAllProgrammesAndTooEarlyStartDate(String deanery) {
-    LocalDate dateFuture = LocalDate.of(2024, 10, 31);
+    LocalDate dateTooEarly = LocalDate.of(2024, 10, 31);
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, dateFuture, END_DATE, deanery, TSS_CURRICULA.get(0),
+            PROGRAMME_MEMBERSHIP_TYPE, dateTooEarly, END_DATE, deanery, TSS_CURRICULA.get(0),
             CURRICULUM_SPECIALTY_CODE, CURRICULUM_SPECIALTY)));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
@@ -1409,6 +1409,38 @@ class ProgrammeMembershipServiceTest {
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
             PROGRAMME_MEMBERSHIP_TYPE, dateOutOfRange, END_DATE, deanery, TSS_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, CURRICULUM_SPECIALTY)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilotRollout2024 = service.isPilotRollout2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilotRollout2024 value.", isPilotRollout2024, is(false));
+  }
+
+  @ParameterizedTest
+  @MethodSource("listLoPilot2024AllProgrammes")
+  void rollout2024ShouldBeFalseIfLoWithAllProgrammesAndNullStartDate(String deanery) {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, null, END_DATE, deanery, TSS_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, CURRICULUM_SPECIALTY)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilotRollout2024 = service.isPilotRollout2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilotRollout2024 value.", isPilotRollout2024, is(false));
+  }
+
+  @Test
+  void rollout2024ShouldBeFalseIfTvLoWithNullStartDate() {
+    String deanery = "Thames Valley";
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, null, END_DATE, deanery, TSS_CURRICULA.get(0),
             CURRICULUM_SPECIALTY_CODE, CURRICULUM_SPECIALTY)));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
