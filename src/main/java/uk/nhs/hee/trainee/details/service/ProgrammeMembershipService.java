@@ -65,6 +65,21 @@ public class ProgrammeMembershipService {
       "East of England",
       "Wessex");
 
+  protected static final List<String> PILOT_2024_ROLLOUT_LOCAL_OFFICES
+      = List.of("London LETBs",
+      "North Central and East London",
+      "South London",
+      "North West London",
+      "Kent, Surrey and Sussex",
+      "East Midlands",
+      "West Midlands",
+      "East of England",
+      "Wessex",
+      "Yorkshire and the Humber",
+      "South West",
+      "North West",
+      "Thames Valley");
+
   protected static final List<String> PILOT_2024_NW_SPECIALTIES = List.of(
       "Cardiothoracic surgery",
       "Core surgical training",
@@ -341,6 +356,46 @@ public class ProgrammeMembershipService {
         .equalsIgnoreCase("Cardio-thoracic surgery (run through)")
         || programmeMembership.getProgrammeName()
         .equalsIgnoreCase("Oral and maxillo-facial surgery (run through)"));
+  }
+
+  /**
+   * Assess if the programme membership for a trainee is in the 2024 pilot rollout. Hopefully a
+   * temporary kludge.
+   *
+   * @param traineeTisId          The TIS id of the trainee.
+   * @param programmeMembershipId The ID of the programme membership to assess.
+   * @return True, or False if the programme membership is not in the 2024 pilot rollout.
+   */
+  public boolean isPilotRollout2024(String traineeTisId, String programmeMembershipId) {
+    TraineeProfile traineeProfile = getProfileWithTssProgrammeMemberships(traineeTisId);
+
+    if (traineeProfile == null) {
+      log.info("2024 pilot rollout: [false] trainee profile {} not found", traineeTisId);
+      return false;
+    }
+
+    ProgrammeMembership programmeMembership = getCandidateProgrammeMembership(
+        traineeProfile.getProgrammeMemberships(), programmeMembershipId);
+    if (programmeMembership == null) {
+      log.info("2024 pilot rollout: [false] programme membership {} does not exist, is non-medical "
+              + "or has wrong type",
+          programmeMembershipId);
+      return false;
+    }
+
+    String managingDeanery = Objects.toString(programmeMembership.getManagingDeanery(), "");
+    LocalDate startDate = programmeMembership.getStartDate();
+    if (startDate == null) {
+      log.info("2024 pilot rollout: [false] start date is null for {}", programmeMembershipId);
+      return false;
+    }
+
+    LocalDate notificationEpoch = managingDeanery.equalsIgnoreCase("Thames Valley")
+        ? LocalDate.of(2025, 1, 31)
+        : LocalDate.of(2024, 10, 31);
+    return ((PILOT_2024_ROLLOUT_LOCAL_OFFICES.stream()
+        .anyMatch(lo -> lo.equalsIgnoreCase(managingDeanery)))
+        && startDate.isAfter(notificationEpoch));
   }
 
   /**
