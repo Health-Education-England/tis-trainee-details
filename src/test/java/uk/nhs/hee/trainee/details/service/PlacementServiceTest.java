@@ -497,7 +497,7 @@ class PlacementServiceTest {
 
   @ParameterizedTest
   @MethodSource("listLoRollout2024")
-  void rollout2024ShouldBeFalseIfProgrammeMembershipInRolloutButPlacementStartBeforeRollout(String deanery) {
+  void rollout2024ShouldBeFalseIfPmInRolloutButPlacementStartBeforeRollout(String deanery) {
     LocalDate okStartDate = deanery.equalsIgnoreCase("Thames Valley")
         ? START_DATE_ROLLOUT_TV
         : START_DATE_ROLLOUT;
@@ -539,7 +539,8 @@ class PlacementServiceTest {
 
   @ParameterizedTest
   @MethodSource("listLoRollout2024")
-  void rollout2024ShouldBeTrueIfPmStartingLaterInMonthInPilotAndPlacementStartInRollout(String deanery) {
+  void rollout2024ShouldBeTrueIfPmStartingLaterInMonthInPilotAndPlacementStartInRollout(
+      String deanery) {
     LocalDate okStartDate = deanery.equalsIgnoreCase("Thames Valley")
         ? START_DATE_ROLLOUT_TV
         : START_DATE_ROLLOUT;
@@ -568,7 +569,7 @@ class PlacementServiceTest {
     traineeProfile.setPlacements(
         List.of(createPlacement(EXISTING_PLACEMENT_ID, "", START_DATE_ROLLOUT)));
     traineeProfile.setProgrammeMemberships(
-        List.of(getProgrammeMembership("rollout", LocalDate.MIN, LocalDate.MIN,
+        List.of(getProgrammeMembership("rollout", LocalDate.MIN, LocalDate.MAX,
             "North East")));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
