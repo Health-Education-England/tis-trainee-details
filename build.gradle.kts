@@ -62,7 +62,7 @@ dependencies {
   // Amazon AWS
   implementation("io.awspring.cloud:spring-cloud-aws-starter-sqs")
   implementation("io.awspring.cloud:spring-cloud-aws-starter-sns")
-  implementation("com.amazonaws:aws-xray-recorder-sdk-spring:2.15.1")
+  implementation("com.amazonaws:aws-xray-recorder-sdk-spring:2.18.2")
 }
 
 java {
