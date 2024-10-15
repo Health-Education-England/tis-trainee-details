@@ -38,6 +38,7 @@ import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.NON_
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.NOT_TSS_SPECIALTIES;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PILOT_2024_LOCAL_OFFICES_ALL_PROGRAMMES;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PILOT_2024_NW_SPECIALTIES;
+import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PILOT_2024_ROLLOUT_LOCAL_OFFICES;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PROGRAMME_BREAK_DAYS;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.TSS_CURRICULA;
 
@@ -1368,14 +1369,16 @@ class ProgrammeMembershipServiceTest {
   }
 
   @ParameterizedTest
-  @MethodSource("listLoPilot2024AllProgrammes")
+  @MethodSource("listLoRollout2024")
   void rollout2024ShouldBeTrueIfLoWithAllProgrammesAndOkStartDate(String deanery) {
-    LocalDate dateFuture = LocalDate.of(2024, 11, 1);
+    LocalDate notificationEpoch = deanery.equalsIgnoreCase("Thames Valley")
+        ? LocalDate.of(2025, 1, 31)
+        : LocalDate.of(2024, 10, 31);
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, dateFuture, END_DATE, deanery, TSS_CURRICULA.get(0),
-            CURRICULUM_SPECIALTY_CODE, CURRICULUM_SPECIALTY)));
+            PROGRAMME_MEMBERSHIP_TYPE, notificationEpoch.plusDays(1), END_DATE, deanery,
+            TSS_CURRICULA.get(0), CURRICULUM_SPECIALTY_CODE, CURRICULUM_SPECIALTY)));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
@@ -1385,7 +1388,7 @@ class ProgrammeMembershipServiceTest {
   }
 
   @ParameterizedTest
-  @MethodSource("listLoPilot2024AllProgrammes")
+  @MethodSource("listLoRollout2024")
   void rollout2024ShouldBeFalseIfLoWithAllProgrammesAndTooEarlyStartDate(String deanery) {
     LocalDate dateTooEarly = LocalDate.of(2024, 10, 31);
     TraineeProfile traineeProfile = new TraineeProfile();
@@ -1454,7 +1457,7 @@ class ProgrammeMembershipServiceTest {
   }
 
   @ParameterizedTest
-  @MethodSource("listLoPilot2024AllProgrammes")
+  @MethodSource("listLoRollout2024")
   void rollout2024ShouldBeFalseIfNoStartDate(String deanery) {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
@@ -1501,6 +1504,10 @@ class ProgrammeMembershipServiceTest {
 
   static Stream<String> listNonRelevantPmTypes() {
     return NON_RELEVANT_PROGRAMME_MEMBERSHIP_TYPES.stream();
+  }
+
+  static Stream<String> listLoRollout2024() {
+    return PILOT_2024_ROLLOUT_LOCAL_OFFICES.stream();
   }
 
   static Stream<String> listLoPilot2024AllProgrammes() {

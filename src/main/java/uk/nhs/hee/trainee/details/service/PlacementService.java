@@ -29,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.mapper.PlacementMapper;
 import uk.nhs.hee.trainee.details.model.Placement;
+import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 
@@ -162,14 +163,28 @@ public class PlacementService {
       return false;
     }
     Placement placement = optionalPlacement.get();
+
+    //short-circuit
+    if (placement.getStartDate().isBefore(LocalDate.of(2024, 11, 1))) {
+      return false;
+    }
+
     LocalDate dayAfterPlacementStart = placement.getStartDate().plusDays(1);
     LocalDate dayBeforePlacementStart = placement.getStartDate().minusDays(1);
 
     TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
-    return traineeProfile.getProgrammeMemberships().stream().filter(pm ->
-            pm.getStartDate().withDayOfMonth(1).isBefore(dayAfterPlacementStart)
-                && pm.getProgrammeCompletionDate().isAfter(dayBeforePlacementStart))
-        .anyMatch(pmInPeriod ->
-            programmeMembershipService.isPilotRollout2024(traineeTisId, pmInPeriod.getTisId()));
+    List<ProgrammeMembership> pmsInPeriod = traineeProfile.getProgrammeMemberships().stream()
+        .filter(pm -> pm.getStartDate().withDayOfMonth(1).isBefore(dayAfterPlacementStart)
+            && pm.getProgrammeCompletionDate().isAfter(dayBeforePlacementStart))
+        .toList();
+    return pmsInPeriod.stream()
+        .filter(pm -> !pm.getManagingDeanery().equalsIgnoreCase("North East"))
+        .anyMatch(pmInRollout -> {
+          LocalDate notificationEpoch = pmInRollout.getManagingDeanery()
+              .equalsIgnoreCase("Thames Valley")
+              ? LocalDate.of(2025, 1, 31)
+              : LocalDate.of(2024, 10, 31);
+          return (placement.getStartDate().isAfter(notificationEpoch));
+        });
   }
 }
