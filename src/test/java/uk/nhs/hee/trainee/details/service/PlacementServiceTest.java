@@ -254,11 +254,11 @@ class PlacementServiceTest {
   @ParameterizedTest
   @ValueSource(strings = {
       "DCT1", // Dental Core Training Year 1
-      "DCT2", // Dental Core Training Year 2
+      "dct2", // Dental Core Training Year 2
       "DCT3", // Dental Core Training Year 3
       "DFT", // Dental Foundation Training
       "F1", // Foundation Year 1
-      "F2" // Foundation Year 2
+      "f2" // Foundation Year 2
   })
   void shouldNotBeOnboardableWhenNonOnBoardedGrade(String grade) {
     Placement placement = createPlacement(EXISTING_PLACEMENT_ID, ORIGINAL_SUFFIX, 0);
@@ -266,12 +266,17 @@ class PlacementServiceTest {
 
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.getPlacements().add(placement);
+    traineeProfile.getProgrammeMemberships()
+        .add(getProgrammeMembership("pm1", START_DATE, END_DATE));
+    traineeProfile.getProgrammeMemberships()
+        .add(getProgrammeMembership("pm2", START_DATE, END_DATE));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
     boolean canBeOnboarded = service.canBeOnboarded(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
 
     assertThat("Unexpected canBeOnboarded result.", canBeOnboarded, is(false));
+    verifyNoInteractions(programmeMembershipService);
   }
 
   @ParameterizedTest

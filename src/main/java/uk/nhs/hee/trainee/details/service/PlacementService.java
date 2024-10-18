@@ -144,7 +144,7 @@ public class PlacementService {
   private boolean canBeOnboarded(TraineeProfile traineeProfile, Placement placement) {
     String grade = placement.getGrade();
 
-    if (NON_ONBOARDED_GRADES.contains(grade)) {
+    if (NON_ONBOARDED_GRADES.contains(grade.toUpperCase())) {
       log.info("Placement not valid for onboarding with grade '{}'.", grade);
       return false;
     }
