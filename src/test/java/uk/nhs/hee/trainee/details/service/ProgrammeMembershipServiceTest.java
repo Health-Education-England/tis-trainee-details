@@ -53,6 +53,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
@@ -526,6 +527,66 @@ class ProgrammeMembershipServiceTest {
 
     assertThat("Unexpected optional isEmpty flag.", programmeMembership.isEmpty(), is(true));
     verify(repository, never()).save(traineeProfile);
+  }
+
+  @ParameterizedTest
+  @NullSource
+  @ValueSource(strings = {"LAT", "VISITOR"})
+  void shouldNotBeOnboardableWhenTypeNotOnboardable(String pmType) {
+    ProgrammeMembership pm = createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_UUID,
+        ORIGINAL_SUFFIX, 0);
+    pm.setProgrammeMembershipType(pmType);
+
+    boolean canBeOnboarded = service.canBeOnboarded(pm);
+
+    assertThat("Unexpected canBeOnboarded result.", canBeOnboarded, is(false));
+  }
+
+  @ParameterizedTest
+  @NullAndEmptySource
+  @ValueSource(strings = "NOT_ONBOARDABLE")
+  void shouldNotBeOnboardableWhenNoOnboardableCurriculaSubType(String currSubType) {
+    ProgrammeMembership pm = createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_UUID,
+        ORIGINAL_SUFFIX, 0);
+
+    Curriculum curr1 = createCurriculum(currSubType, null, "specialty1");
+    Curriculum curr2 = createCurriculum("not onboardable", null, "specialty2");
+    pm.setCurricula(List.of(curr1, curr2));
+
+    boolean canBeOnboarded = service.canBeOnboarded(pm);
+
+    assertThat("Unexpected canBeOnboarded result.", canBeOnboarded, is(false));
+  }
+
+  @ParameterizedTest
+  @NullSource
+  @ValueSource(strings = {"Public Health Medicine", "Foundation"})
+  void shouldNotBeOnboardableWhenNoOnboardableSpecialty(String specialty) {
+    ProgrammeMembership pm = createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_UUID,
+        ORIGINAL_SUFFIX, 0);
+
+    Curriculum curr1 = createCurriculum("MEDICAL_CURRICULUM", null, specialty);
+    Curriculum curr2 = createCurriculum("MEDICAL_SPR", null, specialty);
+    pm.setCurricula(List.of(curr1, curr2));
+
+    boolean canBeOnboarded = service.canBeOnboarded(pm);
+
+    assertThat("Unexpected canBeOnboarded result.", canBeOnboarded, is(false));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"MEDICAL_CURRICULUM", "MEDICAL_SPR"})
+  void shouldBeOnboardableWhenProgrammeMembershipAndCurriculaOnboardable(String subType) {
+    ProgrammeMembership pm = createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_UUID,
+        ORIGINAL_SUFFIX, 0);
+
+    Curriculum curr1 = createCurriculum(subType, null, "Foundation");
+    Curriculum curr2 = createCurriculum(subType, null, "specialty2");
+    pm.setCurricula(List.of(curr1, curr2));
+
+    boolean canBeOnboarded = service.canBeOnboarded(pm);
+
+    assertThat("Unexpected canBeOnboarded result.", canBeOnboarded, is(true));
   }
 
   @Test

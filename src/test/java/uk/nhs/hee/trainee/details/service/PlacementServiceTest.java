@@ -25,6 +25,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PILOT_2024_ROLLOUT_LOCAL_OFFICES;
@@ -38,9 +39,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mapstruct.factory.Mappers;
+import org.junit.jupiter.params.provider.ValueSource;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
-import uk.nhs.hee.trainee.details.mapper.PlacementMapper;
+import uk.nhs.hee.trainee.details.mapper.PlacementMapperImpl;
 import uk.nhs.hee.trainee.details.model.Placement;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.Site;
@@ -79,8 +80,8 @@ class PlacementServiceTest {
   void setUp() {
     repository = mock(TraineeProfileRepository.class);
     programmeMembershipService = mock(ProgrammeMembershipService.class);
-    service = new PlacementService(repository,
-        Mappers.getMapper(PlacementMapper.class), programmeMembershipService);
+    service = new PlacementService(repository, new PlacementMapperImpl(),
+        programmeMembershipService);
   }
 
   @Test
@@ -239,6 +240,107 @@ class PlacementServiceTest {
     boolean result = service.deletePlacementForTrainee(TRAINEE_TIS_ID, NOT_EXISTING_PLACEMENT_ID);
 
     assertThat("Unexpected result.", result, is(false));
+  }
+
+  @Test
+  void shouldNotBeOnboardableWhenTraineeProfileNotFound() {
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(null);
+
+    boolean canBeOnboarded = service.canBeOnboarded(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected canBeOnboarded result.", canBeOnboarded, is(false));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {
+      "DCT1", // Dental Core Training Year 1
+      "DCT2", // Dental Core Training Year 2
+      "DCT3", // Dental Core Training Year 3
+      "DFT", // Dental Foundation Training
+      "F1", // Foundation Year 1
+      "F2" // Foundation Year 2
+  })
+  void shouldNotBeOnboardableWhenNonOnBoardedGrade(String grade) {
+    Placement placement = createPlacement(EXISTING_PLACEMENT_ID, ORIGINAL_SUFFIX, 0);
+    placement.setGrade(grade);
+
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.getPlacements().add(createPlacement(EXISTING_PLACEMENT_ID, ORIGINAL_SUFFIX, 0));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean canBeOnboarded = service.canBeOnboarded(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected canBeOnboarded result.", canBeOnboarded, is(false));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"ST1", "ST2", "ABC123", "XYZ789"})
+  void shouldNotBeOnboardableWhenOnboardedGradeAndNoPossibleProgrammeMemberships(String grade) {
+    Placement placement = createPlacement(EXISTING_PLACEMENT_ID, ORIGINAL_SUFFIX, 0);
+    placement.setGrade(grade);
+
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.getPlacements().add(createPlacement(EXISTING_PLACEMENT_ID, ORIGINAL_SUFFIX, 0));
+    traineeProfile.getProgrammeMemberships()
+        .add(getProgrammeMembership("pm1", START_DATE.minusYears(2), END_DATE.minusYears(2)));
+    traineeProfile.getProgrammeMemberships()
+        .add(getProgrammeMembership("pm2", START_DATE.plusYears(2), END_DATE.plusYears(2)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean canBeOnboarded = service.canBeOnboarded(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected canBeOnboarded result.", canBeOnboarded, is(false));
+    verifyNoInteractions(programmeMembershipService);
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"ST1", "ST2", "ABC123", "XYZ789"})
+  void shouldNotBeOnboardableWhenOnboardedGradeAndProgrammeMembershipNotOnboardable(String grade) {
+    Placement placement = createPlacement(EXISTING_PLACEMENT_ID, ORIGINAL_SUFFIX, 0);
+    placement.setGrade(grade);
+
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.getPlacements().add(createPlacement(EXISTING_PLACEMENT_ID, ORIGINAL_SUFFIX, 0));
+
+    ProgrammeMembership pm1 = getProgrammeMembership("pm1", START_DATE, END_DATE);
+    traineeProfile.getProgrammeMemberships().add(pm1);
+
+    ProgrammeMembership pm2 = getProgrammeMembership("pm2", START_DATE, END_DATE);
+    traineeProfile.getProgrammeMemberships().add(pm2);
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+    when(programmeMembershipService.canBeOnboarded(pm1)).thenReturn(false);
+    when(programmeMembershipService.canBeOnboarded(pm2)).thenReturn(false);
+
+    boolean canBeOnboarded = service.canBeOnboarded(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected canBeOnboarded result.", canBeOnboarded, is(false));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"ST1", "ST2", "ABC123", "XYZ789"})
+  void shouldBeOnboardableWhenOnboardedGradeAndProgrammeMembershipOnboardable(String grade) {
+    Placement placement = createPlacement(EXISTING_PLACEMENT_ID, ORIGINAL_SUFFIX, 0);
+    placement.setGrade(grade);
+
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.getPlacements().add(createPlacement(EXISTING_PLACEMENT_ID, ORIGINAL_SUFFIX, 0));
+
+    ProgrammeMembership pm1 = getProgrammeMembership("pm1", START_DATE, END_DATE);
+    traineeProfile.getProgrammeMemberships().add(pm1);
+
+    ProgrammeMembership pm2 = getProgrammeMembership("pm2", START_DATE, END_DATE);
+    traineeProfile.getProgrammeMemberships().add(pm2);
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+    when(programmeMembershipService.canBeOnboarded(pm1)).thenReturn(false);
+    when(programmeMembershipService.canBeOnboarded(pm2)).thenReturn(true);
+
+    boolean canBeOnboarded = service.canBeOnboarded(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected canBeOnboarded result.", canBeOnboarded, is(true));
   }
 
   @Test
@@ -590,7 +692,7 @@ class PlacementServiceTest {
    * @return The dummy entity.
    */
   private Placement createPlacement(String tisId, String stringSuffix,
-                                    int dateAdjustmentDays) {
+      int dateAdjustmentDays) {
     Placement placement = new Placement();
     placement.setTisId(tisId);
     placement.setStartDate(START_DATE.plusDays(dateAdjustmentDays));
@@ -618,9 +720,9 @@ class PlacementServiceTest {
   /**
    * Create an instance of Placement with default dummy values and a provided start date.
    *
-   * @param tisId              The TIS ID to set on the placement.
-   * @param stringSuffix       The suffix to use for string values.
-   * @param startDateFixed     The start date (end date will be a year later).
+   * @param tisId          The TIS ID to set on the placement.
+   * @param stringSuffix   The suffix to use for string values.
+   * @param startDateFixed The start date (end date will be a year later).
    * @return The dummy entity.
    */
   private Placement createPlacement(String tisId, String stringSuffix, LocalDate startDateFixed) {
