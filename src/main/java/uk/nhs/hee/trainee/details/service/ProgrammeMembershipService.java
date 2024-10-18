@@ -298,6 +298,22 @@ public class ProgrammeMembershipService {
   }
 
   /**
+   * Check whether a trainee can be onboarded based on the given programme membership.
+   *
+   * @param programmeMembership The programme membership to assess.
+   * @return Whether the trainee can be onboarded based on this placement.
+   */
+  public boolean canBeOnboarded(ProgrammeMembership programmeMembership) {
+    if (!hasProgrammeMembershipTypeOfInterest(programmeMembership)) {
+      log.info("Programme Membership not valid for onboarding with type '{}'.",
+          programmeMembership.getProgrammeMembershipType());
+      return false;
+    }
+
+    return !getPmsTssCurricula(List.of(programmeMembership)).isEmpty();
+  }
+
+  /**
    * Assess if the programme membership for a trainee is in the 2024 pilot. Hopefully a temporary
    * kludge.
    *

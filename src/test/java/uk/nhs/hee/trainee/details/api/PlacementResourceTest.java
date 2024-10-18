@@ -226,26 +226,66 @@ class PlacementResourceTest {
         .andExpect(status().isBadRequest());
   }
 
-
-  @ParameterizedTest
-  @ValueSource(booleans = {true, false})
-  void shouldReturnPlacementPilot2024WhenTraineeFound(boolean isPilot2024)
-      throws Exception {
-    when(service
-        .isPilot2024("40", "1"))
-        .thenReturn(isPilot2024);
+  @Test
+  void shouldReturnTrueWhenCanBeOnboardedAndInPilot2024() throws Exception {
+    when(service.canBeOnboarded("40", "1")).thenReturn(true);
+    when(service.isPilot2024("40", "1")).thenReturn(true);
 
     mockMvc.perform(
             get("/api/placement/ispilot2024/{traineeTisId}/{placementId}",
                 "40", "1")
                 .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
-        .andExpect(content().string(String.valueOf(isPilot2024)))
+        .andExpect(content().string("true"))
         .andReturn();
   }
 
   @Test
+  void shouldReturnFalseWhenBothCanBeOnboardedAndInPilot2024False() throws Exception {
+    when(service.canBeOnboarded("40", "1")).thenReturn(false);
+    when(service.isPilot2024("40", "1")).thenReturn(false);
+
+    mockMvc.perform(
+            get("/api/placement/ispilot2024/{traineeTisId}/{placementId}",
+                "40", "1")
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(content().string("false"))
+        .andReturn();
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void shouldReturnFalseWhenOneOfCanBeOnboardedOrInPilot2024False(boolean isValid)
+      throws Exception {
+    when(service.canBeOnboarded("40", "1")).thenReturn(isValid);
+    when(service.isPilot2024("40", "1")).thenReturn(!isValid);
+
+    mockMvc.perform(
+            get("/api/placement/ispilot2024/{traineeTisId}/{placementId}",
+                "40", "1")
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(content().string("false"))
+        .andReturn();
+  }
+
+  @Test
+  void shouldThrowBadRequestWhenCanBeOnboardedException() throws Exception {
+    when(service
+        .canBeOnboarded("triggersError", "1"))
+        .thenThrow(new IllegalArgumentException());
+
+    mockMvc.perform(
+            get("/api/placement/ispilot2024/{traineeTisId}/{placementId}",
+                "triggersError", "1")
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
   void shouldThrowBadRequestWhenPlacementPilot2024Exception() throws Exception {
+    when(service.canBeOnboarded("triggersError", "1")).thenReturn(true);
     when(service
         .isPilot2024("triggersError", "1"))
         .thenThrow(new IllegalArgumentException());
@@ -259,23 +299,66 @@ class PlacementResourceTest {
 
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
-  void shouldReturnPlacementPilotRollout2024WhenTraineeFound(boolean isPilotRollout2024)
+  void shouldReturnTrueWhenCanBeOnboardedAndInPilotRollout2024(boolean isPilotRollout2024)
       throws Exception {
-    when(service
-        .isPilotRollout2024("40", "1"))
-        .thenReturn(isPilotRollout2024);
+    when(service.canBeOnboarded("40", "1")).thenReturn(true);
+    when(service.isPilotRollout2024("40", "1")).thenReturn(true);
 
     mockMvc.perform(
             get("/api/placement/isrollout2024/{traineeTisId}/{placementId}",
                 "40", "1")
                 .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
-        .andExpect(content().string(String.valueOf(isPilotRollout2024)))
+        .andExpect(content().string("true"))
         .andReturn();
   }
 
   @Test
+  void shouldReturnFalseWhenBothCanBeOnboardedAndInPilotRollout2024False() throws Exception {
+    when(service.canBeOnboarded("40", "1")).thenReturn(false);
+    when(service.isPilotRollout2024("40", "1")).thenReturn(false);
+
+    mockMvc.perform(
+            get("/api/placement/isrollout2024/{traineeTisId}/{placementId}",
+                "40", "1")
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(content().string("false"))
+        .andReturn();
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void shouldReturnFalseWhenOneOfCanBeOnboardedOrInPilotRollout2024False(boolean isValid)
+      throws Exception {
+    when(service.canBeOnboarded("40", "1")).thenReturn(isValid);
+    when(service.isPilotRollout2024("40", "1")).thenReturn(!isValid);
+
+    mockMvc.perform(
+            get("/api/placement/isrollout2024/{traineeTisId}/{placementId}",
+                "40", "1")
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(content().string("false"))
+        .andReturn();
+  }
+
+  @Test
+  void shouldThrowBadRequestWhenPlacementCanBeOnboardedException() throws Exception {
+    when(service
+        .canBeOnboarded("triggersError", "1"))
+        .thenThrow(new IllegalArgumentException());
+
+    mockMvc.perform(
+            get("/api/placement/isrollout2024/{traineeTisId}/{placementId}",
+                "triggersError", "1")
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
   void shouldThrowBadRequestWhenPlacementPilotRollout2024Exception() throws Exception {
+    when(service.canBeOnboarded("triggersError", "1")).thenReturn(true);
     when(service
         .isPilotRollout2024("triggersError", "1"))
         .thenThrow(new IllegalArgumentException());

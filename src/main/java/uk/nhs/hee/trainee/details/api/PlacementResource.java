@@ -77,8 +77,8 @@ public class PlacementResource {
   /**
    * Delete the placement for the trainee.
    *
-   * @param traineeTisId    The ID of the trainee to update.
-   * @param placementTisId  The ID of the placement to delete.
+   * @param traineeTisId   The ID of the trainee to update.
+   * @param placementTisId The ID of the placement to delete.
    * @return True if the placement was deleted.
    */
   @DeleteMapping("/{traineeTisId}/{placementTisId}")
@@ -115,7 +115,9 @@ public class PlacementResource {
     log.info("Assess 2024 pilot status: placement {} of trainee with TIS ID {}",
         placementId, traineeTisId);
     try {
-      boolean isPilot2024 = service.isPilot2024(traineeTisId, placementId);
+      boolean isPilot2024 =
+          service.canBeOnboarded(traineeTisId, placementId) && service.isPilot2024(traineeTisId,
+              placementId);
       return ResponseEntity.ok(isPilot2024);
     } catch (IllegalArgumentException | InvalidDataAccessApiUsageException e) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getLocalizedMessage());
@@ -136,7 +138,9 @@ public class PlacementResource {
     log.info("Assess 2024 pilot rollout status: placement {} of trainee with TIS ID {}",
         placementId, traineeTisId);
     try {
-      boolean isPilotRollout2024 = service.isPilotRollout2024(traineeTisId, placementId);
+      boolean isPilotRollout2024 =
+          service.canBeOnboarded(traineeTisId, placementId) && service.isPilotRollout2024(
+              traineeTisId, placementId);
       return ResponseEntity.ok(isPilotRollout2024);
     } catch (IllegalArgumentException | InvalidDataAccessApiUsageException e) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getLocalizedMessage());

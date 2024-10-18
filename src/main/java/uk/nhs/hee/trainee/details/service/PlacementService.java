@@ -25,6 +25,7 @@ import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.mapper.PlacementMapper;
@@ -38,12 +39,21 @@ import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 @Slf4j
 public class PlacementService {
 
+  private static final Set<String> NON_ONBOARDED_GRADES = Set.of(
+      "DCT1", // Dental Core Training Year 1
+      "DCT2", // Dental Core Training Year 2
+      "DCT3", // Dental Core Training Year 3
+      "DFT", // Dental Foundation Training
+      "F1", // Foundation Year 1
+      "F2" // Foundation Year 2
+  );
+
   private final TraineeProfileRepository repository;
   private final PlacementMapper mapper;
   private final ProgrammeMembershipService programmeMembershipService;
 
   PlacementService(TraineeProfileRepository repository, PlacementMapper mapper,
-                   ProgrammeMembershipService programmeMembershipService) {
+      ProgrammeMembershipService programmeMembershipService) {
     this.repository = repository;
     this.mapper = mapper;
     this.programmeMembershipService = programmeMembershipService;
@@ -88,7 +98,6 @@ public class PlacementService {
    * @return True, or False if a trainee with the ID was not found or the placement was not found.
    */
   public boolean deletePlacementForTrainee(String traineeTisId, String placementTisId) {
-    boolean hasDeleted = false;
     TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
 
     if (traineeProfile == null) {
@@ -96,13 +105,52 @@ public class PlacementService {
     }
     List<Placement> placements = traineeProfile.getPlacements();
 
-    hasDeleted = placements.removeIf(p -> p.getTisId().equals(placementTisId));
+    boolean hasDeleted = placements.removeIf(p -> p.getTisId().equals(placementTisId));
 
     if (hasDeleted) {
       repository.save(traineeProfile);
       return true;
     }
     return false;
+  }
+
+  /**
+   * Check whether a trainee can be onboarded based on the given placement.
+   *
+   * @param traineeTisId The TIS id of the trainee.
+   * @param placementId  The ID of the placement to assess.
+   * @return Whether the trainee can be onboarded based on this placement.
+   */
+  public boolean canBeOnboarded(String traineeTisId, String placementId) {
+    TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
+
+    if (traineeProfile == null) {
+      log.info("Placement not valid for onboarding as no profile found for ID '{}'.", traineeTisId);
+      return false;
+    }
+
+    return traineeProfile.getPlacements().stream()
+        .filter(p -> p.getTisId().equals(placementId))
+        .anyMatch(p -> canBeOnboarded(traineeProfile, p));
+  }
+
+  /**
+   * Check whether a trainee can be onboarded based on the given placement.
+   *
+   * @param traineeProfile The profile of the trainee.
+   * @param placement      The placement to assess.
+   * @return Whether the trainee can be onboarded based on this placement.
+   */
+  private boolean canBeOnboarded(TraineeProfile traineeProfile, Placement placement) {
+    String grade = placement.getGrade();
+
+    if (NON_ONBOARDED_GRADES.contains(grade.toUpperCase())) {
+      log.info("Placement not valid for onboarding with grade '{}'.", grade);
+      return false;
+    }
+
+    return getPossiblePlacementProgrammes(traineeProfile, placement).stream()
+        .anyMatch(programmeMembershipService::canBeOnboarded);
   }
 
   private Optional<Placement> pilotPreflightChecks(String traineeTisId, String placementId) {
@@ -136,16 +184,11 @@ public class PlacementService {
     if (optionalPlacement.isEmpty()) {
       return false;
     }
-    Placement placement = optionalPlacement.get();
-    LocalDate dayAfterPlacementStart = placement.getStartDate().plusDays(1);
-    LocalDate dayBeforePlacementStart = placement.getStartDate().minusDays(1);
 
     TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
-    return traineeProfile.getProgrammeMemberships().stream().filter(pm ->
-            pm.getStartDate().withDayOfMonth(1).isBefore(dayAfterPlacementStart)
-                && pm.getProgrammeCompletionDate().isAfter(dayBeforePlacementStart))
-        .anyMatch(pmInPeriod ->
-            programmeMembershipService.isPilot2024(traineeTisId, pmInPeriod.getTisId()));
+    return getPossiblePlacementProgrammes(traineeProfile, optionalPlacement.get()).stream()
+        .anyMatch(pmInPeriod -> programmeMembershipService.isPilot2024(traineeTisId,
+            pmInPeriod.getTisId()));
   }
 
   /**
@@ -186,5 +229,23 @@ public class PlacementService {
               : LocalDate.of(2024, 10, 31);
           return (placement.getStartDate().isAfter(notificationEpoch));
         });
+  }
+
+  /**
+   * Get the possible programme memberships associated with the given placement.
+   *
+   * @param traineeProfile The trainee profile to check PMs of.
+   * @param placement      The placement to assess.
+   * @return A list of possible programme memberships.
+   */
+  private List<ProgrammeMembership> getPossiblePlacementProgrammes(TraineeProfile traineeProfile,
+      Placement placement) {
+    LocalDate dayAfterPlacementStart = placement.getStartDate().plusDays(1);
+    LocalDate dayBeforePlacementStart = placement.getStartDate().minusDays(1);
+
+    return traineeProfile.getProgrammeMemberships().stream().filter(pm ->
+            pm.getStartDate().withDayOfMonth(1).isBefore(dayAfterPlacementStart)
+                && pm.getProgrammeCompletionDate().isAfter(dayBeforePlacementStart))
+        .toList();
   }
 }
