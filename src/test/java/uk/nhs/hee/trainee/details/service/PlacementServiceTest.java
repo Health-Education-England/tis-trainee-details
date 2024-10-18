@@ -265,7 +265,7 @@ class PlacementServiceTest {
     placement.setGrade(grade);
 
     TraineeProfile traineeProfile = new TraineeProfile();
-    traineeProfile.getPlacements().add(createPlacement(EXISTING_PLACEMENT_ID, ORIGINAL_SUFFIX, 0));
+    traineeProfile.getPlacements().add(placement);
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
