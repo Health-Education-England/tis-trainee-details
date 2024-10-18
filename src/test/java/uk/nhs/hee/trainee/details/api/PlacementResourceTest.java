@@ -314,7 +314,7 @@ class PlacementResourceTest {
   }
 
   @Test
-  void shouldReturnTrueWhenBothCanBeOnboardedAndInPilotRollout2024False() throws Exception {
+  void shouldReturnFalseWhenBothCanBeOnboardedAndInPilotRollout2024False() throws Exception {
     when(service.canBeOnboarded("40", "1")).thenReturn(false);
     when(service.isPilotRollout2024("40", "1")).thenReturn(false);
 
@@ -329,7 +329,7 @@ class PlacementResourceTest {
 
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
-  void shouldReturnTrueWhenOneOfCanBeOnboardedOrInPilotRollout2024False(boolean isValid)
+  void shouldReturnFalseWhenOneOfCanBeOnboardedOrInPilotRollout2024False(boolean isValid)
       throws Exception {
     when(service.canBeOnboarded("40", "1")).thenReturn(isValid);
     when(service.isPilotRollout2024("40", "1")).thenReturn(!isValid);
