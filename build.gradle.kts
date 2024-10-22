@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "uk.nhs.hee.trainee.details"
-version = "1.12.1"
+version = "1.13.0"
 
 configurations {
   compileOnly {
@@ -35,6 +35,7 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
   implementation("org.springframework.boot:spring-boot-starter-web")
   implementation("org.springframework.boot:spring-boot-starter-actuator")
+  implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
   implementation("org.springframework.boot:spring-boot-starter-validation")
 
   testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -63,6 +64,13 @@ dependencies {
   implementation("io.awspring.cloud:spring-cloud-aws-starter-sqs")
   implementation("io.awspring.cloud:spring-cloud-aws-starter-sns")
   implementation("com.amazonaws:aws-xray-recorder-sdk-spring:2.15.1")
+
+  // PDF
+  val openHtmlToPdfVersion = "1.0.10"
+  implementation("com.openhtmltopdf:openhtmltopdf-pdfbox:${openHtmlToPdfVersion}")
+  implementation("com.openhtmltopdf:openhtmltopdf-slf4j:${openHtmlToPdfVersion}")
+  val jsoupVersion = "1.17.2"
+  implementation("org.jsoup:jsoup:${jsoupVersion}")
 }
 
 java {

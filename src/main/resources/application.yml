@@ -46,6 +46,9 @@ application:
       default: 1440
       uk.nhs.hee.trainee.details.dto.PlacementDto: ${ SIGNATURE_PLACEMENT_EXPIRY:1440 }
       uk.nhs.hee.trainee.details.dto.ProgrammeMembershipDto: ${ SIGNATURE_PROGRAMME_MEMBERSHIP_EXPIRY:1440 }
+  template-versions:
+    programme-confirmation: v1.0.0
+  timezone: Europe/London
 
 com:
   amazonaws:
@@ -55,3 +58,9 @@ com:
 
 mongock:
   migration-scan-package: uk.nhs.hee.trainee.details.migration
+
+service:
+  reference:
+    host: ${TRAINEE_REFERENCE_HOST:localhost}
+    port: ${TRAINEE_REFERENCE_PORT:8205}
+    url: http://${service.reference.host}:${service.reference.port}/reference

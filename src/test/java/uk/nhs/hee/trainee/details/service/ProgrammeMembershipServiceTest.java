@@ -25,14 +25,22 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static uk.nhs.hee.trainee.details.model.HrefType.ABSOLUTE_URL;
+import static uk.nhs.hee.trainee.details.model.HrefType.NON_HREF;
+import static uk.nhs.hee.trainee.details.model.HrefType.PROTOCOL_EMAIL;
+import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.CONTACT_FIELD;
+import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.CONTACT_TYPE_FIELD;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.MEDICAL_CURRICULA;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.NON_RELEVANT_PROGRAMME_MEMBERSHIP_TYPES;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.NOT_TSS_SPECIALTIES;
@@ -42,10 +50,14 @@ import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PILO
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PROGRAMME_BREAK_DAYS;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.TSS_CURRICULA;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -56,17 +68,23 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapperImpl;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
 import uk.nhs.hee.trainee.details.model.Curriculum;
 import uk.nhs.hee.trainee.details.model.HeeUser;
+import uk.nhs.hee.trainee.details.model.LocalOfficeContactType;
+import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 
 class ProgrammeMembershipServiceTest {
 
+  private static final String REFERENCE_URL = "http://localhost/8205/reference";
+  private static final String TEMPLATE_VERSION = "v1.0.0";
   private static final LocalDate START_DATE = LocalDate.now();
   private static final LocalDate END_DATE = START_DATE.plusYears(1);
   private static final LocalDate COMPLETION_DATE = END_DATE.plusYears(1);
@@ -92,17 +110,25 @@ class ProgrammeMembershipServiceTest {
   private static final String RO_EMAIL = "email-";
   private static final String RO_PHONE = "phone-";
   private static final String RO_GMC = "gmc-";
+  private static final String FORENAMES = "forenames-";
+  private static final String SURNAME = "surname-";
+  private static final String GMC_NUMBER = "gmcNumber-";
+  private static final String OWNER_CONTACT = "ownerContact-";
 
   private ProgrammeMembershipService service;
   private TraineeProfileRepository repository;
   private CachingDelegate cachingDelegate;
+  private PdfGeneratingService pdfService;
+  private RestTemplate restTemplate;
 
   @BeforeEach
   void setUp() {
     repository = mock(TraineeProfileRepository.class);
     cachingDelegate = mock(CachingDelegate.class);
+    pdfService = mock(PdfGeneratingService.class);
+    restTemplate = mock(RestTemplate.class);
     service = new ProgrammeMembershipService(repository, new ProgrammeMembershipMapperImpl(),
-        cachingDelegate);
+        cachingDelegate, pdfService, restTemplate, REFERENCE_URL, TEMPLATE_VERSION);
   }
 
   @Test
@@ -1472,6 +1498,183 @@ class ProgrammeMembershipServiceTest {
     assertThat("Unexpected isPilotRollout2024 value.", isPilotRollout2024, is(false));
   }
 
+  @Test
+  void shouldGenerateProgrammeConfirmationPdf() throws IOException {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPersonalDetails(createPersonalDetails(""));
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, START_DATE, END_DATE, MANAGING_DEANERY, TSS_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, CURRICULUM_SPECIALTY),
+            getProgrammeMembershipWithOneCurriculum("OtherId",
+            PROGRAMME_MEMBERSHIP_TYPE, START_DATE, END_DATE, MANAGING_DEANERY, TSS_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, CURRICULUM_SPECIALTY)));
+
+    List<Map<String, String>> contacts = new ArrayList<>();
+    Map<String, String> contact1 = new HashMap<>();
+    contact1.put(CONTACT_TYPE_FIELD,
+        LocalOfficeContactType.ONBOARDING_SUPPORT.getContactTypeName());
+    contact1.put(CONTACT_FIELD, OWNER_CONTACT);
+    contacts.add(contact1);
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+    when(restTemplate
+        .getForObject("http://localhost/8205/reference/api/local-office-contact-by-lo-name"
+                + "/{localOfficeName}",
+            List.class, Map.of("localOfficeName", MANAGING_DEANERY))).thenReturn(contacts);
+
+    service.generateProgrammeMembershipPdf(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    ArgumentCaptor<Map<String, Object>> variablesCaptor = ArgumentCaptor.forClass(Map.class);
+    verify(pdfService).generatePdf(any(), variablesCaptor.capture());
+    Map<String, Object> variables = variablesCaptor.getValue();
+    assertThat("Unexpected programme membership.", variables.get("pm"),
+        is(traineeProfile.getProgrammeMemberships().get(0)));
+    assertThat("Unexpected trainee.", variables.get("trainee"),
+        is(traineeProfile.getPersonalDetails()));
+    assertThat("Unexpected programme length.", variables.get("pmLength"), is(1L));
+    assertThat("Unexpected local Office Contact.", variables.get("localOfficeContact"),
+        is(OWNER_CONTACT));
+    assertThat("Unexpected contact Href.", variables.get("contactHref"),
+        is(NON_HREF.toString()));
+  }
+
+  @Test
+  void shouldNotGenerateProgrammeConfirmationPdfWhenTraineeNotFound() {
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(null);
+
+    assertThrows(IOException.class,
+        () -> service.generateProgrammeMembershipPdf(TRAINEE_TIS_ID, PROGRAMME_TIS_ID));
+    verifyNoInteractions(restTemplate);
+  }
+
+  @Test
+  void shouldNotGenerateProgrammeConfirmationPdfWhenPmNotFound() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPersonalDetails(createPersonalDetails(""));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    assertThrows(IOException.class,
+        () -> service.generateProgrammeMembershipPdf(TRAINEE_TIS_ID, PROGRAMME_TIS_ID));
+    verifyNoInteractions(restTemplate);
+  }
+
+  @Test
+  void shouldNotGenerateProgrammeConfirmationPdfWhenPmNotStartIn12Weeks() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPersonalDetails(createPersonalDetails(""));
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, START_DATE.plusDays(85), END_DATE,
+            MANAGING_DEANERY, TSS_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, CURRICULUM_SPECIALTY)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    assertThrows(IOException.class,
+        () -> service.generateProgrammeMembershipPdf(TRAINEE_TIS_ID, PROGRAMME_TIS_ID));
+    verifyNoInteractions(restTemplate);
+  }
+
+  @Test
+  void shouldGetContactWhenContactTypeExists() {
+    List<Map<String, String>> contacts = new ArrayList<>();
+    Map<String, String> contact1 = new HashMap<>();
+    contact1.put(CONTACT_TYPE_FIELD, LocalOfficeContactType.TSS_SUPPORT.getContactTypeName());
+    contact1.put(CONTACT_FIELD, "one@email.com, another@email.com");
+    contacts.add(contact1);
+    Map<String, String> contact2 = new HashMap<>();
+    contact2.put(CONTACT_TYPE_FIELD, LocalOfficeContactType.DEFERRAL.getContactTypeName());
+    contact2.put(CONTACT_FIELD, "onboarding");
+    contacts.add(contact2);
+
+    String ownerContact = service.getOwnerContact(contacts,
+        LocalOfficeContactType.TSS_SUPPORT, LocalOfficeContactType.DEFERRAL, "");
+
+    assertThat("Unexpected owner contact.", ownerContact, is(contact1.get(CONTACT_FIELD)));
+  }
+
+  @Test
+  void shouldGetFallbackContactWhenContactMissing() {
+    List<Map<String, String>> contacts = new ArrayList<>();
+    Map<String, String> contact1 = new HashMap<>();
+    contact1.put(CONTACT_TYPE_FIELD, LocalOfficeContactType.TSS_SUPPORT.getContactTypeName());
+    contact1.put(CONTACT_FIELD, "one@email.com, another@email.com");
+    contacts.add(contact1);
+
+    String ownerContact = service.getOwnerContact(contacts,
+        LocalOfficeContactType.ONBOARDING_SUPPORT, LocalOfficeContactType.TSS_SUPPORT, "");
+
+    assertThat("Unexpected owner contact.", ownerContact, is(contact1.get(CONTACT_FIELD)));
+  }
+
+  @Test
+  void shouldUseCustomDefaultNoContactWhenContactAndFallbackMissing() {
+    List<Map<String, String>> contacts = new ArrayList<>();
+    Map<String, String> contact1 = new HashMap<>();
+    contact1.put(CONTACT_TYPE_FIELD, LocalOfficeContactType.TSS_SUPPORT.getContactTypeName());
+    contact1.put(CONTACT_FIELD, "one@email.com, another@email.com");
+    contacts.add(contact1);
+
+    String ownerContact = service.getOwnerContact(contacts,
+        LocalOfficeContactType.ONBOARDING_SUPPORT, LocalOfficeContactType.DEFERRAL, "testDefault");
+
+    assertThat("Unexpected owner contact.", ownerContact, is("testDefault"));
+  }
+
+  @Test
+  void shouldUseCustomDefaultNoContactWhenContactMissingAndFallbackNull() {
+    List<Map<String, String>> contacts = new ArrayList<>();
+    Map<String, String> contact1 = new HashMap<>();
+    contact1.put(CONTACT_TYPE_FIELD, LocalOfficeContactType.TSS_SUPPORT.getContactTypeName());
+    contact1.put(CONTACT_FIELD, "one@email.com, another@email.com");
+    contacts.add(contact1);
+
+    String ownerContact = service.getOwnerContact(contacts,
+        LocalOfficeContactType.ONBOARDING_SUPPORT, null, "testDefault");
+
+    assertThat("Unexpected owner contact.", ownerContact, is("testDefault"));
+  }
+
+  @Test
+  void shouldGetEmptyContactListIfReferenceServiceFailure() {
+    doThrow(new RestClientException("error"))
+        .when(restTemplate).getForObject(any(), any(), anyMap());
+
+    List<Map<String, String>> contactList = service.getOwnerContactList("a local office");
+
+    assertThat("Unexpected owner contact list.", contactList.size(), is(0));
+  }
+
+  @Test
+  void shouldGetEmptyContactListIfLocalOfficeNull() {
+    List<Map<String, String>> contactList = service.getOwnerContactList(null);
+
+    assertThat("Unexpected owner contact.", contactList.size(), is(0));
+  }
+
+  @Test
+  void shouldGetUrlHrefTypeForUrlContact() {
+    assertThat("Unexpected contact href type.",
+        service.getHrefTypeForContact("https://a.validwebsite.com"),
+        is(ABSOLUTE_URL.getHrefTypeName()));
+  }
+
+  @Test
+  void shouldGetEmailHrefTypeForEmailContact() {
+    assertThat("Unexpected contact href type.",
+        service.getHrefTypeForContact("some@email.com"),
+        is(PROTOCOL_EMAIL.getHrefTypeName()));
+  }
+
+  @Test
+  void shouldGetNonValidHrefTypeForOtherTypeContact() {
+    assertThat("Unexpected contact href type.",
+        service.getHrefTypeForContact("some@email.com, also@another.com"),
+        is(NON_HREF.getHrefTypeName()));
+  }
+
   /**
    * Create an instance of ProgrammeMembership with default dummy values.
    *
@@ -1693,5 +1896,19 @@ class ProgrammeMembershipServiceTest {
     heeUser.setEmailAddress(RO_EMAIL + stringSuffix);
 
     return heeUser;
+  }
+
+  /**
+   * Create an instance of PersonalDetails with default dummy values.
+   *
+   * @return The dummy entity.
+   */
+  private PersonalDetails createPersonalDetails(String stringSuffix) {
+    PersonalDetails personalDetails = new PersonalDetails();
+    personalDetails.setForenames(FORENAMES + stringSuffix);
+    personalDetails.setSurname(SURNAME + stringSuffix);
+    personalDetails.setGmcNumber(GMC_NUMBER + stringSuffix);
+
+    return personalDetails;
   }
 }

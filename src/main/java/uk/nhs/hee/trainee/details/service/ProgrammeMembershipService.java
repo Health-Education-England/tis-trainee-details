@@ -21,29 +21,52 @@
 
 package uk.nhs.hee.trainee.details.service;
 
+import static uk.nhs.hee.trainee.details.model.HrefType.ABSOLUTE_URL;
+import static uk.nhs.hee.trainee.details.model.HrefType.NON_HREF;
+import static uk.nhs.hee.trainee.details.model.HrefType.PROTOCOL_EMAIL;
+
 import com.amazonaws.xray.spring.aop.XRayEnabled;
+import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
+import org.thymeleaf.TemplateSpec;
+import org.thymeleaf.templatemode.TemplateMode;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapper;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
 import uk.nhs.hee.trainee.details.model.Curriculum;
+import uk.nhs.hee.trainee.details.model.LocalOfficeContactType;
+import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 
+/**
+ * Programme Membership Service.
+ */
 @Service
 @XRayEnabled
 @Slf4j
 public class ProgrammeMembershipService {
 
+  protected static final String API_GET_OWNER_CONTACT
+      = "/api/local-office-contact-by-lo-name/{localOfficeName}";
   protected static final List<String> MEDICAL_CURRICULA
       = List.of("DENTAL_CURRICULUM", "DENTAL_POST_CCST", "MEDICAL_CURRICULUM");
   protected static final List<String> TSS_CURRICULA
@@ -53,6 +76,9 @@ public class ProgrammeMembershipService {
   protected static final List<String> NON_RELEVANT_PROGRAMME_MEMBERSHIP_TYPES
       = List.of("VISITOR", "LAT");
   protected static final Long PROGRAMME_BREAK_DAYS = 355L;
+  protected static final String OWNER_FIELD = "localOfficeName";
+  protected static final String CONTACT_TYPE_FIELD = "contactTypeName";
+  protected static final String CONTACT_FIELD = "contact";
 
   protected static final List<String> PILOT_2024_LOCAL_OFFICES_ALL_PROGRAMMES
       = List.of("London LETBs",
@@ -94,15 +120,27 @@ public class ProgrammeMembershipService {
       "Urology",
       "Vascular surgery");
 
+  private static final String PM_CONFIRMATION_TEMPLATE_PATH = "programme-confirmation";
+
   private final TraineeProfileRepository repository;
   private final ProgrammeMembershipMapper mapper;
   private final CachingDelegate cachingDelegate;
+  private final PdfGeneratingService pdfService;
+  private final RestTemplate restTemplate;
+  private final String referenceUrl;
+  private final String templateVersion;
 
   ProgrammeMembershipService(TraineeProfileRepository repository, ProgrammeMembershipMapper mapper,
-      CachingDelegate cachingDelegate) {
+      CachingDelegate cachingDelegate, PdfGeneratingService pdfService, RestTemplate restTemplate,
+      @Value("${service.reference.url}") String referenceUrl,
+      @Value("${application.template-versions.programme-confirmation}") String templateVersion) {
     this.repository = repository;
     this.mapper = mapper;
     this.cachingDelegate = cachingDelegate;
+    this.pdfService = pdfService;
+    this.restTemplate = restTemplate;
+    this.referenceUrl = referenceUrl;
+    this.templateVersion = templateVersion;
   }
 
   /**
@@ -441,6 +479,63 @@ public class ProgrammeMembershipService {
   }
 
   /**
+   * Generate programme confirmation PDF of a programme membership.
+   *
+   * @param programmeMembershipId The ID of the programme membership for generating PDF.
+   * @return The generated Programme Membership confirmation PDF.
+   */
+  public byte[] generateProgrammeMembershipPdf(
+      String traineeTisId, String programmeMembershipId) throws IOException {
+
+    TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
+
+    if (traineeProfile != null) {
+      PersonalDetails personalDetails = traineeProfile.getPersonalDetails();
+      List<ProgrammeMembership> existingProgrammeMemberships = traineeProfile
+          .getProgrammeMemberships();
+
+      // Only generate when PM start day is within 12 weeks
+      for (ProgrammeMembership programmeMembership : existingProgrammeMemberships) {
+        if (programmeMembership.getTisId().equals(programmeMembershipId)) {
+          if (programmeMembership.getStartDate().minusDays(85)
+              .isBefore(LocalDate.now())) {
+
+            // Template Variables
+            long pmLength = java.time.temporal.ChronoUnit.YEARS.between(
+                programmeMembership.getStartDate(), programmeMembership.getEndDate());
+            List<Map<String, String>> ownerContactList =
+                getOwnerContactList(programmeMembership.getManagingDeanery());
+            String contact = getOwnerContact(ownerContactList,
+                LocalOfficeContactType.ONBOARDING_SUPPORT,
+                LocalOfficeContactType.TSS_SUPPORT, "");
+
+            Map<String, Object> templateVariables = new HashMap<>();
+            templateVariables.put("pm", programmeMembership);
+            templateVariables.put("trainee", personalDetails);
+            templateVariables.put("pmLength", pmLength);
+            templateVariables.put("localOfficeContact", contact);
+            templateVariables.put("contactHref", getHrefTypeForContact(contact));
+
+            // Generate PDF with template
+            String templatePath =
+                PM_CONFIRMATION_TEMPLATE_PATH + File.separatorChar + templateVersion + ".html";
+            TemplateSpec templateSpec = new TemplateSpec(
+                templatePath, Set.of(), TemplateMode.HTML, null);
+
+            return pdfService.generatePdf(templateSpec, templateVariables);
+          }
+          else {
+            throw new IOException("Programme membership " + programmeMembershipId
+                + " not starting in 12 weeks.");
+          }
+        }
+      }
+      throw new IOException("No matched Programme membership " + programmeMembershipId + ".");
+    }
+    throw new IOException("Trainee Profile " + traineeTisId + " not found.");
+  }
+
+  /**
    * Get the programme membership that is a candidate for new-starter or pilot 2024 assessment.
    *
    * @param programmeMemberships  The list of programme memberships.
@@ -618,5 +713,77 @@ public class ProgrammeMembershipService {
                     .isAfter(anchorPm.getStartDate().minusDays(PROGRAMME_BREAK_DAYS));
               }
             }).toList();
+  }
+
+  /**
+   * Retrieve the full list of contacts for a local office from Trainee Reference Service.
+   *
+   * @param localOfficeName The local office name.
+   * @return The list of contacts, or an empty list if there is an error.
+   */
+  protected List<Map<String, String>> getOwnerContactList(String localOfficeName) {
+    if (localOfficeName != null) {
+      try {
+        List<Map<String, String>> ownerContactList
+            = restTemplate.getForObject(referenceUrl + API_GET_OWNER_CONTACT,
+            List.class, Map.of(OWNER_FIELD, localOfficeName));
+        return ownerContactList == null ? new ArrayList<>() : ownerContactList;
+      } catch (RestClientException rce) {
+        log.warn("Exception occurred when requesting reference local-office-contact-by-lo-name "
+            + "endpoint: " + rce);
+      }
+    }
+    return new ArrayList<>();
+  }
+
+  /**
+   * Get specified owner contact from a list of contacts.
+   *
+   * @param ownerContactList    The owner contact list to search.
+   * @param contactType         The contact type to return.
+   * @param fallbackContactType if the contactType is not available, return this contactType
+   *                            instead.
+   * @param defaultMessage      The default message if the contact was not found.
+   * @return The specific contact of the owner, or the default message if not found.
+   */
+  protected String getOwnerContact(List<Map<String, String>> ownerContactList,
+                                   LocalOfficeContactType contactType,
+                                   LocalOfficeContactType fallbackContactType,
+                                   String defaultMessage) {
+
+    Optional<Map<String, String>> ownerContact = ownerContactList.stream()
+        .filter(c ->
+            c.get(CONTACT_TYPE_FIELD).equalsIgnoreCase(contactType.getContactTypeName()))
+        .findFirst();
+    if (ownerContact.isEmpty() && fallbackContactType != null) {
+      ownerContact = ownerContactList.stream()
+          .filter(c ->
+              c.get(CONTACT_TYPE_FIELD)
+                  .equalsIgnoreCase(fallbackContactType.getContactTypeName()))
+          .findFirst();
+    }
+    return ownerContact.map(oc -> oc.get(CONTACT_FIELD))
+        .orElse(defaultMessage);
+  }
+
+  /**
+   * Return a href type for a contact. It is assumed to be either a URL or an email address. There
+   * is minimal checking that it is a validly formatted email address.
+   *
+   * @param contact The contact string, expected to be either an email address or a URL.
+   * @return "email" if it looks like an email address, "url" if it looks like a URL, and "NOT_HREF"
+   *     otherwise.
+   */
+  protected String getHrefTypeForContact(String contact) {
+    try {
+      new URL(contact);
+      return ABSOLUTE_URL.getHrefTypeName();
+    } catch (MalformedURLException e) {
+      if (contact.contains("@") && !contact.contains(" ")) {
+        return PROTOCOL_EMAIL.getHrefTypeName();
+      } else {
+        return NON_HREF.getHrefTypeName();
+      }
+    }
   }
 }
