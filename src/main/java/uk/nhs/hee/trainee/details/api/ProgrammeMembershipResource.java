@@ -28,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -47,6 +48,9 @@ import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.service.EventPublishService;
 import uk.nhs.hee.trainee.details.service.ProgrammeMembershipService;
 
+/**
+ * Programme Membership Resource.
+ */
 @Slf4j
 @RestController
 @RequestMapping("/api/programme-membership")
@@ -166,6 +170,40 @@ public class ProgrammeMembershipResource {
     eventPublishService.publishCojSignedEvent(entity);
 
     return ResponseEntity.ok(mapper.toDto(entity));
+  }
+
+  /**
+   * Generate programme confirmation PDF of a programme membership.
+   *
+   * @param programmeMembershipId The ID of the programme membership for generating PDF.
+   * @return The generated Programme Membership confirmation PDF.
+   */
+  @GetMapping(value = "/{programmeMembershipId}/download-pdf",
+      produces = MediaType.APPLICATION_PDF_VALUE)
+  public ResponseEntity<byte[]> downloadPdf(
+      @PathVariable String programmeMembershipId,
+      @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
+
+    String traineeTisId;
+    try {
+      traineeTisId = AuthTokenUtil.getTraineeTisId(token);
+    } catch (IOException e) {
+      log.warn("Unable to read tisId from token.", e);
+      return ResponseEntity.badRequest().build();
+    }
+
+    log.info("Trainee '{}' requesting programme confirmation PDF with Programme Membership ID {}",
+        traineeTisId, programmeMembershipId);
+
+    try {
+      byte[] generatedPdf = service
+          .generateProgrammeMembershipPdf(traineeTisId, programmeMembershipId);
+      return ResponseEntity.ok()
+          .contentType(MediaType.APPLICATION_PDF)
+          .body(generatedPdf);
+    } catch (IOException e) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getLocalizedMessage());
+    }
   }
 
   /**

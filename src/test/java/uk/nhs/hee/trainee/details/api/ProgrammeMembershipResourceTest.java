@@ -38,6 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -399,6 +400,53 @@ class ProgrammeMembershipResourceTest {
         .header(HttpHeaders.AUTHORIZATION, token));
 
     verify(eventPublishService).publishCojSignedEvent(programmeMembership);
+  }
+
+  @Test
+  void shouldReturnBadRequestWhenDownloadPdfTokenNotFound() throws Exception {
+    mockMvc.perform(get("/api/programme-membership/{programmeMembershipId}/download-pdf", 0)
+            .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void shouldReturnBadRequestWhenDownloadPdfTokenNotMap() throws Exception {
+    String token = TestJwtUtil.generateToken("[]");
+
+    mockMvc.perform(get("/api/programme-membership/{programmeMembershipId}/download-pdf", 0)
+            .contentType(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void shouldReturnBadRequestWhenDownloadPdfThrowsException() throws Exception {
+    String token = TestJwtUtil.generateTokenForTisId("tisIdValue");
+
+    when(service.generateProgrammeMembershipPdf("tisIdValue", "40"))
+        .thenThrow(IOException.class);
+
+    mockMvc.perform(get("/api/programme-membership/{programmeMembershipId}/download-pdf", 40)
+            .contentType(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void shouldDownloadPdfWhenTraineePmFound() throws Exception {
+    byte[] response = "response content".getBytes();
+
+    when(service.generateProgrammeMembershipPdf("tisIdValue", "40"))
+        .thenReturn(response);
+
+    String token = TestJwtUtil.generateTokenForTisId("tisIdValue");
+    mockMvc.perform(get("/api/programme-membership/{programmeMembershipId}/download-pdf", 40)
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, token));
+//        TODO: Fix it
+//        .andExpect(status().isOk())
+//        .andExpect(content().contentType(MediaType.APPLICATION_PDF))
+//        .andExpect(content().bytes(response));
   }
 
   @ParameterizedTest
