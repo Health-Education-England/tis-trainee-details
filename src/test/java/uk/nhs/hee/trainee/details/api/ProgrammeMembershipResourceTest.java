@@ -384,7 +384,7 @@ class ProgrammeMembershipResourceTest {
 
   @Test
   void shouldReturnBadRequestWhenDownloadPdfTokenNotFound() throws Exception {
-    mockMvc.perform(get("/api/programme-membership/{programmeMembershipId}/download-pdf", 0)
+    mockMvc.perform(get("/api/programme-membership/{programmeMembershipId}/confirmation", 0)
             .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isBadRequest());
   }
@@ -393,7 +393,7 @@ class ProgrammeMembershipResourceTest {
   void shouldReturnBadRequestWhenDownloadPdfTokenNotMap() throws Exception {
     String token = TestJwtUtil.generateToken("[]");
 
-    mockMvc.perform(get("/api/programme-membership/{programmeMembershipId}/download-pdf", 0)
+    mockMvc.perform(get("/api/programme-membership/{programmeMembershipId}/confirmation", 0)
             .contentType(MediaType.APPLICATION_JSON)
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isBadRequest());
@@ -406,7 +406,7 @@ class ProgrammeMembershipResourceTest {
     when(service.generateProgrammeMembershipPdf("tisIdValue", "40"))
         .thenThrow(IOException.class);
 
-    mockMvc.perform(get("/api/programme-membership/{programmeMembershipId}/download-pdf", 40)
+    mockMvc.perform(get("/api/programme-membership/{programmeMembershipId}/confirmation", 40)
             .contentType(MediaType.APPLICATION_JSON)
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isBadRequest());
@@ -420,7 +420,7 @@ class ProgrammeMembershipResourceTest {
         .thenReturn(response);
 
     String token = TestJwtUtil.generateTokenForTisId("tisIdValue");
-    mockMvc.perform(get("/api/programme-membership/{programmeMembershipId}/download-pdf", 40)
+    mockMvc.perform(get("/api/programme-membership/{programmeMembershipId}/confirmation", 40)
         .contentType(MediaType.APPLICATION_JSON)
         .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isOk())

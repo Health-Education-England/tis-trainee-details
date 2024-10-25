@@ -1503,12 +1503,14 @@ class ProgrammeMembershipServiceTest {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setPersonalDetails(createPersonalDetails(""));
     traineeProfile.setProgrammeMemberships(
-        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, START_DATE, END_DATE, MANAGING_DEANERY, TSS_CURRICULA.get(0),
-            CURRICULUM_SPECIALTY_CODE, CURRICULUM_SPECIALTY),
+        List.of(
             getProgrammeMembershipWithOneCurriculum("OtherId",
             PROGRAMME_MEMBERSHIP_TYPE, START_DATE, END_DATE, MANAGING_DEANERY, TSS_CURRICULA.get(0),
-            CURRICULUM_SPECIALTY_CODE, CURRICULUM_SPECIALTY)));
+            CURRICULUM_SPECIALTY_CODE, CURRICULUM_SPECIALTY),
+            getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, START_DATE, END_DATE, MANAGING_DEANERY, TSS_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, CURRICULUM_SPECIALTY)
+            ));
 
     List<Map<String, String>> contacts = new ArrayList<>();
     Map<String, String> contact1 = new HashMap<>();
@@ -1529,7 +1531,7 @@ class ProgrammeMembershipServiceTest {
     verify(pdfService).generatePdf(any(), variablesCaptor.capture());
     Map<String, Object> variables = variablesCaptor.getValue();
     assertThat("Unexpected programme membership.", variables.get("pm"),
-        is(traineeProfile.getProgrammeMemberships().get(0)));
+        is(traineeProfile.getProgrammeMemberships().get(1)));
     assertThat("Unexpected trainee.", variables.get("trainee"),
         is(traineeProfile.getPersonalDetails()));
     assertThat("Unexpected programme length.", variables.get("pmLength"), is(1L));

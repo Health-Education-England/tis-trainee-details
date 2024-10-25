@@ -178,7 +178,7 @@ public class ProgrammeMembershipResource {
    * @param programmeMembershipId The ID of the programme membership for generating PDF.
    * @return The generated Programme Membership confirmation PDF.
    */
-  @GetMapping(value = "/{programmeMembershipId}/download-pdf",
+  @GetMapping(value = "/{programmeMembershipId}/confirmation",
       produces = MediaType.APPLICATION_PDF_VALUE)
   public ResponseEntity<byte[]> downloadPdf(
       @PathVariable String programmeMembershipId,
