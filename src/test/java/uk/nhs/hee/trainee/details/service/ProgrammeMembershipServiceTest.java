@@ -1650,6 +1650,15 @@ class ProgrammeMembershipServiceTest {
   }
 
   @Test
+  void shouldReturnNullContactListIfOwnerContactListIsNull() {
+    when(restTemplate.getForObject(any(), any(), anyMap())).thenReturn(null);
+
+    List<Map<String, String>> contactList = service.getOwnerContactList("a local office");
+
+    assertThat("Unexpected owner contact list.", contactList.size(), is(0));
+  }
+
+  @Test
   void shouldGetEmptyContactListIfLocalOfficeNull() {
     List<Map<String, String>> contactList = service.getOwnerContactList(null);
 
