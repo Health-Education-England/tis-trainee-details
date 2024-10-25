@@ -43,28 +43,23 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Optional;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import uk.nhs.hee.trainee.details.TestJwtUtil;
 import uk.nhs.hee.trainee.details.dto.ProgrammeMembershipDto;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.dto.signature.Signature;
 import uk.nhs.hee.trainee.details.dto.signature.SignedDto;
-import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapper;
 import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapperImpl;
 import uk.nhs.hee.trainee.details.mapper.SignatureMapperImpl;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
@@ -74,22 +69,16 @@ import uk.nhs.hee.trainee.details.service.EventPublishService;
 import uk.nhs.hee.trainee.details.service.ProgrammeMembershipService;
 import uk.nhs.hee.trainee.details.service.SignatureService;
 
+// Explicit import seems required when resource not included in Context Configuration.
+@Import(ProgrammeMembershipResource.class)
 @ContextConfiguration(classes = {ProgrammeMembershipMapperImpl.class, SignatureMapperImpl.class})
-@ExtendWith(SpringExtension.class)
 @WebMvcTest(ProgrammeMembershipResource.class)
 class ProgrammeMembershipResourceTest {
-
-  @Autowired
-  private MappingJackson2HttpMessageConverter jacksonMessageConverter;
 
   @Autowired
   private ObjectMapper mapper;
 
   @Autowired
-  private ProgrammeMembershipMapper programmeMembershipMapper;
-  @Autowired
-  private ObjectMapper objectMapper;
-
   private MockMvc mockMvc;
 
   @MockBean
@@ -100,15 +89,6 @@ class ProgrammeMembershipResourceTest {
 
   @MockBean
   private SignatureService signatureService;
-
-  @BeforeEach
-  void setUp() {
-    ProgrammeMembershipResource resource = new ProgrammeMembershipResource(service,
-        programmeMembershipMapper, eventPublishService);
-    mockMvc = MockMvcBuilders.standaloneSetup(resource)
-        .setMessageConverters(jacksonMessageConverter)
-        .build();
-  }
 
   @Test
   void shouldReturnBadRequestWhenIdIsNull() throws Exception {
@@ -442,11 +422,10 @@ class ProgrammeMembershipResourceTest {
     String token = TestJwtUtil.generateTokenForTisId("tisIdValue");
     mockMvc.perform(get("/api/programme-membership/{programmeMembershipId}/download-pdf", 40)
         .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, token));
-//        TODO: Fix it
-//        .andExpect(status().isOk())
-//        .andExpect(content().contentType(MediaType.APPLICATION_PDF))
-//        .andExpect(content().bytes(response));
+        .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_PDF))
+        .andExpect(content().bytes(response));
   }
 
   @ParameterizedTest
