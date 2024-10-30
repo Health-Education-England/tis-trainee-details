@@ -47,6 +47,7 @@ import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.NOT_
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PILOT_2024_LOCAL_OFFICES_ALL_PROGRAMMES;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PILOT_2024_NW_SPECIALTIES;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PILOT_2024_ROLLOUT_LOCAL_OFFICES;
+import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PM_CONFIRM_WEEKS;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PROGRAMME_BREAK_DAYS;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.TSS_CURRICULA;
 
@@ -1545,7 +1546,7 @@ class ProgrammeMembershipServiceTest {
   void shouldNotGenerateProgrammeConfirmationPdfWhenTraineeNotFound() {
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(null);
 
-    assertThrows(IOException.class,
+    assertThrows(IllegalArgumentException.class,
         () -> service.generateProgrammeMembershipPdf(TRAINEE_TIS_ID, PROGRAMME_TIS_ID));
     verifyNoInteractions(restTemplate);
   }
@@ -1557,7 +1558,7 @@ class ProgrammeMembershipServiceTest {
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
-    assertThrows(IOException.class,
+    assertThrows(IllegalArgumentException.class,
         () -> service.generateProgrammeMembershipPdf(TRAINEE_TIS_ID, PROGRAMME_TIS_ID));
     verifyNoInteractions(restTemplate);
   }
@@ -1568,13 +1569,13 @@ class ProgrammeMembershipServiceTest {
     traineeProfile.setPersonalDetails(createPersonalDetails(""));
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, START_DATE.plusDays(85), END_DATE,
+            PROGRAMME_MEMBERSHIP_TYPE, START_DATE.plusWeeks(PM_CONFIRM_WEEKS), END_DATE,
             MANAGING_DEANERY, TSS_CURRICULA.get(0),
             CURRICULUM_SPECIALTY_CODE, CURRICULUM_SPECIALTY)));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
-    assertThrows(IOException.class,
+    assertThrows(IllegalArgumentException.class,
         () -> service.generateProgrammeMembershipPdf(TRAINEE_TIS_ID, PROGRAMME_TIS_ID));
     verifyNoInteractions(restTemplate);
   }

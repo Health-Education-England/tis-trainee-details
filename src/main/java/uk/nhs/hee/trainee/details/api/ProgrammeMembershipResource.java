@@ -176,6 +176,7 @@ public class ProgrammeMembershipResource {
    * Generate programme confirmation PDF of a programme membership.
    *
    * @param programmeMembershipId The ID of the programme membership for generating PDF.
+   * @param token The authorization token from the request header.
    * @return The generated Programme Membership confirmation PDF.
    */
   @GetMapping(value = "/{programmeMembershipId}/confirmation",

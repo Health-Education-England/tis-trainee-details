@@ -21,6 +21,7 @@
 
 package uk.nhs.hee.trainee.details.service;
 
+import static java.time.temporal.ChronoUnit.YEARS;
 import static uk.nhs.hee.trainee.details.model.HrefType.ABSOLUTE_URL;
 import static uk.nhs.hee.trainee.details.model.HrefType.NON_HREF;
 import static uk.nhs.hee.trainee.details.model.HrefType.PROTOCOL_EMAIL;
@@ -79,6 +80,7 @@ public class ProgrammeMembershipService {
   protected static final String OWNER_FIELD = "localOfficeName";
   protected static final String CONTACT_TYPE_FIELD = "contactTypeName";
   protected static final String CONTACT_FIELD = "contact";
+  protected static final int PM_CONFIRM_WEEKS = 12;
 
   protected static final List<String> PILOT_2024_LOCAL_OFFICES_ALL_PROGRAMMES
       = List.of("London LETBs",
@@ -497,11 +499,11 @@ public class ProgrammeMembershipService {
       // Only generate when PM start day is within 12 weeks
       for (ProgrammeMembership programmeMembership : existingProgrammeMemberships) {
         if (programmeMembership.getTisId().equals(programmeMembershipId)) {
-          if (programmeMembership.getStartDate().minusDays(85)
+          if (programmeMembership.getStartDate().minusWeeks(PM_CONFIRM_WEEKS)
               .isBefore(LocalDate.now())) {
 
             // Template Variables
-            long pmLength = java.time.temporal.ChronoUnit.YEARS.between(
+            long pmLength = YEARS.between(
                 programmeMembership.getStartDate(), programmeMembership.getEndDate());
             List<Map<String, String>> ownerContactList =
                 getOwnerContactList(programmeMembership.getManagingDeanery());
@@ -525,14 +527,14 @@ public class ProgrammeMembershipService {
             return pdfService.generatePdf(templateSpec, templateVariables);
           }
           else {
-            throw new IOException("Programme membership " + programmeMembershipId
-                + " not starting in 12 weeks.");
+            throw new IllegalArgumentException("Programme membership " + programmeMembershipId
+                + " not starting in " + PM_CONFIRM_WEEKS + " weeks.");
           }
         }
       }
-      throw new IOException("No matched Programme membership " + programmeMembershipId + ".");
+      throw new IllegalArgumentException("No matched Programme membership " + programmeMembershipId + ".");
     }
-    throw new IOException("Trainee Profile " + traineeTisId + " not found.");
+    throw new IllegalArgumentException("Trainee Profile " + traineeTisId + " not found.");
   }
 
   /**
