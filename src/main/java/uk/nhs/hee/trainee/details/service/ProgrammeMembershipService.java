@@ -532,7 +532,8 @@ public class ProgrammeMembershipService {
           }
         }
       }
-      throw new IllegalArgumentException("No matched Programme membership " + programmeMembershipId + ".");
+      throw new IllegalArgumentException(
+          "No matched Programme membership " + programmeMembershipId + ".");
     }
     throw new IllegalArgumentException("Trainee Profile " + traineeTisId + " not found.");
   }
