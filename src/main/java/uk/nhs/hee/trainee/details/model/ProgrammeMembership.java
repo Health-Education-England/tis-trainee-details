@@ -27,6 +27,9 @@ import java.util.List;
 import lombok.Data;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 
+/**
+ * Programme Membership model.
+ */
 @Data
 public class ProgrammeMembership {
 

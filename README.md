@@ -27,19 +27,41 @@ gradlew bootRun
 
 #### Environmental Variables
 
-| Name                           | Description                                           | Default   |
-|--------------------------------|-------------------------------------------------------|-----------|
-| AWS_XRAY_DAEMON_ADDRESS        | The AWS XRay daemon host.                             |           |
-| DB_HOST                        | The MongoDB host to connect to.                       | localhost |
-| DB_PORT                        | The port to connect to MongoDB on.                    | 27017     |
-| DB_NAME                        | The name of the MongoDB database.                     | trainee   |
-| DB_USER                        | The username to access the MongoDB instance.          | admin     |
-| DB_PASSWORD                    | The password to access the MongoDB instance.          | pwd       |
-| ENVIRONMENT                    | The environment to log events against.                | local     |
-| EVENT_QUEUE_URL                | The URL of the SQS event queue.                       |           |
-| TOPIC_ARN_COJ_SIGNED           | The SNS topic for sending CoJ signing events.         |           |
-| TOPIC_ARN_GMC_DETAILS_PROVIDED | The SNS topic for GMC detail provided event messages. |           |
-| SENTRY_DSN                     | A Sentry error monitoring Data Source Name.           |           |
+| Name                                  | Description                                                | Default   |
+|---------------------------------------|------------------------------------------------------------|-----------|
+| **Database:**                         |                                                            |           |
+| DB_HOST                               | The MongoDB host to connect to.                            | localhost |
+| DB_PORT                               | The port to connect to MongoDB on.                         | 27017     |
+| DB_NAME                               | The name of the MongoDB database.                          | trainee   |
+| DB_USER                               | The username to access the MongoDB instance.               | admin     |
+| DB_PASSWORD                           | The password to access the MongoDB instance.               | pwd       |
+| **Queues:**                           |                                                            |           |
+| EVENT_QUEUE_URL                       | The queue for sync event.                                  |           |
+| BASIC_DETAILS_UPDATE_QUEUE_URL        | The queue for basic details update.                        |           |
+| CONTACT_DETAILS_UPDATE_QUEUE_URL      | The queue for contact details update.                      |           |
+| GDC_DETAILS_UPDATE_QUEUE_URL          | The queue for GDC details update.                          |           |
+| GMC_DETAILS_UPDATE_QUEUE_URL          | The queue for GMC details update.                          |           |
+| PERSONAL_INFO_UPDATE_QUEUE_URL        | The queue for personal info update.                        |           |
+| PERSON_OWNER_UPDATE_QUEUE_URL         | The queue for person owner update.                         |           |
+| **Redis:**                            |                                                            |           |
+| REDIS_HOST                            | Redis server host.                                         | localhost |
+| REDIS_PASSWORD                        | Login password of the redis server.                        | password  |
+| REDIS_PORT                            | Redis server port.                                         | 6379      |
+| REDIS_SSL                             | Whether to enable SSL support.                             | false     |
+| REDIS_USERNAME                        | Login username of the redis server                         | default   |
+| **Related services:**                 |                                                            |           |
+| TRAINEE_REFERENCE_HOST                | The tis-trainee-reference service host.                    | localhost |
+| TRAINEE_REFERENCE_PORT                | The tis-trainee-reference service port.                    | 8205      |
+| **SNS:**                              |                                                            |           |
+| TOPIC_ARN_COJ_SIGNED                  | The SNS topic for sending CoJ signing events.              |           |
+| TOPIC_ARN_GMC_DETAILS_PROVIDED        | The SNS topic for GMC detail provided event messages.      |           |
+| **Others:**                           |                                                            |           |
+| AWS_XRAY_DAEMON_ADDRESS               | The AWS XRay daemon host.                                  |           |
+| ENVIRONMENT                           | The environment to log events against.                     | local     |
+| SENTRY_DSN                            | A Sentry error monitoring Data Source Name.                |           |
+| SIGNATURE_SECRET_KEY                  | The signature secret key.                                  |           |
+| SIGNATURE_PLACEMENT_EXPIRY            | The signature placement expiry time in minutes.            | 1440      |
+| SIGNATURE_PROGRAMME_MEMBERSHIP_EXPIRY | The signature programme membership expiry time in minutes. | 1440      |
 
 #### Usage Examples
 

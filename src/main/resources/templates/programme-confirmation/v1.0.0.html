@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <title>Programme Confirmation</title>
+</head>
+<body
+  th:with="programmeName=${not #strings.isEmpty(pm.programmeName)} ? ${pm.programmeName} : _"
+>
+<main class="nhsuk-width-container nhsuk-u-margin-top-5">
+  <div style="text-align:right"><img style="margin-right:25px" src='https://trainee.tis.nhs.uk/nhse-logo.png' alt="NHS England logo"/></div>
+  <div>
+    <p>Date <th:block th:text="${#dates.format(#dates.createNow(), 'dd MMMM yyyy')}"></th:block></p>
+    <br/>
+    <h4 class="card-heading-spaced-top">
+      CONFIRMATION OF APPOINTMENT TO <th:block th:text="${not #strings.isEmpty(pm.programmeName)} ? ${#strings.toUpperCase(pm.programmeName)} : _">(Programme Name Missing)</th:block>
+        FOR DR <th:block th:text="${#strings.toUpperCase(trainee.forenames)}"></th:block> <th:block th:text="${not #strings.isEmpty(trainee.surname)} ? ${#strings.capitalize(trainee.surname)} : _">(Surname Missing)</th:block>
+    </h4>
+    <p>I am writing to confirm that Dr <th:block th:text="${#strings.capitalize(trainee.forenames)}"></th:block> <th:block th:text="${not #strings.isEmpty(trainee.surname)} ? ${#strings.capitalize(trainee.surname)} : _">(surname missing)</th:block
+      > (GMC: <th:block th:text="${not #strings.isEmpty(trainee.gmcNumber) ? trainee.gmcNumber : 'unknown'}"></th:block
+      >) has been appointed to a <th:block th:text="${pm.programmeName}"></th:block
+      > Training Programme with an indicative length of training of <th:block th:text="${pmLength}"></th:block> years with the NHS England <th:block th:text="${not #strings.isEmpty(pm.managingDeanery)} ? ${pm.managingDeanery} : _">(local office missing)</th:block
+      > from <th:block th:text="${pm.startDate} ? |${#temporals.format(pm.startDate, 'dd MMMM yyyy')}| : _">(start date missing)</th:block
+      >. Please note that NHS England <th:block th:text="${not #strings.isEmpty(pm.managingDeanery)} ? ${pm.managingDeanery} : _">(local office missing)</th:block> is not an employing body.
+    </p>
+    <p>
+      Dr <th:block th:text="${not #strings.isEmpty(trainee.surname)} ? ${#strings.capitalize(trainee.surname)} : _">(surname missing)</th:block
+      > is currently in a Training Programme between <th:block th:text="${pm.startDate} ? |${#temporals.format(pm.startDate, 'dd MMMM yyyy')}| : _">(start date missing)</th:block
+      > and <th:block th:text="${pm.endDate} ? |${#temporals.format(pm.endDate, 'dd MMMM yyyy')}| : _">(end date missing)</th:block
+      > and will be employed by a Trust. Continuation in the programme is subject to satisfactory progress at annual reviews. Please note Dr <th:block th:text="${not #strings.isEmpty(trainee.surname)} ? ${#strings.capitalize(trainee.surname)} : _">(surname missing)</th:block
+      > will rotate through a number of employing NHS Trusts and/or other employing organisations.
+    </p>
+    <p>
+      Dr <th:block th:text="${not #strings.isEmpty(trainee.surname)} ? ${#strings.capitalize(trainee.surname)} : _">(surname missing)</th:block
+      >'s salary would be in line with NHS employers contract/PayScale. Please click on link for information
+      <a
+        href="https://www.nhsemployers.org/articles/pay-and-conditions-circulars-medical-and-dental-staff"
+        th:target="_blank">Pay and conditions circulars for medical and dental staff | NHS Employers</a>.
+    </p>
+    <p>If you require any further information, please do not hesitate to contact NHS England
+      <th:block th:text="${not #strings.isEmpty(pm.managingDeanery)} ? ${pm.managingDeanery} : _"> Local Office</th:block> via <th:block th:switch="${contactHref}"
+      ><span th:case="url"><a th:href="${localOfficeContact}"><span th:text="${localOfficeContact}"></span></a></span
+      ><span th:case="email"><a th:href="|mailto:${localOfficeContact}?subject=Programme Confirmation (${pm.programmeName}) - GMC: ${not #strings.isEmpty(trainee.gmcNumber) ? trainee.gmcNumber : 'unknown'}, Prog No: ${not #strings.isEmpty(pm.programmeNumber) ? pm.programmeNumber : 'unknown'}|"><span th:text="${localOfficeContact}"></span></a></span
+      ><span th:case="*"><span th:text="${localOfficeContact}"></span></span
+      ></th:block>.
+    </p>
+    <br/>
+    <p>Yours faithfully,
+      <br/>NHS England <th:block th:text="${pm.managingDeanery}">Local Office</th:block>
+    </p>
+  </div>
+</main>
+</body>
+</html>
