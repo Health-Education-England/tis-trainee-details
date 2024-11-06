@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -37,12 +36,11 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-import uk.nhs.hee.trainee.details.api.util.AuthTokenUtil;
 import uk.nhs.hee.trainee.details.dto.ProgrammeMembershipDto;
+import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
 import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapper;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.service.EventPublishService;
@@ -60,15 +58,18 @@ public class ProgrammeMembershipResource {
   private final ProgrammeMembershipService service;
   private final ProgrammeMembershipMapper mapper;
   private final EventPublishService eventPublishService;
+  private final TraineeIdentity traineeIdentity;
 
   /**
    * ProgrammeMembershipResource class constructor.
    */
   public ProgrammeMembershipResource(ProgrammeMembershipService service,
-      ProgrammeMembershipMapper mapper, EventPublishService eventPublishService) {
+      ProgrammeMembershipMapper mapper, EventPublishService eventPublishService,
+      TraineeIdentity traineeIdentity) {
     this.service = service;
     this.mapper = mapper;
     this.eventPublishService = eventPublishService;
+    this.traineeIdentity = traineeIdentity;
   }
 
   /**
@@ -149,15 +150,12 @@ public class ProgrammeMembershipResource {
    */
   @PostMapping("/{programmeMembershipId}/sign-coj")
   public ResponseEntity<ProgrammeMembershipDto> signCoj(
-      @PathVariable String programmeMembershipId,
-      @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
+      @PathVariable String programmeMembershipId) {
     log.info("Signing COJ with Programme Membership ID {}", programmeMembershipId);
+    String traineeTisId = traineeIdentity.getTraineeId();
 
-    String traineeTisId;
-    try {
-      traineeTisId = AuthTokenUtil.getTraineeTisId(token);
-    } catch (IOException e) {
-      log.warn("Unable to read tisId from token.", e);
+    if (traineeTisId == null) {
+      log.warn("No trainee ID provided.");
       return ResponseEntity.badRequest().build();
     }
 
@@ -176,20 +174,15 @@ public class ProgrammeMembershipResource {
    * Generate programme confirmation PDF of a programme membership.
    *
    * @param programmeMembershipId The ID of the programme membership for generating PDF.
-   * @param token The authorization token from the request header.
    * @return The generated Programme Membership confirmation PDF.
    */
   @GetMapping(value = "/{programmeMembershipId}/confirmation",
       produces = MediaType.APPLICATION_PDF_VALUE)
-  public ResponseEntity<byte[]> downloadPdf(
-      @PathVariable String programmeMembershipId,
-      @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
+  public ResponseEntity<byte[]> downloadPdf(@PathVariable String programmeMembershipId) {
+    String traineeTisId = traineeIdentity.getTraineeId();
 
-    String traineeTisId;
-    try {
-      traineeTisId = AuthTokenUtil.getTraineeTisId(token);
-    } catch (IOException e) {
-      log.warn("Unable to read tisId from token.", e);
+    if (traineeTisId == null) {
+      log.warn("No trainee ID provided.");
       return ResponseEntity.badRequest().build();
     }
 

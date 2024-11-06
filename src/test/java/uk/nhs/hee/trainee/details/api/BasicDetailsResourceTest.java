@@ -36,9 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Optional;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -46,27 +44,27 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import uk.nhs.hee.trainee.details.TestJwtUtil;
+import uk.nhs.hee.trainee.details.config.InterceptorConfiguration;
 import uk.nhs.hee.trainee.details.dto.GmcDetailsDto;
 import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
-import uk.nhs.hee.trainee.details.mapper.PersonalDetailsMapper;
 import uk.nhs.hee.trainee.details.mapper.PersonalDetailsMapperImpl;
 import uk.nhs.hee.trainee.details.mapper.SignatureMapperImpl;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.service.PersonalDetailsService;
 import uk.nhs.hee.trainee.details.service.SignatureService;
 
-@ContextConfiguration(classes = {PersonalDetailsMapperImpl.class, SignatureMapperImpl.class})
-@ExtendWith(SpringExtension.class)
+// Explicit import seems required when resource not included in Context Configuration.
+@Import(BasicDetailsResource.class)
+@ContextConfiguration(classes = {PersonalDetailsMapperImpl.class, SignatureMapperImpl.class,
+    RestResponseEntityExceptionHandler.class, InterceptorConfiguration.class})
 @WebMvcTest(BasicDetailsResource.class)
 class BasicDetailsResourceTest {
 
@@ -74,15 +72,9 @@ class BasicDetailsResourceTest {
   private static final String DEFAULT_GMC_STATUS = "Registered with Licence";
 
   @Autowired
-  private MappingJackson2HttpMessageConverter jacksonMessageConverter;
-
-  @Autowired
   private ObjectMapper mapper;
 
   @Autowired
-  private PersonalDetailsMapper personalDetailsMapper;
-
-
   private MockMvc mockMvc;
 
   @MockBean
@@ -90,15 +82,6 @@ class BasicDetailsResourceTest {
 
   @MockBean
   private SignatureService signatureService;
-
-  @BeforeEach
-  void setUp() {
-    BasicDetailsResource resource = new BasicDetailsResource(service, personalDetailsMapper);
-    mockMvc = MockMvcBuilders.standaloneSetup(resource)
-        .setMessageConverters(jacksonMessageConverter)
-        .setControllerAdvice(new RestResponseEntityExceptionHandler())
-        .build();
-  }
 
   @Test
   void shouldUpdateBasicDetailsWhenTraineeFound() throws Exception {
@@ -156,7 +139,7 @@ class BasicDetailsResourceTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(mapper.writeValueAsBytes(gmcDetails))
             .header(HttpHeaders.AUTHORIZATION, token))
-        .andExpect(status().isNotFound());
+        .andExpect(status().isBadRequest());
   }
 
   @Test
