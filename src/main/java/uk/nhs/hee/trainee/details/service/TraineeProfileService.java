@@ -47,8 +47,10 @@ import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 @XRayEnabled
 public class TraineeProfileService {
 
-  protected static final String LONDON_KSS_LOCAL_OFFICE_EMAIL = "england.revalidation.lase@nhs.net";
-  protected static final String MIDLANDS_LOCAL_OFFICE_EMAIL = "england.programmeinformation.mid@nhs.net";
+  protected static final String LONDON_KSS_LOCAL_OFFICE_EMAIL
+      = "england.revalidation.lase@nhs.net";
+  protected static final String MIDLANDS_LOCAL_OFFICE_EMAIL
+      = "england.programmeinformation.mid@nhs.net";
   protected static final Map<String, String> LOCAL_OFFICE_NAME_TO_EMAIL = Map.ofEntries(
       Map.entry("East of England", " england.tis.eoe@nhs.net"),
       Map.entry("East Midlands", MIDLANDS_LOCAL_OFFICE_EMAIL),
@@ -164,7 +166,7 @@ public class TraineeProfileService {
    *
    * @param tisId The TIS ID of the trainee.
    * @return The trainee's current local offices (which may be an empty set if they are not
-   * currently in programme), or optional empty if the trainee is not found.
+   *         currently in programme), or optional empty if the trainee is not found.
    */
   public Optional<Set<LocalOffice>> getTraineeLocalOfficesByTisId(String tisId) {
     TraineeProfile traineeProfile = repository.findByTraineeTisId(tisId);
