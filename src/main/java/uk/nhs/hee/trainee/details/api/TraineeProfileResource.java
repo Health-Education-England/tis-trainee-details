@@ -25,6 +25,7 @@ import com.amazonaws.xray.spring.aop.XRayEnabled;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +35,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import uk.nhs.hee.trainee.details.api.util.AuthTokenUtil;
+import uk.nhs.hee.trainee.details.dto.LocalOffice;
 import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
 import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
 import uk.nhs.hee.trainee.details.dto.TraineeProfileDto;
@@ -148,5 +151,16 @@ public class TraineeProfileResource {
   @GetMapping("/account-details/{tisId}")
   public ResponseEntity<UserDetails> getTraineeDetails(@PathVariable String tisId) {
     return ResponseEntity.of(service.getTraineeDetailsByTisId(tisId));
+  }
+
+  /**
+   * Get the current LO(s) for a trainee TIS ID.
+   *
+   * @param tisId The TIS ID to search by.
+   * @return The distinct matching local offices details, or not found if not found.
+   */
+  @GetMapping("/local-offices/{tisId}")
+  public ResponseEntity<Set<LocalOffice>> getTraineeLocalOffices(@PathVariable String tisId) {
+    return ResponseEntity.of(service.getTraineeLocalOfficesByTisId(tisId));
   }
 }

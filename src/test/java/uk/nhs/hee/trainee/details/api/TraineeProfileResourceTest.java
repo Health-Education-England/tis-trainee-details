@@ -21,6 +21,7 @@
 
 package uk.nhs.hee.trainee.details.api;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
@@ -36,8 +37,10 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +53,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.nhs.hee.trainee.details.TestJwtUtil;
 import uk.nhs.hee.trainee.details.config.InterceptorConfiguration;
+import uk.nhs.hee.trainee.details.dto.LocalOffice;
 import uk.nhs.hee.trainee.details.dto.UserDetails;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
@@ -119,6 +123,8 @@ class TraineeProfileResourceTest {
   private static final Status PLACEMENT_STATUS = Status.CURRENT;
   private static final Instant NOW = Instant.now();
   private static final Instant COJ_SYNCED_AT = Instant.MAX;
+
+  private static final String LOCAL_OFFICE_EMAIL = "some@email.com";
 
   @Autowired
   private MockMvc mockMvc;
@@ -441,5 +447,27 @@ class TraineeProfileResourceTest {
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.email").value(PERSON_EMAIL))
         .andExpect(jsonPath("$.familyName").value(PERSON_SURNAME));
+  }
+
+  @Test
+  void getLocalOfficesShouldReturnNotFoundWhenProfileNotFoundByTisId() throws Exception {
+    mockMvc.perform(get("/api/trainee-profile/local-offices/non-existent-tisid"))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void getLocalOfficesShouldReturnLocalOfficesWhenProfileFoundByTisId() throws Exception {
+    Set<LocalOffice> localOffices = new HashSet<>();
+    localOffices.add(new LocalOffice(LOCAL_OFFICE_EMAIL, PERSON_PERSONOWNER));
+    when(service.getTraineeLocalOfficesByTisId(DEFAULT_TIS_ID_1))
+        .thenReturn(Optional.of(localOffices));
+
+    mockMvc.perform(get("/api/trainee-profile/local-offices/{tisId}", DEFAULT_TIS_ID_1)
+            .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$", hasSize(1)))
+        .andExpect(jsonPath("$[0].email").value(LOCAL_OFFICE_EMAIL))
+        .andExpect(jsonPath("$[0].name").value(PERSON_PERSONOWNER));
   }
 }

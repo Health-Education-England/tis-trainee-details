@@ -31,6 +31,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion.GG10;
 import static uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion.GG9;
+import static uk.nhs.hee.trainee.details.service.TraineeProfileService.LOCAL_OFFICE_NAME_TO_EMAIL;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -38,8 +39,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,6 +53,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.nhs.hee.trainee.details.dto.LocalOffice;
 import uk.nhs.hee.trainee.details.dto.UserDetails;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
@@ -98,6 +102,8 @@ class TraineeProfileServiceTest {
   private static final String PROGRAMME_TISID = "1";
   private static final String PROGRAMME_NAME = "General Practice";
   private static final String PROGRAMME_NUMBER = "EOE8950";
+  private static final String MANAGING_DEANERY = "West Midlands";
+  private static final String MANAGING_DEANERY2 = "Thames Valley";
 
   private static final String CURRICULUM_TISID = "1";
   private static final String CURRICULUM_NAME = "ST3";
@@ -188,6 +194,7 @@ class TraineeProfileServiceTest {
     programmeMembership.setProgrammeTisId(PROGRAMME_TISID);
     programmeMembership.setProgrammeName(PROGRAMME_NAME);
     programmeMembership.setProgrammeNumber(PROGRAMME_NUMBER);
+    programmeMembership.setManagingDeanery(MANAGING_DEANERY);
     programmeMembership.setCurricula(List.of(curriculum));
   }
 
@@ -565,5 +572,115 @@ class TraineeProfileServiceTest {
         is(PERSON_FORENAME));
     assertThat("Unexpected trainee GMC number.", detail.get().gmcNumber(),
         is(PERSON_GMC));
+  }
+
+  @Test
+  void shouldReturnEmptyLocalOfficesWhenTraineeNotFoundByTisId() {
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(null);
+
+    Optional<Set<LocalOffice>> lo = service.getTraineeLocalOfficesByTisId(DEFAULT_TIS_ID_1);
+
+    assertThat("Unexpected local office details.", lo, is(Optional.empty()));
+  }
+
+  @Test
+  void shouldFindZeroLengthSetOfLocalOfficesByTraineeTisIdWhenNoProgrammeMemberships() {
+    traineeProfile.setProgrammeMemberships(new ArrayList<>());
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+
+    Optional<Set<LocalOffice>> lo = service.getTraineeLocalOfficesByTisId(DEFAULT_TIS_ID_1);
+
+    assertThat("Unexpected missing local offices.", lo.isPresent(), is(true));
+    Set<LocalOffice> foundLos = lo.get();
+    assertThat("Unexpected local offices.", foundLos.size(), is(0));
+  }
+
+  @Test
+  void shouldFindLocalOfficesByTraineeTisId() {
+    programmeMembership.setStartDate(LocalDate.MIN);
+    programmeMembership.setEndDate(LocalDate.MAX);
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+
+    Optional<Set<LocalOffice>> lo = service.getTraineeLocalOfficesByTisId(DEFAULT_TIS_ID_1);
+
+    assertThat("Unexpected missing local offices.", lo.isPresent(), is(true));
+    Set<LocalOffice> foundLos = lo.get();
+    assertThat("Unexpected local offices.", foundLos.size(), is(1));
+    LocalOffice firstLo = foundLos.stream().toList().get(0);
+    assertThat("Unexpected local office email.", firstLo.email(),
+        is(LOCAL_OFFICE_NAME_TO_EMAIL.get(MANAGING_DEANERY)));
+    assertThat("Unexpected local office name.", firstLo.name(), is(MANAGING_DEANERY));
+  }
+
+  @Test
+  void shouldFindDistinctMappedLocalOfficesByTraineeTisId() {
+    programmeMembership.setStartDate(LocalDate.MIN);
+    programmeMembership.setEndDate(LocalDate.MAX);
+    ProgrammeMembership programmeMembership2 = new ProgrammeMembership();
+    programmeMembership2.setStartDate(LocalDate.MIN);
+    programmeMembership2.setEndDate(LocalDate.MAX);
+    programmeMembership2.setManagingDeanery(MANAGING_DEANERY2);
+    ProgrammeMembership programmeMembership3 = new ProgrammeMembership();
+    programmeMembership3.setStartDate(LocalDate.MIN);
+    programmeMembership3.setEndDate(LocalDate.MAX);
+    programmeMembership3.setManagingDeanery(MANAGING_DEANERY);
+    ProgrammeMembership programmeMembership4 = new ProgrammeMembership();
+    programmeMembership4.setStartDate(LocalDate.MIN);
+    programmeMembership4.setEndDate(LocalDate.MAX);
+    //no deanery
+    ProgrammeMembership programmeMembership5 = new ProgrammeMembership();
+    programmeMembership5.setStartDate(LocalDate.MIN);
+    programmeMembership5.setEndDate(LocalDate.MAX);
+    programmeMembership5.setManagingDeanery("unknown deanery");
+
+    traineeProfile.setProgrammeMemberships(new ArrayList<>(List.of(
+        programmeMembership, programmeMembership2, programmeMembership3,
+        programmeMembership4, programmeMembership5)));
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+
+    Optional<Set<LocalOffice>> lo = service.getTraineeLocalOfficesByTisId(DEFAULT_TIS_ID_1);
+
+    assertThat("Unexpected missing local offices.", lo.isPresent(), is(true));
+    Set<LocalOffice> foundLos = lo.get();
+    assertThat("Unexpected local offices.", foundLos.size(), is(2));
+    LocalOffice firstLo = foundLos.stream().sorted(Comparator.comparing(LocalOffice::name))
+        .toList().get(0);
+    assertThat("Unexpected local office email.", firstLo.email(),
+        is(LOCAL_OFFICE_NAME_TO_EMAIL.get(MANAGING_DEANERY2)));
+    assertThat("Unexpected local office name.", firstLo.name(), is(MANAGING_DEANERY2));
+    LocalOffice secondLo = foundLos.stream().sorted(Comparator.comparing(LocalOffice::name))
+        .toList().get(1);
+    assertThat("Unexpected local office email.", secondLo.email(),
+        is(LOCAL_OFFICE_NAME_TO_EMAIL.get(MANAGING_DEANERY)));
+    assertThat("Unexpected local office name.", secondLo.name(), is(MANAGING_DEANERY));
+  }
+
+  @Test
+  void shouldFindLocalOfficesWithinDateByTraineeTisId() {
+    programmeMembership.setStartDate(LocalDate.now());
+    programmeMembership.setEndDate(LocalDate.now());
+    ProgrammeMembership programmeMembership2 = new ProgrammeMembership();
+    programmeMembership2.setStartDate(LocalDate.now().plusDays(1));
+    programmeMembership2.setEndDate(LocalDate.MAX);
+    programmeMembership2.setManagingDeanery(MANAGING_DEANERY2);
+    ProgrammeMembership programmeMembership3 = new ProgrammeMembership();
+    programmeMembership3.setStartDate(LocalDate.MIN);
+    programmeMembership3.setEndDate(LocalDate.now().minusDays(1));
+    programmeMembership3.setManagingDeanery(MANAGING_DEANERY2);
+
+
+    traineeProfile.setProgrammeMemberships(new ArrayList<>(List.of(
+        programmeMembership, programmeMembership2, programmeMembership3)));
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+
+    Optional<Set<LocalOffice>> lo = service.getTraineeLocalOfficesByTisId(DEFAULT_TIS_ID_1);
+
+    assertThat("Unexpected missing local offices.", lo.isPresent(), is(true));
+    Set<LocalOffice> foundLos = lo.get();
+    assertThat("Unexpected local offices.", foundLos.size(), is(1));
+    LocalOffice firstLo = foundLos.stream().toList().get(0);
+    assertThat("Unexpected local office email.", firstLo.email(),
+        is(LOCAL_OFFICE_NAME_TO_EMAIL.get(MANAGING_DEANERY)));
+    assertThat("Unexpected local office name.", firstLo.name(), is(MANAGING_DEANERY));
   }
 }
