@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright 2020 Crown Copyright (Health Education England)
+ * Copyright 2024 Crown Copyright (Health Education England)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -19,31 +19,17 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package uk.nhs.hee.trainee.details.model;
+package uk.nhs.hee.trainee.details.repository;
 
-import java.util.ArrayList;
-import java.util.List;
-import lombok.Data;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.Version;
-import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.Field;
+import org.bson.types.ObjectId;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
+import uk.nhs.hee.trainee.details.model.CctCalculation;
 
-@Document(collection = "TraineeProfile")
-@Data
-public class TraineeProfile {
+/**
+ * A repository for CCT calculations.
+ */
+@Repository
+public interface CctCalculationRepository extends MongoRepository<CctCalculation, ObjectId> {
 
-  @Id
-  private String id;
-
-  @Field(value = "traineeTisId")
-  private String traineeTisId;
-  private PersonalDetails personalDetails;
-  private List<Qualification> qualifications = new ArrayList<>();
-  private List<ProgrammeMembership> programmeMemberships = new ArrayList<>();
-  private List<Placement> placements = new ArrayList<>();
-
-  @Version
-  Long version;
 }

@@ -21,6 +21,9 @@
 
 package uk.nhs.hee.trainee.details.dto.validation;
 
+/**
+ * A validation group used when a resource is being created.
+ */
 public interface Create {
 
 }

@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright 2020 Crown Copyright (Health Education England)
+ * Copyright 2022 Crown Copyright (Health Education England)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -19,31 +19,38 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package uk.nhs.hee.trainee.details.model;
+package uk.nhs.hee.trainee.details;
 
-import java.util.ArrayList;
-import java.util.List;
-import lombok.Data;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.Version;
-import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.Field;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
-@Document(collection = "TraineeProfile")
-@Data
-public class TraineeProfile {
+/**
+ * A utility for generating test JWT tokens.
+ */
+public class TestJwtUtil {
 
-  @Id
-  private String id;
+  public static final String TIS_ID_ATTRIBUTE = "custom:tisId";
 
-  @Field(value = "traineeTisId")
-  private String traineeTisId;
-  private PersonalDetails personalDetails;
-  private List<Qualification> qualifications = new ArrayList<>();
-  private List<ProgrammeMembership> programmeMemberships = new ArrayList<>();
-  private List<Placement> placements = new ArrayList<>();
+  /**
+   * Generate a token with the given payload.
+   *
+   * @param payload The payload to inject in to the token.
+   * @return The generated token.
+   */
+  public static String generateToken(String payload) {
+    String encodedPayload = Base64.getUrlEncoder()
+        .encodeToString(payload.getBytes(StandardCharsets.UTF_8));
+    return String.format("aGVhZGVy.%s.c2lnbmF0dXJl", encodedPayload);
+  }
 
-  @Version
-  Long version;
+  /**
+   * Generate a token with the TIS ID attribute as the payload.
+   *
+   * @param traineeTisId The TIS ID to inject in to the payload.
+   * @return The generated token.
+   */
+  public static String generateTokenForTisId(String traineeTisId) {
+    String payload = String.format("{\"%s\":\"%s\"}", TIS_ID_ATTRIBUTE, traineeTisId);
+    return generateToken(payload);
+  }
 }

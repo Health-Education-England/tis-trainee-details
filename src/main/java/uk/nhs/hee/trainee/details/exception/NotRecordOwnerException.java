@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright 2020 Crown Copyright (Health Education England)
+ * Copyright 2024 Crown Copyright (Health Education England)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -19,31 +19,24 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package uk.nhs.hee.trainee.details.model;
+package uk.nhs.hee.trainee.details.exception;
 
-import java.util.ArrayList;
-import java.util.List;
-import lombok.Data;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.Version;
-import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.Field;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
-@Document(collection = "TraineeProfile")
-@Data
-public class TraineeProfile {
+/**
+ * An exception to be thrown if the requested record is not owned by the current user.
+ */
+@ResponseStatus(HttpStatus.FORBIDDEN)
+public class NotRecordOwnerException extends RuntimeException {
 
-  @Id
-  private String id;
-
-  @Field(value = "traineeTisId")
-  private String traineeTisId;
-  private PersonalDetails personalDetails;
-  private List<Qualification> qualifications = new ArrayList<>();
-  private List<ProgrammeMembership> programmeMemberships = new ArrayList<>();
-  private List<Placement> placements = new ArrayList<>();
-
-  @Version
-  Long version;
+  /**
+   * Construct a new NotRecordOwnerException indicating that the requested record is not owned by
+   * the requesting user.
+   *
+   * @param message The exception detail.
+   */
+  public NotRecordOwnerException(String message) {
+    super(message);
+  }
 }
