@@ -23,22 +23,19 @@ package uk.nhs.hee.trainee.details.api;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
 import jakarta.validation.constraints.NotNull;
-import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import uk.nhs.hee.trainee.details.api.util.AuthTokenUtil;
 import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
+import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
 import uk.nhs.hee.trainee.details.dto.TraineeProfileDto;
 import uk.nhs.hee.trainee.details.dto.UserDetails;
 import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapper;
@@ -53,28 +50,27 @@ public class TraineeProfileResource {
 
   private final TraineeProfileService service;
   private final TraineeProfileMapper mapper;
+  private final TraineeIdentity traineeIdentity;
 
-  protected TraineeProfileResource(TraineeProfileService service, TraineeProfileMapper mapper) {
+  protected TraineeProfileResource(TraineeProfileService service, TraineeProfileMapper mapper,
+      TraineeIdentity traineeIdentity) {
     this.service = service;
     this.mapper = mapper;
+    this.traineeIdentity = traineeIdentity;
   }
 
   /**
    * Get a trainee's profile.
    *
-   * @param token The authorization token from the request header.
    * @return The {@link PersonalDetailsDto} representing the trainee profile.
    */
   @GetMapping
-  public ResponseEntity<TraineeProfileDto> getTraineeProfile(
-      @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
+  public ResponseEntity<TraineeProfileDto> getTraineeProfile() {
     log.info("Trainee Profile of authenticated user.");
+    String tisId = traineeIdentity.getTraineeId();
 
-    String tisId;
-    try {
-      tisId = AuthTokenUtil.getTraineeTisId(token);
-    } catch (IOException e) {
-      log.warn("Unable to read tisId from token.", e);
+    if (tisId == null) {
+      log.warn("No trainee ID provided.");
       return ResponseEntity.badRequest().build();
     }
 

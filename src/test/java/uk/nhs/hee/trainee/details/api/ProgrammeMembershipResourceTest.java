@@ -56,6 +56,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import uk.nhs.hee.trainee.details.TestJwtUtil;
+import uk.nhs.hee.trainee.details.config.InterceptorConfiguration;
 import uk.nhs.hee.trainee.details.dto.ProgrammeMembershipDto;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.dto.signature.Signature;
@@ -71,7 +72,8 @@ import uk.nhs.hee.trainee.details.service.SignatureService;
 
 // Explicit import seems required when resource not included in Context Configuration.
 @Import(ProgrammeMembershipResource.class)
-@ContextConfiguration(classes = {ProgrammeMembershipMapperImpl.class, SignatureMapperImpl.class})
+@ContextConfiguration(classes = {ProgrammeMembershipMapperImpl.class, SignatureMapperImpl.class,
+    InterceptorConfiguration.class})
 @WebMvcTest(ProgrammeMembershipResource.class)
 class ProgrammeMembershipResourceTest {
 
@@ -280,13 +282,13 @@ class ProgrammeMembershipResourceTest {
   }
 
   @Test
-  void getShouldReturnNotFoundWhenTisIdNotInToken() throws Exception {
+  void getShouldReturnBadRequestWhenTisIdNotInToken() throws Exception {
     String token = TestJwtUtil.generateToken("{}");
 
     mockMvc.perform(post("/api/programme-membership/{programmeMembershipId}/sign-coj", 0)
             .contentType(MediaType.APPLICATION_JSON)
             .header(HttpHeaders.AUTHORIZATION, token))
-        .andExpect(status().isNotFound());
+        .andExpect(status().isBadRequest());
   }
 
   @Test
@@ -421,8 +423,8 @@ class ProgrammeMembershipResourceTest {
 
     String token = TestJwtUtil.generateTokenForTisId("tisIdValue");
     mockMvc.perform(get("/api/programme-membership/{programmeMembershipId}/confirmation", 40)
-        .contentType(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, token))
+            .contentType(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_PDF))
         .andExpect(content().bytes(response));
