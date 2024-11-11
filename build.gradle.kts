@@ -12,6 +12,7 @@ plugins {
 group = "uk.nhs.hee.trainee.details"
 version = "1.13.2"
 
+
 configurations {
   compileOnly {
     extendsFrom(configurations.annotationProcessor.get())
