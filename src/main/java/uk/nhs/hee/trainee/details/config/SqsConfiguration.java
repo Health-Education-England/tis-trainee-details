@@ -45,30 +45,30 @@ public class SqsConfiguration {
         .configureDefaultConverter(converter
             -> converter.setPayloadTypeHeaderValueFunction(message -> null))
         .build();
-  /*
-  This prevents the inclusion of the JavaType header which can cause issues for listeners
-  which do not have the appropriate class to deserialize the message.
+    /*
+    This prevents the inclusion of the JavaType header which can cause issues for listeners
+    which do not have the appropriate class to deserialize the message.
 
-  e.g. without this custom configuration:
-  ...
-  "MessageAttributes":
-    "JavaType":
-      "StringValue": "uk.nhs.hee.trainee.details.event.ProfileCreateEvent",
-      "DataType": "String",
-    "contentType":
-      "StringValue": "application/json",
-      "DataType": "String"
+    e.g. without this custom configuration:
+    ...
+    "MessageAttributes":
+      "JavaType":
+        "StringValue": "uk.nhs.hee.trainee.details.event.ProfileCreateEvent",
+        "DataType": "String",
+      "contentType":
+        "StringValue": "application/json",
+        "DataType": "String"
 
-  e.g. with custom configuration:
-  ...
-  "MessageAttributes":
-    "contentType":
-       "StringValue": "application/json",
-       "DataType": "String"
+    e.g. with custom configuration:
+    ...
+    "MessageAttributes":
+      "contentType":
+         "StringValue": "application/json",
+         "DataType": "String"
 
-  Note: later versions of spring-cloud-dependencies should simplify this with
-  messageConverter.doNotSendPayloadTypeHeader()
-  */
+    Note: later versions of spring-cloud-dependencies should simplify this with
+    messageConverter.doNotSendPayloadTypeHeader()
+    */
   }
 
 }
