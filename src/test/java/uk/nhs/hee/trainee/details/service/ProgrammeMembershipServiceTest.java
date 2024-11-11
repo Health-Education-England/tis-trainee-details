@@ -41,6 +41,7 @@ import static uk.nhs.hee.trainee.details.model.HrefType.NON_HREF;
 import static uk.nhs.hee.trainee.details.model.HrefType.PROTOCOL_EMAIL;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.CONTACT_FIELD;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.CONTACT_TYPE_FIELD;
+import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.DEFAULT_NO_CONTACT_MESSAGE;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.MEDICAL_CURRICULA;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.NON_RELEVANT_PROGRAMME_MEMBERSHIP_TYPES;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.NOT_TSS_SPECIALTIES;
@@ -1654,7 +1655,8 @@ class ProgrammeMembershipServiceTest {
     contacts.add(contact2);
 
     String ownerContact = service.getOwnerContact(contacts,
-        LocalOfficeContactType.TSS_SUPPORT, LocalOfficeContactType.DEFERRAL, "");
+        LocalOfficeContactType.TSS_SUPPORT, LocalOfficeContactType.DEFERRAL,
+        DEFAULT_NO_CONTACT_MESSAGE);
 
     assertThat("Unexpected owner contact.", ownerContact, is(contact1.get(CONTACT_FIELD)));
   }
@@ -1668,9 +1670,24 @@ class ProgrammeMembershipServiceTest {
     contacts.add(contact1);
 
     String ownerContact = service.getOwnerContact(contacts,
-        LocalOfficeContactType.ONBOARDING_SUPPORT, LocalOfficeContactType.TSS_SUPPORT, "");
+        LocalOfficeContactType.ONBOARDING_SUPPORT, LocalOfficeContactType.TSS_SUPPORT,
+        DEFAULT_NO_CONTACT_MESSAGE);
 
     assertThat("Unexpected owner contact.", ownerContact, is(contact1.get(CONTACT_FIELD)));
+  }
+
+  @Test
+  void shouldGetDefaultNoContactWhenContactMissingAndFallbackNull() {
+    List<Map<String, String>> contacts = new ArrayList<>();
+    Map<String, String> contact1 = new HashMap<>();
+    contact1.put(CONTACT_TYPE_FIELD, LocalOfficeContactType.TSS_SUPPORT.getContactTypeName());
+    contact1.put(CONTACT_FIELD, "one@email.com, another@email.com");
+    contacts.add(contact1);
+
+    String ownerContact = service.getOwnerContact(contacts,
+        LocalOfficeContactType.ONBOARDING_SUPPORT, null, DEFAULT_NO_CONTACT_MESSAGE);
+
+    assertThat("Unexpected owner contact.", ownerContact, is(DEFAULT_NO_CONTACT_MESSAGE));
   }
 
   @Test

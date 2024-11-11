@@ -29,6 +29,11 @@ dependencyManagement {
   }
 }
 
+val mapstructVersion = "1.5.5.Final"
+val mongockVersion = "5.4.2"
+val openHtmlToPdfVersion = "1.0.10"
+val sentryVersion = "7.6.0"
+
 dependencies {
   // Spring Boot
   implementation("org.springframework.boot:spring-boot-starter-data-redis")
@@ -48,16 +53,13 @@ dependencies {
   annotationProcessor("org.projectlombok:lombok")
 
   // Mapstruct
-  val mapstructVersion = "1.5.5.Final"
   implementation("org.mapstruct:mapstruct:${mapstructVersion}")
   annotationProcessor("org.mapstruct:mapstruct-processor:${mapstructVersion}")
 
-  val mongockVersion = "5.4.0"
   implementation("io.mongock:mongock-springboot:${mongockVersion}")
   implementation("io.mongock:mongodb-springdata-v4-driver:${mongockVersion}")
 
   // Sentry reporting
-  val sentryVersion = "7.6.0"
   implementation("io.sentry:sentry-spring-boot-starter-jakarta:$sentryVersion")
 
   // Amazon AWS
@@ -66,11 +68,9 @@ dependencies {
   implementation("com.amazonaws:aws-xray-recorder-sdk-spring:2.15.1")
 
   // PDF
-  val openHtmlToPdfVersion = "1.0.10"
   implementation("com.openhtmltopdf:openhtmltopdf-pdfbox:${openHtmlToPdfVersion}")
   implementation("com.openhtmltopdf:openhtmltopdf-slf4j:${openHtmlToPdfVersion}")
-  val jsoupVersion = "1.17.2"
-  implementation("org.jsoup:jsoup:${jsoupVersion}")
+  implementation("org.jsoup:jsoup:1.17.2")
 }
 
 java {
@@ -95,6 +95,52 @@ sonarqube {
       "build/reports/checkstyle/main.xml,build/reports/checkstyle/test.xml")
   }
 }
+testing {
+  suites {
+    configureEach {
+      if (this is JvmTestSuite) {
+        useJUnitJupiter()
+        dependencies {
+          implementation(project())
+          implementation("org.springframework.boot:spring-boot-starter-test")
+        }
+      }
+    }
+
+    val test by getting(JvmTestSuite::class) {
+      dependencies {
+        annotationProcessor("org.mapstruct:mapstruct-processor:$mapstructVersion")
+      }
+    }
+
+    register<JvmTestSuite>("integrationTest") {
+      dependencies {
+        implementation("org.springframework.boot:spring-boot-testcontainers")
+        implementation("org.testcontainers:junit-jupiter")
+        implementation("org.testcontainers:localstack")
+        implementation("org.testcontainers:mongodb")
+      }
+
+      targets {
+        all {
+          testTask.configure {
+            shouldRunAfter(test)
+            systemProperty("spring.profiles.active", "test")
+          }
+        }
+      }
+    }
+
+    // Include implementation dependencies.
+    val integrationTestImplementation by configurations.getting {
+      extendsFrom(configurations.implementation.get())
+    }
+  }
+}
+
+tasks.named("check") {
+  dependsOn(testing.suites.named("integrationTest"))
+}
 
 tasks.jacocoTestReport {
   reports {
@@ -105,5 +151,4 @@ tasks.jacocoTestReport {
 
 tasks.test {
   finalizedBy(tasks.jacocoTestReport)
-  useJUnitPlatform()
 }

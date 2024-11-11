@@ -68,6 +68,8 @@ public class ProgrammeMembershipService {
 
   protected static final String API_GET_OWNER_CONTACT
       = "/api/local-office-contact-by-lo-name/{localOfficeName}";
+  protected static final String DEFAULT_NO_CONTACT_MESSAGE
+      = "your local office";
   protected static final List<String> MEDICAL_CURRICULA
       = List.of("DENTAL_CURRICULUM", "DENTAL_POST_CCST", "MEDICAL_CURRICULUM");
   protected static final List<String> TSS_CURRICULA
@@ -525,7 +527,7 @@ public class ProgrammeMembershipService {
                 getOwnerContactList(programmeMembership.getManagingDeanery());
             String contact = getOwnerContact(ownerContactList,
                 LocalOfficeContactType.ONBOARDING_SUPPORT,
-                LocalOfficeContactType.TSS_SUPPORT, "");
+                LocalOfficeContactType.TSS_SUPPORT, DEFAULT_NO_CONTACT_MESSAGE);
 
             Map<String, Object> templateVariables = new HashMap<>();
             templateVariables.put("pm", programmeMembership);

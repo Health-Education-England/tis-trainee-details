@@ -1,0 +1,16 @@
+application:
+  aws:
+    sns:
+      coj-signed: dummy
+      gmc-details-provided: dummy
+    sqs:
+      event: dummy
+      basic-details-update: dummy
+      contact-details-update: dummy
+      gdc-details-update: dummy
+      gmc-details-update: dummy
+      personal-info-update: dummy
+      person-owner-update: dummy
+
+mongock:
+  enabled: false
