@@ -40,18 +40,16 @@ import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import uk.nhs.hee.trainee.details.TestJwtUtil;
+import uk.nhs.hee.trainee.details.config.InterceptorConfiguration;
 import uk.nhs.hee.trainee.details.dto.UserDetails;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
@@ -61,7 +59,6 @@ import uk.nhs.hee.trainee.details.mapper.PersonalDetailsMapperImpl;
 import uk.nhs.hee.trainee.details.mapper.PlacementMapperImpl;
 import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapperImpl;
 import uk.nhs.hee.trainee.details.mapper.SignatureMapperImpl;
-import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapper;
 import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapperImpl;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
 import uk.nhs.hee.trainee.details.model.Curriculum;
@@ -74,11 +71,12 @@ import uk.nhs.hee.trainee.details.service.SignatureService;
 import uk.nhs.hee.trainee.details.service.TraineeProfileService;
 import uk.nhs.hee.trainee.details.service.TrainingNumberGenerator;
 
+// Explicit import seems required when resource not included in Context Configuration.
+@Import(TraineeProfileResource.class)
 @ContextConfiguration(classes = {TrainingNumberGenerator.class, TraineeProfileMapperImpl.class,
     PersonalDetailsMapperImpl.class, PlacementMapperImpl.class, ProgrammeMembershipMapperImpl.class,
-    SignatureMapperImpl.class})
-@ExtendWith(SpringExtension.class)
-@WebMvcTest(controllers = TraineeProfileResource.class)
+    SignatureMapperImpl.class, InterceptorConfiguration.class})
+@WebMvcTest(TraineeProfileResource.class)
 class TraineeProfileResourceTest {
 
   private static final String DEFAULT_ID_1 = "DEFAULT_ID_1";
@@ -123,11 +121,6 @@ class TraineeProfileResourceTest {
   private static final Instant COJ_SYNCED_AT = Instant.MAX;
 
   @Autowired
-  private MappingJackson2HttpMessageConverter jacksonMessageConverter;
-
-  @Autowired
-  private TraineeProfileMapper traineeProfileMapper;
-
   private MockMvc mockMvc;
 
   @MockBean
@@ -147,12 +140,6 @@ class TraineeProfileResourceTest {
    */
   @BeforeEach
   void setup() {
-    TraineeProfileResource traineeProfileResource = new TraineeProfileResource(service,
-        traineeProfileMapper);
-    this.mockMvc = MockMvcBuilders.standaloneSetup(traineeProfileResource)
-        .setMessageConverters(jacksonMessageConverter)
-        .build();
-
     setupData();
   }
 
@@ -254,13 +241,13 @@ class TraineeProfileResourceTest {
   }
 
   @Test
-  void getShouldReturnNotFoundWhenTisIdNotInToken() throws Exception {
+  void getShouldReturnBadRequestWhenTisIdNotInToken() throws Exception {
     String token = TestJwtUtil.generateToken("{}");
 
     this.mockMvc.perform(get("/api/trainee-profile")
             .contentType(MediaType.APPLICATION_JSON)
             .header(HttpHeaders.AUTHORIZATION, token))
-        .andExpect(status().isNotFound());
+        .andExpect(status().isBadRequest());
   }
 
   @Test
@@ -395,8 +382,8 @@ class TraineeProfileResourceTest {
             .param("dob", PERSON_DATEOFBIRTH.toString())
             .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
-        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$").value(DEFAULT_TIS_ID_1));
+        .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_PLAIN))
+        .andExpect(content().string(DEFAULT_TIS_ID_1));
   }
 
   @Test
