@@ -26,6 +26,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.servlet.HandlerInterceptor;
 import uk.nhs.hee.trainee.details.api.util.AuthTokenUtil;
 import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
@@ -54,6 +55,14 @@ public class TraineeIdentityInterceptor implements HandlerInterceptor {
       } catch (IOException e) {
         log.warn("Unable to extract trainee ID from authorization token.", e);
       }
+    }
+
+    // Non-CCT endpoints are a mix of authenticated (public) and unauthenticated (internal), limit
+    // trainee ID verification to CCT endpoints for now.
+    if (traineeIdentity.getTraineeId() == null
+        && request.getRequestURI().matches("^/api/cct(/.+)?$")) {
+      response.setStatus(HttpStatus.FORBIDDEN.value());
+      return false;
     }
 
     return true;

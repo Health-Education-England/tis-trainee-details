@@ -78,6 +78,22 @@ class CctResourceIntegrationTest {
   }
 
   @Test
+  void shouldBeForbiddenGettingCalculationWhenNoToken() throws Exception {
+    mockMvc.perform(get("/api/cct/calculation/{id}", "1"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$").doesNotExist());
+  }
+
+  @Test
+  void shouldBeForbiddenGettingCalculationWhenNoTraineeId() throws Exception {
+    String token = TestJwtUtil.generateToken("{}");
+    mockMvc.perform(get("/api/cct/calculation/{id}", "1")
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$").doesNotExist());
+  }
+
+  @Test
   void shouldNotGetCalculationWhenNotOwnedByUser() throws Exception {
     ObjectId id = ObjectId.get();
     CctCalculation entity = CctCalculation.builder()
@@ -109,6 +125,38 @@ class CctResourceIntegrationTest {
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.id").value(id.toString()))
         .andExpect(jsonPath("$.traineeId").doesNotExist());
+  }
+
+  @Test
+  void shouldBeForbiddenCreatingCalculationWhenNoToken() throws Exception {
+    String body = """
+        {
+          "name": "Test Calculation"
+        }
+        """;
+
+    mockMvc.perform(post("/api/cct/calculation")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$").doesNotExist());
+  }
+
+  @Test
+  void shouldBeForbiddenCreatingCalculationWhenNoTraineeId() throws Exception {
+    String body = """
+        {
+          "name": "Test Calculation"
+        }
+        """;
+
+    String token = TestJwtUtil.generateToken("{}");
+    mockMvc.perform(post("/api/cct/calculation")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$").doesNotExist());
   }
 
   @Test
