@@ -21,37 +21,30 @@
 
 package uk.nhs.hee.trainee.details.config;
 
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
+
 import io.awspring.cloud.sqs.operations.SqsTemplate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
-@RunWith(MockitoJUnitRunner.class)
 class SqsConfigurationTest {
 
-  SqsConfiguration sqsConfiguration;
+  private SqsConfiguration configuration;
+  private SqsAsyncClient sqsAsyncClient;
 
   @BeforeEach
   void setUp() {
-    sqsConfiguration = new SqsConfiguration();
+    sqsAsyncClient = mock(SqsAsyncClient.class);
+    configuration = new SqsConfiguration();
   }
 
-
   @Test
-  void shouldRemovePayloadTypeHeader() {
-    SqsTemplate sqsTemplate = sqsConfiguration.sqsTemplate(new SqsAsyncClient() {
-      @Override
-      public String serviceName() {
-        return "";
-      }
+  void sqsTemplate() {
+    SqsTemplate sqsTemplate = configuration.sqsTemplate(sqsAsyncClient);
 
-      @Override
-      public void close() {
-
-      }
-    });
-    //hmmm
+    assertThat("Unexpected SQS template.", sqsTemplate, notNullValue());
   }
 }
