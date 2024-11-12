@@ -30,14 +30,26 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.DoubleNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.jayway.jsonpath.JsonPath;
+import io.awspring.cloud.sqs.operations.SqsTemplate;
+import java.io.IOException;
 import java.util.UUID;
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
@@ -67,10 +79,38 @@ class CctResourceIntegrationTest {
       DockerImageNames.MONGO);
 
   @Autowired
-  MockMvc mockMvc;
+  private MockMvc mockMvc;
 
   @Autowired
   private MongoTemplate template;
+
+  @MockBean
+  private SqsTemplate sqsTemplate;
+
+  private ObjectNode calculationJson;
+
+  @BeforeEach
+  void setUp() throws IOException {
+    calculationJson = (ObjectNode) new ObjectMapper().readTree("""
+        {
+          "name": "Test Calculation",
+          "programmeMembership": {
+            "id": "12345678-aaaa-bbbb-cccc-012345678910",
+            "name": "Test Programme",
+            "startDate": "2024-01-01",
+            "endDate": "2025-01-01",
+            "wte": 0.5
+          },
+          "changes": [
+            {
+              "type": "LTFT",
+              "startDate": "2024-07-01",
+              "wte": 0.75
+            }
+          ]
+        }
+        """);
+  }
 
   @AfterEach
   void tearDown() {
@@ -129,50 +169,27 @@ class CctResourceIntegrationTest {
 
   @Test
   void shouldBeForbiddenCreatingCalculationWhenNoToken() throws Exception {
-    String body = """
-        {
-          "name": "Test Calculation"
-        }
-        """;
-
-    mockMvc.perform(post("/api/cct/calculation")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(body))
+    mockMvc.perform(post("/api/cct/calculation"))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$").doesNotExist());
   }
 
   @Test
   void shouldBeForbiddenCreatingCalculationWhenNoTraineeId() throws Exception {
-    String body = """
-        {
-          "name": "Test Calculation"
-        }
-        """;
-
     String token = TestJwtUtil.generateToken("{}");
     mockMvc.perform(post("/api/cct/calculation")
-            .header(HttpHeaders.AUTHORIZATION, token)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(body))
+            .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$").doesNotExist());
   }
 
   @Test
-  void shouldNotCreateCalculationWhenIdPopulated() throws Exception {
-    String body = """
-        {
-          "id": "%s",
-          "name": "Test Calculation"
-        }
-        """.formatted(ObjectId.get());
-
+  void shouldNotCreateCalculationWhenValidationFails() throws Exception {
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
     mockMvc.perform(post("/api/cct/calculation")
             .header(HttpHeaders.AUTHORIZATION, token)
             .contentType(MediaType.APPLICATION_JSON)
-            .content(body))
+            .content("{}"))
         .andExpect(status().isBadRequest())
         .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
         .andExpect(jsonPath("$.type", is("about:blank")))
@@ -180,24 +197,190 @@ class CctResourceIntegrationTest {
         .andExpect(jsonPath("$.status", is(HttpStatus.BAD_REQUEST.value())))
         .andExpect(jsonPath("$.instance", is("/api/cct/calculation")))
         .andExpect(jsonPath("$.errors").isArray())
+        .andExpect(jsonPath("$.errors", hasSize(3)));
+  }
+
+  @Test
+  void shouldFailCreateCalculationValidationWhenIdPopulated() throws Exception {
+    calculationJson.set("id", TextNode.valueOf(ObjectId.get().toString()));
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculation")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(calculationJson.toString()))
         .andExpect(jsonPath("$.errors", hasSize(1)))
         .andExpect(jsonPath("$.errors[0].pointer", is("#/id")))
         .andExpect(jsonPath("$.errors[0].detail", is("must be null")));
   }
 
+  @ParameterizedTest
+  @NullAndEmptySource
+  @ValueSource(strings = " ")
+  void shouldFailCreateCalculationValidationWhenNameNotValid(String name) throws Exception {
+    calculationJson.replace("name", TextNode.valueOf(name));
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculation")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(calculationJson.toString()))
+        .andExpect(jsonPath("$.errors", hasSize(1)))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/name")))
+        .andExpect(jsonPath("$.errors[0].detail", is("must not be blank")));
+  }
+
   @Test
-  void shouldReturnCreatedCalculationJsonWhenIdNotPopulated() throws Exception {
+  void shouldFailCreateCalculationValidationWhenProgrammeMembershipNull() throws Exception {
+    calculationJson.remove("programmeMembership");
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculation")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(calculationJson.toString()))
+        .andExpect(jsonPath("$.errors", hasSize(1)))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/programmeMembership")))
+        .andExpect(jsonPath("$.errors[0].detail", is("must not be null")));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"id", "startDate", "endDate", "wte"})
+  void shouldFailCreateCalculationValidationWhenProgrammeMembershipFieldNull(String propertyName)
+      throws Exception {
+    calculationJson.withObject("programmeMembership")
+        .remove(propertyName);
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculation")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(calculationJson.toString()))
+        .andExpect(jsonPath("$.errors", hasSize(1)))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/programmeMembership/" + propertyName)))
+        .andExpect(jsonPath("$.errors[0].detail", is("must not be null")));
+  }
+
+  @ParameterizedTest
+  @NullAndEmptySource
+  @ValueSource(strings = " ")
+  void shouldFailCreateCalculationValidationWhenProgrammeMembershipNameNotValid(String pmName)
+      throws Exception {
+    calculationJson.withObject("programmeMembership")
+        .replace("name", TextNode.valueOf(pmName));
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculation")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(calculationJson.toString()))
+        .andExpect(jsonPath("$.errors", hasSize(1)))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/programmeMembership/name")))
+        .andExpect(jsonPath("$.errors[0].detail", is("must not be blank")));
+  }
+
+  @ParameterizedTest
+  @ValueSource(doubles = {-10, -0.1, 1.1, 10})
+  void shouldFailCreateCalculationValidationWhenProgrammeMembershipWteNotValid(double wte)
+      throws Exception {
+    calculationJson.withObject("programmeMembership")
+        .replace("wte", DoubleNode.valueOf(wte));
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculation")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(calculationJson.toString()))
+        .andExpect(jsonPath("$.errors", hasSize(1)))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/programmeMembership/wte")))
+        .andExpect(jsonPath("$.errors[0].detail", is("must be between 0 and 1")));
+  }
+
+  @ParameterizedTest
+  @NullSource
+  @ValueSource(strings = "[]")
+  void shouldFailCreateCalculationValidationWhenChangesNotValid(String changes) throws Exception {
     String body = """
         {
-          "name": "Test Calculation"
+          "name": "Test Calculation",
+          "programmeMembership": {
+            "id": "12345678-aaaa-bbbb-cccc-012345678910",
+            "name": "Test Programme",
+            "startDate": "2024-01-01",
+            "endDate": "2025-01-01",
+            "wte": 0.5
+          },
+          "changes": %s
         }
-        """;
+        """.formatted(changes);
 
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
     mockMvc.perform(post("/api/cct/calculation")
             .header(HttpHeaders.AUTHORIZATION, token)
             .contentType(MediaType.APPLICATION_JSON)
             .content(body))
+        .andExpect(jsonPath("$.errors", hasSize(1)))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/changes")))
+        .andExpect(jsonPath("$.errors[0].detail", is("must not be empty")));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"type", "startDate", "wte"})
+  void shouldFailCreateCalculationValidationWhenChangeTypeNull(String propertyName)
+      throws Exception {
+    ((ObjectNode) calculationJson.withArray("changes").get(0))
+        .remove(propertyName);
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculation")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(calculationJson.toString()))
+        .andExpect(jsonPath("$.errors", hasSize(1)))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/changes[0]/" + propertyName)))
+        .andExpect(jsonPath("$.errors[0].detail", is("must not be null")));
+  }
+
+  @ParameterizedTest
+  @ValueSource(doubles = {-10, -0.1, 1.1, 10})
+  void shouldFailCreateCalculationValidationWhenChangeWteNotValid(double wte) throws Exception {
+    String body = """
+        {
+          "name": "Test Calculation",
+          "programmeMembership": {
+            "id": "12345678-aaaa-bbbb-cccc-012345678910",
+            "name": "Test Programme",
+            "startDate": "2024-01-01",
+            "endDate": "2025-01-01",
+            "wte": 0.5
+          },
+          "changes": [
+            {
+              "type": "LTFT",
+              "startDate": "2024-07-01",
+              "wte": %s
+            }
+          ]
+        }
+        """.formatted(wte);
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculation")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body))
+        .andExpect(jsonPath("$.errors", hasSize(1)))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/changes[0]/wte")))
+        .andExpect(jsonPath("$.errors[0].detail", is("must be between 0 and 1")));
+  }
+
+  @Test
+  void shouldReturnCreatedCalculationJsonWhenRequestValid() throws Exception {
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculation")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(calculationJson.toString()))
         .andExpect(status().isCreated())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.id").exists())
@@ -206,19 +389,13 @@ class CctResourceIntegrationTest {
   }
 
   @Test
-  void shouldReturnLocationOfCreatedCalculationWhenIdNotPopulated() throws Exception {
-    String body = """
-        {
-          "name": "Test Calculation"
-        }
-        """;
-
+  void shouldReturnLocationOfCreatedCalculationWhenRequestValid() throws Exception {
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
     MvcResult result = mockMvc.perform(
             post("/api/cct/calculation")
                 .header(HttpHeaders.AUTHORIZATION, token)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(body))
+                .content(calculationJson.toString()))
         .andReturn();
 
     MockHttpServletResponse response = result.getResponse();

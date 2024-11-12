@@ -23,12 +23,17 @@ package uk.nhs.hee.trainee.details.dto;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Null;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import lombok.Builder;
 import org.bson.types.ObjectId;
+import org.hibernate.validator.constraints.Range;
 import uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType;
 import uk.nhs.hee.trainee.details.dto.validation.Create;
 
@@ -42,11 +47,20 @@ import uk.nhs.hee.trainee.details.dto.validation.Create;
  */
 @Builder
 public record CctCalculationDetailDto(
+
     @JsonSerialize(using = ToStringSerializer.class)
     @Null(groups = Create.class)
     ObjectId id,
+
+    @NotBlank
     String name,
+
+    @NotNull
+    @Valid
     CctProgrammeMembershipDto programmeMembership,
+
+    @NotEmpty
+    @Valid
     List<CctChangeDto> changes) {
 
   /**
@@ -60,11 +74,22 @@ public record CctCalculationDetailDto(
    */
   @Builder
   public record CctProgrammeMembershipDto(
+
+      @NotNull
       UUID id,
+
+      @NotBlank
       String name,
+
+      @NotNull
       LocalDate startDate,
+
+      @NotNull
       LocalDate endDate,
-      double wte) {
+
+      @NotNull
+      @Range(min = 0, max = 1)
+      Double wte) {
 
   }
 
@@ -77,9 +102,16 @@ public record CctCalculationDetailDto(
    */
   @Builder
   public record CctChangeDto(
+
+      @NotNull
       CctChangeType type,
+
+      @NotNull
       LocalDate startDate,
-      double wte) {
+
+      @NotNull
+      @Range(min = 0, max = 1)
+      Double wte) {
 
   }
 }

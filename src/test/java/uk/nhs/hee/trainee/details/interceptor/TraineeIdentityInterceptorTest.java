@@ -46,6 +46,17 @@ class TraineeIdentityInterceptorTest {
     interceptor = new TraineeIdentityInterceptor(traineeIdentity);
   }
 
+  @Test
+  void shouldReturnTrueAndNotSetTraineeIdWhenNoAuthTokenAndNonCctEndpoint() {
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    request.setRequestURI("/api/test");
+
+    boolean result = interceptor.preHandle(request, new MockHttpServletResponse(), new Object());
+
+    assertThat("Unexpected result.", result, is(true));
+    assertThat("Unexpected trainee ID.", traineeIdentity.getTraineeId(), nullValue());
+  }
+
   @ParameterizedTest
   @ValueSource(strings = {"/api/cct", "/api/cct/calculator", "/api/cct/calculator/1",
       "/api/cct/test/1"})
@@ -56,6 +67,18 @@ class TraineeIdentityInterceptorTest {
     boolean result = interceptor.preHandle(request, new MockHttpServletResponse(), new Object());
 
     assertThat("Unexpected result.", result, is(false));
+    assertThat("Unexpected trainee ID.", traineeIdentity.getTraineeId(), nullValue());
+  }
+
+  @Test
+  void shouldReturnTrueAndNotSetTraineeIdWhenTokenNotMapAndNonCctEndpoint() {
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    request.addHeader(HttpHeaders.AUTHORIZATION, TestJwtUtil.generateToken("[]"));
+    request.setRequestURI("/api/test");
+
+    boolean result = interceptor.preHandle(request, new MockHttpServletResponse(), new Object());
+
+    assertThat("Unexpected result.", result, is(true));
     assertThat("Unexpected trainee ID.", traineeIdentity.getTraineeId(), nullValue());
   }
 
@@ -73,10 +96,22 @@ class TraineeIdentityInterceptorTest {
     assertThat("Unexpected trainee ID.", traineeIdentity.getTraineeId(), nullValue());
   }
 
+  @Test
+  void shouldReturnTrueAndNotSetTraineeIdWhenNoTisIdInAuthTokenAndNonCctEndpoint() {
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    request.addHeader(HttpHeaders.AUTHORIZATION, TestJwtUtil.generateToken("{}"));
+    request.setRequestURI("/api/test");
+
+    boolean result = interceptor.preHandle(request, new MockHttpServletResponse(), new Object());
+
+    assertThat("Unexpected result.", result, is(true));
+    assertThat("Unexpected trainee ID.", traineeIdentity.getTraineeId(), nullValue());
+  }
+
   @ParameterizedTest
   @ValueSource(strings = {"/api/cct", "/api/cct/calculator", "/api/cct/calculator/1",
       "/api/cct/test/1"})
-  void shouldReturnTrueAndNotSetTraineeIdWhenNoTisIdInAuthToken(String uri) {
+  void shouldReturnFalseAndNotSetTraineeIdWhenNoTisIdInAuthTokenAndCctEndpoint(String uri) {
     MockHttpServletRequest request = new MockHttpServletRequest();
     request.addHeader(HttpHeaders.AUTHORIZATION, TestJwtUtil.generateToken("{}"));
     request.setRequestURI(uri);
@@ -87,45 +122,10 @@ class TraineeIdentityInterceptorTest {
     assertThat("Unexpected trainee ID.", traineeIdentity.getTraineeId(), nullValue());
   }
 
-  @Test
-  void shouldReturnTrueAndNotSetTraineeIdWhenNoAuthToken() {
-    MockHttpServletRequest request = new MockHttpServletRequest();
-    request.setRequestURI("/api/test");
-
-    boolean result = interceptor.preHandle(request, new MockHttpServletResponse(), new Object());
-
-    assertThat("Unexpected result.", result, is(true));
-    assertThat("Unexpected trainee ID.", traineeIdentity.getTraineeId(), nullValue());
-  }
-
-  @Test
-  void shouldReturnTrueAndNotSetTraineeIdWhenTokenNotMapAndNonCctEndpoint() {
-    MockHttpServletRequest request = new MockHttpServletRequest();
-    request.addHeader(HttpHeaders.AUTHORIZATION, TestJwtUtil.generateToken("[]"));
-    request.setRequestURI("/api/test");
-
-    boolean result = interceptor.preHandle(request, new MockHttpServletResponse(), new Object());
-
-    assertThat("Unexpected result.", result, is(true));
-    assertThat("Unexpected trainee ID.", traineeIdentity.getTraineeId(), nullValue());
-  }
-
-  @Test
-  void shouldReturnTrueAndNotSetTraineeIdWhenNoTisIdInAuthToken() {
-    MockHttpServletRequest request = new MockHttpServletRequest();
-    request.addHeader(HttpHeaders.AUTHORIZATION, TestJwtUtil.generateToken("{}"));
-    request.setRequestURI("/api/test");
-
-    boolean result = interceptor.preHandle(request, new MockHttpServletResponse(), new Object());
-
-    assertThat("Unexpected result.", result, is(true));
-    assertThat("Unexpected trainee ID.", traineeIdentity.getTraineeId(), nullValue());
-  }
-
   @ParameterizedTest
   @ValueSource(strings = {"/api/cct", "/api/cct/calculator", "/api/cct/calculator/1",
       "/api/cct/test/1", "/api/test"})
-  void shouldReturnTrueAndSetTraineeIdWhenTisIdInAuthToken() {
+  void shouldReturnTrueAndSetTraineeIdWhenTisIdInAuthTokenAndCctEndpoint() {
     MockHttpServletRequest request = new MockHttpServletRequest();
     request.addHeader(HttpHeaders.AUTHORIZATION, TestJwtUtil.generateTokenForTisId("40"));
 

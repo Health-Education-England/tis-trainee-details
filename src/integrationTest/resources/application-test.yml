@@ -14,3 +14,11 @@ application:
 
 mongock:
   enabled: false
+
+spring:
+  cloud:
+    aws:
+      region:
+        static: eu-west-2
+      sqs:
+        enabled: false

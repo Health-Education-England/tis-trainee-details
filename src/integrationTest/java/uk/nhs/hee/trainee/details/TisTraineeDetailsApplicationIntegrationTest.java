@@ -34,7 +34,7 @@ import org.testcontainers.containers.localstack.LocalStackContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-@SpringBootTest
+@SpringBootTest(properties = {"spring.cloud.aws.sqs.enabled=true"})
 @Testcontainers(disabledWithoutDocker = true)
 class TisTraineeDetailsApplicationIntegrationTest {
 

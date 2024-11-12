@@ -85,7 +85,7 @@ public record CctCalculation(
   public record CctChange(
       CctChangeType type,
       LocalDate startDate,
-      double wte) {
+      Double wte) {
 
   }
 }

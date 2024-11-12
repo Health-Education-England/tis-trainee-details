@@ -21,9 +21,11 @@
 
 package uk.nhs.hee.trainee.details.dto.validation;
 
+import jakarta.validation.groups.Default;
+
 /**
  * A validation group used when a resource is being created.
  */
-public interface Create {
+public interface Create extends Default {
 
 }
