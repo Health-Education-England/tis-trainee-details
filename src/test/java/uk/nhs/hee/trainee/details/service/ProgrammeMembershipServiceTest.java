@@ -1631,8 +1631,8 @@ class ProgrammeMembershipServiceTest {
     traineeProfile.setPersonalDetails(createPersonalDetails(""));
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, START_DATE.plusWeeks(PM_CONFIRM_WEEKS), END_DATE,
-            MANAGING_DEANERY, TSS_CURRICULA.get(0),
+            PROGRAMME_MEMBERSHIP_TYPE, START_DATE.plusWeeks(PM_CONFIRM_WEEKS).plusDays(1),
+            END_DATE, MANAGING_DEANERY, TSS_CURRICULA.get(0),
             CURRICULUM_SPECIALTY_CODE, CURRICULUM_SPECIALTY)));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);

@@ -517,7 +517,7 @@ public class ProgrammeMembershipService {
       // Only generate when PM start day is within 12 weeks
       for (ProgrammeMembership programmeMembership : existingProgrammeMemberships) {
         if (programmeMembership.getTisId().equals(programmeMembershipId)) {
-          if (programmeMembership.getStartDate().minusWeeks(PM_CONFIRM_WEEKS)
+          if (programmeMembership.getStartDate().minusWeeks(PM_CONFIRM_WEEKS).minusDays(1)
               .isBefore(LocalDate.now())) {
 
             // Template Variables
