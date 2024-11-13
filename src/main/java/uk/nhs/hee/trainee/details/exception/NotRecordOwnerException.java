@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright 2020 Crown Copyright (Health Education England)
+ * Copyright 2024 Crown Copyright (Health Education England)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -19,13 +19,24 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package uk.nhs.hee.trainee.details.dto.validation;
+package uk.nhs.hee.trainee.details.exception;
 
-import jakarta.validation.groups.Default;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 /**
- * A validation group used when a resource is being created.
+ * An exception to be thrown if the requested record is not owned by the current user.
  */
-public interface Create extends Default {
+@ResponseStatus(HttpStatus.FORBIDDEN)
+public class NotRecordOwnerException extends RuntimeException {
 
+  /**
+   * Construct a new NotRecordOwnerException indicating that the requested record is not owned by
+   * the requesting user.
+   *
+   * @param message The exception detail.
+   */
+  public NotRecordOwnerException(String message) {
+    super(message);
+  }
 }

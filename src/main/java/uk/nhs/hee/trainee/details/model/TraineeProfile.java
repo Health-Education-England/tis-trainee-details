@@ -37,7 +37,6 @@ public class TraineeProfile {
   @Id
   private String id;
 
-  @Indexed(unique = true)
   @Field(value = "traineeTisId")
   private String traineeTisId;
   private PersonalDetails personalDetails;

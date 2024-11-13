@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright 2020 Crown Copyright (Health Education England)
+ * Copyright 2024 Crown Copyright (Health Education England)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -19,13 +19,17 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package uk.nhs.hee.trainee.details.dto.validation;
+package uk.nhs.hee.trainee.details.repository;
 
-import jakarta.validation.groups.Default;
+import org.bson.types.ObjectId;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
+import uk.nhs.hee.trainee.details.model.CctCalculation;
 
 /**
- * A validation group used when a resource is being created.
+ * A repository for CCT calculations.
  */
-public interface Create extends Default {
+@Repository
+public interface CctCalculationRepository extends MongoRepository<CctCalculation, ObjectId> {
 
 }
