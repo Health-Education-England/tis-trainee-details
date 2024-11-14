@@ -14,7 +14,7 @@
     <br/>
     <h4 class="card-heading-spaced-top">
       CONFIRMATION OF APPOINTMENT TO <th:block th:text="${not #strings.isEmpty(pm.programmeName)} ? ${#strings.toUpperCase(pm.programmeName)} : _">(Programme Name Missing)</th:block>
-        FOR DR <th:block th:text="${#strings.toUpperCase(trainee.forenames)}"></th:block> <th:block th:text="${not #strings.isEmpty(trainee.surname)} ? ${#strings.capitalize(trainee.surname)} : _">(Surname Missing)</th:block>
+        FOR DR <th:block th:text="${#strings.toUpperCase(trainee.forenames)}"></th:block> <th:block th:text="${not #strings.isEmpty(trainee.surname)} ? ${#strings.toUpperCase(trainee.surname)} : _">(Surname Missing)</th:block>
     </h4>
     <p>I am writing to confirm that Dr <th:block th:text="${#strings.capitalize(trainee.forenames)}"></th:block> <th:block th:text="${not #strings.isEmpty(trainee.surname)} ? ${#strings.capitalize(trainee.surname)} : _">(surname missing)</th:block
       > (GMC: <th:block th:text="${not #strings.isEmpty(trainee.gmcNumber) ? trainee.gmcNumber : 'unknown'}"></th:block
