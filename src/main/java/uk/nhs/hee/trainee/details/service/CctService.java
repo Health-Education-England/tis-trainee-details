@@ -71,7 +71,8 @@ public class CctService {
     String traineeId = traineeIdentity.getTraineeId();
     log.info("Getting CCT calculations for trainee [{}]", traineeId);
 
-    List<CctCalculation> entities = calculationRepository.findByTraineeIdOrderByName(traineeId);
+    List<CctCalculation> entities = calculationRepository.findByTraineeIdOrderByLastModified(
+        traineeId);
     log.info("Found {} CCT calculations for trainee [{}]", entities.size(), traineeId);
 
     return mapper.toSummaryDtos(entities);

@@ -24,13 +24,18 @@ package uk.nhs.hee.trainee.details.config;
 import jakarta.annotation.PostConstruct;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.mongodb.config.EnableMongoAuditing;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.index.Index;
 import org.springframework.data.mongodb.core.index.IndexInfo;
 import org.springframework.data.mongodb.core.index.IndexOperations;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 
+/**
+ * Configuration for the Mongo database.
+ */
 @Configuration
+@EnableMongoAuditing
 public class MongoConfiguration {
 
   private final MongoTemplate template;

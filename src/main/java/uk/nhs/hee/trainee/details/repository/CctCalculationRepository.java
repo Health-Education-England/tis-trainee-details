@@ -34,10 +34,10 @@ import uk.nhs.hee.trainee.details.model.CctCalculation;
 public interface CctCalculationRepository extends MongoRepository<CctCalculation, ObjectId> {
 
   /**
-   * Find all calculations belonging to the given trainee.
+   * Find all calculations belonging to the given trainee, ordered by last modified.
    *
    * @param traineeId The ID of the trainee.
    * @return A list of found calculations.
    */
-  List<CctCalculation> findByTraineeIdOrderByName(String traineeId);
+  List<CctCalculation> findByTraineeIdOrderByLastModified(String traineeId);
 }

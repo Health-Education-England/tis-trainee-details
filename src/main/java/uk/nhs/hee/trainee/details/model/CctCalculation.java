@@ -21,12 +21,15 @@
 
 package uk.nhs.hee.trainee.details.model;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import lombok.Builder;
 import org.bson.types.ObjectId;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
@@ -50,7 +53,13 @@ public record CctCalculation(
     String traineeId,
     String name,
     CctProgrammeMembership programmeMembership,
-    List<CctChange> changes
+    List<CctChange> changes,
+
+    @CreatedDate
+    Instant created,
+
+    @LastModifiedDate
+    Instant lastModified
 ) {
 
   /**

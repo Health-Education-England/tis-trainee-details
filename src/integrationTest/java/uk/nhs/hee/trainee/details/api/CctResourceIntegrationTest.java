@@ -22,6 +22,7 @@
 package uk.nhs.hee.trainee.details.api;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -37,6 +38,9 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import com.jayway.jsonpath.JsonPath;
 import io.awspring.cloud.sqs.operations.SqsTemplate;
 import java.io.IOException;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 import org.bson.types.ObjectId;
@@ -65,7 +69,10 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import uk.nhs.hee.trainee.details.DockerImageNames;
 import uk.nhs.hee.trainee.details.TestJwtUtil;
+import uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType;
 import uk.nhs.hee.trainee.details.model.CctCalculation;
+import uk.nhs.hee.trainee.details.model.CctCalculation.CctChange;
+import uk.nhs.hee.trainee.details.model.CctCalculation.CctProgrammeMembership;
 
 @SpringBootTest
 @Testcontainers(disabledWithoutDocker = true)
@@ -153,26 +160,55 @@ class CctResourceIntegrationTest {
   }
 
   @Test
-  void shouldGetCalculationsOrderedByNameWhenOwnedByUser() throws Exception {
-    ObjectId id1 = ObjectId.get();
-    CctCalculation entity1 = CctCalculation.builder()
-        .id(id1)
+  void shouldGetCalculationsWhenOwnedByUser() throws Exception {
+    UUID pmId = UUID.randomUUID();
+
+    CctCalculation entity = CctCalculation.builder()
         .traineeId(TRAINEE_ID)
-        .name("aaa")
+        .name("Test Calculation")
+        .programmeMembership(CctProgrammeMembership.builder()
+            .id(pmId)
+            .build())
         .build();
-    ObjectId id2 = ObjectId.get();
-    CctCalculation entity2 = CctCalculation.builder()
-        .id(id2)
+    entity = template.insert(entity);
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(get("/api/cct/calculation")
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$").isArray())
+        .andExpect(jsonPath("$", hasSize(1)))
+        .andExpect(jsonPath("$[0].id").value(entity.id().toString()))
+        .andExpect(jsonPath("$[0].name").value("Test Calculation"))
+        .andExpect(jsonPath("$[0].programmeMembershipId").value(pmId.toString()))
+        .andExpect(jsonPath("$[0].created").value(
+            entity.created().truncatedTo(ChronoUnit.MILLIS).toString()))
+        .andExpect(jsonPath("$[0].lastModified").value(
+            entity.lastModified().truncatedTo(ChronoUnit.MILLIS).toString()));
+  }
+
+  @Test
+  void shouldGetCalculationsOrderedByLatestWhenOwnedByUser() throws Exception {
+    CctCalculation future = CctCalculation.builder()
         .traineeId(TRAINEE_ID)
-        .name("ccc")
+        .name("Future")
         .build();
-    ObjectId id3 = ObjectId.get();
-    CctCalculation entity3 = CctCalculation.builder()
-        .id(id3)
+    future = template.insert(future);
+
+    CctCalculation past = CctCalculation.builder()
         .traineeId(TRAINEE_ID)
-        .name("bbb")
+        .name("Past")
         .build();
-    template.insertAll(List.of(entity1, entity2, entity3));
+    template.insert(past);
+
+    CctCalculation present = CctCalculation.builder()
+        .traineeId(TRAINEE_ID)
+        .name("Present")
+        .build();
+    template.insert(present);
+
+    template.save(future);
 
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
     mockMvc.perform(get("/api/cct/calculation")
@@ -181,9 +217,9 @@ class CctResourceIntegrationTest {
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$").isArray())
         .andExpect(jsonPath("$", hasSize(3)))
-        .andExpect(jsonPath("$[0].id").value(id1.toString()))
-        .andExpect(jsonPath("$[1].id").value(id3.toString()))
-        .andExpect(jsonPath("$[2].id").value(id2.toString()));
+        .andExpect(jsonPath("$[0].name").value("Past"))
+        .andExpect(jsonPath("$[1].name").value("Present"))
+        .andExpect(jsonPath("$[2].name").value("Future"));
   }
 
   @Test
@@ -220,20 +256,49 @@ class CctResourceIntegrationTest {
 
   @Test
   void shouldGetCalculationWhenOwnedByUser() throws Exception {
-    ObjectId id = ObjectId.get();
+    UUID pmId = UUID.randomUUID();
+
     CctCalculation entity = CctCalculation.builder()
-        .id(id)
         .traineeId(TRAINEE_ID)
+        .name("Test Calculation")
+        .programmeMembership(CctProgrammeMembership.builder()
+            .id(pmId)
+            .name("Test Programme")
+            .startDate(LocalDate.parse("2024-01-01"))
+            .endDate(LocalDate.parse("2025-01-01"))
+            .wte(1.0)
+            .build())
+        .changes(List.of(
+            CctChange.builder()
+                .type(CctChangeType.LTFT)
+                .startDate(LocalDate.parse("2024-07-01"))
+                .wte(0.5)
+                .build()))
         .build();
-    template.insert(entity);
+    entity = template.insert(entity);
 
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
-    mockMvc.perform(get("/api/cct/calculation/{id}", id)
+    mockMvc.perform(get("/api/cct/calculation/{id}", entity.id())
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.id").value(id.toString()))
-        .andExpect(jsonPath("$.traineeId").doesNotExist());
+        .andExpect(jsonPath("$.id").value(entity.id().toString()))
+        .andExpect(jsonPath("$.traineeId").doesNotExist())
+        .andExpect(jsonPath("$.name").value("Test Calculation"))
+        .andExpect(jsonPath("$.programmeMembership").isMap())
+        .andExpect(jsonPath("$.programmeMembership.id").value(pmId.toString()))
+        .andExpect(jsonPath("$.programmeMembership.startDate").value("2024-01-01"))
+        .andExpect(jsonPath("$.programmeMembership.endDate").value("2025-01-01"))
+        .andExpect(jsonPath("$.programmeMembership.wte").value(1))
+        .andExpect(jsonPath("$.changes").isArray())
+        .andExpect(jsonPath("$.changes", hasSize(1)))
+        .andExpect(jsonPath("$.changes[0].type").value("LTFT"))
+        .andExpect(jsonPath("$.changes[0].startDate").value("2024-07-01"))
+        .andExpect(jsonPath("$.changes[0].wte").value(0.5))
+        .andExpect(
+            jsonPath("$.created").value(entity.created().truncatedTo(ChronoUnit.MILLIS).toString()))
+        .andExpect(jsonPath("$.lastModified").value(
+            entity.lastModified().truncatedTo(ChronoUnit.MILLIS).toString()));
   }
 
   @Test
@@ -445,8 +510,10 @@ class CctResourceIntegrationTest {
 
   @Test
   void shouldReturnCreatedCalculationJsonWhenRequestValid() throws Exception {
+    Instant start = Instant.now();
+
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
-    mockMvc.perform(post("/api/cct/calculation")
+    MvcResult result = mockMvc.perform(post("/api/cct/calculation")
             .header(HttpHeaders.AUTHORIZATION, token)
             .contentType(MediaType.APPLICATION_JSON)
             .content(calculationJson.toString()))
@@ -454,7 +521,17 @@ class CctResourceIntegrationTest {
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.id").exists())
         .andExpect(jsonPath("$.traineeId").doesNotExist())
-        .andExpect(jsonPath("$.name").value("Test Calculation"));
+        .andExpect(jsonPath("$.name").value("Test Calculation"))
+        .andExpect(jsonPath("$.created").exists())
+        .andExpect(jsonPath("$.lastModified").exists())
+        .andReturn();
+
+    String response = result.getResponse().getContentAsString();
+    Instant created = Instant.parse(JsonPath.read(response, "$.created"));
+    assertThat("Unexpected created timestamp.", created, greaterThan(start));
+
+    Instant lastModified = Instant.parse(JsonPath.read(response, "$.lastModified"));
+    assertThat("Unexpected last modified timestamp.", lastModified, greaterThan(start));
   }
 
   @Test

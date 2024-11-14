@@ -23,6 +23,7 @@ package uk.nhs.hee.trainee.details.dto;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import java.time.Instant;
 import java.util.UUID;
 import lombok.Builder;
 import org.bson.types.ObjectId;
@@ -40,6 +41,8 @@ public record CctCalculationSummaryDto(
     @JsonSerialize(using = ToStringSerializer.class)
     ObjectId id,
     String name,
-    UUID programmeMembershipId) {
+    UUID programmeMembershipId,
+    Instant created,
+    Instant lastModified) {
 
 }
