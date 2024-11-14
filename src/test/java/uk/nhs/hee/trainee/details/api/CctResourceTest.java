@@ -22,6 +22,7 @@
 package uk.nhs.hee.trainee.details.api;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
@@ -34,6 +35,7 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Optional;
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,6 +43,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
+import uk.nhs.hee.trainee.details.dto.CctCalculationSummaryDto;
 import uk.nhs.hee.trainee.details.service.CctService;
 
 class CctResourceTest {
@@ -55,6 +58,47 @@ class CctResourceTest {
   }
 
   @Test
+  void shouldNotGetCalculationSummariesWhenCalculationsNotExist() {
+    ObjectId id = ObjectId.get();
+    when(service.getCalculation(id)).thenReturn(Optional.empty());
+
+    ResponseEntity<List<CctCalculationSummaryDto>> response = controller.getCalculationSummaries();
+
+    assertThat("Unexpected response code.", response.getStatusCode(), is(OK));
+    assertThat("Unexpected response body.", response.getBody(), is(List.of()));
+  }
+
+  @Test
+  void shouldGetCalculationSummariesWhenCalculationsExist() {
+    ObjectId id1 = ObjectId.get();
+    CctCalculationSummaryDto dto1 = CctCalculationSummaryDto.builder()
+        .id(id1)
+        .name("Test Calculation 1")
+        .build();
+    ObjectId id2 = ObjectId.get();
+    CctCalculationSummaryDto dto2 = CctCalculationSummaryDto.builder()
+        .id(id2)
+        .name("Test Calculation 2")
+        .build();
+    when(service.getCalculations()).thenReturn(List.of(dto1, dto2));
+
+    ResponseEntity<List<CctCalculationSummaryDto>> response = controller.getCalculationSummaries();
+
+    assertThat("Unexpected response code.", response.getStatusCode(), is(OK));
+
+    List<CctCalculationSummaryDto> responseDtos = response.getBody();
+    assertThat("Unexpected response DTO count.", responseDtos, hasSize(2));
+
+    CctCalculationSummaryDto responseDto1 = responseDtos.get(0);
+    assertThat("Unexpected ID.", responseDto1.id(), is(id1));
+    assertThat("Unexpected name.", responseDto1.name(), is("Test Calculation 1"));
+
+    CctCalculationSummaryDto responseDto2 = responseDtos.get(1);
+    assertThat("Unexpected ID.", responseDto2.id(), is(id2));
+    assertThat("Unexpected name.", responseDto2.name(), is("Test Calculation 2"));
+  }
+
+  @Test
   void shouldNotGetCalculationDetailWhenCalculationNotExists() {
     ObjectId id = ObjectId.get();
     when(service.getCalculation(id)).thenReturn(Optional.empty());
@@ -62,7 +106,7 @@ class CctResourceTest {
     ResponseEntity<CctCalculationDetailDto> response = controller.getCalculationDetails(id);
 
     assertThat("Unexpected response code.", response.getStatusCode(), is(NOT_FOUND));
-    assertThat("Unexpected response code.", response.getBody(), nullValue());
+    assertThat("Unexpected response body.", response.getBody(), nullValue());
   }
 
   @Test

@@ -37,6 +37,7 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import com.jayway.jsonpath.JsonPath;
 import io.awspring.cloud.sqs.operations.SqsTemplate;
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.AfterEach;
@@ -115,6 +116,74 @@ class CctResourceIntegrationTest {
   @AfterEach
   void tearDown() {
     template.findAllAndRemove(new Query(), CctCalculation.class);
+  }
+
+  @Test
+  void shouldBeForbiddenGettingCalculationsWhenNoToken() throws Exception {
+    mockMvc.perform(get("/api/cct/calculation", "1"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$").doesNotExist());
+  }
+
+  @Test
+  void shouldBeForbiddenGettingCalculationsWhenNoTraineeId() throws Exception {
+    String token = TestJwtUtil.generateToken("{}");
+    mockMvc.perform(get("/api/cct/calculation", "1")
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$").doesNotExist());
+  }
+
+  @Test
+  void shouldNotGetCalculationsWhenNotOwnedByUser() throws Exception {
+    ObjectId id = ObjectId.get();
+    CctCalculation entity = CctCalculation.builder()
+        .id(id)
+        .traineeId(TRAINEE_ID)
+        .build();
+    template.insert(entity);
+
+    String token = TestJwtUtil.generateTokenForTisId(UUID.randomUUID().toString());
+    mockMvc.perform(get("/api/cct/calculation")
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$").isArray())
+        .andExpect(jsonPath("$", hasSize(0)));
+  }
+
+  @Test
+  void shouldGetCalculationsOrderedByNameWhenOwnedByUser() throws Exception {
+    ObjectId id1 = ObjectId.get();
+    CctCalculation entity1 = CctCalculation.builder()
+        .id(id1)
+        .traineeId(TRAINEE_ID)
+        .name("aaa")
+        .build();
+    ObjectId id2 = ObjectId.get();
+    CctCalculation entity2 = CctCalculation.builder()
+        .id(id2)
+        .traineeId(TRAINEE_ID)
+        .name("ccc")
+        .build();
+    ObjectId id3 = ObjectId.get();
+    CctCalculation entity3 = CctCalculation.builder()
+        .id(id3)
+        .traineeId(TRAINEE_ID)
+        .name("bbb")
+        .build();
+    template.insertAll(List.of(entity1, entity2, entity3));
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(get("/api/cct/calculation")
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$").isArray())
+        .andExpect(jsonPath("$", hasSize(3)))
+        .andExpect(jsonPath("$[0].id").value(id1.toString()))
+        .andExpect(jsonPath("$[1].id").value(id3.toString()))
+        .andExpect(jsonPath("$[2].id").value(id2.toString()));
   }
 
   @Test

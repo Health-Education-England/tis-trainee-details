@@ -23,9 +23,11 @@ package uk.nhs.hee.trainee.details.mapper;
 
 import static org.mapstruct.MappingConstants.ComponentModel.SPRING;
 
+import java.util.List;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
+import uk.nhs.hee.trainee.details.dto.CctCalculationSummaryDto;
 import uk.nhs.hee.trainee.details.model.CctCalculation;
 
 /**
@@ -33,6 +35,23 @@ import uk.nhs.hee.trainee.details.model.CctCalculation;
  */
 @Mapper(componentModel = SPRING)
 public interface CctMapper {
+
+  /**
+   * Convert a {@link CctCalculation} entity to a {@link CctCalculationSummaryDto} DTO.
+   *
+   * @param entity The entity to convert to a DTO.
+   * @return The equivalent summary DTO.
+   */
+  @Mapping(target = "programmeMembershipId", source = "programmeMembership.id")
+  CctCalculationSummaryDto toSummaryDto(CctCalculation entity);
+
+  /**
+   * Convert a list of {@link CctCalculation} to a list of {@link CctCalculationDetailDto}.
+   *
+   * @param entities The entities to convert to DTOs.
+   * @return The equivalent summary DTOs.
+   */
+  List<CctCalculationSummaryDto> toSummaryDtos(List<CctCalculation> entities);
 
   /**
    * Convert a {@link CctCalculation} entity to a {@link CctCalculationDetailDto} DTO.
