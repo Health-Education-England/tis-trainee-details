@@ -23,6 +23,7 @@ package uk.nhs.hee.trainee.details.api;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.net.URI;
+import java.util.List;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
@@ -35,6 +36,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
+import uk.nhs.hee.trainee.details.dto.CctCalculationSummaryDto;
 import uk.nhs.hee.trainee.details.dto.validation.Create;
 import uk.nhs.hee.trainee.details.service.CctService;
 
@@ -56,6 +58,18 @@ public class CctResource {
    */
   public CctResource(CctService service) {
     this.service = service;
+  }
+
+  /**
+   * Get a list of CCT calculation summaries for the current user.
+   *
+   * @return The found CCT calculation summaries.
+   */
+  @GetMapping("/calculation")
+  public ResponseEntity<List<CctCalculationSummaryDto>> getCalculationSummaries() {
+    log.info("Request to get a summary for all CCT calculations");
+    List<CctCalculationSummaryDto> calculations = service.getCalculations();
+    return ResponseEntity.ok(calculations);
   }
 
   /**

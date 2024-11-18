@@ -19,25 +19,30 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package uk.nhs.hee.trainee.details.repository;
+package uk.nhs.hee.trainee.details.dto;
 
-import java.util.List;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import java.time.Instant;
+import java.util.UUID;
+import lombok.Builder;
 import org.bson.types.ObjectId;
-import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.stereotype.Repository;
-import uk.nhs.hee.trainee.details.model.CctCalculation;
 
 /**
- * A repository for CCT calculations.
+ * A summary of a CCT calculation.
+ *
+ * @param id                    The ID of the calculation.
+ * @param name                  The name of the calculation.
+ * @param programmeMembershipId The ID of the associated programme membership.
  */
-@Repository
-public interface CctCalculationRepository extends MongoRepository<CctCalculation, ObjectId> {
+@Builder
+public record CctCalculationSummaryDto(
 
-  /**
-   * Find all calculations belonging to the given trainee, ordered by last modified.
-   *
-   * @param traineeId The ID of the trainee.
-   * @return A list of found calculations.
-   */
-  List<CctCalculation> findByTraineeIdOrderByLastModified(String traineeId);
+    @JsonSerialize(using = ToStringSerializer.class)
+    ObjectId id,
+    String name,
+    UUID programmeMembershipId,
+    Instant created,
+    Instant lastModified) {
+
 }

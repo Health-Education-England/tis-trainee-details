@@ -30,6 +30,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.LTFT;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -40,6 +42,7 @@ import org.junit.jupiter.api.Test;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto.CctChangeDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto.CctProgrammeMembershipDto;
+import uk.nhs.hee.trainee.details.dto.CctCalculationSummaryDto;
 import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
 import uk.nhs.hee.trainee.details.exception.NotRecordOwnerException;
 import uk.nhs.hee.trainee.details.mapper.CctMapperImpl;
@@ -63,6 +66,72 @@ class CctServiceTest {
     calculationRepository = mock(CctCalculationRepository.class);
 
     service = new CctService(traineeIdentity, calculationRepository, new CctMapperImpl());
+  }
+
+  @Test
+  void shouldReturnEmptyGettingCalculationsWhenNotFound() {
+    when(calculationRepository.findByTraineeIdOrderByLastModified(TRAINEE_ID)).thenReturn(
+        List.of());
+
+    List<CctCalculationSummaryDto> result = service.getCalculations();
+
+    assertThat("Unexpected calculation summary count.", result.size(), is(0));
+  }
+
+  @Test
+  void shouldGetCalculationsWhenFound() {
+    ObjectId calculationId1 = ObjectId.get();
+    UUID pmId1 = UUID.randomUUID();
+    Instant created1 = Instant.now().minus(Duration.ofDays(1));
+    Instant lastModified1 = Instant.now().plus(Duration.ofDays(1));
+
+    CctCalculation entity1 = CctCalculation.builder()
+        .id(calculationId1)
+        .traineeId(TRAINEE_ID)
+        .name("Test Calculation 1")
+        .programmeMembership(CctProgrammeMembership.builder()
+            .id(pmId1)
+            .build())
+        .created(created1)
+        .lastModified(lastModified1)
+        .build();
+
+    ObjectId calculationId2 = ObjectId.get();
+    UUID pmId2 = UUID.randomUUID();
+    Instant created2 = Instant.now().minus(Duration.ofDays(2));
+    Instant lastModified2 = Instant.now().plus(Duration.ofDays(2));
+
+    CctCalculation entity2 = CctCalculation.builder()
+        .id(calculationId2)
+        .traineeId(TRAINEE_ID)
+        .name("Test Calculation 2")
+        .programmeMembership(CctProgrammeMembership.builder()
+            .id(pmId2)
+            .build())
+        .created(created2)
+        .lastModified(lastModified2)
+        .build();
+
+    when(calculationRepository.findByTraineeIdOrderByLastModified(TRAINEE_ID)).thenReturn(
+        List.of(entity1, entity2));
+
+    List<CctCalculationSummaryDto> result = service.getCalculations();
+
+    assertThat("Unexpected calculation summary count.", result.size(), is(2));
+
+    CctCalculationSummaryDto dto1 = result.get(0);
+    assertThat("Unexpected calculation ID.", dto1.id(), is(calculationId1));
+    assertThat("Unexpected calculation name.", dto1.name(), is("Test Calculation 1"));
+    assertThat("Unexpected PM ID.", dto1.programmeMembershipId(), is(pmId1));
+    assertThat("Unexpected created timestamp.", dto1.created(), is(created1));
+    assertThat("Unexpected last modified timestamp.", dto1.lastModified(), is(lastModified1));
+
+    CctCalculationSummaryDto dto2 = result.get(1);
+    assertThat("Unexpected calculation ID.", dto2.id(), is(calculationId2));
+    assertThat("Unexpected calculation name.", dto2.name(), is("Test Calculation 2"));
+    assertThat("Unexpected PM ID.", dto2.programmeMembershipId(), is(pmId2));
+    assertThat("Unexpected created timestamp.", dto2.created(), is(created2));
+    assertThat("Unexpected last modified timestamp.", dto2.lastModified(), is(lastModified2));
   }
 
   @Test
@@ -94,6 +163,9 @@ class CctServiceTest {
     ObjectId calculationId = ObjectId.get();
     UUID pmId = UUID.randomUUID();
 
+    Instant created = Instant.now().minus(Duration.ofDays(1));
+    Instant lastModified = Instant.now().plus(Duration.ofDays(1));
+
     CctCalculation entity = CctCalculation.builder()
         .id(calculationId)
         .traineeId(TRAINEE_ID)
@@ -109,6 +181,8 @@ class CctServiceTest {
             CctChange.builder().type(LTFT).startDate(LocalDate.MIN).wte(0.5).build(),
             CctChange.builder().type(LTFT).startDate(LocalDate.MAX).wte(0.75).build()
         ))
+        .created(created)
+        .lastModified(lastModified)
         .build();
 
     when(calculationRepository.findById(calculationId)).thenReturn(Optional.of(entity));
@@ -120,6 +194,8 @@ class CctServiceTest {
     CctCalculationDetailDto dto = result.get();
     assertThat("Unexpected calculation ID.", dto.id(), is(calculationId));
     assertThat("Unexpected calculation name.", dto.name(), is("Test Calculation"));
+    assertThat("Unexpected created timestamp.", dto.created(), is(created));
+    assertThat("Unexpected last modified timestamp.", dto.lastModified(), is(lastModified));
 
     CctProgrammeMembershipDto pm = dto.programmeMembership();
     assertThat("Unexpected PM ID.", pm.id(), is(pmId));

@@ -28,6 +28,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Null;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -44,6 +45,8 @@ import uk.nhs.hee.trainee.details.dto.validation.Create;
  * @param name                A name for the calculation.
  * @param programmeMembership The programme membership data for the calculation.
  * @param changes             The CCT changes to be calculated.
+ * @param created             When the calculation was created (auto-generated).
+ * @param lastModified        When the calculation was last modified (auto-generated).
  */
 @Builder
 public record CctCalculationDetailDto(
@@ -61,7 +64,9 @@ public record CctCalculationDetailDto(
 
     @NotEmpty
     @Valid
-    List<CctChangeDto> changes) {
+    List<CctChangeDto> changes,
+    Instant created,
+    Instant lastModified) {
 
   /**
    * Programme membership data for a calculation.
