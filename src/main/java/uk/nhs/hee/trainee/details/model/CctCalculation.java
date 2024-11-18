@@ -43,6 +43,8 @@ import uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType;
  * @param name                A name for the calculation.
  * @param programmeMembership The programme membership data for the calculation.
  * @param changes             The CCT changes to be calculated.
+ * @param created             When the calculation was created (auto-generated).
+ * @param lastModified        When the calculation was last modified (auto-generated).
  */
 @Document("CctCalculation")
 @Builder
