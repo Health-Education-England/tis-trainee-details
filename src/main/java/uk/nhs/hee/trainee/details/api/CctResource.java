@@ -102,4 +102,15 @@ public class CctResource {
     return ResponseEntity.created(URI.create("/api/cct/calculation/" + savedCalculation.id()))
         .body(savedCalculation);
   }
+
+  @PostMapping("/calculate")
+  public ResponseEntity<CctCalculationDetailDto> calculateCctDate(
+      @RequestBody CctCalculationDetailDto calculation) {
+    log.info("Request to calculate CCT date [{}]", calculation.name());
+    Optional<CctCalculationDetailDto> cctDateCalculation = service.calculateCctDate(calculation);
+    if (cctDateCalculation.isEmpty()) {
+      return ResponseEntity.badRequest().build();
+    }
+    return ResponseEntity.of(cctDateCalculation);
+  }
 }

@@ -45,6 +45,7 @@ import uk.nhs.hee.trainee.details.dto.validation.Create;
  * @param name                A name for the calculation.
  * @param programmeMembership The programme membership data for the calculation.
  * @param changes             The CCT changes to be calculated.
+ * @param cctDate             The calculated CCT end date based on the changes.
  * @param created             When the calculation was created (auto-generated).
  * @param lastModified        When the calculation was last modified (auto-generated).
  */
@@ -65,6 +66,10 @@ public record CctCalculationDetailDto(
     @NotEmpty
     @Valid
     List<CctChangeDto> changes,
+
+    @Null(groups = Create.class)
+    LocalDate cctDate,
+
     Instant created,
     Instant lastModified) {
 

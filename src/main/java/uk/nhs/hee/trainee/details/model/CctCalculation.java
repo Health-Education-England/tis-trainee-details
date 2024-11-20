@@ -43,6 +43,7 @@ import uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType;
  * @param name                A name for the calculation.
  * @param programmeMembership The programme membership data for the calculation.
  * @param changes             The CCT changes to be calculated.
+ * @param cctDate             The calculated CCT end date based on the changes.
  * @param created             When the calculation was created (auto-generated).
  * @param lastModified        When the calculation was last modified (auto-generated).
  */
@@ -56,6 +57,8 @@ public record CctCalculation(
     String name,
     CctProgrammeMembership programmeMembership,
     List<CctChange> changes,
+
+    LocalDate cctDate,
 
     @CreatedDate
     Instant created,

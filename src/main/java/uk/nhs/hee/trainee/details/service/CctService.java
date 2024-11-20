@@ -22,6 +22,7 @@
 package uk.nhs.hee.trainee.details.service;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
@@ -114,5 +115,26 @@ public class CctService {
 
     log.info("Created CCT calculation [{}] with id [{}]", dto.name(), entity.id());
     return mapper.toDetailDto(entity);
+  }
+
+  /**
+   * Calculate the CCT end date and insert it into a CCT Calculation DTO.
+   *
+   * @param dto The CctCalculationDetailDto to use to calculate the CCT end date.
+   * @return A copy of the DTO with the CCT end date set, or Optional.empty if the calculation was
+   * not possible due to invalid data.
+   */
+  public Optional<CctCalculationDetailDto> calculateCctDate(CctCalculationDetailDto dto) {
+    LocalDate cctDate = LocalDate.MAX; //placeholder
+    return Optional.of(
+        CctCalculationDetailDto.builder()
+            .id(dto.id())
+            .name(dto.name())
+            .programmeMembership(dto.programmeMembership())
+            .changes(dto.changes())
+            .cctDate(cctDate)
+            .created(dto.created())
+            .lastModified(dto.lastModified())
+            .build());
   }
 }
