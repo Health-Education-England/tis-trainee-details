@@ -1597,7 +1597,6 @@ class ProgrammeMembershipServiceTest {
         is(traineeProfile.getProgrammeMemberships().get(1)));
     assertThat("Unexpected trainee.", variables.get("trainee"),
         is(traineeProfile.getPersonalDetails()));
-    assertThat("Unexpected programme length.", variables.get("pmLength"), is(1L));
     assertThat("Unexpected local Office Contact.", variables.get("localOfficeContact"),
         is(OWNER_CONTACT));
     assertThat("Unexpected contact Href.", variables.get("contactHref"),

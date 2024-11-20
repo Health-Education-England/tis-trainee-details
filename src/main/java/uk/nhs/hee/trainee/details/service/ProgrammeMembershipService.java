@@ -521,8 +521,6 @@ public class ProgrammeMembershipService {
               .isBefore(LocalDate.now())) {
 
             // Template Variables
-            long pmLength = YEARS.between(
-                programmeMembership.getStartDate(), programmeMembership.getEndDate());
             List<Map<String, String>> ownerContactList =
                 getOwnerContactList(programmeMembership.getManagingDeanery());
             String contact = getOwnerContact(ownerContactList,
@@ -532,7 +530,6 @@ public class ProgrammeMembershipService {
             Map<String, Object> templateVariables = new HashMap<>();
             templateVariables.put("pm", programmeMembership);
             templateVariables.put("trainee", personalDetails);
-            templateVariables.put("pmLength", pmLength);
             templateVariables.put("localOfficeContact", contact);
             templateVariables.put("contactHref", getHrefTypeForContact(contact));
 
