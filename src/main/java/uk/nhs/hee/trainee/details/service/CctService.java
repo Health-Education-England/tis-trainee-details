@@ -122,7 +122,7 @@ public class CctService {
    *
    * @param dto The CctCalculationDetailDto to use to calculate the CCT end date.
    * @return A copy of the DTO with the CCT end date set, or Optional.empty if the calculation was
-   * not possible due to invalid data.
+   *         not possible due to invalid data.
    */
   public Optional<CctCalculationDetailDto> calculateCctDate(CctCalculationDetailDto dto) {
     LocalDate cctDate = LocalDate.MAX; //placeholder

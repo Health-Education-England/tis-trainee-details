@@ -103,6 +103,14 @@ public class CctResource {
         .body(savedCalculation);
   }
 
+  /**
+   * Set the CCT end date in a CCT calculation DTO.
+   *
+   * @param calculation The CCT calculation details.
+   *
+   * @return The CCT calculation with the CCT end date, or Bad Request if the CCT date could not
+   *         be calculated.
+   */
   @PostMapping("/calculate")
   public ResponseEntity<CctCalculationDetailDto> calculateCctDate(
       @RequestBody CctCalculationDetailDto calculation) {
