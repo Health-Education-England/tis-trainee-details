@@ -19,7 +19,7 @@
     <p>I am writing to confirm that Dr <th:block th:text="${#strings.capitalize(trainee.forenames)}"></th:block> <th:block th:text="${not #strings.isEmpty(trainee.surname)} ? ${#strings.capitalize(trainee.surname)} : _">(surname missing)</th:block
       > (GMC: <th:block th:text="${not #strings.isEmpty(trainee.gmcNumber) ? trainee.gmcNumber : 'unknown'}"></th:block
       >) has been appointed to a <th:block th:text="${pm.programmeName}"></th:block
-      > Training Programme with an indicative length of training of <th:block th:text="${pmLength}"></th:block> years with the NHS England <th:block th:text="${not #strings.isEmpty(pm.managingDeanery)} ? ${pm.managingDeanery} : _">(local office missing)</th:block
+      > Training Programme with NHS England <th:block th:text="${not #strings.isEmpty(pm.managingDeanery)} ? ${pm.managingDeanery} : _">(local office missing)</th:block
       > from <th:block th:text="${pm.startDate} ? |${#temporals.format(pm.startDate, 'dd MMMM yyyy')}| : _">(start date missing)</th:block
       >. Please note that NHS England <th:block th:text="${not #strings.isEmpty(pm.managingDeanery)} ? ${pm.managingDeanery} : _">(local office missing)</th:block> is not an employing body.
     </p>
