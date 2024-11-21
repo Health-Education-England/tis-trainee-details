@@ -30,11 +30,13 @@ import static org.hamcrest.Matchers.sameInstance;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
 
 import java.net.URI;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.bson.types.ObjectId;
@@ -171,5 +173,47 @@ class CctResourceTest {
     HttpHeaders headers = response.getHeaders();
     assertThat("Unexpected response code.", headers.getLocation(),
         is(URI.create("/api/cct/calculation/" + id)));
+  }
+
+  @Test
+  void shouldReturnCctCalculation() {
+    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
+        .name("Test Calculation")
+        .build();
+
+    ObjectId id = ObjectId.get();
+    when(service.calculateCctDate(any())).thenAnswer(inv -> {
+      CctCalculationDetailDto arg = inv.getArgument(0);
+      return Optional.of(CctCalculationDetailDto.builder()
+          .id(id)
+          .name(arg.name())
+          .cctDate(LocalDate.MAX)
+          .build());
+    });
+
+    ResponseEntity<CctCalculationDetailDto> response = controller.calculateCctDate(dto);
+
+    assertThat("Unexpected response code.", response.getStatusCode(), is(OK));
+
+    CctCalculationDetailDto responseBody = response.getBody();
+    assertThat("Unexpected response body.", responseBody, notNullValue());
+    assertThat("Unexpected CCT date.", responseBody.cctDate(), is(LocalDate.MAX));
+    assertThat("Unexpected name.", responseBody.name(), is("Test Calculation"));
+  }
+
+  @Test
+  void shouldReturnBadRequestIfErrorInCctCalculation() {
+    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
+        .name("Test Calculation")
+        .build();
+
+    when(service.calculateCctDate(any())).thenReturn(Optional.empty());
+
+    ResponseEntity<CctCalculationDetailDto> response = controller.calculateCctDate(dto);
+
+    assertThat("Unexpected response code.", response.getStatusCode(), is(BAD_REQUEST));
+
+    CctCalculationDetailDto responseBody = response.getBody();
+    assertThat("Unexpected response body.", responseBody, nullValue());
   }
 }

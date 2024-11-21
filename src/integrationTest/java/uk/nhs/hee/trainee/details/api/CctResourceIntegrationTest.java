@@ -257,6 +257,7 @@ class CctResourceIntegrationTest {
   @Test
   void shouldGetCalculationWhenOwnedByUser() throws Exception {
     UUID pmId = UUID.randomUUID();
+    LocalDate cctDate = LocalDate.of(2024, 1, 1);
 
     CctCalculation entity = CctCalculation.builder()
         .traineeId(TRAINEE_ID)
@@ -295,6 +296,7 @@ class CctResourceIntegrationTest {
         .andExpect(jsonPath("$.changes[0].type").value("LTFT"))
         .andExpect(jsonPath("$.changes[0].startDate").value("2024-07-01"))
         .andExpect(jsonPath("$.changes[0].wte").value(0.5))
+        .andExpect(jsonPath("$.cctDate").doesNotExist())
         .andExpect(
             jsonPath("$.created").value(entity.created().truncatedTo(ChronoUnit.MILLIS).toString()))
         .andExpect(jsonPath("$.lastModified").value(
@@ -521,6 +523,7 @@ class CctResourceIntegrationTest {
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.id").exists())
         .andExpect(jsonPath("$.traineeId").doesNotExist())
+        .andExpect(jsonPath("$.cctDate").doesNotExist())
         .andExpect(jsonPath("$.name").value("Test Calculation"))
         .andExpect(jsonPath("$.created").exists())
         .andExpect(jsonPath("$.lastModified").exists())
@@ -553,6 +556,27 @@ class CctResourceIntegrationTest {
     mockMvc.perform(get(location)
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(jsonPath("$.id").value(id))
+        .andExpect(jsonPath("$.name").value("Test Calculation"));
+  }
+
+  @Test
+  void shouldBeForbiddenCctCalculationWhenNoToken() throws Exception {
+    mockMvc.perform(post("/api/cct/calculate"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$").doesNotExist());
+  }
+
+  @Test
+  void shouldReturnCctCalculationJsonWhenRequestValid() throws Exception {
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculate")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(calculationJson.toString()))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.traineeId").doesNotExist())
+        .andExpect(jsonPath("$.cctDate").value(LocalDate.MAX.toString()))
         .andExpect(jsonPath("$.name").value("Test Calculation"));
   }
 }
