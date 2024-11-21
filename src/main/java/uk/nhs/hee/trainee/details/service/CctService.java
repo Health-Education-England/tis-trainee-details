@@ -126,15 +126,6 @@ public class CctService {
    */
   public Optional<CctCalculationDetailDto> calculateCctDate(CctCalculationDetailDto dto) {
     LocalDate cctDate = LocalDate.MAX; //placeholder
-    return Optional.of(
-        CctCalculationDetailDto.builder()
-            .id(dto.id())
-            .name(dto.name())
-            .programmeMembership(dto.programmeMembership())
-            .changes(dto.changes())
-            .cctDate(cctDate)
-            .created(dto.created())
-            .lastModified(dto.lastModified())
-            .build());
+    return Optional.of(mapper.toDetailDto(dto, cctDate));
   }
 }

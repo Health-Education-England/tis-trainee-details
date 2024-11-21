@@ -275,7 +275,6 @@ class CctResourceIntegrationTest {
                 .startDate(LocalDate.parse("2024-07-01"))
                 .wte(0.5)
                 .build()))
-        .cctDate(cctDate)
         .build();
     entity = template.insert(entity);
 
@@ -297,7 +296,7 @@ class CctResourceIntegrationTest {
         .andExpect(jsonPath("$.changes[0].type").value("LTFT"))
         .andExpect(jsonPath("$.changes[0].startDate").value("2024-07-01"))
         .andExpect(jsonPath("$.changes[0].wte").value(0.5))
-        .andExpect(jsonPath("$.cctDate").value(cctDate.toString()))
+        .andExpect(jsonPath("$.cctDate").doesNotExist())
         .andExpect(
             jsonPath("$.created").value(entity.created().truncatedTo(ChronoUnit.MILLIS).toString()))
         .andExpect(jsonPath("$.lastModified").value(

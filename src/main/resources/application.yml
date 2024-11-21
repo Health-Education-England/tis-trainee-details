@@ -30,8 +30,8 @@ sentry:
 application:
   aws:
     sns:
-      coj-signed: ${TOPIC_ARN_COJ_SIGNED}
-      gmc-details-provided: ${TOPIC_ARN_GMC_DETAILS_PROVIDED}
+      coj-signed: ${TOPIC_ARN_COJ_SIGNED:topic112}
+      gmc-details-provided: ${TOPIC_ARN_GMC_DETAILS_PROVIDED:topic123}
     sqs:
       event: ${EVENT_QUEUE_URL:}
       basic-details-update: ${BASIC_DETAILS_UPDATE_QUEUE_URL:}

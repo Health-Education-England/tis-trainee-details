@@ -23,6 +23,7 @@ package uk.nhs.hee.trainee.details.mapper;
 
 import static org.mapstruct.MappingConstants.ComponentModel.SPRING;
 
+import java.time.LocalDate;
 import java.util.List;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -59,6 +60,7 @@ public interface CctMapper {
    * @param entity The entity to convert to a DTO.
    * @return The equivalent detail DTO.
    */
+  @Mapping(target = "cctDate", ignore = true)
   CctCalculationDetailDto toDetailDto(CctCalculation entity);
 
   /**
@@ -70,4 +72,14 @@ public interface CctMapper {
    */
   @Mapping(target = "traineeId", source = "traineeId")
   CctCalculation toEntity(CctCalculationDetailDto dto, String traineeId);
+
+  /**
+   * Insert a cctDate into a {@link CctCalculationDetailDto} DTO.
+   *
+   * @param dto        The DTO to use.
+   * @param newCctDate The CCT date to update the DTO with.
+   * @return The equivalent DTO with CCT date injected.
+   */
+  @Mapping(target = "cctDate", source = "newCctDate")
+  CctCalculationDetailDto toDetailDto(CctCalculationDetailDto dto, LocalDate newCctDate);
 }

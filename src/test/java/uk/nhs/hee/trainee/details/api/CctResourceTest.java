@@ -207,7 +207,7 @@ class CctResourceTest {
         .name("Test Calculation")
         .build();
 
-    when(service.calculateCctDate(any())).thenAnswer(inv -> Optional.empty());
+    when(service.calculateCctDate(any())).thenReturn(Optional.empty());
 
     ResponseEntity<CctCalculationDetailDto> response = controller.calculateCctDate(dto);
 
