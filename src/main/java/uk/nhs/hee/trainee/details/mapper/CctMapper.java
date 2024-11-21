@@ -64,16 +64,6 @@ public interface CctMapper {
   CctCalculationDetailDto toDetailDto(CctCalculation entity);
 
   /**
-   * Convert a {@link CctCalculationDetailDto} DTO to a {@link CctCalculation} entity.
-   *
-   * @param dto       The DTO to convert to an entity.
-   * @param traineeId The ID of the trainee the calculation is for.
-   * @return The equivalent entity with trainee ID injected.
-   */
-  @Mapping(target = "traineeId", source = "traineeId")
-  CctCalculation toEntity(CctCalculationDetailDto dto, String traineeId);
-
-  /**
    * Insert a cctDate into a {@link CctCalculationDetailDto} DTO.
    *
    * @param dto        The DTO to use.
@@ -82,4 +72,14 @@ public interface CctMapper {
    */
   @Mapping(target = "cctDate", source = "newCctDate")
   CctCalculationDetailDto toDetailDto(CctCalculationDetailDto dto, LocalDate newCctDate);
+
+  /**
+   * Convert a {@link CctCalculationDetailDto} DTO to a {@link CctCalculation} entity.
+   *
+   * @param dto       The DTO to convert to an entity.
+   * @param traineeId The ID of the trainee the calculation is for.
+   * @return The equivalent entity with trainee ID injected.
+   */
+  @Mapping(target = "traineeId", source = "traineeId")
+  CctCalculation toEntity(CctCalculationDetailDto dto, String traineeId);
 }
