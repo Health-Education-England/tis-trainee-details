@@ -94,7 +94,7 @@ class TraineeProfileServiceTest {
   private static final String PERSON_MEDICALSCHOOL = "University of Science and Technology";
   private static final String PERSON_TELEPHONENUMBER = "01632960363";
   private static final String PERSON_MOBILE = "08465879348";
-  private static final String PERSON_EMAIL = "contact@contact.com";
+  private static final String PERSON_EMAIL = "email@email.com";
   private static final String PERSON_ADDRESS1 = "585-6360 Interdum Street";
   private static final String PERSON_ADDRESS2 = "Goulburn";
   private static final String PERSON_ADDRESS3 = "London";
@@ -406,7 +406,7 @@ class TraineeProfileServiceTest {
     service.getTraineeTisIdsByEmail("UPPER.lower@UpperCamel.lowerCamel");
 
     String email = emailCaptor.getValue();
-    assertThat("Unexpected contact.", email, is("upper.lower@uppercamel.lowercamel"));
+    assertThat("Unexpected email.", email, is("upper.lower@uppercamel.lowercamel"));
   }
 
   @Test
@@ -574,11 +574,11 @@ class TraineeProfileServiceTest {
     Optional<UserDetails> detail = service.getTraineeDetailsByTisId(DEFAULT_TIS_ID_1);
 
     assertThat("Unexpected missing account details.", detail.isPresent(), is(true));
-    assertThat("Unexpected trainee contact.", detail.get().email(), is(PERSON_EMAIL));
+    assertThat("Unexpected trainee email.", detail.get().email(), is(PERSON_EMAIL));
     assertThat("Unexpected trainee title.", detail.get().title(), is(PERSON_TITLE));
-    assertThat("Unexpected trainee family localOffice.", detail.get().familyName(),
+    assertThat("Unexpected trainee family name.", detail.get().familyName(),
         is(PERSON_SURNAME));
-    assertThat("Unexpected trainee given localOffice.", detail.get().givenName(),
+    assertThat("Unexpected trainee given name.", detail.get().givenName(),
         is(PERSON_FORENAME));
     assertThat("Unexpected trainee GMC number.", detail.get().gmcNumber(),
         is(PERSON_GMC));

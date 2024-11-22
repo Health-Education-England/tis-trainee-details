@@ -67,7 +67,7 @@ import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 public class ProgrammeMembershipService {
 
   protected static final String API_GET_OWNER_CONTACT
-      = "/api/local-office-contact-by-lo-localOffice/{localOfficeName}";
+      = "/api/local-office-contact-by-lo-name/{localOfficeName}";
   protected static final String DEFAULT_NO_CONTACT_MESSAGE
       = "your local office";
   protected static final List<String> MEDICAL_CURRICULA
@@ -734,7 +734,7 @@ public class ProgrammeMembershipService {
   /**
    * Retrieve the full list of contacts for a local office from Trainee Reference Service.
    *
-   * @param localOfficeName The local office localOffice.
+   * @param localOfficeName The local office name.
    * @return The list of contacts, or an empty list if there is an error.
    */
   protected List<Map<String, String>> getOwnerContactList(String localOfficeName) {
@@ -745,7 +745,7 @@ public class ProgrammeMembershipService {
             List.class, Map.of(OWNER_FIELD, localOfficeName));
         return ownerContactList == null ? new ArrayList<>() : ownerContactList;
       } catch (RestClientException rce) {
-        log.warn("Exception occurred when requesting reference local-office-contact-by-lo-localOffice "
+        log.warn("Exception occurred when requesting reference local-office-contact-by-lo-name "
             + "endpoint: " + rce);
       }
     }

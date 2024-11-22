@@ -88,9 +88,9 @@ public class TraineeProfileResource {
   }
 
   /**
-   * Get the trainee IDs for an contact address.
+   * Get the trainee IDs for an email address.
    *
-   * @param email The contact to search by.
+   * @param email The email to search by.
    * @return The matching trainee IDs.
    */
   @GetMapping("/trainee-ids")
@@ -119,7 +119,7 @@ public class TraineeProfileResource {
   /**
    * Verify the trainee against the provided details.
    *
-   * @param email The contact to match.
+   * @param email The email to match.
    * @param gmc   The GMC number to match.
    * @param dob   The date of birth to match.
    * @return The matching trainee ID, or 404 if not verified or not unique
@@ -128,7 +128,7 @@ public class TraineeProfileResource {
   public ResponseEntity<String> getVerifiedTraineeIds(@NotNull @RequestParam String email,
       @NotNull @RequestParam String gmc,
       @NotNull @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dob) {
-    log.info("Request to verify trainee ID matching contact '{}', GMC '{}' and DOB '{}'", email, gmc,
+    log.info("Request to verify trainee ID matching email '{}', GMC '{}' and DOB '{}'", email, gmc,
         dob.toString());
     List<String> traineeIds = service.getTraineeTisIdsByEmailGmcAndDob(email, gmc, dob);
 

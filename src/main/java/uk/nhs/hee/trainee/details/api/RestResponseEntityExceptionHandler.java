@@ -92,7 +92,7 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
   /**
    * A detailed parameter validation error.
    *
-   * @param parameter The localOffice of the parameter.
+   * @param parameter The name of the parameter.
    * @param detail    The validation failure detail.
    */
   record ParameterValidationError(String parameter, String detail) {

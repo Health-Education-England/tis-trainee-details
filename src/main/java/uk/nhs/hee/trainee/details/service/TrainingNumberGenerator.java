@@ -293,13 +293,13 @@ public class TrainingNumberGenerator {
 
     String programmeName = programmeMembership.getProgrammeName();
     if (programmeName == null || programmeName.isBlank()) {
-      log.info("Skipping training number population as programme localOffice is blank.");
+      log.info("Skipping training number population as programme name is blank.");
       return true;
     }
 
     String lowerProgrammeName = programmeName.toLowerCase();
     if (lowerProgrammeName.contains("foundation")) {
-      log.info("Skipping training number population as programme localOffice '{}' is excluded.",
+      log.info("Skipping training number population as programme name '{}' is excluded.",
           programmeMembership.getProgrammeName());
       return true;
     }

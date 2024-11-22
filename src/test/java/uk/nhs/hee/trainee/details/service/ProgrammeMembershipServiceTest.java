@@ -108,9 +108,9 @@ class ProgrammeMembershipServiceTest {
   private static final Instant COJ_SYNCED_AT = Instant.now();
   private static final String CURRICULUM_SPECIALTY_CODE = "X75";
   private static final String CURRICULUM_SPECIALTY = "some valid specialty";
-  private static final String RO_FIRSTNAME = "first localOffice-";
-  private static final String RO_LASTNAME = "last localOffice-";
-  private static final String RO_EMAIL = "contact-";
+  private static final String RO_FIRSTNAME = "first name-";
+  private static final String RO_LASTNAME = "last name-";
+  private static final String RO_EMAIL = "email-";
   private static final String RO_PHONE = "phone-";
   private static final String RO_GMC = "gmc-";
   private static final String FORENAMES = "forenames-";
@@ -1646,7 +1646,7 @@ class ProgrammeMembershipServiceTest {
     List<Map<String, String>> contacts = new ArrayList<>();
     Map<String, String> contact1 = new HashMap<>();
     contact1.put(CONTACT_TYPE_FIELD, LocalOfficeContactType.TSS_SUPPORT.getContactTypeName());
-    contact1.put(CONTACT_FIELD, "one@contact.com, another@contact.com");
+    contact1.put(CONTACT_FIELD, "one@email.com, another@email.com");
     contacts.add(contact1);
     Map<String, String> contact2 = new HashMap<>();
     contact2.put(CONTACT_TYPE_FIELD, LocalOfficeContactType.DEFERRAL.getContactTypeName());
@@ -1665,7 +1665,7 @@ class ProgrammeMembershipServiceTest {
     List<Map<String, String>> contacts = new ArrayList<>();
     Map<String, String> contact1 = new HashMap<>();
     contact1.put(CONTACT_TYPE_FIELD, LocalOfficeContactType.TSS_SUPPORT.getContactTypeName());
-    contact1.put(CONTACT_FIELD, "one@contact.com, another@contact.com");
+    contact1.put(CONTACT_FIELD, "one@email.com, another@email.com");
     contacts.add(contact1);
 
     String ownerContact = service.getOwnerContact(contacts,
@@ -1680,7 +1680,7 @@ class ProgrammeMembershipServiceTest {
     List<Map<String, String>> contacts = new ArrayList<>();
     Map<String, String> contact1 = new HashMap<>();
     contact1.put(CONTACT_TYPE_FIELD, LocalOfficeContactType.TSS_SUPPORT.getContactTypeName());
-    contact1.put(CONTACT_FIELD, "one@contact.com, another@contact.com");
+    contact1.put(CONTACT_FIELD, "one@email.com, another@email.com");
     contacts.add(contact1);
 
     String ownerContact = service.getOwnerContact(contacts,
@@ -1694,7 +1694,7 @@ class ProgrammeMembershipServiceTest {
     List<Map<String, String>> contacts = new ArrayList<>();
     Map<String, String> contact1 = new HashMap<>();
     contact1.put(CONTACT_TYPE_FIELD, LocalOfficeContactType.TSS_SUPPORT.getContactTypeName());
-    contact1.put(CONTACT_FIELD, "one@contact.com, another@contact.com");
+    contact1.put(CONTACT_FIELD, "one@email.com, another@email.com");
     contacts.add(contact1);
 
     String ownerContact = service.getOwnerContact(contacts,
@@ -1708,7 +1708,7 @@ class ProgrammeMembershipServiceTest {
     List<Map<String, String>> contacts = new ArrayList<>();
     Map<String, String> contact1 = new HashMap<>();
     contact1.put(CONTACT_TYPE_FIELD, LocalOfficeContactType.TSS_SUPPORT.getContactTypeName());
-    contact1.put(CONTACT_FIELD, "one@contact.com, another@contact.com");
+    contact1.put(CONTACT_FIELD, "one@email.com, another@email.com");
     contacts.add(contact1);
 
     String ownerContact = service.getOwnerContact(contacts,
@@ -1753,14 +1753,14 @@ class ProgrammeMembershipServiceTest {
   @Test
   void shouldGetEmailHrefTypeForEmailContact() {
     assertThat("Unexpected contact href type.",
-        service.getHrefTypeForContact("some@contact.com"),
+        service.getHrefTypeForContact("some@email.com"),
         is(PROTOCOL_EMAIL.getHrefTypeName()));
   }
 
   @Test
   void shouldGetNonValidHrefTypeForOtherTypeContact() {
     assertThat("Unexpected contact href type.",
-        service.getHrefTypeForContact("some@contact.com, also@another.com"),
+        service.getHrefTypeForContact("some@email.com, also@another.com"),
         is(NON_HREF.getHrefTypeName()));
   }
 
@@ -1870,7 +1870,7 @@ class ProgrammeMembershipServiceTest {
    * @param managingDeanery          The managing deanery.
    * @param curriculumSubType        The curriculum subtype.
    * @param curriculumSpecialtyCode  The curriculum specialty code.
-   * @param curriculumSpecialty      The curriculum specialty localOffice.
+   * @param curriculumSpecialty      The curriculum specialty name.
    * @return The programme membership.
    */
   private ProgrammeMembership getProgrammeMembershipWithOneCurriculum(

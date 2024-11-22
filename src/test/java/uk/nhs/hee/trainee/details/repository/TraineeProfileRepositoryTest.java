@@ -46,7 +46,7 @@ import uk.nhs.hee.trainee.details.model.TraineeProfile;
 @SpringBootTest
 class TraineeProfileRepositoryTest {
 
-  private static final String EMAIL = "contact@contact.com";
+  private static final String EMAIL = "email@email.com";
 
   @Autowired
   private TraineeProfileRepository repository;
@@ -111,7 +111,7 @@ class TraineeProfileRepositoryTest {
   @Transactional
   void shouldFailToSaveStaleProfile() {
     PersonalDetails personalDetails = new PersonalDetails();
-    personalDetails.setEmail("other contact");
+    personalDetails.setEmail("other email");
 
     Optional<TraineeProfile> firstCopy = repository.findById("1");
     Optional<TraineeProfile> secondCopy = repository.findById("1");

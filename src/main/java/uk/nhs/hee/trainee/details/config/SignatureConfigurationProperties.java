@@ -44,7 +44,7 @@ public final class SignatureConfigurationProperties {
    * Create a configuration profiles object for signature configuration values.
    *
    * @param secretKey   The secret key to use when generating a HMAC signature.
-   * @param expireAfter A map where the value is a DTO class localOffice and the value is how long, in
+   * @param expireAfter A map where the value is a DTO class name and the value is how long, in
    *                    minutes, the signature for that DTO should be valid.
    */
   @ConstructorBinding

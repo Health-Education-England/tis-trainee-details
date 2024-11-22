@@ -30,7 +30,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum HrefType {
-  PROTOCOL_EMAIL("contact"),
+  PROTOCOL_EMAIL("email"),
   ABSOLUTE_URL("url"),
   NON_HREF("NON_HREF");
 

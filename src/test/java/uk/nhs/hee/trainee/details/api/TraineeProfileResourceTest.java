@@ -106,7 +106,7 @@ class TraineeProfileResourceTest {
   private static final String PERSON_MEDICALSCHOOL = "University of Science and Technology";
   private static final String PERSON_TELEPHONENUMBER = "01632960363";
   private static final String PERSON_MOBILE = "08465879348";
-  private static final String PERSON_EMAIL = "contact@contact.com";
+  private static final String PERSON_EMAIL = "email@email.com";
   private static final String PERSON_ADDRESS1 = "585-6360 Interdum Street";
   private static final String PERSON_ADDRESS2 = "Goulburn";
   private static final String PERSON_ADDRESS3 = "London";

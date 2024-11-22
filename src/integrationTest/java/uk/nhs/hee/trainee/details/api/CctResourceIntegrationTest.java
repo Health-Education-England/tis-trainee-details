@@ -101,10 +101,10 @@ class CctResourceIntegrationTest {
   void setUp() throws IOException {
     calculationJson = (ObjectNode) new ObjectMapper().readTree("""
         {
-          "localOffice": "Test Calculation",
+          "name": "Test Calculation",
           "programmeMembership": {
             "id": "12345678-aaaa-bbbb-cccc-012345678910",
-            "localOffice": "Test Programme",
+            "name": "Test Programme",
             "startDate": "2024-01-01",
             "endDate": "2025-01-01",
             "wte": 0.5
@@ -180,7 +180,7 @@ class CctResourceIntegrationTest {
         .andExpect(jsonPath("$").isArray())
         .andExpect(jsonPath("$", hasSize(1)))
         .andExpect(jsonPath("$[0].id").value(entity.id().toString()))
-        .andExpect(jsonPath("$[0].localOffice").value("Test Calculation"))
+        .andExpect(jsonPath("$[0].name").value("Test Calculation"))
         .andExpect(jsonPath("$[0].programmeMembershipId").value(pmId.toString()))
         .andExpect(jsonPath("$[0].created").value(
             entity.created().truncatedTo(ChronoUnit.MILLIS).toString()))
@@ -217,9 +217,9 @@ class CctResourceIntegrationTest {
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$").isArray())
         .andExpect(jsonPath("$", hasSize(3)))
-        .andExpect(jsonPath("$[0].localOffice").value("Past"))
-        .andExpect(jsonPath("$[1].localOffice").value("Present"))
-        .andExpect(jsonPath("$[2].localOffice").value("Future"));
+        .andExpect(jsonPath("$[0].name").value("Past"))
+        .andExpect(jsonPath("$[1].name").value("Present"))
+        .andExpect(jsonPath("$[2].name").value("Future"));
   }
 
   @Test
@@ -285,7 +285,7 @@ class CctResourceIntegrationTest {
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.id").value(entity.id().toString()))
         .andExpect(jsonPath("$.traineeId").doesNotExist())
-        .andExpect(jsonPath("$.localOffice").value("Test Calculation"))
+        .andExpect(jsonPath("$.name").value("Test Calculation"))
         .andExpect(jsonPath("$.programmeMembership").isMap())
         .andExpect(jsonPath("$.programmeMembership.id").value(pmId.toString()))
         .andExpect(jsonPath("$.programmeMembership.startDate").value("2024-01-01"))
@@ -354,7 +354,7 @@ class CctResourceIntegrationTest {
   @NullAndEmptySource
   @ValueSource(strings = " ")
   void shouldFailCreateCalculationValidationWhenNameNotValid(String name) throws Exception {
-    calculationJson.replace("localOffice", TextNode.valueOf(name));
+    calculationJson.replace("name", TextNode.valueOf(name));
 
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
     mockMvc.perform(post("/api/cct/calculation")
@@ -362,7 +362,7 @@ class CctResourceIntegrationTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(calculationJson.toString()))
         .andExpect(jsonPath("$.errors", hasSize(1)))
-        .andExpect(jsonPath("$.errors[0].pointer", is("#/localOffice")))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/name")))
         .andExpect(jsonPath("$.errors[0].detail", is("must not be blank")));
   }
 
@@ -403,7 +403,7 @@ class CctResourceIntegrationTest {
   void shouldFailCreateCalculationValidationWhenProgrammeMembershipNameNotValid(String pmName)
       throws Exception {
     calculationJson.withObject("programmeMembership")
-        .replace("localOffice", TextNode.valueOf(pmName));
+        .replace("name", TextNode.valueOf(pmName));
 
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
     mockMvc.perform(post("/api/cct/calculation")
@@ -411,7 +411,7 @@ class CctResourceIntegrationTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(calculationJson.toString()))
         .andExpect(jsonPath("$.errors", hasSize(1)))
-        .andExpect(jsonPath("$.errors[0].pointer", is("#/programmeMembership/localOffice")))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/programmeMembership/name")))
         .andExpect(jsonPath("$.errors[0].detail", is("must not be blank")));
   }
 
@@ -438,10 +438,10 @@ class CctResourceIntegrationTest {
   void shouldFailCreateCalculationValidationWhenChangesNotValid(String changes) throws Exception {
     String body = """
         {
-          "localOffice": "Test Calculation",
+          "name": "Test Calculation",
           "programmeMembership": {
             "id": "12345678-aaaa-bbbb-cccc-012345678910",
-            "localOffice": "Test Programme",
+            "name": "Test Programme",
             "startDate": "2024-01-01",
             "endDate": "2025-01-01",
             "wte": 0.5
@@ -482,10 +482,10 @@ class CctResourceIntegrationTest {
   void shouldFailCreateCalculationValidationWhenChangeWteNotValid(double wte) throws Exception {
     String body = """
         {
-          "localOffice": "Test Calculation",
+          "name": "Test Calculation",
           "programmeMembership": {
             "id": "12345678-aaaa-bbbb-cccc-012345678910",
-            "localOffice": "Test Programme",
+            "name": "Test Programme",
             "startDate": "2024-01-01",
             "endDate": "2025-01-01",
             "wte": 0.5
@@ -524,7 +524,7 @@ class CctResourceIntegrationTest {
         .andExpect(jsonPath("$.id").exists())
         .andExpect(jsonPath("$.traineeId").doesNotExist())
         .andExpect(jsonPath("$.cctDate").doesNotExist())
-        .andExpect(jsonPath("$.localOffice").value("Test Calculation"))
+        .andExpect(jsonPath("$.name").value("Test Calculation"))
         .andExpect(jsonPath("$.created").exists())
         .andExpect(jsonPath("$.lastModified").exists())
         .andReturn();
@@ -556,7 +556,7 @@ class CctResourceIntegrationTest {
     mockMvc.perform(get(location)
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(jsonPath("$.id").value(id))
-        .andExpect(jsonPath("$.localOffice").value("Test Calculation"));
+        .andExpect(jsonPath("$.name").value("Test Calculation"));
   }
 
   @Test
@@ -577,6 +577,6 @@ class CctResourceIntegrationTest {
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.traineeId").doesNotExist())
         .andExpect(jsonPath("$.cctDate").value(LocalDate.MAX.toString()))
-        .andExpect(jsonPath("$.localOffice").value("Test Calculation"));
+        .andExpect(jsonPath("$.name").value("Test Calculation"));
   }
 }

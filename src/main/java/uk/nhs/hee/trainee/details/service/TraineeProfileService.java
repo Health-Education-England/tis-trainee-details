@@ -98,15 +98,15 @@ public class TraineeProfileService {
   }
 
   /**
-   * Get the trainee IDs associated with the given contact.
+   * Get the trainee IDs associated with the given email.
    *
-   * @param email The contact address of the trainee.
+   * @param email The email address of the trainee.
    * @return The trainee TIS IDs.
    */
   public List<String> getTraineeTisIdsByEmail(String email) {
     List<TraineeProfile> traineeProfiles = repository.findAllByTraineeEmail(email.toLowerCase());
 
-    // if there are multiple profiles found by contact,
+    // if there are multiple profiles found by email,
     // do filtering to find the best profile with the valid GMC
     if (traineeProfiles.size() > 1) {
       List<TraineeProfile> filteredProfiles = traineeProfiles.stream()
@@ -114,7 +114,7 @@ public class TraineeProfileService {
           .collect(Collectors.toList());
 
       // return all filtered valid profile if there are one or more
-      // otherwise, return all profiles found by contact
+      // otherwise, return all profiles found by email
       if (!filteredProfiles.isEmpty()) {
         traineeProfiles = filteredProfiles;
       }
@@ -126,10 +126,10 @@ public class TraineeProfileService {
   }
 
   /**
-   * Get the trainee contact associated with the given id.
+   * Get the trainee email associated with the given id.
    *
    * @param tisId The TIS ID of the trainee.
-   * @return The trainee contact, or optional empty if trainee not found or contact missing.
+   * @return The trainee email, or optional empty if trainee not found or email missing.
    */
   public Optional<UserDetails> getTraineeDetailsByTisId(String tisId) {
     TraineeProfile traineeProfile = repository.findByTraineeTisId(tisId);

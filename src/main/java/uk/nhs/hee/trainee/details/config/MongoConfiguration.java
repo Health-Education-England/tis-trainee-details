@@ -50,7 +50,7 @@ public class MongoConfiguration {
   @PostConstruct
   public void initIndexes() {
     IndexOperations traineeProfileIndexOps = template.indexOps(TraineeProfile.class);
-    traineeProfileIndexOps.ensureIndex(new Index().on("personalDetails.contact", Direction.ASC));
+    traineeProfileIndexOps.ensureIndex(new Index().on("personalDetails.email", Direction.ASC));
 
     //ensure unique index on traineeTisId
     for (IndexInfo idx : traineeProfileIndexOps.getIndexInfo()) {

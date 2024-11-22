@@ -122,14 +122,14 @@ class CctServiceTest {
 
     CctCalculationSummaryDto dto1 = result.get(0);
     assertThat("Unexpected calculation ID.", dto1.id(), is(calculationId1));
-    assertThat("Unexpected calculation localOffice.", dto1.name(), is("Test Calculation 1"));
+    assertThat("Unexpected calculation name.", dto1.name(), is("Test Calculation 1"));
     assertThat("Unexpected PM ID.", dto1.programmeMembershipId(), is(pmId1));
     assertThat("Unexpected created timestamp.", dto1.created(), is(created1));
     assertThat("Unexpected last modified timestamp.", dto1.lastModified(), is(lastModified1));
 
     CctCalculationSummaryDto dto2 = result.get(1);
     assertThat("Unexpected calculation ID.", dto2.id(), is(calculationId2));
-    assertThat("Unexpected calculation localOffice.", dto2.name(), is("Test Calculation 2"));
+    assertThat("Unexpected calculation name.", dto2.name(), is("Test Calculation 2"));
     assertThat("Unexpected PM ID.", dto2.programmeMembershipId(), is(pmId2));
     assertThat("Unexpected created timestamp.", dto2.created(), is(created2));
     assertThat("Unexpected last modified timestamp.", dto2.lastModified(), is(lastModified2));
@@ -194,14 +194,14 @@ class CctServiceTest {
 
     CctCalculationDetailDto dto = result.get();
     assertThat("Unexpected calculation ID.", dto.id(), is(calculationId));
-    assertThat("Unexpected calculation localOffice.", dto.name(), is("Test Calculation"));
+    assertThat("Unexpected calculation name.", dto.name(), is("Test Calculation"));
     assertThat("Unexpected CCT date.", dto.cctDate(), is(nullValue())); //to be fixed
     assertThat("Unexpected created timestamp.", dto.created(), is(created));
     assertThat("Unexpected last modified timestamp.", dto.lastModified(), is(lastModified));
 
     CctProgrammeMembershipDto pm = dto.programmeMembership();
     assertThat("Unexpected PM ID.", pm.id(), is(pmId));
-    assertThat("Unexpected PM localOffice.", pm.name(), is("Test Programme"));
+    assertThat("Unexpected PM name.", pm.name(), is("Test Programme"));
     assertThat("Unexpected PM start date.", pm.startDate(), is(LocalDate.EPOCH));
     assertThat("Unexpected PM end date.", pm.endDate(), is(LocalDate.EPOCH.plusYears(1)));
     assertThat("Unexpected PM WTE.", pm.wte(), is(1.0));
@@ -273,12 +273,12 @@ class CctServiceTest {
 
     CctCalculationDetailDto savedDto = service.createCalculation(dto);
     assertThat("Unexpected calculation ID.", savedDto.id(), is(calculationId));
-    assertThat("Unexpected calculation localOffice.", savedDto.name(), is("Test Calculation"));
+    assertThat("Unexpected calculation name.", savedDto.name(), is("Test Calculation"));
     assertThat("Unexpected CCT date.", savedDto.cctDate(), is(nullValue()));
 
     CctProgrammeMembershipDto pm = savedDto.programmeMembership();
     assertThat("Unexpected PM ID.", pm.id(), is(pmId));
-    assertThat("Unexpected PM localOffice.", pm.name(), is("Test Programme"));
+    assertThat("Unexpected PM name.", pm.name(), is("Test Programme"));
     assertThat("Unexpected PM start date.", pm.startDate(), is(LocalDate.EPOCH));
     assertThat("Unexpected PM end date.", pm.endDate(), is(LocalDate.EPOCH.plusYears(1)));
     assertThat("Unexpected PM WTE.", pm.wte(), is(1.0));
@@ -324,12 +324,12 @@ class CctServiceTest {
     CctCalculationDetailDto calculatedDto = calculatedDtoOptional.get();
 
     assertThat("Unexpected calculation ID.", calculatedDto.id(), is(calculationId));
-    assertThat("Unexpected calculation localOffice.", calculatedDto.name(), is("Test Calculation"));
+    assertThat("Unexpected calculation name.", calculatedDto.name(), is("Test Calculation"));
     assertThat("Unexpected calculated CCT date.", calculatedDto.cctDate(), is(LocalDate.MAX));
 
     CctProgrammeMembershipDto pm = calculatedDto.programmeMembership();
     assertThat("Unexpected PM ID.", pm.id(), is(pmId));
-    assertThat("Unexpected PM localOffice.", pm.name(), is("Test Programme"));
+    assertThat("Unexpected PM name.", pm.name(), is("Test Programme"));
     assertThat("Unexpected PM start date.", pm.startDate(), is(LocalDate.EPOCH));
     assertThat("Unexpected PM end date.", pm.endDate(), is(LocalDate.EPOCH.plusYears(1)));
     assertThat("Unexpected PM WTE.", pm.wte(), is(1.0));
