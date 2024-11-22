@@ -75,7 +75,7 @@ class CctCalculationRepositoryIntegrationTest {
         .findAny()
         .orElseThrow(() -> new AssertionError("Expected index not found."));
 
-    assertThat("Unexpected index localOffice.", indexInfo.getName(), is(name));
+    assertThat("Unexpected index name.", indexInfo.getName(), is(name));
     assertThat("Unexpected index hashed flag.", indexInfo.isHashed(), is(false));
     assertThat("Unexpected index hidden flag.", indexInfo.isHidden(), is(false));
     assertThat("Unexpected index sparse flag.", indexInfo.isSparse(), is(false));
