@@ -465,10 +465,6 @@ class TraineeProfileResourceTest {
 
   @Test
   void getLocalOfficeContactsShouldReturnBadRequestWhenInvalidContactType() throws Exception {
-    Set<LocalOfficeContact> localOfficeContacts = new HashSet<>();
-    localOfficeContacts.add(new LocalOfficeContact(LOCAL_OFFICE_EMAIL, PERSON_PERSONOWNER));
-    when(service.getTraineeLocalOfficeContacts(eq(DEFAULT_TIS_ID_1), any()))
-        .thenReturn(Optional.of(localOfficeContacts));
     mockMvc.perform(
             get("/api/trainee-profile/local-office-contacts/tisid/invalid-type"))
         .andExpect(status().isBadRequest());

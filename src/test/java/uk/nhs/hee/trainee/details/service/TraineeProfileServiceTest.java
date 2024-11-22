@@ -611,7 +611,7 @@ class TraineeProfileServiceTest {
 
   @ParameterizedTest
   @EnumSource(LocalOfficeContactType.class)
-  void shouldFindLocalOfficeContactsByTraineeTisId(LocalOfficeContactType contactType) {
+  void shouldFindLoContacts(LocalOfficeContactType contactType) {
     programmeMembership.setStartDate(LocalDate.MIN);
     programmeMembership.setEndDate(LocalDate.MAX);
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
@@ -651,7 +651,7 @@ class TraineeProfileServiceTest {
 
   @ParameterizedTest
   @EnumSource(LocalOfficeContactType.class)
-  void shouldFindDistinctMappedLoContactsByTraineeTisId(LocalOfficeContactType contactType) {
+  void shouldFindDistinctMappedLoContacts(LocalOfficeContactType contactType) {
     programmeMembership.setStartDate(LocalDate.MIN);
     programmeMembership.setEndDate(LocalDate.MAX);
     ProgrammeMembership programmeMembership2 = new ProgrammeMembership();
@@ -700,13 +700,13 @@ class TraineeProfileServiceTest {
         .toList().get(1);
     assertThat("Unexpected local office contact.", secondLo.contact(),
         is(LO_CONTACT1));
-    assertThat("Unexpected local office LO.", secondLo.localOffice(),
+    assertThat("Unexpected local office contact LO.", secondLo.localOffice(),
         is(MANAGING_DEANERY));
   }
 
   @ParameterizedTest
   @EnumSource(LocalOfficeContactType.class)
-  void shouldFindLoContactsWithinDateByTraineeTisId(LocalOfficeContactType contactType) {
+  void shouldFindLoContactsWithinDate(LocalOfficeContactType contactType) {
     programmeMembership.setStartDate(LocalDate.now());
     programmeMembership.setEndDate(LocalDate.now());
     ProgrammeMembership programmeMembership2 = new ProgrammeMembership();

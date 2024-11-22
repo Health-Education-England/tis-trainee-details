@@ -806,8 +806,8 @@ public class ProgrammeMembershipService {
    * is minimal checking that it is a validly formatted contact address.
    *
    * @param contact The contact string, expected to be either an contact address or a URL.
-   * @return "contact" if it looks like an contact address, "url" if it looks like a URL, and "NOT_HREF"
-   *     otherwise.
+   * @return "contact" if it looks like an contact address, "url" if it looks like a URL,
+   *     and "NOT_HREF" otherwise.
    */
   protected String getHrefTypeForContact(String contact) {
     try {
