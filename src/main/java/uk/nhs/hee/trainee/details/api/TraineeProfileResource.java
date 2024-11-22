@@ -154,15 +154,15 @@ public class TraineeProfileResource {
   }
 
   /**
-   * Get the current LO contact(s) of the given type for a trainee TIS ID.
+   * Get the current local office contact(s) of the given type for a trainee TIS ID.
    *
    * @param tisId       The TIS ID to search by.
    * @param contactType The local office contact type to search by.
    * @return The distinct matching local office contact details, or not found if not found.
    */
   @GetMapping("/local-office-contacts/{tisId}/{contactType}")
-  public ResponseEntity<Set<LocalOfficeContact>> getTraineeLocalOfficeContacts(@PathVariable String tisId,
-                                                                               @PathVariable LocalOfficeContactType contactType) {
+  public ResponseEntity<Set<LocalOfficeContact>> getTraineeLocalOfficeContacts(
+      @PathVariable String tisId, @PathVariable LocalOfficeContactType contactType) {
     return ResponseEntity.of(service.getTraineeLocalOfficeContacts(tisId, contactType));
   }
 }

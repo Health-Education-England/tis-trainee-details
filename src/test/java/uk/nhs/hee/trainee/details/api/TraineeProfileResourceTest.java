@@ -23,6 +23,7 @@ package uk.nhs.hee.trainee.details.api;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -43,6 +44,8 @@ import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -66,6 +69,7 @@ import uk.nhs.hee.trainee.details.mapper.SignatureMapperImpl;
 import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapperImpl;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
 import uk.nhs.hee.trainee.details.model.Curriculum;
+import uk.nhs.hee.trainee.details.model.LocalOfficeContactType;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.model.Placement;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
@@ -298,7 +302,7 @@ class TraineeProfileResourceTest {
         .andExpect(jsonPath("$.personalDetails.medicalSchool").value(PERSON_MEDICALSCHOOL))
         .andExpect(jsonPath("$.personalDetails.telephoneNumber").value(PERSON_TELEPHONENUMBER))
         .andExpect(jsonPath("$.personalDetails.mobileNumber").value(PERSON_MOBILE))
-        .andExpect(jsonPath("$.personalDetails.contact").value(PERSON_EMAIL))
+        .andExpect(jsonPath("$.personalDetails.email").value(PERSON_EMAIL))
         .andExpect(jsonPath("$.personalDetails.address1").value(PERSON_ADDRESS1))
         .andExpect(jsonPath("$.personalDetails.address2").value(PERSON_ADDRESS2))
         .andExpect(jsonPath("$.personalDetails.address3").value(PERSON_ADDRESS3))
@@ -359,7 +363,7 @@ class TraineeProfileResourceTest {
         .thenReturn(List.of(DEFAULT_TIS_ID_1, "id2"));
 
     mockMvc.perform(get("/api/trainee-profile/trainee-ids")
-            .param("contact", PERSON_EMAIL)
+            .param("email", PERSON_EMAIL)
             .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -372,7 +376,7 @@ class TraineeProfileResourceTest {
     when(service.getTraineeTisIdsByEmail(PERSON_EMAIL)).thenReturn(Collections.emptyList());
 
     mockMvc.perform(get("/api/trainee-profile/trainee-ids")
-            .param("contact", PERSON_EMAIL)
+            .param("email", PERSON_EMAIL)
             .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$").doesNotExist());
@@ -383,7 +387,7 @@ class TraineeProfileResourceTest {
     when(service.getTraineeTisIdsByEmailGmcAndDob(PERSON_EMAIL, PERSON_GMC, PERSON_DATEOFBIRTH))
         .thenReturn(List.of(DEFAULT_TIS_ID_1));
     mockMvc.perform(get("/api/trainee-profile/trainee-verify")
-            .param("contact", PERSON_EMAIL)
+            .param("email", PERSON_EMAIL)
             .param("gmc", PERSON_GMC)
             .param("dob", PERSON_DATEOFBIRTH.toString())
             .contentType(MediaType.APPLICATION_JSON))
@@ -398,7 +402,7 @@ class TraineeProfileResourceTest {
         .thenReturn(Collections.emptyList());
 
     mockMvc.perform(get("/api/trainee-profile/trainee-verify")
-            .param("contact", PERSON_EMAIL)
+            .param("email", PERSON_EMAIL)
             .param("gmc", PERSON_GMC)
             .param("dob", PERSON_DATEOFBIRTH.toString())
             .contentType(MediaType.APPLICATION_JSON))
@@ -412,7 +416,7 @@ class TraineeProfileResourceTest {
         .thenReturn(List.of(DEFAULT_TIS_ID_1, "id2"));
 
     mockMvc.perform(get("/api/trainee-profile/trainee-verify")
-            .param("contact", PERSON_EMAIL)
+            .param("email", PERSON_EMAIL)
             .param("gmc", PERSON_GMC)
             .param("dob", PERSON_DATEOFBIRTH.toString())
             .contentType(MediaType.APPLICATION_JSON))
@@ -445,24 +449,43 @@ class TraineeProfileResourceTest {
             .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.contact").value(PERSON_EMAIL))
+        .andExpect(jsonPath("$.email").value(PERSON_EMAIL))
         .andExpect(jsonPath("$.familyName").value(PERSON_SURNAME));
   }
 
-  @Test
-  void getLocalOfficesShouldReturnNotFoundWhenProfileNotFoundByTisId() throws Exception {
-    mockMvc.perform(get("/api/trainee-profile/local-offices/non-existent-tisid"))
+  @ParameterizedTest
+  @EnumSource(LocalOfficeContactType.class)
+  void getLocalOfficeContactsShouldReturnNotFoundWhenProfileNotFoundByTisId(
+      LocalOfficeContactType contactType) throws Exception {
+    mockMvc.perform(
+        get("/api/trainee-profile/local-office-contacts/non-existent-tisid/{contactType}",
+            contactType))
         .andExpect(status().isNotFound());
   }
 
   @Test
-  void getLocalOfficesShouldReturnLocalOfficesWhenProfileFoundByTisId() throws Exception {
+  void getLocalOfficeContactsShouldReturnBadRequestWhenInvalidContactType() throws Exception {
     Set<LocalOfficeContact> localOfficeContacts = new HashSet<>();
     localOfficeContacts.add(new LocalOfficeContact(LOCAL_OFFICE_EMAIL, PERSON_PERSONOWNER));
-    when(service.getTraineeLocalOfficeContacts(DEFAULT_TIS_ID_1))
+    when(service.getTraineeLocalOfficeContacts(eq(DEFAULT_TIS_ID_1), any()))
+        .thenReturn(Optional.of(localOfficeContacts));
+    mockMvc.perform(
+            get("/api/trainee-profile/local-office-contacts/tisid/invalid-type"))
+        .andExpect(status().isBadRequest());
+  }
+
+  @ParameterizedTest
+  @EnumSource(LocalOfficeContactType.class)
+  void getLocalOfficeContactsShouldReturnLocalOfficesWhenProfileFoundByTisId(
+      LocalOfficeContactType contactType) throws Exception {
+    Set<LocalOfficeContact> localOfficeContacts = new HashSet<>();
+    localOfficeContacts.add(new LocalOfficeContact(LOCAL_OFFICE_EMAIL, PERSON_PERSONOWNER));
+    when(service.getTraineeLocalOfficeContacts(DEFAULT_TIS_ID_1, contactType))
         .thenReturn(Optional.of(localOfficeContacts));
 
-    mockMvc.perform(get("/api/trainee-profile/local-offices/{tisId}", DEFAULT_TIS_ID_1)
+    mockMvc.perform(
+        get("/api/trainee-profile/local-office-contacts/{tisId}/{contactType}",
+            DEFAULT_TIS_ID_1, contactType)
             .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))

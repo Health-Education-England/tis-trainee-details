@@ -50,6 +50,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -119,8 +120,8 @@ class TraineeProfileServiceTest {
   private static final String PLACEMENT_SITE2 = "Addenbrookes Hospital";
   private static final Status PLACEMENT_STATUS2 = Status.PAST;
 
-  private static final String GMC_CONTACT1 = "gmc1@gmc.com";
-  private static final String GMC_CONTACT2 = "gmc2@gmc.com";
+  private static final String LO_CONTACT1 = "gmc@local.office";
+  private static final String LO_CONTACT2 = "ltft@local.office";
 
   @InjectMocks
   private TraineeProfileService service;
@@ -583,48 +584,74 @@ class TraineeProfileServiceTest {
         is(PERSON_GMC));
   }
 
-  @Test
-  void shouldReturnEmptyLocalOfficesWhenTraineeNotFoundByTisId() {
+  @ParameterizedTest
+  @EnumSource(LocalOfficeContactType.class)
+  void shouldReturnEmptyLoContactsWhenTraineeNotFoundByTisId(LocalOfficeContactType contactType) {
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(null);
 
-    Optional<Set<LocalOfficeContact>> lo = service.getTraineeLocalOfficeContacts(DEFAULT_TIS_ID_1);
+    Optional<Set<LocalOfficeContact>> loContacts
+        = service.getTraineeLocalOfficeContacts(DEFAULT_TIS_ID_1, contactType);
 
-    assertThat("Unexpected local office details.", lo, is(Optional.empty()));
+    assertThat("Unexpected local office contact details.", loContacts, is(Optional.empty()));
   }
 
-  @Test
-  void shouldFindZeroLengthSetOfLocalOfficesByTraineeTisIdWhenNoProgrammeMemberships() {
+  @ParameterizedTest
+  @EnumSource(LocalOfficeContactType.class)
+  void shouldFindEmptySetOfLoContactsWhenNoPms(LocalOfficeContactType contactType) {
     traineeProfile.setProgrammeMemberships(new ArrayList<>());
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
 
-    Optional<Set<LocalOfficeContact>> lo = service.getTraineeLocalOfficeContacts(DEFAULT_TIS_ID_1);
+    Optional<Set<LocalOfficeContact>> loContacts
+        = service.getTraineeLocalOfficeContacts(DEFAULT_TIS_ID_1, contactType);
 
-    assertThat("Unexpected missing local offices.", lo.isPresent(), is(true));
-    Set<LocalOfficeContact> foundLos = lo.get();
-    assertThat("Unexpected local offices.", foundLos.size(), is(0));
+    assertThat("Unexpected missing LO contacts.", loContacts.isPresent(), is(true));
+    Set<LocalOfficeContact> foundLoContacts = loContacts.get();
+    assertThat("Unexpected local office contacts.", foundLoContacts.size(), is(0));
   }
 
-  @Test
-  void shouldFindLocalOfficesByTraineeTisId() {
+  @ParameterizedTest
+  @EnumSource(LocalOfficeContactType.class)
+  void shouldFindLocalOfficeContactsByTraineeTisId(LocalOfficeContactType contactType) {
     programmeMembership.setStartDate(LocalDate.MIN);
     programmeMembership.setEndDate(LocalDate.MAX);
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
     when(programmeMembershipService.getOwnerContact(
-        MANAGING_DEANERY, LocalOfficeContactType.GMC_UPDATE, null, null))
-        .thenReturn(GMC_CONTACT1);
+        MANAGING_DEANERY, contactType, null, null))
+        .thenReturn(LO_CONTACT1);
 
-    Optional<Set<LocalOfficeContact>> lo = service.getTraineeLocalOfficeContacts(DEFAULT_TIS_ID_1);
+    Optional<Set<LocalOfficeContact>> loContacts
+        = service.getTraineeLocalOfficeContacts(DEFAULT_TIS_ID_1, contactType);
 
-    assertThat("Unexpected missing local offices.", lo.isPresent(), is(true));
-    Set<LocalOfficeContact> foundLos = lo.get();
-    assertThat("Unexpected local offices.", foundLos.size(), is(1));
-    LocalOfficeContact firstLo = foundLos.stream().toList().get(0);
-    assertThat("Unexpected local office contact.", firstLo.contact(), is(GMC_CONTACT1));
-    assertThat("Unexpected local office localOffice.", firstLo.localOffice(), is(MANAGING_DEANERY));
+    assertThat("Unexpected missing LO contacts.", loContacts.isPresent(), is(true));
+    Set<LocalOfficeContact> foundLoContacts = loContacts.get();
+    assertThat("Unexpected local office contacts.", foundLoContacts.size(), is(1));
+    LocalOfficeContact firstLo = foundLoContacts.stream().toList().get(0);
+    assertThat("Unexpected local office contact.", firstLo.contact(), is(LO_CONTACT1));
+    assertThat("Unexpected local office contact LO.", firstLo.localOffice(),
+        is(MANAGING_DEANERY));
   }
 
-  @Test
-  void shouldFindDistinctMappedLocalOfficesByTraineeTisId() {
+  @ParameterizedTest
+  @EnumSource(LocalOfficeContactType.class)
+  void shouldNotFindLoContactsWithOtherContactType(LocalOfficeContactType contactType) {
+    programmeMembership.setStartDate(LocalDate.MIN);
+    programmeMembership.setEndDate(LocalDate.MAX);
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+
+    when(programmeMembershipService.getOwnerContact(
+        MANAGING_DEANERY, contactType, null, null))
+        .thenReturn(LO_CONTACT1);
+
+    service.getTraineeLocalOfficeContacts(DEFAULT_TIS_ID_1, contactType);
+
+    verify(programmeMembershipService)
+        .getOwnerContact(MANAGING_DEANERY, contactType, null, null);
+    verifyNoMoreInteractions(programmeMembershipService);
+  }
+
+  @ParameterizedTest
+  @EnumSource(LocalOfficeContactType.class)
+  void shouldFindDistinctMappedLoContactsByTraineeTisId(LocalOfficeContactType contactType) {
     programmeMembership.setStartDate(LocalDate.MIN);
     programmeMembership.setEndDate(LocalDate.MAX);
     ProgrammeMembership programmeMembership2 = new ProgrammeMembership();
@@ -649,31 +676,37 @@ class TraineeProfileServiceTest {
         programmeMembership4, programmeMembership5)));
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
     when(programmeMembershipService.getOwnerContact(
-        MANAGING_DEANERY, LocalOfficeContactType.GMC_UPDATE, null, null))
-        .thenReturn(GMC_CONTACT1);
+        MANAGING_DEANERY, contactType, null, null))
+        .thenReturn(LO_CONTACT1);
     when(programmeMembershipService.getOwnerContact(
-        MANAGING_DEANERY2, LocalOfficeContactType.GMC_UPDATE, null, null))
-        .thenReturn(GMC_CONTACT2);
+        MANAGING_DEANERY2, contactType, null, null))
+        .thenReturn(LO_CONTACT2);
 
-    Optional<Set<LocalOfficeContact>> lo = service.getTraineeLocalOfficeContacts(DEFAULT_TIS_ID_1);
+    Optional<Set<LocalOfficeContact>> loContacts
+        = service.getTraineeLocalOfficeContacts(DEFAULT_TIS_ID_1, contactType);
 
-    assertThat("Unexpected missing local offices.", lo.isPresent(), is(true));
-    Set<LocalOfficeContact> foundLos = lo.get();
-    assertThat("Unexpected local offices.", foundLos.size(), is(2));
-    LocalOfficeContact firstLo = foundLos.stream().sorted(Comparator.comparing(LocalOfficeContact::localOffice))
+    assertThat("Unexpected missing LO contacts.", loContacts.isPresent(), is(true));
+    Set<LocalOfficeContact> foundLoContacts = loContacts.get();
+    assertThat("Unexpected local office contacts.", foundLoContacts.size(), is(2));
+    LocalOfficeContact firstLo = foundLoContacts.stream()
+        .sorted(Comparator.comparing(LocalOfficeContact::localOffice))
         .toList().get(0);
     assertThat("Unexpected local office contact.", firstLo.contact(),
-        is(GMC_CONTACT2));
-    assertThat("Unexpected local office localOffice.", firstLo.localOffice(), is(MANAGING_DEANERY2));
-    LocalOfficeContact secondLo = foundLos.stream().sorted(Comparator.comparing(LocalOfficeContact::localOffice))
+        is(LO_CONTACT2));
+    assertThat("Unexpected local office localOffice.", firstLo.localOffice(),
+        is(MANAGING_DEANERY2));
+    LocalOfficeContact secondLo = foundLoContacts.stream()
+        .sorted(Comparator.comparing(LocalOfficeContact::localOffice))
         .toList().get(1);
     assertThat("Unexpected local office contact.", secondLo.contact(),
-        is(GMC_CONTACT1));
-    assertThat("Unexpected local office localOffice.", secondLo.localOffice(), is(MANAGING_DEANERY));
+        is(LO_CONTACT1));
+    assertThat("Unexpected local office LO.", secondLo.localOffice(),
+        is(MANAGING_DEANERY));
   }
 
-  @Test
-  void shouldFindLocalOfficesWithinDateByTraineeTisId() {
+  @ParameterizedTest
+  @EnumSource(LocalOfficeContactType.class)
+  void shouldFindLoContactsWithinDateByTraineeTisId(LocalOfficeContactType contactType) {
     programmeMembership.setStartDate(LocalDate.now());
     programmeMembership.setEndDate(LocalDate.now());
     ProgrammeMembership programmeMembership2 = new ProgrammeMembership();
@@ -689,20 +722,22 @@ class TraineeProfileServiceTest {
         programmeMembership, programmeMembership2, programmeMembership3)));
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
     when(programmeMembershipService.getOwnerContact(
-        MANAGING_DEANERY, LocalOfficeContactType.GMC_UPDATE, null, null))
-        .thenReturn(GMC_CONTACT1);
+        MANAGING_DEANERY, contactType, null, null))
+        .thenReturn(LO_CONTACT1);
 
-    Optional<Set<LocalOfficeContact>> lo = service.getTraineeLocalOfficeContacts(DEFAULT_TIS_ID_1);
+    Optional<Set<LocalOfficeContact>> loContacts
+        = service.getTraineeLocalOfficeContacts(DEFAULT_TIS_ID_1, contactType);
 
     verify(programmeMembershipService).getOwnerContact(eq(MANAGING_DEANERY), any(), any(), any());
     verifyNoMoreInteractions(programmeMembershipService); //only one filtered programme membership
 
-    assertThat("Unexpected missing local offices.", lo.isPresent(), is(true));
-    Set<LocalOfficeContact> foundLos = lo.get();
-    assertThat("Unexpected local offices.", foundLos.size(), is(1));
-    LocalOfficeContact firstLo = foundLos.stream().toList().get(0);
+    assertThat("Unexpected missing LO contacts.", loContacts.isPresent(), is(true));
+    Set<LocalOfficeContact> foundLoContacts = loContacts.get();
+    assertThat("Unexpected local office contacts.", foundLoContacts.size(), is(1));
+    LocalOfficeContact firstLo = foundLoContacts.stream().toList().get(0);
     assertThat("Unexpected local office contact.", firstLo.contact(),
-        is(GMC_CONTACT1));
-    assertThat("Unexpected local office localOffice.", firstLo.localOffice(), is(MANAGING_DEANERY));
+        is(LO_CONTACT1));
+    assertThat("Unexpected local office contact LO.", firstLo.localOffice(),
+        is(MANAGING_DEANERY));
   }
 }
