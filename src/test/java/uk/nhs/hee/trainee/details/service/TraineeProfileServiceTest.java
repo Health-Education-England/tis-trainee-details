@@ -27,11 +27,13 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion.GG10;
 import static uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion.GG9;
-import static uk.nhs.hee.trainee.details.service.TraineeProfileService.LOCAL_OFFICE_NAME_TO_EMAIL;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -58,6 +60,7 @@ import uk.nhs.hee.trainee.details.dto.UserDetails;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
 import uk.nhs.hee.trainee.details.model.Curriculum;
+import uk.nhs.hee.trainee.details.model.LocalOfficeContactType;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.model.Placement;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
@@ -116,11 +119,17 @@ class TraineeProfileServiceTest {
   private static final String PLACEMENT_SITE2 = "Addenbrookes Hospital";
   private static final Status PLACEMENT_STATUS2 = Status.PAST;
 
+  private static final String GMC_CONTACT1 = "gmc1@gmc.com";
+  private static final String GMC_CONTACT2 = "gmc2@gmc.com";
+
   @InjectMocks
   private TraineeProfileService service;
 
   @Mock
   private TraineeProfileRepository repository;
+
+  @Mock
+  private ProgrammeMembershipService programmeMembershipService;
 
   @Mock
   private TrainingNumberGenerator trainingNumberGenerator;
@@ -600,6 +609,9 @@ class TraineeProfileServiceTest {
     programmeMembership.setStartDate(LocalDate.MIN);
     programmeMembership.setEndDate(LocalDate.MAX);
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+    when(programmeMembershipService.getOwnerContact(
+        MANAGING_DEANERY, LocalOfficeContactType.GMC_UPDATE, null, null))
+        .thenReturn(GMC_CONTACT1);
 
     Optional<Set<LocalOffice>> lo = service.getTraineeLocalOfficesByTisId(DEFAULT_TIS_ID_1);
 
@@ -607,8 +619,7 @@ class TraineeProfileServiceTest {
     Set<LocalOffice> foundLos = lo.get();
     assertThat("Unexpected local offices.", foundLos.size(), is(1));
     LocalOffice firstLo = foundLos.stream().toList().get(0);
-    assertThat("Unexpected local office email.", firstLo.email(),
-        is(LOCAL_OFFICE_NAME_TO_EMAIL.get(MANAGING_DEANERY)));
+    assertThat("Unexpected local office email.", firstLo.email(), is(GMC_CONTACT1));
     assertThat("Unexpected local office name.", firstLo.name(), is(MANAGING_DEANERY));
   }
 
@@ -637,6 +648,12 @@ class TraineeProfileServiceTest {
         programmeMembership, programmeMembership2, programmeMembership3,
         programmeMembership4, programmeMembership5)));
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+    when(programmeMembershipService.getOwnerContact(
+        MANAGING_DEANERY, LocalOfficeContactType.GMC_UPDATE, null, null))
+        .thenReturn(GMC_CONTACT1);
+    when(programmeMembershipService.getOwnerContact(
+        MANAGING_DEANERY2, LocalOfficeContactType.GMC_UPDATE, null, null))
+        .thenReturn(GMC_CONTACT2);
 
     Optional<Set<LocalOffice>> lo = service.getTraineeLocalOfficesByTisId(DEFAULT_TIS_ID_1);
 
@@ -646,12 +663,12 @@ class TraineeProfileServiceTest {
     LocalOffice firstLo = foundLos.stream().sorted(Comparator.comparing(LocalOffice::name))
         .toList().get(0);
     assertThat("Unexpected local office email.", firstLo.email(),
-        is(LOCAL_OFFICE_NAME_TO_EMAIL.get(MANAGING_DEANERY2)));
+        is(GMC_CONTACT2));
     assertThat("Unexpected local office name.", firstLo.name(), is(MANAGING_DEANERY2));
     LocalOffice secondLo = foundLos.stream().sorted(Comparator.comparing(LocalOffice::name))
         .toList().get(1);
     assertThat("Unexpected local office email.", secondLo.email(),
-        is(LOCAL_OFFICE_NAME_TO_EMAIL.get(MANAGING_DEANERY)));
+        is(GMC_CONTACT1));
     assertThat("Unexpected local office name.", secondLo.name(), is(MANAGING_DEANERY));
   }
 
@@ -668,19 +685,24 @@ class TraineeProfileServiceTest {
     programmeMembership3.setEndDate(LocalDate.now().minusDays(1));
     programmeMembership3.setManagingDeanery(MANAGING_DEANERY2);
 
-
     traineeProfile.setProgrammeMemberships(new ArrayList<>(List.of(
         programmeMembership, programmeMembership2, programmeMembership3)));
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+    when(programmeMembershipService.getOwnerContact(
+        MANAGING_DEANERY, LocalOfficeContactType.GMC_UPDATE, null, null))
+        .thenReturn(GMC_CONTACT1);
 
     Optional<Set<LocalOffice>> lo = service.getTraineeLocalOfficesByTisId(DEFAULT_TIS_ID_1);
+
+    verify(programmeMembershipService).getOwnerContact(eq(MANAGING_DEANERY), any(), any(), any());
+    verifyNoMoreInteractions(programmeMembershipService); //only one filtered programme membership
 
     assertThat("Unexpected missing local offices.", lo.isPresent(), is(true));
     Set<LocalOffice> foundLos = lo.get();
     assertThat("Unexpected local offices.", foundLos.size(), is(1));
     LocalOffice firstLo = foundLos.stream().toList().get(0);
     assertThat("Unexpected local office email.", firstLo.email(),
-        is(LOCAL_OFFICE_NAME_TO_EMAIL.get(MANAGING_DEANERY)));
+        is(GMC_CONTACT1));
     assertThat("Unexpected local office name.", firstLo.name(), is(MANAGING_DEANERY));
   }
 }

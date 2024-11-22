@@ -26,7 +26,6 @@ import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -36,6 +35,7 @@ import uk.nhs.hee.trainee.details.dto.LocalOffice;
 import uk.nhs.hee.trainee.details.dto.UserDetails;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
+import uk.nhs.hee.trainee.details.model.LocalOfficeContactType;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.Qualification;
@@ -47,29 +47,13 @@ import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 @XRayEnabled
 public class TraineeProfileService {
 
-  protected static final String LONDON_KSS_LOCAL_OFFICE_EMAIL
-      = "england.revalidation.lase@nhs.net";
-  protected static final String MIDLANDS_LOCAL_OFFICE_EMAIL
-      = "england.programmeinformation.mid@nhs.net";
-  protected static final Map<String, String> LOCAL_OFFICE_NAME_TO_EMAIL = Map.ofEntries(
-      Map.entry("East of England", " england.tis.eoe@nhs.net"),
-      Map.entry("East Midlands", MIDLANDS_LOCAL_OFFICE_EMAIL),
-      Map.entry("Kent, Surrey and Sussex", LONDON_KSS_LOCAL_OFFICE_EMAIL),
-      Map.entry("London LETBs", LONDON_KSS_LOCAL_OFFICE_EMAIL),
-      Map.entry("North Central and East London", LONDON_KSS_LOCAL_OFFICE_EMAIL),
-      Map.entry("North East", "england.tissupport.north@nhs.net"),
-      Map.entry("North West London", LONDON_KSS_LOCAL_OFFICE_EMAIL),
-      Map.entry("South London", LONDON_KSS_LOCAL_OFFICE_EMAIL),
-      Map.entry("South West", "england.training.sw@nhs.net"),
-      Map.entry("Thames Valley", "england.formr.tv@nhs.net"),
-      Map.entry("West Midlands", MIDLANDS_LOCAL_OFFICE_EMAIL),
-      Map.entry("Yorkshire and the Humber", "england.tis.yh@nhs.net")
-  );
-
   private final TraineeProfileRepository repository;
+  private final ProgrammeMembershipService programmeMembershipService;
 
-  TraineeProfileService(TraineeProfileRepository repository) {
+  TraineeProfileService(TraineeProfileRepository repository,
+                        ProgrammeMembershipService programmeMembershipService) {
     this.repository = repository;
+    this.programmeMembershipService = programmeMembershipService;
   }
 
   /**
@@ -179,11 +163,18 @@ public class TraineeProfileService {
           .filter(pm -> pm.getEndDate().isAfter(yesterday))
           .toList();
       Set<LocalOffice> localOffices = new HashSet<>();
+
       for (ProgrammeMembership pm : currentPms) {
-        if (pm.getManagingDeanery() != null
-            && LOCAL_OFFICE_NAME_TO_EMAIL.get(pm.getManagingDeanery()) != null) {
-          localOffices.add(new LocalOffice(
-              LOCAL_OFFICE_NAME_TO_EMAIL.get(pm.getManagingDeanery()), pm.getManagingDeanery()));
+        if (pm.getManagingDeanery() != null) {
+          String loGmcUpdateContact = programmeMembershipService.getOwnerContact(
+                  pm.getManagingDeanery(),
+                  LocalOfficeContactType.GMC_UPDATE,
+                  null,
+                  null);
+          if (loGmcUpdateContact != null) {
+            localOffices.add(new LocalOffice(
+                loGmcUpdateContact, pm.getManagingDeanery()));
+          }
         }
       }
       return Optional.of(localOffices);

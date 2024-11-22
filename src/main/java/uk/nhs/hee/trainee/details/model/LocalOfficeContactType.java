@@ -35,6 +35,7 @@ public enum LocalOfficeContactType {
   ONBOARDING_SUPPORT("Onboarding Support"),
   SPONSORSHIP("Sponsorship"),
   DEFERRAL("Deferral"),
+  GMC_UPDATE("GMC Update"),
   TSS_SUPPORT("TIS Self-Service Support"),
   LOCAL_OFFICE_WEBSITE("Local office website");
 
