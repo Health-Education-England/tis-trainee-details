@@ -42,7 +42,7 @@ import uk.nhs.hee.trainee.details.dto.validation.Create;
  * A representation of a CCT calculation's detail.
  *
  * @param id                  The ID of the calculation.
- * @param name                A name for the calculation.
+ * @param name                A localOffice for the calculation.
  * @param programmeMembership The programme membership data for the calculation.
  * @param changes             The CCT changes to be calculated.
  * @param cctDate             The calculated CCT end date based on the changes.
@@ -77,7 +77,7 @@ public record CctCalculationDetailDto(
    * Programme membership data for a calculation.
    *
    * @param id        The ID of the programme membership.
-   * @param name      The name of the programme.
+   * @param name      The localOffice of the programme.
    * @param startDate The start date of the programme.
    * @param endDate   The end date of the programme.
    * @param wte       The whole time equivalent of the programme membership.

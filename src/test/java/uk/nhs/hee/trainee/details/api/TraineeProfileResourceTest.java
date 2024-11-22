@@ -53,7 +53,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.nhs.hee.trainee.details.TestJwtUtil;
 import uk.nhs.hee.trainee.details.config.InterceptorConfiguration;
-import uk.nhs.hee.trainee.details.dto.LocalOffice;
+import uk.nhs.hee.trainee.details.dto.LocalOfficeContact;
 import uk.nhs.hee.trainee.details.dto.UserDetails;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
@@ -102,7 +102,7 @@ class TraineeProfileResourceTest {
   private static final String PERSON_MEDICALSCHOOL = "University of Science and Technology";
   private static final String PERSON_TELEPHONENUMBER = "01632960363";
   private static final String PERSON_MOBILE = "08465879348";
-  private static final String PERSON_EMAIL = "email@email.com";
+  private static final String PERSON_EMAIL = "contact@contact.com";
   private static final String PERSON_ADDRESS1 = "585-6360 Interdum Street";
   private static final String PERSON_ADDRESS2 = "Goulburn";
   private static final String PERSON_ADDRESS3 = "London";
@@ -124,7 +124,7 @@ class TraineeProfileResourceTest {
   private static final Instant NOW = Instant.now();
   private static final Instant COJ_SYNCED_AT = Instant.MAX;
 
-  private static final String LOCAL_OFFICE_EMAIL = "some@email.com";
+  private static final String LOCAL_OFFICE_EMAIL = "some@contact.com";
 
   @Autowired
   private MockMvc mockMvc;
@@ -298,7 +298,7 @@ class TraineeProfileResourceTest {
         .andExpect(jsonPath("$.personalDetails.medicalSchool").value(PERSON_MEDICALSCHOOL))
         .andExpect(jsonPath("$.personalDetails.telephoneNumber").value(PERSON_TELEPHONENUMBER))
         .andExpect(jsonPath("$.personalDetails.mobileNumber").value(PERSON_MOBILE))
-        .andExpect(jsonPath("$.personalDetails.email").value(PERSON_EMAIL))
+        .andExpect(jsonPath("$.personalDetails.contact").value(PERSON_EMAIL))
         .andExpect(jsonPath("$.personalDetails.address1").value(PERSON_ADDRESS1))
         .andExpect(jsonPath("$.personalDetails.address2").value(PERSON_ADDRESS2))
         .andExpect(jsonPath("$.personalDetails.address3").value(PERSON_ADDRESS3))
@@ -359,7 +359,7 @@ class TraineeProfileResourceTest {
         .thenReturn(List.of(DEFAULT_TIS_ID_1, "id2"));
 
     mockMvc.perform(get("/api/trainee-profile/trainee-ids")
-            .param("email", PERSON_EMAIL)
+            .param("contact", PERSON_EMAIL)
             .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -372,7 +372,7 @@ class TraineeProfileResourceTest {
     when(service.getTraineeTisIdsByEmail(PERSON_EMAIL)).thenReturn(Collections.emptyList());
 
     mockMvc.perform(get("/api/trainee-profile/trainee-ids")
-            .param("email", PERSON_EMAIL)
+            .param("contact", PERSON_EMAIL)
             .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$").doesNotExist());
@@ -383,7 +383,7 @@ class TraineeProfileResourceTest {
     when(service.getTraineeTisIdsByEmailGmcAndDob(PERSON_EMAIL, PERSON_GMC, PERSON_DATEOFBIRTH))
         .thenReturn(List.of(DEFAULT_TIS_ID_1));
     mockMvc.perform(get("/api/trainee-profile/trainee-verify")
-            .param("email", PERSON_EMAIL)
+            .param("contact", PERSON_EMAIL)
             .param("gmc", PERSON_GMC)
             .param("dob", PERSON_DATEOFBIRTH.toString())
             .contentType(MediaType.APPLICATION_JSON))
@@ -398,7 +398,7 @@ class TraineeProfileResourceTest {
         .thenReturn(Collections.emptyList());
 
     mockMvc.perform(get("/api/trainee-profile/trainee-verify")
-            .param("email", PERSON_EMAIL)
+            .param("contact", PERSON_EMAIL)
             .param("gmc", PERSON_GMC)
             .param("dob", PERSON_DATEOFBIRTH.toString())
             .contentType(MediaType.APPLICATION_JSON))
@@ -412,7 +412,7 @@ class TraineeProfileResourceTest {
         .thenReturn(List.of(DEFAULT_TIS_ID_1, "id2"));
 
     mockMvc.perform(get("/api/trainee-profile/trainee-verify")
-            .param("email", PERSON_EMAIL)
+            .param("contact", PERSON_EMAIL)
             .param("gmc", PERSON_GMC)
             .param("dob", PERSON_DATEOFBIRTH.toString())
             .contentType(MediaType.APPLICATION_JSON))
@@ -445,7 +445,7 @@ class TraineeProfileResourceTest {
             .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.email").value(PERSON_EMAIL))
+        .andExpect(jsonPath("$.contact").value(PERSON_EMAIL))
         .andExpect(jsonPath("$.familyName").value(PERSON_SURNAME));
   }
 
@@ -457,17 +457,17 @@ class TraineeProfileResourceTest {
 
   @Test
   void getLocalOfficesShouldReturnLocalOfficesWhenProfileFoundByTisId() throws Exception {
-    Set<LocalOffice> localOffices = new HashSet<>();
-    localOffices.add(new LocalOffice(LOCAL_OFFICE_EMAIL, PERSON_PERSONOWNER));
-    when(service.getTraineeLocalOfficesByTisId(DEFAULT_TIS_ID_1))
-        .thenReturn(Optional.of(localOffices));
+    Set<LocalOfficeContact> localOfficeContacts = new HashSet<>();
+    localOfficeContacts.add(new LocalOfficeContact(LOCAL_OFFICE_EMAIL, PERSON_PERSONOWNER));
+    when(service.getTraineeLocalOfficeContacts(DEFAULT_TIS_ID_1))
+        .thenReturn(Optional.of(localOfficeContacts));
 
     mockMvc.perform(get("/api/trainee-profile/local-offices/{tisId}", DEFAULT_TIS_ID_1)
             .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$", hasSize(1)))
-        .andExpect(jsonPath("$[0].email").value(LOCAL_OFFICE_EMAIL))
-        .andExpect(jsonPath("$[0].name").value(PERSON_PERSONOWNER));
+        .andExpect(jsonPath("$[0].contact").value(LOCAL_OFFICE_EMAIL))
+        .andExpect(jsonPath("$[0].localOffice").value(PERSON_PERSONOWNER));
   }
 }

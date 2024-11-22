@@ -87,6 +87,6 @@ class ContactDetailsListenerTest {
     PersonalDetails entity = entityCaptor.getValue();
     assertThat("Unexpected forenames.", entity.getForenames(), is(FORENAMES));
     assertThat("Unexpected surname.", entity.getSurname(), is(SURNAME));
-    assertThat("Unexpected email.", entity.getEmail(), is(EMAIL));
+    assertThat("Unexpected contact.", entity.getEmail(), is(EMAIL));
   }
 }

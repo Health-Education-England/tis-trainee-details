@@ -32,7 +32,7 @@ public interface TraineeProfileRepository extends MongoRepository<TraineeProfile
 
   TraineeProfile findByTraineeTisId(String traineeTisId);
 
-  @Query("{ 'personalDetails.email' : ?0 }")
+  @Query("{ 'personalDetails.contact' : ?0 }")
   List<TraineeProfile> findAllByTraineeEmail(String email);
 
   void deleteByTraineeTisId(String traineeTisId);

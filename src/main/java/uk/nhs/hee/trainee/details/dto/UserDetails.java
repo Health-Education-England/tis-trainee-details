@@ -24,10 +24,10 @@ package uk.nhs.hee.trainee.details.dto;
 /**
  * User details for an individual user.
  *
- * @param email      The profile email.
+ * @param email      The profile contact.
  * @param title      The profile title.
- * @param familyName The profile family name.
- * @param givenName  The profile given name.
+ * @param familyName The profile family localOffice.
+ * @param givenName  The profile given localOffice.
  * @param gmcNumber  The profile GMC number.
  */
 public record UserDetails(

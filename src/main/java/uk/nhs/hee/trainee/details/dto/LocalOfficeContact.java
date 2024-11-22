@@ -22,13 +22,13 @@
 package uk.nhs.hee.trainee.details.dto;
 
 /**
- * Details for a local office.
+ * Details for a local office contact.
  *
- * @param email The local office email.
- * @param name  The local office name.
+ * @param contact     The local office contact.
+ * @param localOffice The local office.
  */
-public record LocalOffice(
-    String email, //deprecated: should be gotten from reference service when data captured there
-    String name) {
+public record LocalOfficeContact(
+    String contact,
+    String localOffice) {
 
 }

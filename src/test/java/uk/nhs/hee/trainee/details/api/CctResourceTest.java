@@ -93,11 +93,11 @@ class CctResourceTest {
 
     CctCalculationSummaryDto responseDto1 = responseDtos.get(0);
     assertThat("Unexpected ID.", responseDto1.id(), is(id1));
-    assertThat("Unexpected name.", responseDto1.name(), is("Test Calculation 1"));
+    assertThat("Unexpected localOffice.", responseDto1.name(), is("Test Calculation 1"));
 
     CctCalculationSummaryDto responseDto2 = responseDtos.get(1);
     assertThat("Unexpected ID.", responseDto2.id(), is(id2));
-    assertThat("Unexpected name.", responseDto2.name(), is("Test Calculation 2"));
+    assertThat("Unexpected localOffice.", responseDto2.name(), is("Test Calculation 2"));
   }
 
   @Test
@@ -148,7 +148,7 @@ class CctResourceTest {
     CctCalculationDetailDto responseBody = response.getBody();
     assertThat("Unexpected response body.", responseBody, notNullValue());
     assertThat("Unexpected ID.", responseBody.id(), is(id));
-    assertThat("Unexpected name.", responseBody.name(), is("Test Calculation"));
+    assertThat("Unexpected localOffice.", responseBody.name(), is("Test Calculation"));
 
 
   }
@@ -198,7 +198,7 @@ class CctResourceTest {
     CctCalculationDetailDto responseBody = response.getBody();
     assertThat("Unexpected response body.", responseBody, notNullValue());
     assertThat("Unexpected CCT date.", responseBody.cctDate(), is(LocalDate.MAX));
-    assertThat("Unexpected name.", responseBody.name(), is("Test Calculation"));
+    assertThat("Unexpected localOffice.", responseBody.name(), is("Test Calculation"));
   }
 
   @Test

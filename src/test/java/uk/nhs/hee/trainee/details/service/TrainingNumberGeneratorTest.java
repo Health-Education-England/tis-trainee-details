@@ -209,7 +209,7 @@ class TrainingNumberGeneratorTest {
     assertThat("Unexpected training number.", trainingNumber, nullValue());
 
     assertThat("Expected log not found.", output.getOut(),
-        containsString("Skipping training number population as programme name is blank."));
+        containsString("Skipping training number population as programme localOffice is blank."));
   }
 
   @ParameterizedTest
@@ -245,7 +245,7 @@ class TrainingNumberGeneratorTest {
     assertThat("Unexpected training number.", trainingNumber, nullValue());
 
     assertThat("Expected log not found.", output.getOut(), containsString(
-        "Skipping training number population as programme name '" + programmeName
+        "Skipping training number population as programme localOffice '" + programmeName
             + "' is excluded."));
   }
 

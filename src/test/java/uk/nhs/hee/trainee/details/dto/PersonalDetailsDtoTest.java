@@ -40,9 +40,9 @@ class PersonalDetailsDtoTest {
 
   @Test
   void shouldDeserializeEmailToLowerCase() throws IOException {
-    String json = "{\"email\": \"UPPER.lower@UpperCamel.lowerCamel\"}";
+    String json = "{\"contact\": \"UPPER.lower@UpperCamel.lowerCamel\"}";
 
     PersonalDetailsDto dto = jacksonTester.parseObject(json);
-    assertThat("Unexpected email.", dto.getEmail(), is("upper.lower@uppercamel.lowercamel"));
+    assertThat("Unexpected contact.", dto.getEmail(), is("upper.lower@uppercamel.lowercamel"));
   }
 }

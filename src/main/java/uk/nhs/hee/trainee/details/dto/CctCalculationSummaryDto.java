@@ -32,7 +32,7 @@ import org.bson.types.ObjectId;
  * A summary of a CCT calculation.
  *
  * @param id                    The ID of the calculation.
- * @param name                  The name of the calculation.
+ * @param name                  The localOffice of the calculation.
  * @param programmeMembershipId The ID of the associated programme membership.
  */
 @Builder

@@ -177,7 +177,7 @@ class PlacementResourceTest {
         .andExpect(jsonPath("$.subSpecialty").value(is("subSpecialtyValue")))
         .andExpect(jsonPath("$.postAllowsSubspecialty").value(is(true)))
         .andExpect(jsonPath("$.otherSpecialties.length()").value(is(1)))
-        .andExpect(jsonPath("$.otherSpecialties.[0].name").value(is("otherSpecialtyValue")))
+        .andExpect(jsonPath("$.otherSpecialties.[0].localOffice").value(is("otherSpecialtyValue")))
         .andExpect(jsonPath("$.placementType").value(is("placementTypeValue")))
         .andExpect(jsonPath("$.status").value(is("CURRENT")))
         .andExpect(jsonPath("$.signature.hmac").value(signature.getHmac()))

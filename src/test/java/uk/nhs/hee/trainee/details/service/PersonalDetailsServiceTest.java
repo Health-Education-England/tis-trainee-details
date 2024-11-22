@@ -54,7 +54,7 @@ class PersonalDetailsServiceTest {
   private static final String MAIDEN_NAME = "maidenName-";
   private static final String TELEPHONE_NUMBER = "telephoneNumber-";
   private static final String MOBILE_NUMBER = "mobileNumber-";
-  private static final String EMAIL = "email-";
+  private static final String EMAIL = "contact-";
   private static final String ADDRESS_1 = "address1-";
   private static final String ADDRESS_2 = "address2-";
   private static final String ADDRESS_3 = "address3-";

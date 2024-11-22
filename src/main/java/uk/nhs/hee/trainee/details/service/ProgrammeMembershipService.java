@@ -67,7 +67,7 @@ import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 public class ProgrammeMembershipService {
 
   protected static final String API_GET_OWNER_CONTACT
-      = "/api/local-office-contact-by-lo-name/{localOfficeName}";
+      = "/api/local-office-contact-by-lo-localOffice/{localOfficeName}";
   protected static final String DEFAULT_NO_CONTACT_MESSAGE
       = "your local office";
   protected static final List<String> MEDICAL_CURRICULA
@@ -734,7 +734,7 @@ public class ProgrammeMembershipService {
   /**
    * Retrieve the full list of contacts for a local office from Trainee Reference Service.
    *
-   * @param localOfficeName The local office name.
+   * @param localOfficeName The local office localOffice.
    * @return The list of contacts, or an empty list if there is an error.
    */
   protected List<Map<String, String>> getOwnerContactList(String localOfficeName) {
@@ -745,7 +745,7 @@ public class ProgrammeMembershipService {
             List.class, Map.of(OWNER_FIELD, localOfficeName));
         return ownerContactList == null ? new ArrayList<>() : ownerContactList;
       } catch (RestClientException rce) {
-        log.warn("Exception occurred when requesting reference local-office-contact-by-lo-name "
+        log.warn("Exception occurred when requesting reference local-office-contact-by-lo-localOffice "
             + "endpoint: " + rce);
       }
     }
@@ -802,11 +802,11 @@ public class ProgrammeMembershipService {
   }
 
   /**
-   * Return a href type for a contact. It is assumed to be either a URL or an email address. There
-   * is minimal checking that it is a validly formatted email address.
+   * Return a href type for a contact. It is assumed to be either a URL or an contact address. There
+   * is minimal checking that it is a validly formatted contact address.
    *
-   * @param contact The contact string, expected to be either an email address or a URL.
-   * @return "email" if it looks like an email address, "url" if it looks like a URL, and "NOT_HREF"
+   * @param contact The contact string, expected to be either an contact address or a URL.
+   * @return "contact" if it looks like an contact address, "url" if it looks like a URL, and "NOT_HREF"
    *     otherwise.
    */
   protected String getHrefTypeForContact(String contact) {

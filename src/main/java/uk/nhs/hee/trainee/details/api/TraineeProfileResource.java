@@ -35,13 +35,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import uk.nhs.hee.trainee.details.api.util.AuthTokenUtil;
-import uk.nhs.hee.trainee.details.dto.LocalOffice;
+import uk.nhs.hee.trainee.details.dto.LocalOfficeContact;
 import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
 import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
 import uk.nhs.hee.trainee.details.dto.TraineeProfileDto;
 import uk.nhs.hee.trainee.details.dto.UserDetails;
 import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapper;
+import uk.nhs.hee.trainee.details.model.LocalOfficeContactType;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.service.TraineeProfileService;
 
@@ -88,9 +88,9 @@ public class TraineeProfileResource {
   }
 
   /**
-   * Get the trainee IDs for an email address.
+   * Get the trainee IDs for an contact address.
    *
-   * @param email The email to search by.
+   * @param email The contact to search by.
    * @return The matching trainee IDs.
    */
   @GetMapping("/trainee-ids")
@@ -119,7 +119,7 @@ public class TraineeProfileResource {
   /**
    * Verify the trainee against the provided details.
    *
-   * @param email The email to match.
+   * @param email The contact to match.
    * @param gmc   The GMC number to match.
    * @param dob   The date of birth to match.
    * @return The matching trainee ID, or 404 if not verified or not unique
@@ -128,7 +128,7 @@ public class TraineeProfileResource {
   public ResponseEntity<String> getVerifiedTraineeIds(@NotNull @RequestParam String email,
       @NotNull @RequestParam String gmc,
       @NotNull @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dob) {
-    log.info("Request to verify trainee ID matching email '{}', GMC '{}' and DOB '{}'", email, gmc,
+    log.info("Request to verify trainee ID matching contact '{}', GMC '{}' and DOB '{}'", email, gmc,
         dob.toString());
     List<String> traineeIds = service.getTraineeTisIdsByEmailGmcAndDob(email, gmc, dob);
 
@@ -154,13 +154,15 @@ public class TraineeProfileResource {
   }
 
   /**
-   * Get the current LO(s) for a trainee TIS ID.
+   * Get the current LO contact(s) of the given type for a trainee TIS ID.
    *
-   * @param tisId The TIS ID to search by.
-   * @return The distinct matching local offices details, or not found if not found.
+   * @param tisId       The TIS ID to search by.
+   * @param contactType The local office contact type to search by.
+   * @return The distinct matching local office contact details, or not found if not found.
    */
-  @GetMapping("/local-offices/{tisId}")
-  public ResponseEntity<Set<LocalOffice>> getTraineeLocalOffices(@PathVariable String tisId) {
-    return ResponseEntity.of(service.getTraineeLocalOfficesByTisId(tisId));
+  @GetMapping("/local-office-contacts/{tisId}/{contactType}")
+  public ResponseEntity<Set<LocalOfficeContact>> getTraineeLocalOfficeContacts(@PathVariable String tisId,
+                                                                               @PathVariable LocalOfficeContactType contactType) {
+    return ResponseEntity.of(service.getTraineeLocalOfficeContacts(tisId, contactType));
   }
 }

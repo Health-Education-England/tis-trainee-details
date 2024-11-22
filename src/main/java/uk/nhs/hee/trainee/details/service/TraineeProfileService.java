@@ -31,7 +31,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import uk.nhs.hee.trainee.details.dto.LocalOffice;
+import uk.nhs.hee.trainee.details.dto.LocalOfficeContact;
 import uk.nhs.hee.trainee.details.dto.UserDetails;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
@@ -98,15 +98,15 @@ public class TraineeProfileService {
   }
 
   /**
-   * Get the trainee IDs associated with the given email.
+   * Get the trainee IDs associated with the given contact.
    *
-   * @param email The email address of the trainee.
+   * @param email The contact address of the trainee.
    * @return The trainee TIS IDs.
    */
   public List<String> getTraineeTisIdsByEmail(String email) {
     List<TraineeProfile> traineeProfiles = repository.findAllByTraineeEmail(email.toLowerCase());
 
-    // if there are multiple profiles found by email,
+    // if there are multiple profiles found by contact,
     // do filtering to find the best profile with the valid GMC
     if (traineeProfiles.size() > 1) {
       List<TraineeProfile> filteredProfiles = traineeProfiles.stream()
@@ -114,7 +114,7 @@ public class TraineeProfileService {
           .collect(Collectors.toList());
 
       // return all filtered valid profile if there are one or more
-      // otherwise, return all profiles found by email
+      // otherwise, return all profiles found by contact
       if (!filteredProfiles.isEmpty()) {
         traineeProfiles = filteredProfiles;
       }
@@ -126,10 +126,10 @@ public class TraineeProfileService {
   }
 
   /**
-   * Get the trainee email associated with the given id.
+   * Get the trainee contact associated with the given id.
    *
    * @param tisId The TIS ID of the trainee.
-   * @return The trainee email, or optional empty if trainee not found or email missing.
+   * @return The trainee contact, or optional empty if trainee not found or contact missing.
    */
   public Optional<UserDetails> getTraineeDetailsByTisId(String tisId) {
     TraineeProfile traineeProfile = repository.findByTraineeTisId(tisId);
@@ -146,13 +146,14 @@ public class TraineeProfileService {
   }
 
   /**
-   * Get the local office(s) for a trainee with the given id.
+   * Get the local office contact(s) of given type for a trainee with the given id.
    *
    * @param tisId The TIS ID of the trainee.
    * @return The trainee's current local offices (which may be an empty set if they are not
    *         currently in programme), or optional empty if the trainee is not found.
    */
-  public Optional<Set<LocalOffice>> getTraineeLocalOfficesByTisId(String tisId) {
+  public Optional<Set<LocalOfficeContact>> getTraineeLocalOfficeContacts(String tisId,
+      LocalOfficeContactType contactType) {
     TraineeProfile traineeProfile = repository.findByTraineeTisId(tisId);
 
     if (traineeProfile != null) {
@@ -162,30 +163,30 @@ public class TraineeProfileService {
           .filter(pm -> pm.getStartDate().isBefore(tomorrow))
           .filter(pm -> pm.getEndDate().isAfter(yesterday))
           .toList();
-      Set<LocalOffice> localOffices = new HashSet<>();
+      Set<LocalOfficeContact> localOfficeContacts = new HashSet<>();
 
       for (ProgrammeMembership pm : currentPms) {
         if (pm.getManagingDeanery() != null) {
-          String loGmcUpdateContact = programmeMembershipService.getOwnerContact(
+          String loTypeContact = programmeMembershipService.getOwnerContact(
                   pm.getManagingDeanery(),
-                  LocalOfficeContactType.GMC_UPDATE,
+                  contactType,
                   null,
                   null);
-          if (loGmcUpdateContact != null) {
-            localOffices.add(new LocalOffice(
-                loGmcUpdateContact, pm.getManagingDeanery()));
+          if (loTypeContact != null) {
+            localOfficeContacts.add(new LocalOfficeContact(
+                loTypeContact, pm.getManagingDeanery()));
           }
         }
       }
-      return Optional.of(localOffices);
+      return Optional.of(localOfficeContacts);
     }
     return Optional.empty();
   }
 
   /**
-   * Get the trainee ID(s) associated with the given email, GMC number and post code.
+   * Get the trainee ID(s) associated with the given contact, GMC number and post code.
    *
-   * @param email The email address of the trainee.
+   * @param email The contact address of the trainee.
    * @param gmc   The GMC number of the trainee.
    * @param dob   The date of birth of the trainee.
    * @return The trainee TIS IDs.

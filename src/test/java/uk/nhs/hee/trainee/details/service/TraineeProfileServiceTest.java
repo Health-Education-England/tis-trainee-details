@@ -55,7 +55,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.nhs.hee.trainee.details.dto.LocalOffice;
+import uk.nhs.hee.trainee.details.dto.LocalOfficeContact;
 import uk.nhs.hee.trainee.details.dto.UserDetails;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
@@ -93,7 +93,7 @@ class TraineeProfileServiceTest {
   private static final String PERSON_MEDICALSCHOOL = "University of Science and Technology";
   private static final String PERSON_TELEPHONENUMBER = "01632960363";
   private static final String PERSON_MOBILE = "08465879348";
-  private static final String PERSON_EMAIL = "email@email.com";
+  private static final String PERSON_EMAIL = "contact@contact.com";
   private static final String PERSON_ADDRESS1 = "585-6360 Interdum Street";
   private static final String PERSON_ADDRESS2 = "Goulburn";
   private static final String PERSON_ADDRESS3 = "London";
@@ -405,7 +405,7 @@ class TraineeProfileServiceTest {
     service.getTraineeTisIdsByEmail("UPPER.lower@UpperCamel.lowerCamel");
 
     String email = emailCaptor.getValue();
-    assertThat("Unexpected email.", email, is("upper.lower@uppercamel.lowercamel"));
+    assertThat("Unexpected contact.", email, is("upper.lower@uppercamel.lowercamel"));
   }
 
   @Test
@@ -573,11 +573,11 @@ class TraineeProfileServiceTest {
     Optional<UserDetails> detail = service.getTraineeDetailsByTisId(DEFAULT_TIS_ID_1);
 
     assertThat("Unexpected missing account details.", detail.isPresent(), is(true));
-    assertThat("Unexpected trainee email.", detail.get().email(), is(PERSON_EMAIL));
+    assertThat("Unexpected trainee contact.", detail.get().email(), is(PERSON_EMAIL));
     assertThat("Unexpected trainee title.", detail.get().title(), is(PERSON_TITLE));
-    assertThat("Unexpected trainee family name.", detail.get().familyName(),
+    assertThat("Unexpected trainee family localOffice.", detail.get().familyName(),
         is(PERSON_SURNAME));
-    assertThat("Unexpected trainee given name.", detail.get().givenName(),
+    assertThat("Unexpected trainee given localOffice.", detail.get().givenName(),
         is(PERSON_FORENAME));
     assertThat("Unexpected trainee GMC number.", detail.get().gmcNumber(),
         is(PERSON_GMC));
@@ -587,7 +587,7 @@ class TraineeProfileServiceTest {
   void shouldReturnEmptyLocalOfficesWhenTraineeNotFoundByTisId() {
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(null);
 
-    Optional<Set<LocalOffice>> lo = service.getTraineeLocalOfficesByTisId(DEFAULT_TIS_ID_1);
+    Optional<Set<LocalOfficeContact>> lo = service.getTraineeLocalOfficeContacts(DEFAULT_TIS_ID_1);
 
     assertThat("Unexpected local office details.", lo, is(Optional.empty()));
   }
@@ -597,10 +597,10 @@ class TraineeProfileServiceTest {
     traineeProfile.setProgrammeMemberships(new ArrayList<>());
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
 
-    Optional<Set<LocalOffice>> lo = service.getTraineeLocalOfficesByTisId(DEFAULT_TIS_ID_1);
+    Optional<Set<LocalOfficeContact>> lo = service.getTraineeLocalOfficeContacts(DEFAULT_TIS_ID_1);
 
     assertThat("Unexpected missing local offices.", lo.isPresent(), is(true));
-    Set<LocalOffice> foundLos = lo.get();
+    Set<LocalOfficeContact> foundLos = lo.get();
     assertThat("Unexpected local offices.", foundLos.size(), is(0));
   }
 
@@ -613,14 +613,14 @@ class TraineeProfileServiceTest {
         MANAGING_DEANERY, LocalOfficeContactType.GMC_UPDATE, null, null))
         .thenReturn(GMC_CONTACT1);
 
-    Optional<Set<LocalOffice>> lo = service.getTraineeLocalOfficesByTisId(DEFAULT_TIS_ID_1);
+    Optional<Set<LocalOfficeContact>> lo = service.getTraineeLocalOfficeContacts(DEFAULT_TIS_ID_1);
 
     assertThat("Unexpected missing local offices.", lo.isPresent(), is(true));
-    Set<LocalOffice> foundLos = lo.get();
+    Set<LocalOfficeContact> foundLos = lo.get();
     assertThat("Unexpected local offices.", foundLos.size(), is(1));
-    LocalOffice firstLo = foundLos.stream().toList().get(0);
-    assertThat("Unexpected local office email.", firstLo.email(), is(GMC_CONTACT1));
-    assertThat("Unexpected local office name.", firstLo.name(), is(MANAGING_DEANERY));
+    LocalOfficeContact firstLo = foundLos.stream().toList().get(0);
+    assertThat("Unexpected local office contact.", firstLo.contact(), is(GMC_CONTACT1));
+    assertThat("Unexpected local office localOffice.", firstLo.localOffice(), is(MANAGING_DEANERY));
   }
 
   @Test
@@ -655,21 +655,21 @@ class TraineeProfileServiceTest {
         MANAGING_DEANERY2, LocalOfficeContactType.GMC_UPDATE, null, null))
         .thenReturn(GMC_CONTACT2);
 
-    Optional<Set<LocalOffice>> lo = service.getTraineeLocalOfficesByTisId(DEFAULT_TIS_ID_1);
+    Optional<Set<LocalOfficeContact>> lo = service.getTraineeLocalOfficeContacts(DEFAULT_TIS_ID_1);
 
     assertThat("Unexpected missing local offices.", lo.isPresent(), is(true));
-    Set<LocalOffice> foundLos = lo.get();
+    Set<LocalOfficeContact> foundLos = lo.get();
     assertThat("Unexpected local offices.", foundLos.size(), is(2));
-    LocalOffice firstLo = foundLos.stream().sorted(Comparator.comparing(LocalOffice::name))
+    LocalOfficeContact firstLo = foundLos.stream().sorted(Comparator.comparing(LocalOfficeContact::localOffice))
         .toList().get(0);
-    assertThat("Unexpected local office email.", firstLo.email(),
+    assertThat("Unexpected local office contact.", firstLo.contact(),
         is(GMC_CONTACT2));
-    assertThat("Unexpected local office name.", firstLo.name(), is(MANAGING_DEANERY2));
-    LocalOffice secondLo = foundLos.stream().sorted(Comparator.comparing(LocalOffice::name))
+    assertThat("Unexpected local office localOffice.", firstLo.localOffice(), is(MANAGING_DEANERY2));
+    LocalOfficeContact secondLo = foundLos.stream().sorted(Comparator.comparing(LocalOfficeContact::localOffice))
         .toList().get(1);
-    assertThat("Unexpected local office email.", secondLo.email(),
+    assertThat("Unexpected local office contact.", secondLo.contact(),
         is(GMC_CONTACT1));
-    assertThat("Unexpected local office name.", secondLo.name(), is(MANAGING_DEANERY));
+    assertThat("Unexpected local office localOffice.", secondLo.localOffice(), is(MANAGING_DEANERY));
   }
 
   @Test
@@ -692,17 +692,17 @@ class TraineeProfileServiceTest {
         MANAGING_DEANERY, LocalOfficeContactType.GMC_UPDATE, null, null))
         .thenReturn(GMC_CONTACT1);
 
-    Optional<Set<LocalOffice>> lo = service.getTraineeLocalOfficesByTisId(DEFAULT_TIS_ID_1);
+    Optional<Set<LocalOfficeContact>> lo = service.getTraineeLocalOfficeContacts(DEFAULT_TIS_ID_1);
 
     verify(programmeMembershipService).getOwnerContact(eq(MANAGING_DEANERY), any(), any(), any());
     verifyNoMoreInteractions(programmeMembershipService); //only one filtered programme membership
 
     assertThat("Unexpected missing local offices.", lo.isPresent(), is(true));
-    Set<LocalOffice> foundLos = lo.get();
+    Set<LocalOfficeContact> foundLos = lo.get();
     assertThat("Unexpected local offices.", foundLos.size(), is(1));
-    LocalOffice firstLo = foundLos.stream().toList().get(0);
-    assertThat("Unexpected local office email.", firstLo.email(),
+    LocalOfficeContact firstLo = foundLos.stream().toList().get(0);
+    assertThat("Unexpected local office contact.", firstLo.contact(),
         is(GMC_CONTACT1));
-    assertThat("Unexpected local office name.", firstLo.name(), is(MANAGING_DEANERY));
+    assertThat("Unexpected local office localOffice.", firstLo.localOffice(), is(MANAGING_DEANERY));
   }
 }

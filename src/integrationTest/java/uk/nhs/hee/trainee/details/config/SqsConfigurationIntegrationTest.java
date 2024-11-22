@@ -75,7 +75,7 @@ class SqsConfigurationIntegrationTest {
 
   @BeforeAll
   static void setUpBeforeAll() throws IOException, InterruptedException {
-    localstack.execInContainer("awslocal sqs create-queue --queue-name",
+    localstack.execInContainer("awslocal sqs create-queue --queue-localOffice",
         PROFILE_CREATED_QUEUE);
   }
 
