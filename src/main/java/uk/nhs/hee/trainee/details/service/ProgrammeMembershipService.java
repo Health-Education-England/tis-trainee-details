@@ -802,11 +802,11 @@ public class ProgrammeMembershipService {
   }
 
   /**
-   * Return a href type for a contact. It is assumed to be either a URL or an contact address. There
-   * is minimal checking that it is a validly formatted contact address.
+   * Return a href type for a contact. It is assumed to be either a URL or an email address. There
+   * is minimal checking that it is a validly formatted email address.
    *
-   * @param contact The contact string, expected to be either an contact address or a URL.
-   * @return "contact" if it looks like an contact address, "url" if it looks like a URL,
+   * @param contact The contact string, expected to be either an email address or a URL.
+   * @return "email" if it looks like an email address, "url" if it looks like a URL,
    *     and "NOT_HREF" otherwise.
    */
   protected String getHrefTypeForContact(String contact) {
