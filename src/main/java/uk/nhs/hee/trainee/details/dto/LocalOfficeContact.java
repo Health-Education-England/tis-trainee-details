@@ -16,28 +16,19 @@
  * NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
  * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
  * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package uk.nhs.hee.trainee.details.model;
-
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+package uk.nhs.hee.trainee.details.dto;
 
 /**
- * An enumeration of possible local office contact types.
+ * Details for a local office contact.
+ *
+ * @param contact     The local office contact.
+ * @param localOffice The local office.
  */
-@Getter
-@AllArgsConstructor
-public enum LocalOfficeContactType {
+public record LocalOfficeContact(
+    String contact,
+    String localOffice) {
 
-  LTFT("Less Than Full Time"),
-  ONBOARDING_SUPPORT("Onboarding Support"),
-  SPONSORSHIP("Sponsorship"),
-  DEFERRAL("Deferral"),
-  GMC_UPDATE("GMC Update"),
-  TSS_SUPPORT("TIS Self-Service Support"),
-  LOCAL_OFFICE_WEBSITE("Local office website");
-
-  private final String contactTypeName;
 }

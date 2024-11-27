@@ -25,6 +25,7 @@ import com.amazonaws.xray.spring.aop.XRayEnabled;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -34,11 +35,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import uk.nhs.hee.trainee.details.dto.LocalOfficeContact;
 import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
 import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
 import uk.nhs.hee.trainee.details.dto.TraineeProfileDto;
 import uk.nhs.hee.trainee.details.dto.UserDetails;
 import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapper;
+import uk.nhs.hee.trainee.details.model.LocalOfficeContactType;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.service.TraineeProfileService;
 
@@ -148,5 +151,18 @@ public class TraineeProfileResource {
   @GetMapping("/account-details/{tisId}")
   public ResponseEntity<UserDetails> getTraineeDetails(@PathVariable String tisId) {
     return ResponseEntity.of(service.getTraineeDetailsByTisId(tisId));
+  }
+
+  /**
+   * Get the current local office contact(s) of the given type for a trainee TIS ID.
+   *
+   * @param tisId       The TIS ID to search by.
+   * @param contactType The local office contact type to search by.
+   * @return The distinct matching local office contact details, or not found if not found.
+   */
+  @GetMapping("/local-office-contacts/{tisId}/{contactType}")
+  public ResponseEntity<Set<LocalOfficeContact>> getTraineeLocalOfficeContacts(
+      @PathVariable String tisId, @PathVariable LocalOfficeContactType contactType) {
+    return ResponseEntity.of(service.getTraineeLocalOfficeContacts(tisId, contactType));
   }
 }

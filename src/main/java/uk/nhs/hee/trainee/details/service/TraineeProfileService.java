@@ -24,15 +24,20 @@ package uk.nhs.hee.trainee.details.service;
 import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.time.LocalDate;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import uk.nhs.hee.trainee.details.dto.LocalOfficeContact;
 import uk.nhs.hee.trainee.details.dto.UserDetails;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
+import uk.nhs.hee.trainee.details.model.LocalOfficeContactType;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
+import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.Qualification;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
@@ -43,9 +48,12 @@ import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 public class TraineeProfileService {
 
   private final TraineeProfileRepository repository;
+  private final ProgrammeMembershipService programmeMembershipService;
 
-  TraineeProfileService(TraineeProfileRepository repository) {
+  TraineeProfileService(TraineeProfileRepository repository,
+                        ProgrammeMembershipService programmeMembershipService) {
     this.repository = repository;
+    this.programmeMembershipService = programmeMembershipService;
   }
 
   /**
@@ -138,9 +146,47 @@ public class TraineeProfileService {
   }
 
   /**
-   * Get the trainee ID(s) associated with the given email, GMC number and post code.
+   * Get the local office contact(s) of given type for a trainee with the given id.
    *
-   * @param email The email address of the trainee.
+   * @param tisId The TIS ID of the trainee.
+   * @return The trainee's current local offices (which may be an empty set if they are not
+   *         currently in programme), or optional empty if the trainee is not found.
+   */
+  public Optional<Set<LocalOfficeContact>> getTraineeLocalOfficeContacts(String tisId,
+      LocalOfficeContactType contactType) {
+    TraineeProfile traineeProfile = repository.findByTraineeTisId(tisId);
+
+    if (traineeProfile != null) {
+      LocalDate tomorrow = LocalDate.now().plusDays(1);
+      LocalDate yesterday = LocalDate.now().minusDays(1);
+      List<ProgrammeMembership> currentPms = traineeProfile.getProgrammeMemberships().stream()
+          .filter(pm -> pm.getStartDate().isBefore(tomorrow))
+          .filter(pm -> pm.getEndDate().isAfter(yesterday))
+          .toList();
+      Set<LocalOfficeContact> localOfficeContacts = new HashSet<>();
+
+      for (ProgrammeMembership pm : currentPms) {
+        if (pm.getManagingDeanery() != null) {
+          String loTypeContact = programmeMembershipService.getOwnerContact(
+                  pm.getManagingDeanery(),
+                  contactType,
+                  null,
+                  null);
+          if (loTypeContact != null) {
+            localOfficeContacts.add(new LocalOfficeContact(
+                loTypeContact, pm.getManagingDeanery()));
+          }
+        }
+      }
+      return Optional.of(localOfficeContacts);
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * Get the trainee ID(s) associated with the given contact, GMC number and post code.
+   *
+   * @param email The contact address of the trainee.
    * @param gmc   The GMC number of the trainee.
    * @param dob   The date of birth of the trainee.
    * @return The trainee TIS IDs.

@@ -21,6 +21,7 @@
 
 package uk.nhs.hee.trainee.details.api;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
@@ -36,10 +37,14 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -50,6 +55,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.nhs.hee.trainee.details.TestJwtUtil;
 import uk.nhs.hee.trainee.details.config.InterceptorConfiguration;
+import uk.nhs.hee.trainee.details.dto.LocalOfficeContact;
 import uk.nhs.hee.trainee.details.dto.UserDetails;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
@@ -62,6 +68,7 @@ import uk.nhs.hee.trainee.details.mapper.SignatureMapperImpl;
 import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapperImpl;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
 import uk.nhs.hee.trainee.details.model.Curriculum;
+import uk.nhs.hee.trainee.details.model.LocalOfficeContactType;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.model.Placement;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
@@ -119,6 +126,8 @@ class TraineeProfileResourceTest {
   private static final Status PLACEMENT_STATUS = Status.CURRENT;
   private static final Instant NOW = Instant.now();
   private static final Instant COJ_SYNCED_AT = Instant.MAX;
+
+  private static final String LOCAL_OFFICE_EMAIL = "some@contact.com";
 
   @Autowired
   private MockMvc mockMvc;
@@ -441,5 +450,42 @@ class TraineeProfileResourceTest {
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.email").value(PERSON_EMAIL))
         .andExpect(jsonPath("$.familyName").value(PERSON_SURNAME));
+  }
+
+  @ParameterizedTest
+  @EnumSource(LocalOfficeContactType.class)
+  void getLocalOfficeContactsShouldReturnNotFoundWhenProfileNotFoundByTisId(
+      LocalOfficeContactType contactType) throws Exception {
+    mockMvc.perform(
+        get("/api/trainee-profile/local-office-contacts/non-existent-tisid/{contactType}",
+            contactType))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void getLocalOfficeContactsShouldReturnBadRequestWhenInvalidContactType() throws Exception {
+    mockMvc.perform(
+            get("/api/trainee-profile/local-office-contacts/tisid/invalid-type"))
+        .andExpect(status().isBadRequest());
+  }
+
+  @ParameterizedTest
+  @EnumSource(LocalOfficeContactType.class)
+  void getLocalOfficeContactsShouldReturnLocalOfficesWhenProfileFoundByTisId(
+      LocalOfficeContactType contactType) throws Exception {
+    Set<LocalOfficeContact> localOfficeContacts = new HashSet<>();
+    localOfficeContacts.add(new LocalOfficeContact(LOCAL_OFFICE_EMAIL, PERSON_PERSONOWNER));
+    when(service.getTraineeLocalOfficeContacts(DEFAULT_TIS_ID_1, contactType))
+        .thenReturn(Optional.of(localOfficeContacts));
+
+    mockMvc.perform(
+        get("/api/trainee-profile/local-office-contacts/{tisId}/{contactType}",
+            DEFAULT_TIS_ID_1, contactType)
+            .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$", hasSize(1)))
+        .andExpect(jsonPath("$[0].contact").value(LOCAL_OFFICE_EMAIL))
+        .andExpect(jsonPath("$[0].localOffice").value(PERSON_PERSONOWNER));
   }
 }

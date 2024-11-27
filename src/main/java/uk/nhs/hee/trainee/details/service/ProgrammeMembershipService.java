@@ -521,9 +521,7 @@ public class ProgrammeMembershipService {
               .isBefore(LocalDate.now())) {
 
             // Template Variables
-            List<Map<String, String>> ownerContactList =
-                getOwnerContactList(programmeMembership.getManagingDeanery());
-            String contact = getOwnerContact(ownerContactList,
+            String contact = getOwnerContact(programmeMembership.getManagingDeanery(),
                 LocalOfficeContactType.ONBOARDING_SUPPORT,
                 LocalOfficeContactType.TSS_SUPPORT, DEFAULT_NO_CONTACT_MESSAGE);
 
@@ -785,12 +783,31 @@ public class ProgrammeMembershipService {
   }
 
   /**
+   * Retrieve the contact of the specified type for the given local office. If the contact type is
+   * not found then a fallback contact type will be sought, and a default message returned if
+   * neither are present.
+   *
+   * @param localOfficeName     The local office to use.
+   * @param contactType         The contact type to return.
+   * @param fallbackContactType if the contactType is not available, return this contactType
+   *                            instead.
+   * @param defaultMessage      The default message if the contact was not found.
+   * @return The specific contact of the local office, or the default message if not found.
+   */
+  public String getOwnerContact(String localOfficeName, LocalOfficeContactType contactType,
+                                LocalOfficeContactType fallbackContactType,
+                                String defaultMessage) {
+    return getOwnerContact(
+        getOwnerContactList(localOfficeName), contactType, fallbackContactType, defaultMessage);
+  }
+
+  /**
    * Return a href type for a contact. It is assumed to be either a URL or an email address. There
    * is minimal checking that it is a validly formatted email address.
    *
    * @param contact The contact string, expected to be either an email address or a URL.
-   * @return "email" if it looks like an email address, "url" if it looks like a URL, and "NOT_HREF"
-   *     otherwise.
+   * @return "email" if it looks like an email address, "url" if it looks like a URL,
+   *     and "NOT_HREF" otherwise.
    */
   protected String getHrefTypeForContact(String contact) {
     try {
