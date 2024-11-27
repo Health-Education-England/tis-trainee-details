@@ -32,12 +32,14 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationSummaryDto;
 import uk.nhs.hee.trainee.details.dto.validation.Create;
+import uk.nhs.hee.trainee.details.dto.validation.UserUpdate;
 import uk.nhs.hee.trainee.details.service.CctService;
 
 /**
@@ -83,6 +85,27 @@ public class CctResource {
     log.info("Request to get details for CCT calculation[{}]", id);
     Optional<CctCalculationDetailDto> calculation = service.getCalculation(id);
     return ResponseEntity.of(calculation);
+  }
+
+  /**
+   * Update an existing CCT calculation with the given ID.
+   *
+   * @param id The ID of the calculation to update.
+   * @return The updated CCT calculation details, or bad request if inconsistent ids.
+   */
+  @PutMapping("/calculation/{id}")
+  public ResponseEntity<CctCalculationDetailDto> updateCalculationDetails(@PathVariable ObjectId id,
+    @Validated(UserUpdate.class) @RequestBody CctCalculationDetailDto calculation) {
+    log.info("Request to update CCT calculation[{}]", id);
+    CctCalculationDetailDto savedCalculation = service.updateCalculation(id, calculation);
+
+    if (savedCalculation != null) {
+      log.info("Updated CCT calculation [{}] with id [{}]", savedCalculation.name(),
+          savedCalculation.id());
+      return ResponseEntity.ok(savedCalculation);
+    } else {
+      return ResponseEntity.badRequest().body(null);
+    }
   }
 
   /**

@@ -28,6 +28,7 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.LTFT;
 
@@ -346,5 +347,122 @@ class CctServiceTest {
     assertThat("Unexpected change type.", change2.type(), is(LTFT));
     assertThat("Unexpected change type.", change2.startDate(), is(LocalDate.MAX));
     assertThat("Unexpected change type.", change2.wte(), is(0.75));
+  }
+
+  @Test
+  void shouldUpdateExistingCalculation() {
+    UUID pmId = UUID.randomUUID();
+    ObjectId id = ObjectId.get();
+    Instant created = Instant.now();
+
+    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
+        .id(id)
+        .created(created)
+        .name("Test Calculation")
+        .programmeMembership(CctProgrammeMembershipDto.builder()
+            .id(pmId)
+            .name("Test Programme")
+            .startDate(LocalDate.EPOCH)
+            .endDate(LocalDate.EPOCH.plusYears(1))
+            .wte(1.0)
+            .build())
+        .changes(List.of(
+            CctChangeDto.builder().type(LTFT).startDate(LocalDate.MIN).wte(0.5).build(),
+            CctChangeDto.builder().type(LTFT).startDate(LocalDate.MAX).wte(0.75).build()
+        ))
+        .build();
+
+    Instant modified = created.plusSeconds(1);
+    when(calculationRepository.save(any(CctCalculation.class))).thenAnswer(inv -> {
+      CctCalculation entity = inv.getArgument(0);
+      CctProgrammeMembership pm = entity.programmeMembership();
+      CctChange change1 = entity.changes().get(0);
+      CctChange change2 = entity.changes().get(1);
+
+      return CctCalculation.builder()
+          .id(id)
+          .created(created)
+          .lastModified(modified)
+          .traineeId(entity.traineeId())
+          .name(entity.name())
+          .programmeMembership(CctProgrammeMembership.builder()
+              .id(pm.id())
+              .name(pm.name())
+              .startDate(pm.startDate())
+              .endDate(pm.endDate())
+              .wte(pm.wte())
+              .build())
+          .changes(List.of(
+              CctChange.builder()
+                  .type(change1.type())
+                  .startDate(change1.startDate())
+                  .wte(change1.wte())
+                  .build(),
+              CctChange.builder()
+                  .type(change2.type())
+                  .startDate(change2.startDate())
+                  .wte(change2.wte()).build()
+          ))
+          .build();
+    });
+
+    CctCalculationDetailDto updatedDto = service.updateCalculation(id, dto);
+
+    assertThat("Unexpected calculation ID.", updatedDto.id(), is(id));
+    assertThat("Unexpected calculation created.", updatedDto.created(), is(created));
+    assertThat("Unexpected calculation last modified.", updatedDto.lastModified(),
+        is(modified));
+    assertThat("Unexpected calculation name.", updatedDto.name(), is("Test Calculation"));
+    assertThat("Unexpected CCT date.", updatedDto.cctDate(), is(nullValue()));
+
+    CctProgrammeMembershipDto pm = updatedDto.programmeMembership();
+    assertThat("Unexpected PM ID.", pm.id(), is(pmId));
+    assertThat("Unexpected PM name.", pm.name(), is("Test Programme"));
+    assertThat("Unexpected PM start date.", pm.startDate(), is(LocalDate.EPOCH));
+    assertThat("Unexpected PM end date.", pm.endDate(), is(LocalDate.EPOCH.plusYears(1)));
+    assertThat("Unexpected PM WTE.", pm.wte(), is(1.0));
+
+    List<CctChangeDto> changes = updatedDto.changes();
+    assertThat("Unexpected change count.", changes.size(), is(2));
+
+    CctChangeDto change1 = changes.get(0);
+    assertThat("Unexpected change type.", change1.type(), is(LTFT));
+    assertThat("Unexpected change type.", change1.startDate(), is(LocalDate.MIN));
+    assertThat("Unexpected change type.", change1.wte(), is(0.5));
+
+    CctChangeDto change2 = changes.get(1);
+    assertThat("Unexpected change type.", change2.type(), is(LTFT));
+    assertThat("Unexpected change type.", change2.startDate(), is(LocalDate.MAX));
+    assertThat("Unexpected change type.", change2.wte(), is(0.75));
+  }
+
+  @Test
+  void shouldNotUpdateExistingCalculationIfIdsInconsistent() {
+    ObjectId id = ObjectId.get();
+    ObjectId id2 = ObjectId.get();
+
+    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
+        .id(id)
+        .name("Test Calculation")
+        .build();
+
+    CctCalculationDetailDto updatedDto = service.updateCalculation(id2, dto);
+
+    assertThat("Unexpected updated calculation.", updatedDto, nullValue());
+    verifyNoInteractions(calculationRepository);
+  }
+
+  @Test
+  void shouldNotSaveNewlyCreatedCalculation() {
+    ObjectId id = ObjectId.get();
+
+    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
+        .name("Test Calculation")
+        .build();
+
+    CctCalculationDetailDto updatedDto = service.updateCalculation(id, dto);
+
+    assertThat("Unexpected updated calculation.", updatedDto, nullValue());
+    verifyNoInteractions(calculationRepository);
   }
 }

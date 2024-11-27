@@ -36,6 +36,7 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
 
 import java.net.URI;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -210,6 +211,59 @@ class CctResourceTest {
     when(service.calculateCctDate(any())).thenReturn(Optional.empty());
 
     ResponseEntity<CctCalculationDetailDto> response = controller.calculateCctDate(dto);
+
+    assertThat("Unexpected response code.", response.getStatusCode(), is(BAD_REQUEST));
+
+    CctCalculationDetailDto responseBody = response.getBody();
+    assertThat("Unexpected response body.", responseBody, nullValue());
+  }
+
+  @Test
+  void shouldReturnUpdatedCalculation() {
+    ObjectId id = ObjectId.get();
+    Instant created = Instant.now();
+    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
+        .id(id)
+        .name("Test Calculation")
+        .created(created)
+        .lastModified(created)
+        .build();
+
+    Instant modified = created.plusSeconds(1);
+    when(service.updateCalculation(any(), any())).thenAnswer(inv -> {
+      CctCalculationDetailDto arg = inv.getArgument(1);
+      return CctCalculationDetailDto.builder()
+          .id(arg.id())
+          .name(arg.name())
+          .created(arg.created())
+          .lastModified(modified)
+          .build();
+    });
+
+    ResponseEntity<CctCalculationDetailDto> response = controller.updateCalculationDetails(id, dto);
+
+    assertThat("Unexpected response code.", response.getStatusCode(), is(OK));
+
+    CctCalculationDetailDto responseBody = response.getBody();
+    assertThat("Unexpected response body.", responseBody, notNullValue());
+    assertThat("Unexpected ID.", responseBody.id(), is(id));
+    assertThat("Unexpected name.", responseBody.name(), is("Test Calculation"));
+    assertThat("Unexpected created.", responseBody.created(), is(created));
+    assertThat("Unexpected last modified.", responseBody.lastModified(), is(modified));
+  }
+
+  @Test
+  void shouldReturnBadRequestWhenUpdateIsInconsistent() {
+    ObjectId id = ObjectId.get();
+    ObjectId id2 = ObjectId.get();
+    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
+        .id(id2)
+        .name("Test Calculation")
+        .build();
+
+    when(service.updateCalculation(any(), any())).thenReturn(null);
+
+    ResponseEntity<CctCalculationDetailDto> response = controller.updateCalculationDetails(id, dto);
 
     assertThat("Unexpected response code.", response.getStatusCode(), is(BAD_REQUEST));
 
