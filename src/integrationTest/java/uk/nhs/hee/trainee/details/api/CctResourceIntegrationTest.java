@@ -625,6 +625,8 @@ class CctResourceIntegrationTest {
 
     ObjectId id = entity.id();
     Instant created = entity.created();
+    Instant lastModified = entity.lastModified();
+    assertThat("Unexpected initial last modified date.", created, is(lastModified));
 
     String body = """
         {
