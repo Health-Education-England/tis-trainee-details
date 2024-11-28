@@ -476,40 +476,4 @@ class CctServiceTest {
     verify(calculationRepository).findById(id);
     verifyNoMoreInteractions(calculationRepository);
   }
-
-  @Test
-  void shouldNotUpdateExistingCalculationIfNotOwnedByUser() {
-    UUID pmId = UUID.randomUUID();
-    ObjectId id = ObjectId.get();
-    Instant created = Instant.now();
-
-    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
-        .id(id)
-        .created(created)
-        .name("Test Calculation")
-        .programmeMembership(CctProgrammeMembershipDto.builder()
-            .id(pmId)
-            .name("Test Programme")
-            .startDate(LocalDate.EPOCH)
-            .endDate(LocalDate.EPOCH.plusYears(1))
-            .wte(1.0)
-            .build())
-        .changes(List.of(
-            CctChangeDto.builder().type(LTFT).startDate(LocalDate.MIN).wte(0.5).build(),
-            CctChangeDto.builder().type(LTFT).startDate(LocalDate.MAX).wte(0.75).build()
-        ))
-        .build();
-
-    CctCalculation existingCalc = CctCalculation.builder()
-        .id(id)
-        .traineeId("another trainee")
-        .build();
-    when(calculationRepository.findById(any())).thenReturn(Optional.of(existingCalc));
-
-
-    Optional<CctCalculationDetailDto> updatedDtoOptional = service.updateCalculation(id, dto);
-    assertThat("Unexpected saved calculation.", updatedDtoOptional.isPresent(), is(false));
-    verify(calculationRepository).findById(id);
-    verifyNoMoreInteractions(calculationRepository);
-  }
 }

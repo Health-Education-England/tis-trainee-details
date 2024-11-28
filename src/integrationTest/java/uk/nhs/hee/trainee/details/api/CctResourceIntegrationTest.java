@@ -616,7 +616,7 @@ class CctResourceIntegrationTest {
   }
 
   @Test
-  void shouldReturnNotFoundWhenUpdatingCalculationNotOwnedByUser() throws Exception {
+  void shouldReturnForbiddenWhenUpdatingCalculationNotOwnedByUser() throws Exception {
     CctCalculation entity = CctCalculation.builder()
         .traineeId("another trainee")
         .name("Test Calculation")
@@ -654,7 +654,7 @@ class CctResourceIntegrationTest {
             .header(HttpHeaders.AUTHORIZATION, token)
             .contentType(MediaType.APPLICATION_JSON)
             .content(body))
-        .andExpect(status().isNotFound());
+        .andExpect(status().isForbidden());
   }
 
   @Test

@@ -127,20 +127,15 @@ public class CctService {
   public Optional<CctCalculationDetailDto> updateCalculation(ObjectId id,
       CctCalculationDetailDto dto) {
     log.info("Updating CCT calculation [{}] with id [{}]", dto.name(), id);
-    try {
-      Optional<CctCalculationDetailDto> existingCalc = getCalculation(id);
-      if (existingCalc.isPresent()) {
-        CctCalculation entity = mapper.toEntity(dto, traineeIdentity.getTraineeId());
-        entity = calculationRepository.save(entity);
 
-        log.info("Updated CCT calculation [{}] with id [{}]", dto.name(), entity.id());
-        return Optional.of(mapper.toDetailDto(entity));
-
-      } else {
-        log.warn("CCT calculation [{}] cannot be updated: not found.", id);
-      }
-    } catch (NotRecordOwnerException e) {
-      log.warn("CCT calculation [{}] cannot be updated: {}.", id, e.getMessage());
+    Optional<CctCalculationDetailDto> existingCalc = getCalculation(id);
+    if (existingCalc.isPresent()) {
+      CctCalculation entity = mapper.toEntity(dto, traineeIdentity.getTraineeId());
+      entity = calculationRepository.save(entity);
+      log.info("Updated CCT calculation [{}] with id [{}]", dto.name(), entity.id());
+      return Optional.of(mapper.toDetailDto(entity));
+    } else {
+      log.warn("CCT calculation [{}] cannot be updated: not found.", id);
     }
     return Optional.empty();
   }
