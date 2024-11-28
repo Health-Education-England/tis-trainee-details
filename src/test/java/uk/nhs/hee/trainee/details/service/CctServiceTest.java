@@ -28,7 +28,8 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.LTFT;
 
@@ -350,7 +351,7 @@ class CctServiceTest {
   }
 
   @Test
-  void shouldUpdateExistingCalculation() {
+  void shouldUpdateExistingCalculationIfExistsAndOwnedByUser() {
     UUID pmId = UUID.randomUUID();
     ObjectId id = ObjectId.get();
     Instant created = Instant.now();
@@ -371,6 +372,12 @@ class CctServiceTest {
             CctChangeDto.builder().type(LTFT).startDate(LocalDate.MAX).wte(0.75).build()
         ))
         .build();
+
+    CctCalculation existingCalc = CctCalculation.builder()
+        .id(id)
+        .traineeId(TRAINEE_ID)
+        .build();
+    when(calculationRepository.findById(any())).thenReturn(Optional.of(existingCalc));
 
     Instant modified = created.plusSeconds(1);
     when(calculationRepository.save(any(CctCalculation.class))).thenAnswer(inv -> {
@@ -406,8 +413,10 @@ class CctServiceTest {
           .build();
     });
 
-    CctCalculationDetailDto updatedDto = service.updateCalculation(id, dto);
+    Optional<CctCalculationDetailDto> updatedDtoOptional = service.updateCalculation(id, dto);
+    assertThat("Unexpected saved calculation.", updatedDtoOptional.isPresent(), is(true));
 
+    CctCalculationDetailDto updatedDto = updatedDtoOptional.get();
     assertThat("Unexpected calculation ID.", updatedDto.id(), is(id));
     assertThat("Unexpected calculation created.", updatedDto.created(), is(created));
     assertThat("Unexpected calculation last modified.", updatedDto.lastModified(),
@@ -437,32 +446,70 @@ class CctServiceTest {
   }
 
   @Test
-  void shouldNotUpdateExistingCalculationIfIdsInconsistent() {
+  void shouldNotUpdateExistingCalculationIfNotExists() {
+    UUID pmId = UUID.randomUUID();
     ObjectId id = ObjectId.get();
-    ObjectId id2 = ObjectId.get();
+    Instant created = Instant.now();
 
     CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
         .id(id)
+        .created(created)
         .name("Test Calculation")
+        .programmeMembership(CctProgrammeMembershipDto.builder()
+            .id(pmId)
+            .name("Test Programme")
+            .startDate(LocalDate.EPOCH)
+            .endDate(LocalDate.EPOCH.plusYears(1))
+            .wte(1.0)
+            .build())
+        .changes(List.of(
+            CctChangeDto.builder().type(LTFT).startDate(LocalDate.MIN).wte(0.5).build(),
+            CctChangeDto.builder().type(LTFT).startDate(LocalDate.MAX).wte(0.75).build()
+        ))
         .build();
 
-    CctCalculationDetailDto updatedDto = service.updateCalculation(id2, dto);
+    when(calculationRepository.findById(any())).thenReturn(Optional.empty());
 
-    assertThat("Unexpected updated calculation.", updatedDto, nullValue());
-    verifyNoInteractions(calculationRepository);
+    Optional<CctCalculationDetailDto> updatedDtoOptional = service.updateCalculation(id, dto);
+
+    assertThat("Unexpected saved calculation.", updatedDtoOptional.isPresent(), is(false));
+    verify(calculationRepository).findById(id);
+    verifyNoMoreInteractions(calculationRepository);
   }
 
   @Test
-  void shouldNotSaveNewlyCreatedCalculation() {
+  void shouldNotUpdateExistingCalculationIfNotOwnedByUser() {
+    UUID pmId = UUID.randomUUID();
     ObjectId id = ObjectId.get();
+    Instant created = Instant.now();
 
     CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
+        .id(id)
+        .created(created)
         .name("Test Calculation")
+        .programmeMembership(CctProgrammeMembershipDto.builder()
+            .id(pmId)
+            .name("Test Programme")
+            .startDate(LocalDate.EPOCH)
+            .endDate(LocalDate.EPOCH.plusYears(1))
+            .wte(1.0)
+            .build())
+        .changes(List.of(
+            CctChangeDto.builder().type(LTFT).startDate(LocalDate.MIN).wte(0.5).build(),
+            CctChangeDto.builder().type(LTFT).startDate(LocalDate.MAX).wte(0.75).build()
+        ))
         .build();
 
-    CctCalculationDetailDto updatedDto = service.updateCalculation(id, dto);
+    CctCalculation existingCalc = CctCalculation.builder()
+        .id(id)
+        .traineeId("another trainee")
+        .build();
+    when(calculationRepository.findById(any())).thenReturn(Optional.of(existingCalc));
 
-    assertThat("Unexpected updated calculation.", updatedDto, nullValue());
-    verifyNoInteractions(calculationRepository);
+
+    Optional<CctCalculationDetailDto> updatedDtoOptional = service.updateCalculation(id, dto);
+    assertThat("Unexpected saved calculation.", updatedDtoOptional.isPresent(), is(false));
+    verify(calculationRepository).findById(id);
+    verifyNoMoreInteractions(calculationRepository);
   }
 }

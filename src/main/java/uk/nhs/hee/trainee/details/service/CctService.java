@@ -122,19 +122,26 @@ public class CctService {
    *
    * @param id  The ID of the CCT calculation to update
    * @param dto The detail of the CCT calculation.
-   * @return The updated CCT calculation, or null if the provided id is not the entity id.
+   * @return The updated CCT calculation, or optional empty if error.
    */
-  public CctCalculationDetailDto updateCalculation(ObjectId id, CctCalculationDetailDto dto) {
+  public Optional<CctCalculationDetailDto> updateCalculation(ObjectId id, CctCalculationDetailDto dto) {
     log.info("Updating CCT calculation [{}] with id [{}]", dto.name(), id);
-    CctCalculation entity = mapper.toEntity(dto, traineeIdentity.getTraineeId());
-    if (entity.id() == null || entity.id().compareTo(id) != 0) {
-      log.warn("Not updating CCT calculation because of id mismatch [{}] != [{}]", id, entity.id());
-      return null;
-    }
-    entity = calculationRepository.save(entity);
+    try {
+      Optional<CctCalculationDetailDto> existingCalc = getCalculation(id);
+      if (existingCalc.isPresent()) {
+        CctCalculation entity = mapper.toEntity(dto, traineeIdentity.getTraineeId());
+        entity = calculationRepository.save(entity);
 
-    log.info("Updated CCT calculation [{}] with id [{}]", dto.name(), entity.id());
-    return mapper.toDetailDto(entity);
+        log.info("Updated CCT calculation [{}] with id [{}]", dto.name(), entity.id());
+        return Optional.of(mapper.toDetailDto(entity));
+
+      } else {
+        log.warn("CCT calculation [{}] cannot be updated: not found.", id);
+      }
+    } catch (NotRecordOwnerException e) {
+      log.warn("CCT calculation [{}] cannot be updated: {}.", id, e.getMessage());
+    }
+    return Optional.empty();
   }
 
   /**

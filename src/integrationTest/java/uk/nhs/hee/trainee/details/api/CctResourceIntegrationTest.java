@@ -616,6 +616,81 @@ class CctResourceIntegrationTest {
   }
 
   @Test
+  void shouldReturnNotFoundWhenUpdatingCalculationNotOwnedByUser() throws Exception {
+    CctCalculation entity = CctCalculation.builder()
+        .traineeId("another trainee")
+        .name("Test Calculation")
+        .build();
+    entity = template.insert(entity);
+
+    ObjectId id = entity.id();
+    Instant created = entity.created();
+
+    String body = """
+        {
+          "id": "%s",
+          "created": "%s",
+          "name": "Test Calculation updated",
+          "programmeMembership": {
+            "id": "12345678-aaaa-bbbb-cccc-012345678910",
+            "name": "Test Programme",
+            "startDate": "2024-01-01",
+            "endDate": "2025-01-01",
+            "wte": 0.5
+          },
+          "changes": [
+            {
+              "type": "LTFT",
+              "startDate": "2024-07-01",
+              "wte": 0.75
+            }
+          ]
+        }
+        """.formatted(id, created);
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+
+    mockMvc.perform(put("/api/cct/calculation/" + id)
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void shouldReturnNotFoundWhenUpdatingNewCalculation() throws Exception {
+    ObjectId id = ObjectId.get();
+    String body = """
+        {
+          "id": "%s",
+          "name": "Test Calculation updated",
+          "programmeMembership": {
+            "id": "12345678-aaaa-bbbb-cccc-012345678910",
+            "name": "Test Programme",
+            "startDate": "2024-01-01",
+            "endDate": "2025-01-01",
+            "wte": 0.5
+          },
+          "changes": [
+            {
+              "type": "LTFT",
+              "startDate": "2024-07-01",
+              "wte": 0.75
+            }
+          ]
+        }
+        """.formatted(id);
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+
+    mockMvc.perform(put("/api/cct/calculation/" + id)
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
   void shouldUpdateCalculation() throws Exception {
     CctCalculation entity = CctCalculation.builder()
         .traineeId(TRAINEE_ID)

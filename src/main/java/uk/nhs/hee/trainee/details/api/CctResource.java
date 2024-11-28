@@ -97,15 +97,20 @@ public class CctResource {
   public ResponseEntity<CctCalculationDetailDto> updateCalculationDetails(@PathVariable ObjectId id,
       @Validated(UserUpdate.class) @RequestBody CctCalculationDetailDto calculation) {
     log.info("Request to update CCT calculation[{}]", id);
-    CctCalculationDetailDto savedCalculation = service.updateCalculation(id, calculation);
+    Optional<CctCalculationDetailDto> savedCalculation;
 
-    if (savedCalculation != null) {
-      log.info("Updated CCT calculation [{}] with id [{}]", savedCalculation.name(),
-          savedCalculation.id());
-      return ResponseEntity.ok(savedCalculation);
+    if (calculation.id() == null) {
+      log.warn("Not updating CCT calculation because of missing id (use POST to create)");
+      return ResponseEntity.badRequest().build();
+    } else if (calculation.id().compareTo(id) != 0) {
+      log.warn("Not updating CCT calculation because of id mismatch [{}] != [{}]", id,
+          calculation.id());
+      return ResponseEntity.badRequest().build();
     } else {
-      return ResponseEntity.badRequest().body(null);
+      savedCalculation = service.updateCalculation(id, calculation);
     }
+
+    return ResponseEntity.of(savedCalculation);
   }
 
   /**

@@ -232,12 +232,12 @@ class CctResourceTest {
     Instant modified = created.plusSeconds(1);
     when(service.updateCalculation(any(), any())).thenAnswer(inv -> {
       CctCalculationDetailDto arg = inv.getArgument(1);
-      return CctCalculationDetailDto.builder()
+      return Optional.of(CctCalculationDetailDto.builder()
           .id(arg.id())
           .name(arg.name())
           .created(arg.created())
           .lastModified(modified)
-          .build();
+          .build());
     });
 
     ResponseEntity<CctCalculationDetailDto> response = controller.updateCalculationDetails(id, dto);
@@ -261,11 +261,46 @@ class CctResourceTest {
         .name("Test Calculation")
         .build();
 
-    when(service.updateCalculation(any(), any())).thenReturn(null);
+    ResponseEntity<CctCalculationDetailDto> response = controller.updateCalculationDetails(id, dto);
+
+    assertThat("Unexpected response code.", response.getStatusCode(), is(BAD_REQUEST));
+
+    CctCalculationDetailDto responseBody = response.getBody();
+    assertThat("Unexpected response body.", responseBody, nullValue());
+  }
+
+  @Test
+  void shouldReturnBadRequestWhenUpdateHasNoEntityId() {
+    ObjectId id = ObjectId.get();
+    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
+        .name("Test Calculation")
+        .build();
 
     ResponseEntity<CctCalculationDetailDto> response = controller.updateCalculationDetails(id, dto);
 
     assertThat("Unexpected response code.", response.getStatusCode(), is(BAD_REQUEST));
+
+    CctCalculationDetailDto responseBody = response.getBody();
+    assertThat("Unexpected response body.", responseBody, nullValue());
+  }
+
+  @Test
+  void shouldReturnNotFoundWhenCalculationCannotBeUpdated() {
+    ObjectId id = ObjectId.get();
+    Instant created = Instant.now();
+    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
+        .id(id)
+        .name("Test Calculation")
+        .created(created)
+        .lastModified(created)
+        .build();
+
+    //e.g. because not owned by the user, or non-existent
+    when(service.updateCalculation(any(), any())).thenReturn(Optional.empty());
+
+    ResponseEntity<CctCalculationDetailDto> response = controller.updateCalculationDetails(id, dto);
+
+    assertThat("Unexpected response code.", response.getStatusCode(), is(NOT_FOUND));
 
     CctCalculationDetailDto responseBody = response.getBody();
     assertThat("Unexpected response body.", responseBody, nullValue());
