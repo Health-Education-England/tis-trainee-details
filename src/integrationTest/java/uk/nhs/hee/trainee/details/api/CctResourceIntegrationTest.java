@@ -25,8 +25,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.core.IsNot.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -257,7 +260,6 @@ class CctResourceIntegrationTest {
   @Test
   void shouldGetCalculationWhenOwnedByUser() throws Exception {
     UUID pmId = UUID.randomUUID();
-    LocalDate cctDate = LocalDate.of(2024, 1, 1);
 
     CctCalculation entity = CctCalculation.builder()
         .traineeId(TRAINEE_ID)
@@ -578,5 +580,172 @@ class CctResourceIntegrationTest {
         .andExpect(jsonPath("$.traineeId").doesNotExist())
         .andExpect(jsonPath("$.cctDate").value(LocalDate.MAX.toString()))
         .andExpect(jsonPath("$.name").value("Test Calculation"));
+  }
+
+  @Test
+  void shouldReturnBadRequestWhenUpdatingCalculationWithoutEntityId() throws Exception {
+    ObjectId id = ObjectId.get();
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+
+    mockMvc.perform(put("/api/cct/calculation/" + id)
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(calculationJson.toString()))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$").doesNotExist());
+  }
+
+  @Test
+  void shouldReturnBadRequestWhenUpdatingCalculationWithConflictingIds() throws Exception {
+    ObjectId id = ObjectId.get();
+    String body = """
+        {
+          "id": %s
+          "name": "Test Calculation",
+        }
+        """.formatted(id);
+
+    ObjectId id2 = ObjectId.get();
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+
+    mockMvc.perform(put("/api/cct/calculation/" + id2)
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void shouldReturnForbiddenWhenUpdatingCalculationNotOwnedByUser() throws Exception {
+    CctCalculation entity = CctCalculation.builder()
+        .traineeId("another trainee")
+        .name("Test Calculation")
+        .build();
+    entity = template.insert(entity);
+
+    ObjectId id = entity.id();
+    Instant created = entity.created();
+
+    String body = """
+        {
+          "id": "%s",
+          "created": "%s",
+          "name": "Test Calculation updated",
+          "programmeMembership": {
+            "id": "12345678-aaaa-bbbb-cccc-012345678910",
+            "name": "Test Programme",
+            "startDate": "2024-01-01",
+            "endDate": "2025-01-01",
+            "wte": 0.5
+          },
+          "changes": [
+            {
+              "type": "LTFT",
+              "startDate": "2024-07-01",
+              "wte": 0.75
+            }
+          ]
+        }
+        """.formatted(id, created);
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+
+    mockMvc.perform(put("/api/cct/calculation/" + id)
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body))
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
+  void shouldReturnNotFoundWhenUpdatingNewCalculation() throws Exception {
+    ObjectId id = ObjectId.get();
+    String body = """
+        {
+          "id": "%s",
+          "name": "Test Calculation updated",
+          "programmeMembership": {
+            "id": "12345678-aaaa-bbbb-cccc-012345678910",
+            "name": "Test Programme",
+            "startDate": "2024-01-01",
+            "endDate": "2025-01-01",
+            "wte": 0.5
+          },
+          "changes": [
+            {
+              "type": "LTFT",
+              "startDate": "2024-07-01",
+              "wte": 0.75
+            }
+          ]
+        }
+        """.formatted(id);
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+
+    mockMvc.perform(put("/api/cct/calculation/" + id)
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void shouldUpdateCalculation() throws Exception {
+    CctCalculation entity = CctCalculation.builder()
+        .traineeId(TRAINEE_ID)
+        .name("Test Calculation")
+        .build();
+    entity = template.insert(entity);
+
+    ObjectId id = entity.id();
+    Instant created = entity.created();
+    Instant lastModified = entity.lastModified();
+    assertThat("Unexpected initial last modified date.", created, is(lastModified));
+
+    String body = """
+        {
+          "id": "%s",
+          "created": "%s",
+          "name": "Test Calculation updated",
+          "programmeMembership": {
+            "id": "12345678-aaaa-bbbb-cccc-012345678910",
+            "name": "Test Programme",
+            "startDate": "2024-01-01",
+            "endDate": "2025-01-01",
+            "wte": 0.5
+          },
+          "changes": [
+            {
+              "type": "LTFT",
+              "startDate": "2024-07-01",
+              "wte": 0.75
+            }
+          ]
+        }
+        """.formatted(id, created);
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+
+    MvcResult result = mockMvc.perform(put("/api/cct/calculation/" + id)
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.id").value(id.toString()))
+        .andExpect(jsonPath("$.name").value("Test Calculation updated"))
+        .andExpect(jsonPath("$.created").value(created.toString()))
+        .andReturn();
+
+    MockHttpServletResponse response = result.getResponse();
+    String lastModifiedString = JsonPath.read(response.getContentAsString(), "$.lastModified");
+    String createdString = JsonPath.read(response.getContentAsString(), "$.created");
+    assertThat("Unexpected last modified date.", lastModifiedString, not(createdString));
+
+    CctCalculation updatedEntity = template.findById(id, CctCalculation.class);
+    assertThat("Unexpected missing saved entity.", updatedEntity, notNullValue());
+    assertThat("Unexpected updated entity name.", updatedEntity.name(),
+        is("Test Calculation updated"));
   }
 }

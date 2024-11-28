@@ -118,6 +118,29 @@ public class CctService {
   }
 
   /**
+   * Update a CCT calculation.
+   *
+   * @param id  The ID of the CCT calculation to update
+   * @param dto The detail of the CCT calculation.
+   * @return The updated CCT calculation, or optional empty if error.
+   */
+  public Optional<CctCalculationDetailDto> updateCalculation(ObjectId id,
+      CctCalculationDetailDto dto) {
+    log.info("Updating CCT calculation [{}] with id [{}]", dto.name(), id);
+
+    Optional<CctCalculationDetailDto> existingCalc = getCalculation(id);
+    if (existingCalc.isPresent()) {
+      CctCalculation entity = mapper.toEntity(dto, traineeIdentity.getTraineeId());
+      entity = calculationRepository.save(entity);
+      log.info("Updated CCT calculation [{}] with id [{}]", dto.name(), entity.id());
+      return Optional.of(mapper.toDetailDto(entity));
+    } else {
+      log.warn("CCT calculation [{}] cannot be updated: not found.", id);
+    }
+    return Optional.empty();
+  }
+
+  /**
    * Calculate the CCT end date and insert it into a CCT Calculation DTO.
    *
    * @param dto The CctCalculationDetailDto to use to calculate the CCT end date.
