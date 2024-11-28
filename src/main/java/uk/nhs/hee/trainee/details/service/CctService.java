@@ -124,7 +124,8 @@ public class CctService {
    * @param dto The detail of the CCT calculation.
    * @return The updated CCT calculation, or optional empty if error.
    */
-  public Optional<CctCalculationDetailDto> updateCalculation(ObjectId id, CctCalculationDetailDto dto) {
+  public Optional<CctCalculationDetailDto> updateCalculation(ObjectId id,
+      CctCalculationDetailDto dto) {
     log.info("Updating CCT calculation [{}] with id [{}]", dto.name(), id);
     try {
       Optional<CctCalculationDetailDto> existingCalc = getCalculation(id);
