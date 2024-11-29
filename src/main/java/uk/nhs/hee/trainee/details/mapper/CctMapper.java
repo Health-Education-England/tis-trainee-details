@@ -27,6 +27,7 @@ import java.time.LocalDate;
 import java.util.List;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.Named;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationSummaryDto;
 import uk.nhs.hee.trainee.details.model.CctCalculation;
@@ -60,18 +61,8 @@ public interface CctMapper {
    * @param entity The entity to convert to a DTO.
    * @return The equivalent detail DTO.
    */
-  @Mapping(target = "cctDate", ignore = true)
+  @Mapping(target = "cctDate", source = "entity", qualifiedByName = "calculateCctDate")
   CctCalculationDetailDto toDetailDto(CctCalculation entity);
-
-  /**
-   * Insert a cctDate into a {@link CctCalculationDetailDto} DTO.
-   *
-   * @param dto        The DTO to use.
-   * @param newCctDate The CCT date to update the DTO with.
-   * @return The equivalent DTO with CCT date injected.
-   */
-  @Mapping(target = "cctDate", source = "newCctDate")
-  CctCalculationDetailDto toDetailDto(CctCalculationDetailDto dto, LocalDate newCctDate);
 
   /**
    * Convert a {@link CctCalculationDetailDto} DTO to a {@link CctCalculation} entity.
@@ -82,4 +73,18 @@ public interface CctMapper {
    */
   @Mapping(target = "traineeId", source = "traineeId")
   CctCalculation toEntity(CctCalculationDetailDto dto, String traineeId);
+
+  /**
+   * Calculate the CCT end date for a CCT Calculation.
+   *
+   * @param entity The CctCalculation to use to calculate the CCT end date.
+   * @return the CCT end date, or null if CctCalculation is null.
+   */
+  @Named("calculateCctDate")
+  static LocalDate calculateCctDate(CctCalculation entity) {
+    if (entity != null) {
+      return LocalDate.of(2030, 1, 1); //placeholder
+    }
+    return null;
+  }
 }
