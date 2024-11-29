@@ -38,6 +38,8 @@ import uk.nhs.hee.trainee.details.model.CctCalculation;
 @Mapper(componentModel = SPRING)
 public interface CctMapper {
 
+  public static final LocalDate PLACEHOLDER_CCT_DATE = LocalDate.of(2030, 1, 1);
+
   /**
    * Convert a {@link CctCalculation} entity to a {@link CctCalculationSummaryDto} DTO.
    *
@@ -83,7 +85,7 @@ public interface CctMapper {
   @Named("calculateCctDate")
   static LocalDate calculateCctDate(CctCalculation entity) {
     if (entity != null) {
-      return LocalDate.of(2030, 1, 1); //placeholder
+      return PLACEHOLDER_CCT_DATE;
     }
     return null;
   }

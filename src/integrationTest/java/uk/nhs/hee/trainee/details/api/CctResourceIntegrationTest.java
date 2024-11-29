@@ -33,6 +33,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static uk.nhs.hee.trainee.details.mapper.CctMapper.PLACEHOLDER_CCT_DATE;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.DoubleNode;
@@ -298,7 +299,7 @@ class CctResourceIntegrationTest {
         .andExpect(jsonPath("$.changes[0].type").value("LTFT"))
         .andExpect(jsonPath("$.changes[0].startDate").value("2024-07-01"))
         .andExpect(jsonPath("$.changes[0].wte").value(0.5))
-        .andExpect(jsonPath("$.cctDate").doesNotExist())
+        .andExpect(jsonPath("$.cctDate").value(PLACEHOLDER_CCT_DATE.toString()))
         .andExpect(
             jsonPath("$.created").value(entity.created().truncatedTo(ChronoUnit.MILLIS).toString()))
         .andExpect(jsonPath("$.lastModified").value(
@@ -525,7 +526,7 @@ class CctResourceIntegrationTest {
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.id").exists())
         .andExpect(jsonPath("$.traineeId").doesNotExist())
-        .andExpect(jsonPath("$.cctDate").doesNotExist())
+        .andExpect(jsonPath("$.cctDate").value(PLACEHOLDER_CCT_DATE.toString()))
         .andExpect(jsonPath("$.name").value("Test Calculation"))
         .andExpect(jsonPath("$.created").exists())
         .andExpect(jsonPath("$.lastModified").exists())
@@ -578,7 +579,7 @@ class CctResourceIntegrationTest {
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.traineeId").doesNotExist())
-        .andExpect(jsonPath("$.cctDate").value(LocalDate.MAX.toString()))
+        .andExpect(jsonPath("$.cctDate").value(PLACEHOLDER_CCT_DATE.toString()))
         .andExpect(jsonPath("$.name").value("Test Calculation"));
   }
 

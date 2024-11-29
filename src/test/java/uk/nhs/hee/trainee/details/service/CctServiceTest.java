@@ -31,6 +31,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.LTFT;
+import static uk.nhs.hee.trainee.details.mapper.CctMapper.PLACEHOLDER_CCT_DATE;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -56,7 +57,6 @@ import uk.nhs.hee.trainee.details.repository.CctCalculationRepository;
 class CctServiceTest {
 
   private static final String TRAINEE_ID = UUID.randomUUID().toString();
-  private static final LocalDate PLACEHOLDER_CCT_DATE = LocalDate.of(2030, 1, 1);
 
   private CctService service;
   private CctCalculationRepository calculationRepository;
