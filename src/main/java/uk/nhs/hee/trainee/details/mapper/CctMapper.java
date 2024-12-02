@@ -84,9 +84,6 @@ public interface CctMapper {
    */
   @Named("calculateCctDate")
   static LocalDate calculateCctDate(CctCalculation entity) {
-    if (entity != null) {
-      return PLACEHOLDER_CCT_DATE;
-    }
-    return null;
+    return PLACEHOLDER_CCT_DATE;
   }
 }

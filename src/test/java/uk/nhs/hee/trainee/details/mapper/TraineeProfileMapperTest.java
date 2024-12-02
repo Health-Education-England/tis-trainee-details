@@ -56,7 +56,7 @@ class TraineeProfileMapperTest {
   private TrainingNumberGenerator trainingNumberGenerator;
 
   @Test
-  void shouldGenerateTrainingNumberssWhenGettingTraineeProfile() {
+  void shouldGenerateTrainingNumbersWhenGettingTraineeProfile() {
     TraineeProfile entity = new TraineeProfile();
 
     TraineeProfileDto dto = mapper.toDto(entity);
