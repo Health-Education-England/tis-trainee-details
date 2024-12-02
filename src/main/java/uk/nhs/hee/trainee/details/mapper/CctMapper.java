@@ -27,7 +27,6 @@ import java.time.LocalDate;
 import java.util.List;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.Named;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationSummaryDto;
 import uk.nhs.hee.trainee.details.model.CctCalculation;
@@ -37,8 +36,6 @@ import uk.nhs.hee.trainee.details.model.CctCalculation;
  */
 @Mapper(componentModel = SPRING)
 public interface CctMapper {
-
-  public static final LocalDate PLACEHOLDER_CCT_DATE = LocalDate.of(2030, 1, 1);
 
   /**
    * Convert a {@link CctCalculation} entity to a {@link CctCalculationSummaryDto} DTO.
@@ -63,8 +60,18 @@ public interface CctMapper {
    * @param entity The entity to convert to a DTO.
    * @return The equivalent detail DTO.
    */
-  @Mapping(target = "cctDate", source = "entity", qualifiedByName = "calculateCctDate")
+  @Mapping(target = "cctDate", ignore = true)
   CctCalculationDetailDto toDetailDto(CctCalculation entity);
+
+  /**
+   * Convert a {@link CctCalculation} entity to a {@link CctCalculationDetailDto} DTO, injecting
+   * the CCT date into this.
+   *
+   * @param entity The entity to convert to a DTO.
+   * @return The equivalent detail DTO.
+   */
+  @Mapping(target = "cctDate", source = "cctDate")
+  CctCalculationDetailDto toDetailDto(CctCalculation entity, LocalDate cctDate);
 
   /**
    * Convert a {@link CctCalculationDetailDto} DTO to a {@link CctCalculation} entity.
@@ -76,14 +83,4 @@ public interface CctMapper {
   @Mapping(target = "traineeId", source = "traineeId")
   CctCalculation toEntity(CctCalculationDetailDto dto, String traineeId);
 
-  /**
-   * Calculate the CCT end date for a CCT Calculation.
-   *
-   * @param entity The CctCalculation to use to calculate the CCT end date.
-   * @return the CCT end date, or null if CctCalculation is null.
-   */
-  @Named("calculateCctDate")
-  static LocalDate calculateCctDate(CctCalculation entity) {
-    return PLACEHOLDER_CCT_DATE;
-  }
 }

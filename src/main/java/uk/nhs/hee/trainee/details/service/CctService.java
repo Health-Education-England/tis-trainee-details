@@ -22,6 +22,8 @@
 package uk.nhs.hee.trainee.details.service;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
@@ -98,7 +100,9 @@ public class CctService {
     }
 
     log.info("CCT calculation found: [{}]", entity.isPresent());
-    return entity.map(mapper::toDetailDto);
+    return entity.map(cctCalculation
+        -> mapper.toDetailDto(cctCalculation, calculateCctDate(cctCalculation)))
+        .or(() -> entity.map(mapper::toDetailDto));
   }
 
   /**
@@ -113,7 +117,7 @@ public class CctService {
     entity = calculationRepository.insert(entity);
 
     log.info("Created CCT calculation [{}] with id [{}]", dto.name(), entity.id());
-    return mapper.toDetailDto(entity);
+    return mapper.toDetailDto(entity, calculateCctDate(entity));
   }
 
   /**
@@ -132,7 +136,7 @@ public class CctService {
       CctCalculation entity = mapper.toEntity(dto, traineeIdentity.getTraineeId());
       entity = calculationRepository.save(entity);
       log.info("Updated CCT calculation [{}] with id [{}]", dto.name(), entity.id());
-      return Optional.of(mapper.toDetailDto(entity));
+      return Optional.of(mapper.toDetailDto(entity, calculateCctDate(entity)));
     } else {
       log.warn("CCT calculation [{}] cannot be updated: not found.", id);
     }
@@ -143,11 +147,54 @@ public class CctService {
    * Calculate the CCT end date and insert it into a CCT Calculation DTO.
    *
    * @param dto The CctCalculationDetailDto to use to calculate the CCT end date.
-   * @return A copy of the DTO with the CCT end date set, or Optional.empty if the calculation was
-   *         not possible due to invalid data.
+   * @return A copy of the DTO with the CCT end date set.
    */
-  public Optional<CctCalculationDetailDto> calculateCctDate(CctCalculationDetailDto dto) {
-    Optional<CctCalculation> entity = Optional.of(mapper.toEntity(dto, null));
-    return entity.map(mapper::toDetailDto);
+  public Optional<CctCalculationDetailDto> insertCctDate(CctCalculationDetailDto dto) {
+    CctCalculation entity = mapper.toEntity(dto, null);
+    return Optional.of(mapper.toDetailDto(entity, calculateCctDate(entity)));
+  }
+
+  /**
+   * Calculate the CCT end date for a CCT Calculation.
+   *
+   * @param entity The CctCalculation to use to calculate the CCT end date.
+   * @return the CCT end date, or null if this is not possible to calculate.
+   */
+  public LocalDate calculateCctDate(CctCalculation entity) {
+    if (entity != null) {
+      LocalDate currentEndDate = entity.programmeMembership().endDate();
+      //assumption: changes are in sequential date order
+      for (int i = 0; i < entity.changes().size(); i++) {
+        CctCalculation.CctChange c = entity.changes().get(i);
+        LocalDate startDate = c.startDate();
+        if (startDate.isAfter(currentEndDate)) {
+          log.warn("CCT date cannot be calculated, start date for change {} after end date {}.",
+              c, currentEndDate);
+          return null;
+        }
+        long chunkDays = ChronoUnit.DAYS.between(startDate, currentEndDate);
+        double currentWte = i == 0
+            ? entity.programmeMembership().wte()
+            : entity.changes().get(i - 1).wte();
+        double wte = c.wte();
+        long chunkDaysWte = (long) Math.ceil((chunkDays * currentWte) / wte);
+        currentEndDate = currentEndDate.plusDays(chunkDaysWte - chunkDays);
+      }
+
+      return currentEndDate;
+
+    } else {
+      return null;
+    }
+  }
+
+  /**
+   * Calculate the CCT end date for a CCT Calculation DTO.
+   *
+   * @param dto The CctCalculation DTO to use to calculate the CCT end date.
+   * @return the CCT end date, or null if this is not possible to calculate.
+   */
+  public LocalDate calculateCctDate(CctCalculationDetailDto dto) {
+    return calculateCctDate(mapper.toEntity(dto, null));
   }
 }

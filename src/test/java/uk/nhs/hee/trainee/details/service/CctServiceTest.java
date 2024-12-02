@@ -31,7 +31,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.LTFT;
-import static uk.nhs.hee.trainee.details.mapper.CctMapper.PLACEHOLDER_CCT_DATE;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -197,7 +196,7 @@ class CctServiceTest {
     CctCalculationDetailDto dto = result.get();
     assertThat("Unexpected calculation ID.", dto.id(), is(calculationId));
     assertThat("Unexpected calculation name.", dto.name(), is("Test Calculation"));
-    assertThat("Unexpected CCT date.", dto.cctDate(), is(PLACEHOLDER_CCT_DATE));
+    assertThat("Unexpected CCT date.", dto.cctDate(), is(service.calculateCctDate(entity)));
     assertThat("Unexpected created timestamp.", dto.created(), is(created));
     assertThat("Unexpected last modified timestamp.", dto.lastModified(), is(lastModified));
 
@@ -276,7 +275,8 @@ class CctServiceTest {
     CctCalculationDetailDto savedDto = service.createCalculation(dto);
     assertThat("Unexpected calculation ID.", savedDto.id(), is(calculationId));
     assertThat("Unexpected calculation name.", savedDto.name(), is("Test Calculation"));
-    assertThat("Unexpected CCT date.", savedDto.cctDate(), is(PLACEHOLDER_CCT_DATE));
+    assertThat("Unexpected CCT date.", savedDto.cctDate(),
+        is(service.calculateCctDate(savedDto)));
 
     CctProgrammeMembershipDto pm = savedDto.programmeMembership();
     assertThat("Unexpected PM ID.", pm.id(), is(pmId));
@@ -300,7 +300,7 @@ class CctServiceTest {
   }
 
   @Test
-  void shouldCalculateCctDateAndIncludeOtherDetailsInReturnedDto() {
+  void shouldInsertCctDateAndIncludeOtherDetailsInReturnedDto() {
     UUID pmId = UUID.randomUUID();
 
     ObjectId calculationId = ObjectId.get();
@@ -320,7 +320,7 @@ class CctServiceTest {
         ))
         .build();
 
-    Optional<CctCalculationDetailDto> calculatedDtoOptional = service.calculateCctDate(dto);
+    Optional<CctCalculationDetailDto> calculatedDtoOptional = service.insertCctDate(dto);
 
     assertThat("Unexpected CCT calculation.", calculatedDtoOptional.isPresent(), is(true));
     CctCalculationDetailDto calculatedDto = calculatedDtoOptional.get();
@@ -328,7 +328,7 @@ class CctServiceTest {
     assertThat("Unexpected calculation ID.", calculatedDto.id(), is(calculationId));
     assertThat("Unexpected calculation name.", calculatedDto.name(), is("Test Calculation"));
     assertThat("Unexpected calculated CCT date.", calculatedDto.cctDate(),
-        is(PLACEHOLDER_CCT_DATE));
+        is(service.calculateCctDate(calculatedDto)));
 
     CctProgrammeMembershipDto pm = calculatedDto.programmeMembership();
     assertThat("Unexpected PM ID.", pm.id(), is(pmId));
@@ -377,6 +377,13 @@ class CctServiceTest {
     CctCalculation existingCalc = CctCalculation.builder()
         .id(id)
         .traineeId(TRAINEE_ID)
+        .programmeMembership(CctProgrammeMembership.builder()
+            .startDate(LocalDate.EPOCH)
+            .endDate(LocalDate.EPOCH.plusYears(1))
+            .wte(1.0)
+            .build())
+        .changes(List.of(
+                CctChange.builder().type(LTFT).startDate(LocalDate.MIN).wte(0.5).build()))
         .build();
     when(calculationRepository.findById(any())).thenReturn(Optional.of(existingCalc));
 
@@ -423,7 +430,8 @@ class CctServiceTest {
     assertThat("Unexpected calculation last modified.", updatedDto.lastModified(),
         is(modified));
     assertThat("Unexpected calculation name.", updatedDto.name(), is("Test Calculation"));
-    assertThat("Unexpected CCT date.", updatedDto.cctDate(), is(PLACEHOLDER_CCT_DATE));
+    assertThat("Unexpected CCT date.", updatedDto.cctDate(),
+        is(service.calculateCctDate(updatedDto)));
 
     CctProgrammeMembershipDto pm = updatedDto.programmeMembership();
     assertThat("Unexpected PM ID.", pm.id(), is(pmId));

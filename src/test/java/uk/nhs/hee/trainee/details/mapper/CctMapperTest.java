@@ -23,8 +23,8 @@ package uk.nhs.hee.trainee.details.mapper;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static uk.nhs.hee.trainee.details.mapper.CctMapper.PLACEHOLDER_CCT_DATE;
 
+import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -40,10 +40,11 @@ class CctMapperTest {
 
   @Test
   void shouldGenerateCctDateWhenGettingDetailDto() {
+    LocalDate cctDate = LocalDate.MAX;
     CctCalculation entity = CctCalculation.builder().build();
 
-    CctCalculationDetailDto dto = mapper.toDetailDto(entity);
+    CctCalculationDetailDto dto = mapper.toDetailDto(entity, cctDate);
 
-    assertThat("Unexpected dto.", dto.cctDate(), is(PLACEHOLDER_CCT_DATE));
+    assertThat("Unexpected dto.", dto.cctDate(), is(cctDate));
   }
 }
