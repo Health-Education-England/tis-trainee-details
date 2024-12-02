@@ -24,7 +24,6 @@ package uk.nhs.hee.trainee.details.service;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -32,6 +31,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.LTFT;
+import static uk.nhs.hee.trainee.details.mapper.CctMapper.PLACEHOLDER_CCT_DATE;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -197,7 +197,7 @@ class CctServiceTest {
     CctCalculationDetailDto dto = result.get();
     assertThat("Unexpected calculation ID.", dto.id(), is(calculationId));
     assertThat("Unexpected calculation name.", dto.name(), is("Test Calculation"));
-    assertThat("Unexpected CCT date.", dto.cctDate(), is(nullValue())); //to be fixed
+    assertThat("Unexpected CCT date.", dto.cctDate(), is(PLACEHOLDER_CCT_DATE));
     assertThat("Unexpected created timestamp.", dto.created(), is(created));
     assertThat("Unexpected last modified timestamp.", dto.lastModified(), is(lastModified));
 
@@ -276,7 +276,7 @@ class CctServiceTest {
     CctCalculationDetailDto savedDto = service.createCalculation(dto);
     assertThat("Unexpected calculation ID.", savedDto.id(), is(calculationId));
     assertThat("Unexpected calculation name.", savedDto.name(), is("Test Calculation"));
-    assertThat("Unexpected CCT date.", savedDto.cctDate(), is(nullValue()));
+    assertThat("Unexpected CCT date.", savedDto.cctDate(), is(PLACEHOLDER_CCT_DATE));
 
     CctProgrammeMembershipDto pm = savedDto.programmeMembership();
     assertThat("Unexpected PM ID.", pm.id(), is(pmId));
@@ -327,7 +327,8 @@ class CctServiceTest {
 
     assertThat("Unexpected calculation ID.", calculatedDto.id(), is(calculationId));
     assertThat("Unexpected calculation name.", calculatedDto.name(), is("Test Calculation"));
-    assertThat("Unexpected calculated CCT date.", calculatedDto.cctDate(), is(LocalDate.MAX));
+    assertThat("Unexpected calculated CCT date.", calculatedDto.cctDate(),
+        is(PLACEHOLDER_CCT_DATE));
 
     CctProgrammeMembershipDto pm = calculatedDto.programmeMembership();
     assertThat("Unexpected PM ID.", pm.id(), is(pmId));
@@ -422,7 +423,7 @@ class CctServiceTest {
     assertThat("Unexpected calculation last modified.", updatedDto.lastModified(),
         is(modified));
     assertThat("Unexpected calculation name.", updatedDto.name(), is("Test Calculation"));
-    assertThat("Unexpected CCT date.", updatedDto.cctDate(), is(nullValue()));
+    assertThat("Unexpected CCT date.", updatedDto.cctDate(), is(PLACEHOLDER_CCT_DATE));
 
     CctProgrammeMembershipDto pm = updatedDto.programmeMembership();
     assertThat("Unexpected PM ID.", pm.id(), is(pmId));

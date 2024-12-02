@@ -148,7 +148,7 @@ public class CctService {
    *         not possible due to invalid data.
    */
   public Optional<CctCalculationDetailDto> calculateCctDate(CctCalculationDetailDto dto) {
-    LocalDate cctDate = LocalDate.MAX; //placeholder
-    return Optional.of(mapper.toDetailDto(dto, cctDate));
+    Optional<CctCalculation> entity = Optional.of(mapper.toEntity(dto, null));
+    return entity.map(mapper::toDetailDto);
   }
 }
