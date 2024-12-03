@@ -67,7 +67,6 @@ public record CctCalculationDetailDto(
     @Valid
     List<CctChangeDto> changes,
 
-    @Null(groups = Create.class)
     LocalDate cctDate,
 
     Instant created,
