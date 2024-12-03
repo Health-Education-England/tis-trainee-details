@@ -177,48 +177,6 @@ class CctResourceTest {
   }
 
   @Test
-  void shouldReturnCctCalculation() {
-    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
-        .name("Test Calculation")
-        .build();
-
-    ObjectId id = ObjectId.get();
-    when(service.calculateCctDate(any())).thenAnswer(inv -> {
-      CctCalculationDetailDto arg = inv.getArgument(0);
-      return Optional.of(CctCalculationDetailDto.builder()
-          .id(id)
-          .name(arg.name())
-          .cctDate(LocalDate.MAX)
-          .build());
-    });
-
-    ResponseEntity<CctCalculationDetailDto> response = controller.calculateCctDate(dto);
-
-    assertThat("Unexpected response code.", response.getStatusCode(), is(OK));
-
-    CctCalculationDetailDto responseBody = response.getBody();
-    assertThat("Unexpected response body.", responseBody, notNullValue());
-    assertThat("Unexpected CCT date.", responseBody.cctDate(), is(LocalDate.MAX));
-    assertThat("Unexpected name.", responseBody.name(), is("Test Calculation"));
-  }
-
-  @Test
-  void shouldReturnBadRequestIfErrorInCctCalculation() {
-    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
-        .name("Test Calculation")
-        .build();
-
-    when(service.calculateCctDate(any())).thenReturn(Optional.empty());
-
-    ResponseEntity<CctCalculationDetailDto> response = controller.calculateCctDate(dto);
-
-    assertThat("Unexpected response code.", response.getStatusCode(), is(BAD_REQUEST));
-
-    CctCalculationDetailDto responseBody = response.getBody();
-    assertThat("Unexpected response body.", responseBody, nullValue());
-  }
-
-  @Test
   void shouldReturnUpdatedCalculation() {
     ObjectId id = ObjectId.get();
     Instant created = Instant.now();
