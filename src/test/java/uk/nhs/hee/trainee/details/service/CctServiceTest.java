@@ -180,8 +180,10 @@ class CctServiceTest {
             .wte(1.0)
             .build())
         .changes(List.of(
-            CctChange.builder().type(LTFT).startDate(LocalDate.MIN).wte(0.5).build(),
-            CctChange.builder().type(LTFT).startDate(LocalDate.MAX).wte(0.75).build()
+            CctChange.builder().type(LTFT).startDate(LocalDate.EPOCH.plusMonths(6))
+                .wte(0.5).build(),
+            CctChange.builder().type(LTFT).startDate(LocalDate.EPOCH.plusMonths(13))
+                .wte(0.75).build()
         ))
         .created(created)
         .lastModified(lastModified)
@@ -212,12 +214,14 @@ class CctServiceTest {
 
     CctChangeDto change1 = changes.get(0);
     assertThat("Unexpected change type.", change1.type(), is(LTFT));
-    assertThat("Unexpected change type.", change1.startDate(), is(LocalDate.MIN));
+    assertThat("Unexpected change type.", change1.startDate(),
+        is(LocalDate.EPOCH.plusMonths(6)));
     assertThat("Unexpected change type.", change1.wte(), is(0.5));
 
     CctChangeDto change2 = changes.get(1);
     assertThat("Unexpected change type.", change2.type(), is(LTFT));
-    assertThat("Unexpected change type.", change2.startDate(), is(LocalDate.MAX));
+    assertThat("Unexpected change type.", change2.startDate(),
+        is(LocalDate.EPOCH.plusMonths(13)));
     assertThat("Unexpected change type.", change2.wte(), is(0.75));
   }
 
@@ -235,8 +239,10 @@ class CctServiceTest {
             .wte(1.0)
             .build())
         .changes(List.of(
-            CctChangeDto.builder().type(LTFT).startDate(LocalDate.MIN).wte(0.5).build(),
-            CctChangeDto.builder().type(LTFT).startDate(LocalDate.MAX).wte(0.75).build()
+            CctChangeDto.builder().type(LTFT).startDate(LocalDate.EPOCH.plusMonths(6))
+                .wte(0.5).build(),
+            CctChangeDto.builder().type(LTFT).startDate(LocalDate.EPOCH.plusMonths(13))
+                .wte(0.75).build()
         ))
         .build();
 
@@ -290,12 +296,14 @@ class CctServiceTest {
 
     CctChangeDto change1 = changes.get(0);
     assertThat("Unexpected change type.", change1.type(), is(LTFT));
-    assertThat("Unexpected change type.", change1.startDate(), is(LocalDate.MIN));
+    assertThat("Unexpected change type.", change1.startDate(),
+        is(LocalDate.EPOCH.plusMonths(6)));
     assertThat("Unexpected change type.", change1.wte(), is(0.5));
 
     CctChangeDto change2 = changes.get(1);
     assertThat("Unexpected change type.", change2.type(), is(LTFT));
-    assertThat("Unexpected change type.", change2.startDate(), is(LocalDate.MAX));
+    assertThat("Unexpected change type.", change2.startDate(),
+        is(LocalDate.EPOCH.plusMonths(13)));
     assertThat("Unexpected change type.", change2.wte(), is(0.75));
   }
 
@@ -315,8 +323,10 @@ class CctServiceTest {
             .wte(1.0)
             .build())
         .changes(List.of(
-            CctChangeDto.builder().type(LTFT).startDate(LocalDate.MIN).wte(0.5).build(),
-            CctChangeDto.builder().type(LTFT).startDate(LocalDate.MAX).wte(0.75).build()
+            CctChangeDto.builder().type(LTFT).startDate(LocalDate.EPOCH.plusMonths(6))
+                .wte(0.5).build(),
+            CctChangeDto.builder().type(LTFT).startDate(LocalDate.EPOCH.plusMonths(13))
+                .wte(0.75).build()
         ))
         .build();
 
@@ -342,12 +352,14 @@ class CctServiceTest {
 
     CctChangeDto change1 = changes.get(0);
     assertThat("Unexpected change type.", change1.type(), is(LTFT));
-    assertThat("Unexpected change type.", change1.startDate(), is(LocalDate.MIN));
+    assertThat("Unexpected change type.", change1.startDate(),
+        is(LocalDate.EPOCH.plusMonths(6)));
     assertThat("Unexpected change type.", change1.wte(), is(0.5));
 
     CctChangeDto change2 = changes.get(1);
     assertThat("Unexpected change type.", change2.type(), is(LTFT));
-    assertThat("Unexpected change type.", change2.startDate(), is(LocalDate.MAX));
+    assertThat("Unexpected change type.", change2.startDate(),
+        is(LocalDate.EPOCH.plusMonths(13)));
     assertThat("Unexpected change type.", change2.wte(), is(0.75));
   }
 
@@ -369,8 +381,10 @@ class CctServiceTest {
             .wte(1.0)
             .build())
         .changes(List.of(
-            CctChangeDto.builder().type(LTFT).startDate(LocalDate.MIN).wte(0.5).build(),
-            CctChangeDto.builder().type(LTFT).startDate(LocalDate.MAX).wte(0.75).build()
+            CctChangeDto.builder().type(LTFT).startDate(LocalDate.EPOCH.plusMonths(6))
+                .wte(0.5).build(),
+            CctChangeDto.builder().type(LTFT).startDate(LocalDate.EPOCH.plusMonths(13))
+                .wte(0.75).build()
         ))
         .build();
 
@@ -445,12 +459,14 @@ class CctServiceTest {
 
     CctChangeDto change1 = changes.get(0);
     assertThat("Unexpected change type.", change1.type(), is(LTFT));
-    assertThat("Unexpected change type.", change1.startDate(), is(LocalDate.MIN));
+    assertThat("Unexpected change type.", change1.startDate(),
+        is(LocalDate.EPOCH.plusMonths(6)));
     assertThat("Unexpected change type.", change1.wte(), is(0.5));
 
     CctChangeDto change2 = changes.get(1);
     assertThat("Unexpected change type.", change2.type(), is(LTFT));
-    assertThat("Unexpected change type.", change2.startDate(), is(LocalDate.MAX));
+    assertThat("Unexpected change type.", change2.startDate(),
+        is(LocalDate.EPOCH.plusMonths(13)));
     assertThat("Unexpected change type.", change2.wte(), is(0.75));
   }
 
@@ -472,8 +488,10 @@ class CctServiceTest {
             .wte(1.0)
             .build())
         .changes(List.of(
-            CctChangeDto.builder().type(LTFT).startDate(LocalDate.MIN).wte(0.5).build(),
-            CctChangeDto.builder().type(LTFT).startDate(LocalDate.MAX).wte(0.75).build()
+            CctChangeDto.builder().type(LTFT).startDate(LocalDate.EPOCH.plusMonths(6))
+                .wte(0.5).build(),
+            CctChangeDto.builder().type(LTFT).startDate(LocalDate.EPOCH.plusMonths(13))
+                .wte(0.75).build()
         ))
         .build();
 

@@ -172,6 +172,9 @@ public class CctService {
               c, currentEndDate);
           return null;
         }
+        if (startDate.isBefore(entity.programmeMembership().startDate())) {
+          startDate = entity.programmeMembership().startDate();
+        }
         long chunkDays = ChronoUnit.DAYS.between(startDate, currentEndDate);
         double currentWte = i == 0
             ? entity.programmeMembership().wte()
