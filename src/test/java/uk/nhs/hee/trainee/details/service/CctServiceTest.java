@@ -24,6 +24,7 @@ package uk.nhs.hee.trainee.details.service;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -31,6 +32,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.LTFT;
+import static uk.nhs.hee.trainee.details.service.CctService.WTE_EPSILON;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -41,6 +43,8 @@ import java.util.UUID;
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto.CctChangeDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto.CctProgrammeMembershipDto;
@@ -502,5 +506,146 @@ class CctServiceTest {
     assertThat("Unexpected saved calculation.", updatedDtoOptional.isPresent(), is(false));
     verify(calculationRepository).findById(id);
     verifyNoMoreInteractions(calculationRepository);
+  }
+
+  @Test
+  void shouldReturnNullCctDateIfNullEntity() {
+    assertThat("Unexpected CCT date.", service.calculateCctDate((CctCalculation) null),
+        is(nullValue()));
+  }
+
+  @Test
+  void shouldReturnNullCctDateIfInvalidChangeStartDate() {
+    LocalDate pmEndDate = LocalDate.EPOCH.plusMonths(12);
+    CctCalculation entity = CctCalculation.builder()
+        .traineeId(TRAINEE_ID)
+        .programmeMembership(CctProgrammeMembership.builder()
+            .startDate(LocalDate.EPOCH)
+            .endDate(pmEndDate)
+            .wte(1.0)
+            .build())
+        .changes(List.of(
+            CctChange.builder().type(LTFT).startDate(pmEndDate.plusDays(1))
+                .wte(0.5).build()))
+        .build();
+    assertThat("Unexpected CCT date.", service.calculateCctDate(entity),
+        is(nullValue()));
+  }
+
+  @Test
+  void shouldIgnoreChangeStartDateBeforePmStartDateForCctDate() {
+    LocalDate pmStartDate = LocalDate.EPOCH;
+    CctCalculation entityEarlyChangeStartDate = CctCalculation.builder()
+        .traineeId(TRAINEE_ID)
+        .programmeMembership(CctProgrammeMembership.builder()
+            .startDate(pmStartDate)
+            .endDate(LocalDate.EPOCH.plusYears(1))
+            .wte(1.0)
+            .build())
+        .changes(List.of(
+            CctChange.builder().type(LTFT).startDate(LocalDate.MIN)
+                .wte(0.5).build()))
+        .build();
+
+    CctCalculation entityNormalStartDate = CctCalculation.builder()
+        .traineeId(TRAINEE_ID)
+        .programmeMembership(CctProgrammeMembership.builder()
+            .startDate(pmStartDate)
+            .endDate(LocalDate.EPOCH.plusYears(1))
+            .wte(1.0)
+            .build())
+        .changes(List.of(
+            CctChange.builder().type(LTFT).startDate(pmStartDate)
+                .wte(0.5).build()))
+        .build();
+    assertThat("Unexpected CCT date.", service.calculateCctDate(entityEarlyChangeStartDate),
+        is(service.calculateCctDate(entityNormalStartDate)));
+  }
+
+  @Test
+  void shouldOrderChangesByStartDateForCctDate() {
+      LocalDate pmStartDate = LocalDate.EPOCH;
+      CctCalculation entity = CctCalculation.builder()
+          .traineeId(TRAINEE_ID)
+          .programmeMembership(CctProgrammeMembership.builder()
+              .startDate(pmStartDate)
+              .endDate(LocalDate.EPOCH.plusYears(1))
+              .wte(1.0)
+              .build())
+          .changes(List.of(
+              CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(3))
+                  .wte(0.5).build(),
+              CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(9))
+                  .wte(1.0).build(),
+              CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(6))
+                  .wte(0.75).build()))
+          .build();
+
+    CctCalculation entityChangesReordered = CctCalculation.builder()
+        .traineeId(TRAINEE_ID)
+        .programmeMembership(CctProgrammeMembership.builder()
+            .startDate(pmStartDate)
+            .endDate(LocalDate.EPOCH.plusYears(1))
+            .wte(1.0)
+            .build())
+        .changes(List.of(
+            CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(9))
+                .wte(1.0).build(),
+            CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(3))
+                .wte(0.5).build(),
+            CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(6))
+                .wte(0.75).build()))
+        .build();
+
+      assertThat("Unexpected CCT date.", service.calculateCctDate(entity),
+          is(service.calculateCctDate(entityChangesReordered)));
+  }
+
+  @Test
+  void shouldReturnNullCctDateIfAnyChangeHasTooSmallWte() {
+    LocalDate pmStartDate = LocalDate.EPOCH;
+    CctCalculation entity = CctCalculation.builder()
+        .traineeId(TRAINEE_ID)
+        .programmeMembership(CctProgrammeMembership.builder()
+            .startDate(pmStartDate)
+            .endDate(LocalDate.EPOCH.plusYears(1))
+            .wte(1.0)
+            .build())
+        .changes(List.of(
+            CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(3))
+                .wte(WTE_EPSILON - 0.001).build()))
+        .build();
+
+    assertThat("Unexpected CCT date.", service.calculateCctDate(entity),
+        is(nullValue()));
+  }
+
+  @ParameterizedTest
+  @ValueSource(doubles = {0.8, 0.7, 0.6, 0.5, 0.25})
+  void shouldCalculateCctDate(double changeWte) {
+    LocalDate pmStartDate = LocalDate.of(2024, 9, 25);
+    CctCalculation entity = CctCalculation.builder()
+        .traineeId(TRAINEE_ID)
+        .programmeMembership(CctProgrammeMembership.builder()
+            .startDate(pmStartDate)
+            .endDate(LocalDate.of(2028, 1, 1))
+            .wte(1.0)
+            .build())
+        .changes(List.of(
+            CctChange.builder().type(LTFT).startDate(pmStartDate)
+                .wte(changeWte).build()))
+        .build();
+
+    //examples from front-end tests
+    LocalDate expectedCctDate = switch ((int) (changeWte * 100)) {
+      case 80 -> LocalDate.of(2028, 10, 26);
+      case 70 -> LocalDate.of(2029, 5, 27);
+      case 60 -> LocalDate.of(2030, 3, 7);
+      case 50 -> LocalDate.of(2031, 4, 8);
+      case 25 -> LocalDate.of(2037, 10, 19);
+      default -> LocalDate.MIN;
+    };
+    assertThat("Unexpected CCT date.", service.calculateCctDate(entity),
+          is(expectedCctDate));
   }
 }

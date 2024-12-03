@@ -88,7 +88,6 @@ class CctResourceIntegrationTest {
   private static final LocalDate CCT_DATE_75 = LocalDate.of(2024, 11, 1);
   //based on calculationJson change below.
 
-
   @Container
   @ServiceConnection
   private static final MongoDBContainer mongoContainer = new MongoDBContainer(
