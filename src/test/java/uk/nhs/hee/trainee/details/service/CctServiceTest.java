@@ -648,4 +648,25 @@ class CctServiceTest {
     assertThat("Unexpected CCT date.", service.calculateCctDate(entity),
         is(expectedCctDate));
   }
+
+  @Test
+  void shouldCalcCctDate2() {
+    //don't ask why these are the way they are, ask the FE :>
+    LocalDate pmStartDate = LocalDate.of(2024, 12, 3).plusWeeks(16);
+    LocalDate pmEndDate = LocalDate.of(2024, 12, 3).plusDays(1701);
+    CctCalculation entity = CctCalculation.builder()
+        .traineeId(TRAINEE_ID)
+        .programmeMembership(CctProgrammeMembership.builder()
+            .startDate(pmStartDate)
+            .endDate(pmEndDate)
+            .wte(1.0)
+            .build())
+        .changes(List.of(
+            CctChange.builder().type(LTFT).startDate(pmStartDate)
+                .wte(0.5).build()))
+        .build();
+
+    assertThat("Unexpected CCT date.", service.calculateCctDate(entity),
+        is(LocalDate.of(2033, 12, 6)));
+  }
 }
