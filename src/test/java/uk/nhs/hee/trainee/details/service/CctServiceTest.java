@@ -401,7 +401,7 @@ class CctServiceTest {
             .wte(1.0)
             .build())
         .changes(List.of(
-                CctChange.builder().type(LTFT).startDate(LocalDate.MIN).wte(0.5).build()))
+            CctChange.builder().type(LTFT).startDate(LocalDate.MIN).wte(0.5).build()))
         .build();
     when(calculationRepository.findById(any())).thenReturn(Optional.of(existingCalc));
 
@@ -564,22 +564,22 @@ class CctServiceTest {
 
   @Test
   void shouldOrderChangesByStartDateForCctDate() {
-      LocalDate pmStartDate = LocalDate.EPOCH;
-      CctCalculation entity = CctCalculation.builder()
-          .traineeId(TRAINEE_ID)
-          .programmeMembership(CctProgrammeMembership.builder()
-              .startDate(pmStartDate)
-              .endDate(LocalDate.EPOCH.plusYears(1))
-              .wte(1.0)
-              .build())
-          .changes(List.of(
-              CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(3))
-                  .wte(0.5).build(),
-              CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(9))
-                  .wte(1.0).build(),
-              CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(6))
-                  .wte(0.75).build()))
-          .build();
+    LocalDate pmStartDate = LocalDate.EPOCH;
+    CctCalculation entity = CctCalculation.builder()
+        .traineeId(TRAINEE_ID)
+        .programmeMembership(CctProgrammeMembership.builder()
+            .startDate(pmStartDate)
+            .endDate(LocalDate.EPOCH.plusYears(1))
+            .wte(1.0)
+            .build())
+        .changes(List.of(
+            CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(3))
+                .wte(0.5).build(),
+            CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(9))
+                .wte(1.0).build(),
+            CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(6))
+                .wte(0.75).build()))
+        .build();
 
     CctCalculation entityChangesReordered = CctCalculation.builder()
         .traineeId(TRAINEE_ID)
@@ -597,8 +597,8 @@ class CctServiceTest {
                 .wte(0.75).build()))
         .build();
 
-      assertThat("Unexpected CCT date.", service.calculateCctDate(entity),
-          is(service.calculateCctDate(entityChangesReordered)));
+    assertThat("Unexpected CCT date.", service.calculateCctDate(entity),
+        is(service.calculateCctDate(entityChangesReordered)));
   }
 
   @Test
@@ -646,6 +646,6 @@ class CctServiceTest {
       default -> LocalDate.MIN;
     };
     assertThat("Unexpected CCT date.", service.calculateCctDate(entity),
-          is(expectedCctDate));
+        is(expectedCctDate));
   }
 }
