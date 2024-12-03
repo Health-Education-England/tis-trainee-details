@@ -95,7 +95,7 @@ public class CctResource {
    */
   @PutMapping("/calculation/{id}")
   public ResponseEntity<CctCalculationDetailDto> updateCalculationDetails(@PathVariable ObjectId id,
-      @Validated(UserUpdate.class) @RequestBody CctCalculationDetailDto calculation) {
+      @Validated @RequestBody CctCalculationDetailDto calculation) {
     log.info("Request to update CCT calculation[{}]", id);
     Optional<CctCalculationDetailDto> savedCalculation;
 
