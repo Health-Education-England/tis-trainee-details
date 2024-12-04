@@ -39,7 +39,6 @@ import org.springframework.web.bind.annotation.RestController;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationSummaryDto;
 import uk.nhs.hee.trainee.details.dto.validation.Create;
-import uk.nhs.hee.trainee.details.dto.validation.UserUpdate;
 import uk.nhs.hee.trainee.details.service.CctService;
 
 /**
