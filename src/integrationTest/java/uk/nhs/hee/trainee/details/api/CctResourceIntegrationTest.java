@@ -113,6 +113,7 @@ class CctResourceIntegrationTest {
             "endDate": "2025-01-01",
             "wte": 0.5
           },
+          "cctDate": "2024-01-01",
           "changes": [
             {
               "type": "LTFT",
