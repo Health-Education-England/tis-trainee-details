@@ -33,7 +33,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static uk.nhs.hee.trainee.details.mapper.CctMapper.PLACEHOLDER_CCT_DATE;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.LTFT;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.DoubleNode;
@@ -84,6 +84,9 @@ import uk.nhs.hee.trainee.details.model.CctCalculation.CctProgrammeMembership;
 class CctResourceIntegrationTest {
 
   private static final String TRAINEE_ID = UUID.randomUUID().toString();
+
+  private static final LocalDate CCT_DATE_75 = LocalDate.of(2024, 11, 1);
+  //based on calculationJson change below.
 
   @Container
   @ServiceConnection
@@ -282,6 +285,8 @@ class CctResourceIntegrationTest {
         .build();
     entity = template.insert(entity);
 
+    LocalDate cctDate = LocalDate.of(2025, 7, 4); //based on details above
+
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
     mockMvc.perform(get("/api/cct/calculation/{id}", entity.id())
             .header(HttpHeaders.AUTHORIZATION, token))
@@ -300,7 +305,7 @@ class CctResourceIntegrationTest {
         .andExpect(jsonPath("$.changes[0].type").value("LTFT"))
         .andExpect(jsonPath("$.changes[0].startDate").value("2024-07-01"))
         .andExpect(jsonPath("$.changes[0].wte").value(0.5))
-        .andExpect(jsonPath("$.cctDate").value(PLACEHOLDER_CCT_DATE.toString()))
+        .andExpect(jsonPath("$.cctDate").value(cctDate.toString()))
         .andExpect(
             jsonPath("$.created").value(entity.created().truncatedTo(ChronoUnit.MILLIS).toString()))
         .andExpect(jsonPath("$.lastModified").value(
@@ -527,7 +532,7 @@ class CctResourceIntegrationTest {
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.id").exists())
         .andExpect(jsonPath("$.traineeId").doesNotExist())
-        .andExpect(jsonPath("$.cctDate").value(PLACEHOLDER_CCT_DATE.toString()))
+        .andExpect(jsonPath("$.cctDate").value(CCT_DATE_75.toString()))
         .andExpect(jsonPath("$.name").value("Test Calculation"))
         .andExpect(jsonPath("$.created").exists())
         .andExpect(jsonPath("$.lastModified").exists())
@@ -676,6 +681,15 @@ class CctResourceIntegrationTest {
     CctCalculation entity = CctCalculation.builder()
         .traineeId(TRAINEE_ID)
         .name("Test Calculation")
+        .programmeMembership(CctProgrammeMembership.builder()
+            .startDate(LocalDate.of(2024, 1, 1))
+            .endDate(LocalDate.of(2025, 1, 1))
+            .wte(0.5)
+            .build())
+        .changes(List.of(
+            CctChange.builder().type(LTFT).startDate(LocalDate.of(2024, 11, 1))
+                .wte(1.0)
+                .build()))
         .build();
     entity = template.insert(entity);
 
