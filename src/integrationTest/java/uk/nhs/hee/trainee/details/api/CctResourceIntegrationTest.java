@@ -189,7 +189,7 @@ class CctResourceIntegrationTest {
         .andExpect(jsonPath("$", hasSize(1)))
         .andExpect(jsonPath("$[0].id").value(entity.id().toString()))
         .andExpect(jsonPath("$[0].name").value("Test Calculation"))
-        .andExpect(jsonPath("$[0].programmeMembershipId").value(pmId.toString()))
+        .andExpect(jsonPath("$[0].programmeMembership.id").value(pmId.toString()))
         .andExpect(jsonPath("$[0].created").value(
             entity.created().truncatedTo(ChronoUnit.MILLIS).toString()))
         .andExpect(jsonPath("$[0].lastModified").value(
