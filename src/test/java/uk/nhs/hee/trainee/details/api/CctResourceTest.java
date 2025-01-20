@@ -45,7 +45,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
-import uk.nhs.hee.trainee.details.dto.CctCalculationSummaryDto;
 import uk.nhs.hee.trainee.details.service.CctService;
 
 class CctResourceTest {
@@ -60,42 +59,42 @@ class CctResourceTest {
   }
 
   @Test
-  void shouldNotGetCalculationSummariesWhenCalculationsNotExist() {
+  void shouldNotGetCalculationDetailsWhenCalculationsNotExist() {
     ObjectId id = ObjectId.get();
     when(service.getCalculation(id)).thenReturn(Optional.empty());
 
-    ResponseEntity<List<CctCalculationSummaryDto>> response = controller.getCalculationSummaries();
+    ResponseEntity<List<CctCalculationDetailDto>> response = controller.getCalculationDetails();
 
     assertThat("Unexpected response code.", response.getStatusCode(), is(OK));
     assertThat("Unexpected response body.", response.getBody(), is(List.of()));
   }
 
   @Test
-  void shouldGetCalculationSummariesWhenCalculationsExist() {
+  void shouldGetCalculationDetailsWhenCalculationsExist() {
     ObjectId id1 = ObjectId.get();
-    CctCalculationSummaryDto dto1 = CctCalculationSummaryDto.builder()
+    CctCalculationDetailDto dto1 = CctCalculationDetailDto.builder()
         .id(id1)
         .name("Test Calculation 1")
         .build();
     ObjectId id2 = ObjectId.get();
-    CctCalculationSummaryDto dto2 = CctCalculationSummaryDto.builder()
+    CctCalculationDetailDto dto2 = CctCalculationDetailDto.builder()
         .id(id2)
         .name("Test Calculation 2")
         .build();
     when(service.getCalculations()).thenReturn(List.of(dto1, dto2));
 
-    ResponseEntity<List<CctCalculationSummaryDto>> response = controller.getCalculationSummaries();
+    ResponseEntity<List<CctCalculationDetailDto>> response = controller.getCalculationDetails();
 
     assertThat("Unexpected response code.", response.getStatusCode(), is(OK));
 
-    List<CctCalculationSummaryDto> responseDtos = response.getBody();
+    List<CctCalculationDetailDto> responseDtos = response.getBody();
     assertThat("Unexpected response DTO count.", responseDtos, hasSize(2));
 
-    CctCalculationSummaryDto responseDto1 = responseDtos.get(0);
+    CctCalculationDetailDto responseDto1 = responseDtos.get(0);
     assertThat("Unexpected ID.", responseDto1.id(), is(id1));
     assertThat("Unexpected name.", responseDto1.name(), is("Test Calculation 1"));
 
-    CctCalculationSummaryDto responseDto2 = responseDtos.get(1);
+    CctCalculationDetailDto responseDto2 = responseDtos.get(1);
     assertThat("Unexpected ID.", responseDto2.id(), is(id2));
     assertThat("Unexpected name.", responseDto2.name(), is("Test Calculation 2"));
   }

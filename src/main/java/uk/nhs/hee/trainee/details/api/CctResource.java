@@ -37,7 +37,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
-import uk.nhs.hee.trainee.details.dto.CctCalculationSummaryDto;
 import uk.nhs.hee.trainee.details.dto.validation.Create;
 import uk.nhs.hee.trainee.details.service.CctService;
 
@@ -67,9 +66,9 @@ public class CctResource {
    * @return The found CCT calculation summaries.
    */
   @GetMapping("/calculation")
-  public ResponseEntity<List<CctCalculationSummaryDto>> getCalculationSummaries() {
-    log.info("Request to get a summary for all CCT calculations");
-    List<CctCalculationSummaryDto> calculations = service.getCalculations();
+  public ResponseEntity<List<CctCalculationDetailDto>> getCalculationDetails() {
+    log.info("Request to get details for all CCT calculations");
+    List<CctCalculationDetailDto> calculations = service.getCalculations();
     return ResponseEntity.ok(calculations);
   }
 
