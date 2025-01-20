@@ -48,7 +48,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto.CctChangeDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto.CctProgrammeMembershipDto;
-import uk.nhs.hee.trainee.details.dto.CctCalculationSummaryDto;
 import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
 import uk.nhs.hee.trainee.details.exception.NotRecordOwnerException;
 import uk.nhs.hee.trainee.details.mapper.CctMapperImpl;
