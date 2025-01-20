@@ -31,7 +31,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
-import uk.nhs.hee.trainee.details.dto.CctCalculationSummaryDto;
 import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
 import uk.nhs.hee.trainee.details.exception.NotRecordOwnerException;
 import uk.nhs.hee.trainee.details.mapper.CctMapper;
@@ -67,11 +66,11 @@ public class CctService {
   }
 
   /**
-   * Get a list of CCT calculation summaries for the current user.
+   * Get a list of CCT calculations for the current user.
    *
-   * @return Summaries of the found CCT calculations, or empty when none found.
+   * @return Details of the found CCT calculations, or empty when none found.
    */
-  public List<CctCalculationSummaryDto> getCalculations() {
+  public List<CctCalculationDetailDto> getCalculations() {
     String traineeId = traineeIdentity.getTraineeId();
     log.info("Getting CCT calculations for trainee [{}]", traineeId);
 
@@ -79,7 +78,7 @@ public class CctService {
         traineeId);
     log.info("Found {} CCT calculations for trainee [{}]", entities.size(), traineeId);
 
-    return mapper.toSummaryDtos(entities);
+    return mapper.toDetailDtos(entities);
   }
 
   /**

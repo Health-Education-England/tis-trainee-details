@@ -74,6 +74,15 @@ public interface CctMapper {
   CctCalculationDetailDto toDetailDto(CctCalculation entity, LocalDate cctDate);
 
   /**
+   * Convert a list of {@link CctCalculation} to a list of {@link CctCalculationDetailDto}.
+   *
+   * @param entities The entities to convert to DTOs.
+   * @return The equivalent detail DTOs.
+   */
+  @Mapping(target = "cctDate", ignore = true)
+  List<CctCalculationDetailDto> toDetailDtos(List<CctCalculation> entities);
+
+  /**
    * Convert a {@link CctCalculationDetailDto} DTO to a {@link CctCalculation} entity.
    *
    * @param dto       The DTO to convert to an entity.

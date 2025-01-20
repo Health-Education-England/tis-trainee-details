@@ -48,7 +48,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto.CctChangeDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto.CctProgrammeMembershipDto;
-import uk.nhs.hee.trainee.details.dto.CctCalculationSummaryDto;
 import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
 import uk.nhs.hee.trainee.details.exception.NotRecordOwnerException;
 import uk.nhs.hee.trainee.details.mapper.CctMapperImpl;
@@ -79,9 +78,9 @@ class CctServiceTest {
     when(calculationRepository.findByTraineeIdOrderByLastModified(TRAINEE_ID)).thenReturn(
         List.of());
 
-    List<CctCalculationSummaryDto> result = service.getCalculations();
+    List<CctCalculationDetailDto> result = service.getCalculations();
 
-    assertThat("Unexpected calculation summary count.", result.size(), is(0));
+    assertThat("Unexpected calculation details count.", result.size(), is(0));
   }
 
   @Test
@@ -121,21 +120,21 @@ class CctServiceTest {
     when(calculationRepository.findByTraineeIdOrderByLastModified(TRAINEE_ID)).thenReturn(
         List.of(entity1, entity2));
 
-    List<CctCalculationSummaryDto> result = service.getCalculations();
+    List<CctCalculationDetailDto> result = service.getCalculations();
 
     assertThat("Unexpected calculation summary count.", result.size(), is(2));
 
-    CctCalculationSummaryDto dto1 = result.get(0);
+    CctCalculationDetailDto dto1 = result.get(0);
     assertThat("Unexpected calculation ID.", dto1.id(), is(calculationId1));
     assertThat("Unexpected calculation name.", dto1.name(), is("Test Calculation 1"));
-    assertThat("Unexpected PM ID.", dto1.programmeMembershipId(), is(pmId1));
+    assertThat("Unexpected PM ID.", dto1.programmeMembership().id(), is(pmId1));
     assertThat("Unexpected created timestamp.", dto1.created(), is(created1));
     assertThat("Unexpected last modified timestamp.", dto1.lastModified(), is(lastModified1));
 
-    CctCalculationSummaryDto dto2 = result.get(1);
+    CctCalculationDetailDto dto2 = result.get(1);
     assertThat("Unexpected calculation ID.", dto2.id(), is(calculationId2));
     assertThat("Unexpected calculation name.", dto2.name(), is("Test Calculation 2"));
-    assertThat("Unexpected PM ID.", dto2.programmeMembershipId(), is(pmId2));
+    assertThat("Unexpected PM ID.", dto2.programmeMembership().id(), is(pmId2));
     assertThat("Unexpected created timestamp.", dto2.created(), is(created2));
     assertThat("Unexpected last modified timestamp.", dto2.lastModified(), is(lastModified2));
   }
