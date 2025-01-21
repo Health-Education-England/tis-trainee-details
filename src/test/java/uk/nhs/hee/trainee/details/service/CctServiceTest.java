@@ -96,9 +96,16 @@ class CctServiceTest {
         .name("Test Calculation 1")
         .programmeMembership(CctProgrammeMembership.builder()
             .id(pmId1)
+            .startDate(LocalDate.EPOCH)
+            .endDate(LocalDate.EPOCH.plusYears(1))
+            .wte(1.0)
             .build())
         .created(created1)
         .lastModified(lastModified1)
+        .changes(List.of(CctChange.builder()
+            .startDate(LocalDate.EPOCH.plusMonths(1))
+            .wte(0.5)
+            .build()))
         .build();
 
     ObjectId calculationId2 = ObjectId.get();
@@ -112,7 +119,14 @@ class CctServiceTest {
         .name("Test Calculation 2")
         .programmeMembership(CctProgrammeMembership.builder()
             .id(pmId2)
+            .startDate(LocalDate.EPOCH)
+            .endDate(LocalDate.EPOCH.plusYears(1))
+            .wte(1.0)
             .build())
+        .changes(List.of(CctChange.builder()
+            .startDate(LocalDate.EPOCH)
+            .wte(0.75)
+            .build()))
         .created(created2)
         .lastModified(lastModified2)
         .build();
@@ -128,6 +142,7 @@ class CctServiceTest {
     assertThat("Unexpected calculation ID.", dto1.id(), is(calculationId1));
     assertThat("Unexpected calculation name.", dto1.name(), is("Test Calculation 1"));
     assertThat("Unexpected PM ID.", dto1.programmeMembership().id(), is(pmId1));
+    assertThat("Unexpected CCT date.", dto1.cctDate(), is(service.calculateCctDate(entity1)));
     assertThat("Unexpected created timestamp.", dto1.created(), is(created1));
     assertThat("Unexpected last modified timestamp.", dto1.lastModified(), is(lastModified1));
 
@@ -135,6 +150,7 @@ class CctServiceTest {
     assertThat("Unexpected calculation ID.", dto2.id(), is(calculationId2));
     assertThat("Unexpected calculation name.", dto2.name(), is("Test Calculation 2"));
     assertThat("Unexpected PM ID.", dto2.programmeMembership().id(), is(pmId2));
+    assertThat("Unexpected CCT date.", dto2.cctDate(), is(service.calculateCctDate(entity2)));
     assertThat("Unexpected created timestamp.", dto2.created(), is(created2));
     assertThat("Unexpected last modified timestamp.", dto2.lastModified(), is(lastModified2));
   }

@@ -176,9 +176,20 @@ class CctResourceIntegrationTest {
         .name("Test Calculation")
         .programmeMembership(CctProgrammeMembership.builder()
             .id(pmId)
+            .startDate(LocalDate.parse("2024-01-01"))
+            .endDate(LocalDate.parse("2025-01-01"))
+            .wte(1.0)
             .build())
+        .changes(List.of(
+            CctChange.builder()
+                .type(CctChangeType.LTFT)
+                .startDate(LocalDate.parse("2024-07-01"))
+                .wte(0.5)
+                .build()))
         .build();
     entity = template.insert(entity);
+
+    LocalDate cctDate = LocalDate.of(2025, 7, 4); //based on details above
 
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
     mockMvc.perform(get("/api/cct/calculation")
@@ -192,6 +203,7 @@ class CctResourceIntegrationTest {
         .andExpect(jsonPath("$[0].programmeMembership.id").value(pmId.toString()))
         .andExpect(jsonPath("$[0].created").value(
             entity.created().truncatedTo(ChronoUnit.MILLIS).toString()))
+        .andExpect(jsonPath("$[0].cctDate").value(cctDate.toString()))
         .andExpect(jsonPath("$[0].lastModified").value(
             entity.lastModified().truncatedTo(ChronoUnit.MILLIS).toString()));
   }
@@ -201,18 +213,54 @@ class CctResourceIntegrationTest {
     CctCalculation future = CctCalculation.builder()
         .traineeId(TRAINEE_ID)
         .name("Future")
+        .programmeMembership(CctProgrammeMembership.builder()
+            .id(UUID.randomUUID())
+            .startDate(LocalDate.parse("2024-01-01"))
+            .endDate(LocalDate.parse("2025-01-01"))
+            .wte(1.0)
+            .build())
+        .changes(List.of(
+            CctChange.builder()
+                .type(CctChangeType.LTFT)
+                .startDate(LocalDate.parse("2024-07-01"))
+                .wte(0.5)
+                .build()))
         .build();
     future = template.insert(future);
 
     CctCalculation past = CctCalculation.builder()
         .traineeId(TRAINEE_ID)
         .name("Past")
+        .programmeMembership(CctProgrammeMembership.builder()
+            .id(UUID.randomUUID())
+            .startDate(LocalDate.parse("2024-01-01"))
+            .endDate(LocalDate.parse("2025-01-01"))
+            .wte(1.0)
+            .build())
+        .changes(List.of(
+            CctChange.builder()
+                .type(CctChangeType.LTFT)
+                .startDate(LocalDate.parse("2024-07-01"))
+                .wte(0.5)
+                .build()))
         .build();
     template.insert(past);
 
     CctCalculation present = CctCalculation.builder()
         .traineeId(TRAINEE_ID)
         .name("Present")
+        .programmeMembership(CctProgrammeMembership.builder()
+            .id(UUID.randomUUID())
+            .startDate(LocalDate.parse("2024-01-01"))
+            .endDate(LocalDate.parse("2025-01-01"))
+            .wte(1.0)
+            .build())
+        .changes(List.of(
+            CctChange.builder()
+                .type(CctChangeType.LTFT)
+                .startDate(LocalDate.parse("2024-07-01"))
+                .wte(0.5)
+                .build()))
         .build();
     template.insert(present);
 
