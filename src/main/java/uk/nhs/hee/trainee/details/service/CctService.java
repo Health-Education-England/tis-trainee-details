@@ -24,6 +24,7 @@ package uk.nhs.hee.trainee.details.service;
 import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -78,7 +79,10 @@ public class CctService {
         traineeId);
     log.info("Found {} CCT calculations for trainee [{}]", entities.size(), traineeId);
 
-    return mapper.toDetailDtos(entities);
+    List<CctCalculationDetailDto> entityDtos = new ArrayList<>();
+    entities.forEach(entity ->
+        entityDtos.add(mapper.toDetailDto(entity, calculateCctDate(entity))));
+    return entityDtos;
   }
 
   /**
