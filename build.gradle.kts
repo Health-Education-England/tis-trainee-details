@@ -1,12 +1,12 @@
 plugins {
   java
-  id("org.springframework.boot") version "3.3.0"
-  id("io.spring.dependency-management") version "1.1.4"
+  alias(libs.plugins.spring.boot)
+  alias(libs.plugins.spring.dependency.management)
 
   // Code Quality
   checkstyle
   jacoco
-  id("org.sonarqube") version "5.1.0.4882"
+  alias(libs.plugins.sonarqube)
 }
 
 group = "uk.nhs.hee.trainee.details"
@@ -18,21 +18,12 @@ configurations {
   }
 }
 
-repositories {
-  mavenCentral()
-}
-
 dependencyManagement {
   imports {
-    mavenBom("org.springframework.cloud:spring-cloud-dependencies:2023.0.0")
-    mavenBom("io.awspring.cloud:spring-cloud-aws-dependencies:3.1.0")
+    mavenBom(libs.spring.cloud.dependencies.core.get().toString())
+    mavenBom(libs.spring.cloud.dependencies.aws.get().toString())
   }
 }
-
-val mapstructVersion = "1.5.5.Final"
-val mongockVersion = "5.4.2"
-val openHtmlToPdfVersion = "1.0.10"
-val sentryVersion = "7.6.0"
 
 dependencies {
   // Spring Boot
@@ -46,31 +37,28 @@ dependencies {
   testImplementation("org.springframework.boot:spring-boot-starter-test")
   testImplementation("org.springframework.cloud:spring-cloud-starter-bootstrap")
   testImplementation("com.playtika.testcontainers:embedded-redis:3.1.5")
-  testImplementation("org.testcontainers:junit-jupiter:1.19.8")
+  testImplementation("org.testcontainers:junit-jupiter")
 
   // Lombok
   compileOnly("org.projectlombok:lombok")
   annotationProcessor("org.projectlombok:lombok")
 
   // Mapstruct
-  implementation("org.mapstruct:mapstruct:${mapstructVersion}")
-  annotationProcessor("org.mapstruct:mapstruct-processor:${mapstructVersion}")
+  implementation(libs.mapstruct.core)
+  annotationProcessor(libs.mapstruct.processor)
 
-  implementation("io.mongock:mongock-springboot:${mongockVersion}")
-  implementation("io.mongock:mongodb-springdata-v4-driver:${mongockVersion}")
+  implementation(libs.bundles.mongock)
 
   // Sentry reporting
-  implementation("io.sentry:sentry-spring-boot-starter-jakarta:$sentryVersion")
+  implementation(libs.sentry.core)
 
   // Amazon AWS
   implementation("io.awspring.cloud:spring-cloud-aws-starter-sqs")
   implementation("io.awspring.cloud:spring-cloud-aws-starter-sns")
-  implementation("com.amazonaws:aws-xray-recorder-sdk-spring:2.15.1")
+  implementation(libs.aws.xray)
 
   // PDF
-  implementation("com.openhtmltopdf:openhtmltopdf-pdfbox:${openHtmlToPdfVersion}")
-  implementation("com.openhtmltopdf:openhtmltopdf-slf4j:${openHtmlToPdfVersion}")
-  implementation("org.jsoup:jsoup:1.17.2")
+  implementation(libs.bundles.pdf.publishing)
 }
 
 java {
@@ -109,7 +97,7 @@ testing {
 
     val test by getting(JvmTestSuite::class) {
       dependencies {
-        annotationProcessor("org.mapstruct:mapstruct-processor:$mapstructVersion")
+        annotationProcessor(libs.mapstruct.processor)
       }
     }
 
