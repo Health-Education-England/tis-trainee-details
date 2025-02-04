@@ -96,6 +96,7 @@ class ProgrammeMembershipServiceTest {
   private static final String PROGRAMME_NUMBER = "programmeNumber-";
   private static final String MANAGING_DEANERY = "managingDeanery-";
   private static final String DESIGNATED_BODY = "designatedBody-";
+  private static final String DESIGNATED_BODY_CODE = "designatedBodyCode-";
   private static final String PROGRAMME_MEMBERSHIP_TYPE = "programmeMembershipType-";
   private static final String TRAINEE_TIS_ID = "40";
   private static final String MODIFIED_SUFFIX = "post";
@@ -165,6 +166,7 @@ class ProgrammeMembershipServiceTest {
     expectedProgrammeMembership.setProgrammeNumber(PROGRAMME_NUMBER + MODIFIED_SUFFIX);
     expectedProgrammeMembership.setManagingDeanery(MANAGING_DEANERY + MODIFIED_SUFFIX);
     expectedProgrammeMembership.setDesignatedBody(DESIGNATED_BODY + MODIFIED_SUFFIX);
+    expectedProgrammeMembership.setDesignatedBodyCode(DESIGNATED_BODY_CODE + MODIFIED_SUFFIX);
     expectedProgrammeMembership
         .setProgrammeMembershipType(PROGRAMME_MEMBERSHIP_TYPE + MODIFIED_SUFFIX);
     expectedProgrammeMembership.setStartDate(START_DATE.plusDays(100));
@@ -200,6 +202,7 @@ class ProgrammeMembershipServiceTest {
     expectedProgrammeMembership.setProgrammeNumber(PROGRAMME_NUMBER + MODIFIED_SUFFIX);
     expectedProgrammeMembership.setManagingDeanery(MANAGING_DEANERY + MODIFIED_SUFFIX);
     expectedProgrammeMembership.setDesignatedBody(DESIGNATED_BODY + MODIFIED_SUFFIX);
+    expectedProgrammeMembership.setDesignatedBodyCode(DESIGNATED_BODY_CODE + MODIFIED_SUFFIX);
     expectedProgrammeMembership
         .setProgrammeMembershipType(PROGRAMME_MEMBERSHIP_TYPE + MODIFIED_SUFFIX);
     expectedProgrammeMembership.setStartDate(START_DATE.plusDays(100));
@@ -237,6 +240,7 @@ class ProgrammeMembershipServiceTest {
     expectedProgrammeMembership.setProgrammeNumber(PROGRAMME_NUMBER + MODIFIED_SUFFIX);
     expectedProgrammeMembership.setManagingDeanery(MANAGING_DEANERY + MODIFIED_SUFFIX);
     expectedProgrammeMembership.setDesignatedBody(DESIGNATED_BODY + MODIFIED_SUFFIX);
+    expectedProgrammeMembership.setDesignatedBodyCode(DESIGNATED_BODY_CODE + MODIFIED_SUFFIX);
     expectedProgrammeMembership
         .setProgrammeMembershipType(PROGRAMME_MEMBERSHIP_TYPE + MODIFIED_SUFFIX);
     expectedProgrammeMembership.setStartDate(START_DATE.plusDays(100));
@@ -1781,6 +1785,7 @@ class ProgrammeMembershipServiceTest {
     programmeMembership.setProgrammeNumber(PROGRAMME_NUMBER + stringSuffix);
     programmeMembership.setManagingDeanery(MANAGING_DEANERY + stringSuffix);
     programmeMembership.setDesignatedBody(DESIGNATED_BODY + stringSuffix);
+    programmeMembership.setDesignatedBodyCode(DESIGNATED_BODY_CODE + stringSuffix);
     programmeMembership.setProgrammeMembershipType(PROGRAMME_MEMBERSHIP_TYPE + stringSuffix);
     programmeMembership.setStartDate(START_DATE.plusDays(dateAdjustmentDays));
     programmeMembership.setEndDate(END_DATE.plusDays(dateAdjustmentDays));
