@@ -131,6 +131,7 @@ class ProgrammeMembershipResourceTest {
     programmeMembership.setProgrammeNumber("programmeNumberValue");
     programmeMembership.setManagingDeanery("managingDeaneryValue");
     programmeMembership.setDesignatedBody("designatedBodyValue");
+    programmeMembership.setDesignatedBodyCode("designatedBodyCodeValue");
     programmeMembership.setProgrammeMembershipType("programmeMembershipTypeValue");
     programmeMembership.setStartDate(start);
     programmeMembership.setEndDate(end);
@@ -169,6 +170,7 @@ class ProgrammeMembershipResourceTest {
         .andExpect(jsonPath("$.programmeNumber").value(is("programmeNumberValue")))
         .andExpect(jsonPath("$.managingDeanery").value(is("managingDeaneryValue")))
         .andExpect(jsonPath("$.designatedBody").value(is("designatedBodyValue")))
+        .andExpect(jsonPath("$.designatedBodyCode").value(is("designatedBodyCodeValue")))
         .andExpect(jsonPath("$.programmeMembershipType").value(is("programmeMembershipTypeValue")))
         .andExpect(jsonPath("$.startDate").value(is(start.toString())))
         .andExpect(jsonPath("$.endDate").value(is(end.toString())))

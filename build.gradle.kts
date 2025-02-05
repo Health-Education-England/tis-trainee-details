@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "uk.nhs.hee.trainee.details"
-version = "1.20.2"
+version = "1.21.0"
 
 configurations {
   compileOnly {
@@ -83,6 +83,7 @@ sonarqube {
       "build/reports/checkstyle/main.xml,build/reports/checkstyle/test.xml")
   }
 }
+
 testing {
   suites {
     configureEach {
