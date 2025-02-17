@@ -26,7 +26,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import lombok.Builder;
-import org.bson.types.ObjectId;
+import lombok.With;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -50,7 +50,8 @@ import uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType;
 @Builder
 public record CctCalculation(
     @Id
-    ObjectId id,
+    @With
+    UUID id,
     @Indexed
     String traineeId,
     String name,
@@ -61,8 +62,7 @@ public record CctCalculation(
     Instant created,
 
     @LastModifiedDate
-    Instant lastModified
-) {
+    Instant lastModified) implements UuidIdentifiedRecord<CctCalculation> {
 
   /**
    * Programme membership data for a calculation.

@@ -47,7 +47,6 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
-import org.bson.types.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -151,7 +150,7 @@ class CctResourceIntegrationTest {
 
   @Test
   void shouldNotGetCalculationsWhenNotOwnedByUser() throws Exception {
-    ObjectId id = ObjectId.get();
+    UUID id = UUID.randomUUID();
     CctCalculation entity = CctCalculation.builder()
         .id(id)
         .traineeId(TRAINEE_ID)
@@ -296,7 +295,7 @@ class CctResourceIntegrationTest {
 
   @Test
   void shouldNotGetCalculationWhenNotOwnedByUser() throws Exception {
-    ObjectId id = ObjectId.get();
+    UUID id = UUID.randomUUID();
     CctCalculation entity = CctCalculation.builder()
         .id(id)
         .traineeId(TRAINEE_ID)
@@ -395,7 +394,7 @@ class CctResourceIntegrationTest {
 
   @Test
   void shouldFailCreateCalculationValidationWhenIdPopulated() throws Exception {
-    calculationJson.set("id", TextNode.valueOf(ObjectId.get().toString()));
+    calculationJson.set("id", TextNode.valueOf(UUID.randomUUID().toString()));
 
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
     mockMvc.perform(post("/api/cct/calculation")
@@ -618,7 +617,7 @@ class CctResourceIntegrationTest {
 
   @Test
   void shouldReturnBadRequestWhenUpdatingCalculationWithoutEntityId() throws Exception {
-    ObjectId id = ObjectId.get();
+    UUID id = UUID.randomUUID();
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
 
     mockMvc.perform(put("/api/cct/calculation/" + id)
@@ -631,15 +630,15 @@ class CctResourceIntegrationTest {
 
   @Test
   void shouldReturnBadRequestWhenUpdatingCalculationWithConflictingIds() throws Exception {
-    ObjectId id = ObjectId.get();
+    UUID id1 = UUID.randomUUID();
     String body = """
         {
           "id": %s
           "name": "Test Calculation",
         }
-        """.formatted(id);
+        """.formatted(id1);
 
-    ObjectId id2 = ObjectId.get();
+    UUID id2 = UUID.randomUUID();
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
 
     mockMvc.perform(put("/api/cct/calculation/" + id2)
@@ -657,7 +656,7 @@ class CctResourceIntegrationTest {
         .build();
     entity = template.insert(entity);
 
-    ObjectId id = entity.id();
+    UUID id = entity.id();
     Instant created = entity.created();
 
     String body = """
@@ -693,7 +692,7 @@ class CctResourceIntegrationTest {
 
   @Test
   void shouldReturnNotFoundWhenUpdatingNewCalculation() throws Exception {
-    ObjectId id = ObjectId.get();
+    UUID id = UUID.randomUUID();
     String body = """
         {
           "id": "%s",
@@ -741,7 +740,7 @@ class CctResourceIntegrationTest {
         .build();
     entity = template.insert(entity);
 
-    ObjectId id = entity.id();
+    UUID id = entity.id();
     Instant created = entity.created();
     Instant lastModified = entity.lastModified();
     assertThat("Unexpected initial last modified date.", created, is(lastModified));

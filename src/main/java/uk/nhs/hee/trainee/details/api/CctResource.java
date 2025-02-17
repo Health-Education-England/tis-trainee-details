@@ -25,8 +25,8 @@ import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
-import org.bson.types.ObjectId;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -79,7 +79,7 @@ public class CctResource {
    * @return The found CCT calculation details.
    */
   @GetMapping("/calculation/{id}")
-  public ResponseEntity<CctCalculationDetailDto> getCalculationDetails(@PathVariable ObjectId id) {
+  public ResponseEntity<CctCalculationDetailDto> getCalculationDetails(@PathVariable UUID id) {
     log.info("Request to get details for CCT calculation[{}]", id);
     Optional<CctCalculationDetailDto> calculation = service.getCalculation(id);
     return ResponseEntity.of(calculation);
@@ -92,7 +92,7 @@ public class CctResource {
    * @return The updated CCT calculation details, or bad request if inconsistent ids.
    */
   @PutMapping("/calculation/{id}")
-  public ResponseEntity<CctCalculationDetailDto> updateCalculationDetails(@PathVariable ObjectId id,
+  public ResponseEntity<CctCalculationDetailDto> updateCalculationDetails(@PathVariable UUID id,
       @Validated @RequestBody CctCalculationDetailDto calculation) {
     log.info("Request to update CCT calculation[{}]", id);
     Optional<CctCalculationDetailDto> savedCalculation;

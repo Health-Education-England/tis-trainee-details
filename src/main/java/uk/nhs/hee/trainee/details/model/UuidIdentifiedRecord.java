@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright 2020 Crown Copyright (Health Education England)
+ * Copyright 2025 Crown Copyright (Health Education England)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -19,29 +19,27 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package uk.nhs.hee.trainee.details.config;
+package uk.nhs.hee.trainee.details.model;
 
 import java.util.UUID;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.data.mongodb.config.EnableMongoAuditing;
-import org.springframework.data.mongodb.core.mapping.event.BeforeConvertCallback;
-import uk.nhs.hee.trainee.details.model.UuidIdentifiedRecord;
 
 /**
- * Configuration for the Mongo database.
+ * An interface for record-based entities with UUID identifiers.
  */
-@Configuration
-@EnableMongoAuditing
-public class MongoConfiguration {
+public interface UuidIdentifiedRecord<T> {
 
-  @Bean
-  public <T extends UuidIdentifiedRecord<T>> BeforeConvertCallback<T> beforeConvertCallback() {
-    return (entity, collection) -> {
-      if (entity.id() == null) {
-        entity = entity.withId(UUID.randomUUID());
-      }
-      return entity;
-    };
-  }
+  /**
+   * Get the entity's current ID.
+   *
+   * @return The entity's ID.
+   */
+  UUID id();
+
+  /**
+   * Create a new instance of the entity with the given ID.
+   *
+   * @param id The ID to add to the entity.
+   * @return The new instance of the entity.
+   */
+  T withId(UUID id);
 }

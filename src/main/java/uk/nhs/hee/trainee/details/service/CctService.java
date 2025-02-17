@@ -28,8 +28,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
-import org.bson.types.ObjectId;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
 import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
@@ -45,6 +45,7 @@ import uk.nhs.hee.trainee.details.repository.CctCalculationRepository;
 @Service
 @XRayEnabled
 public class CctService {
+
   protected static final double WTE_EPSILON = 0.01; //minimum WTE value
 
   private final TraineeIdentity traineeIdentity;
@@ -93,7 +94,7 @@ public class CctService {
    * @throws NotRecordOwnerException If the found CCT calculation does not belong to the current
    *                                 user.
    */
-  public Optional<CctCalculationDetailDto> getCalculation(ObjectId id) {
+  public Optional<CctCalculationDetailDto> getCalculation(UUID id) {
     log.info("Getting CCT calculation [{}]", id);
     String traineeId = traineeIdentity.getTraineeId();
     Optional<CctCalculation> entity = calculationRepository.findById(id);
@@ -132,7 +133,7 @@ public class CctService {
    * @param dto The detail of the CCT calculation.
    * @return The updated CCT calculation, or optional empty if error.
    */
-  public Optional<CctCalculationDetailDto> updateCalculation(ObjectId id,
+  public Optional<CctCalculationDetailDto> updateCalculation(UUID id,
       CctCalculationDetailDto dto) {
     log.info("Updating CCT calculation [{}] with id [{}]", dto.name(), id);
 

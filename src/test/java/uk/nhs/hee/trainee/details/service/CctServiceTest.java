@@ -40,7 +40,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.bson.types.ObjectId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -85,7 +84,7 @@ class CctServiceTest {
 
   @Test
   void shouldGetCalculationsWhenFound() {
-    ObjectId calculationId1 = ObjectId.get();
+    UUID calculationId1 = UUID.randomUUID();
     UUID pmId1 = UUID.randomUUID();
     Instant created1 = Instant.now().minus(Duration.ofDays(1));
     Instant lastModified1 = Instant.now().plus(Duration.ofDays(1));
@@ -108,7 +107,7 @@ class CctServiceTest {
             .build()))
         .build();
 
-    ObjectId calculationId2 = ObjectId.get();
+    UUID calculationId2 = UUID.randomUUID();
     UUID pmId2 = UUID.randomUUID();
     Instant created2 = Instant.now().minus(Duration.ofDays(2));
     Instant lastModified2 = Instant.now().plus(Duration.ofDays(2));
@@ -157,7 +156,7 @@ class CctServiceTest {
 
   @Test
   void shouldReturnEmptyGettingCalculationWhenNotFound() {
-    ObjectId id = ObjectId.get();
+    UUID id = UUID.randomUUID();
 
     when(calculationRepository.findById(id)).thenReturn(Optional.empty());
 
@@ -168,7 +167,7 @@ class CctServiceTest {
 
   @Test
   void shouldThrowExceptionGettingCalculationWhenNotBelongsToUser() {
-    ObjectId id = ObjectId.get();
+    UUID id = UUID.randomUUID();
     CctCalculation entity = CctCalculation.builder()
         .id(id)
         .traineeId(UUID.randomUUID().toString())
@@ -181,7 +180,7 @@ class CctServiceTest {
 
   @Test
   void shouldGetCalculationWhenBelongsToUser() {
-    ObjectId calculationId = ObjectId.get();
+    UUID calculationId = UUID.randomUUID();
     UUID pmId = UUID.randomUUID();
 
     Instant created = Instant.now().minus(Duration.ofDays(1));
@@ -265,7 +264,7 @@ class CctServiceTest {
         ))
         .build();
 
-    ObjectId calculationId = ObjectId.get();
+    UUID calculationId = UUID.randomUUID();
     when(calculationRepository.insert(any(CctCalculation.class))).thenAnswer(inv -> {
       CctCalculation entity = inv.getArgument(0);
       CctProgrammeMembership pm = entity.programmeMembership();
@@ -330,7 +329,7 @@ class CctServiceTest {
   void shouldInsertCctDateAndIncludeOtherDetailsInReturnedDto() {
     UUID pmId = UUID.randomUUID();
 
-    ObjectId calculationId = ObjectId.get();
+    UUID calculationId = UUID.randomUUID();
     CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
         .id(calculationId)
         .name("Test Calculation")
@@ -385,7 +384,7 @@ class CctServiceTest {
   @Test
   void shouldUpdateExistingCalculationIfExistsAndOwnedByUser() {
     UUID pmId = UUID.randomUUID();
-    ObjectId id = ObjectId.get();
+    UUID id = UUID.randomUUID();
     Instant created = Instant.now();
 
     CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
@@ -492,7 +491,7 @@ class CctServiceTest {
   @Test
   void shouldNotUpdateExistingCalculationIfNotExists() {
     UUID pmId = UUID.randomUUID();
-    ObjectId id = ObjectId.get();
+    UUID id = UUID.randomUUID();
     Instant created = Instant.now();
 
     CctCalculationDetailDto dto = CctCalculationDetailDto.builder()

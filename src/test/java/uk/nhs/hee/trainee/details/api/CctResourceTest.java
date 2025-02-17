@@ -39,7 +39,7 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import org.bson.types.ObjectId;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
@@ -60,7 +60,7 @@ class CctResourceTest {
 
   @Test
   void shouldNotGetCalculationDetailsWhenCalculationsNotExist() {
-    ObjectId id = ObjectId.get();
+    UUID id = UUID.randomUUID();
     when(service.getCalculation(id)).thenReturn(Optional.empty());
 
     ResponseEntity<List<CctCalculationDetailDto>> response = controller.getCalculationDetails();
@@ -71,12 +71,12 @@ class CctResourceTest {
 
   @Test
   void shouldGetCalculationDetailsWhenCalculationsExist() {
-    ObjectId id1 = ObjectId.get();
+    UUID id1 = UUID.randomUUID();
     CctCalculationDetailDto dto1 = CctCalculationDetailDto.builder()
         .id(id1)
         .name("Test Calculation 1")
         .build();
-    ObjectId id2 = ObjectId.get();
+    UUID id2 = UUID.randomUUID();
     CctCalculationDetailDto dto2 = CctCalculationDetailDto.builder()
         .id(id2)
         .name("Test Calculation 2")
@@ -101,7 +101,7 @@ class CctResourceTest {
 
   @Test
   void shouldNotGetCalculationDetailWhenCalculationNotExists() {
-    ObjectId id = ObjectId.get();
+    UUID id = UUID.randomUUID();
     when(service.getCalculation(id)).thenReturn(Optional.empty());
 
     ResponseEntity<CctCalculationDetailDto> response = controller.getCalculationDetails(id);
@@ -112,7 +112,7 @@ class CctResourceTest {
 
   @Test
   void shouldGetCalculationDetailWhenCalculationExists() {
-    ObjectId id = ObjectId.get();
+    UUID id = UUID.randomUUID();
     CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
         .id(id)
         .name("Test Calculation")
@@ -131,7 +131,7 @@ class CctResourceTest {
         .name("Test Calculation")
         .build();
 
-    ObjectId id = ObjectId.get();
+    UUID id = UUID.randomUUID();
     when(service.createCalculation(any())).thenAnswer(inv -> {
       CctCalculationDetailDto arg = inv.getArgument(0);
       return CctCalculationDetailDto.builder()
@@ -158,7 +158,7 @@ class CctResourceTest {
         .name("Test Calculation")
         .build();
 
-    ObjectId id = ObjectId.get();
+    UUID id = UUID.randomUUID();
     when(service.createCalculation(any())).thenAnswer(inv -> {
       CctCalculationDetailDto arg = inv.getArgument(0);
       return CctCalculationDetailDto.builder()
@@ -176,7 +176,7 @@ class CctResourceTest {
 
   @Test
   void shouldReturnUpdatedCalculation() {
-    ObjectId id = ObjectId.get();
+    UUID id = UUID.randomUUID();
     Instant created = Instant.now();
     CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
         .id(id)
@@ -210,14 +210,15 @@ class CctResourceTest {
 
   @Test
   void shouldReturnBadRequestWhenUpdateIsInconsistent() {
-    ObjectId id = ObjectId.get();
-    ObjectId id2 = ObjectId.get();
+    UUID id1 = UUID.randomUUID();
+    UUID id2 = UUID.randomUUID();
     CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
         .id(id2)
         .name("Test Calculation")
         .build();
 
-    ResponseEntity<CctCalculationDetailDto> response = controller.updateCalculationDetails(id, dto);
+    ResponseEntity<CctCalculationDetailDto> response = controller.updateCalculationDetails(id1,
+        dto);
 
     assertThat("Unexpected response code.", response.getStatusCode(), is(BAD_REQUEST));
 
@@ -227,7 +228,7 @@ class CctResourceTest {
 
   @Test
   void shouldReturnBadRequestWhenUpdateHasNoEntityId() {
-    ObjectId id = ObjectId.get();
+    UUID id = UUID.randomUUID();
     CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
         .name("Test Calculation")
         .build();
@@ -242,7 +243,7 @@ class CctResourceTest {
 
   @Test
   void shouldReturnNotFoundWhenCalculationCannotBeUpdated() {
-    ObjectId id = ObjectId.get();
+    UUID id = UUID.randomUUID();
     Instant created = Instant.now();
     CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
         .id(id)
