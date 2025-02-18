@@ -516,9 +516,42 @@ class CctResourceIntegrationTest {
         .andExpect(jsonPath("$.errors[0].detail", is("must not be empty")));
   }
 
+  @Test
+  void shouldFailCreateCalculationValidationWhenChangeIdPopulated() throws Exception {
+    String body = """
+        {
+          "name": "Test Calculation",
+          "programmeMembership": {
+            "id": "12345678-aaaa-bbbb-cccc-012345678910",
+            "name": "Test Programme",
+            "startDate": "2024-01-01",
+            "endDate": "2025-01-01",
+            "wte": 0.5
+          },
+          "changes": [
+            {
+              "id": "%s",
+              "type": "LTFT",
+              "startDate": "2024-07-01",
+              "wte": 0.75
+            }
+          ]
+        }
+        """.formatted(UUID.randomUUID());
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculation")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body))
+        .andExpect(jsonPath("$.errors", hasSize(1)))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/changes[0]/id")))
+        .andExpect(jsonPath("$.errors[0].detail", is("must be null")));
+  }
+
   @ParameterizedTest
   @ValueSource(strings = {"type", "startDate", "wte"})
-  void shouldFailCreateCalculationValidationWhenChangeTypeNull(String propertyName)
+  void shouldFailCreateCalculationValidationWhenChangePropertyNull(String propertyName)
       throws Exception {
     ((ObjectNode) calculationJson.withArray("changes").get(0))
         .remove(propertyName);
@@ -583,6 +616,7 @@ class CctResourceIntegrationTest {
         .andExpect(jsonPath("$.name").value("Test Calculation"))
         .andExpect(jsonPath("$.created").exists())
         .andExpect(jsonPath("$.lastModified").exists())
+        .andExpect(jsonPath("$.changes[0].id").exists())
         .andReturn();
 
     String response = result.getResponse().getContentAsString();
@@ -724,6 +758,76 @@ class CctResourceIntegrationTest {
   }
 
   @Test
+  void shouldNotUpdateCalculationWhenChangeIdValidationFails() throws Exception {
+    CctCalculation entity = CctCalculation.builder()
+        .traineeId(TRAINEE_ID)
+        .name("Test Calculation")
+        .programmeMembership(CctProgrammeMembership.builder()
+            .startDate(LocalDate.of(2024, 1, 1))
+            .endDate(LocalDate.of(2025, 1, 1))
+            .wte(0.5)
+            .build())
+        .changes(List.of(
+                CctChange.builder().type(LTFT).startDate(LocalDate.of(2024, 11, 1))
+                    .wte(1.0)
+                    .build()
+            )
+        )
+        .build();
+    entity = template.insert(entity);
+
+    UUID id = entity.id();
+    UUID changeId1 = entity.changes().get(0).id();
+    UUID changeId2 = UUID.randomUUID();
+
+    String body = """
+        {
+          "id": "%s",
+          "name": "Test Calculation updated",
+          "programmeMembership": {
+            "id": "12345678-aaaa-bbbb-cccc-012345678910",
+            "name": "Test Programme",
+            "startDate": "2024-01-01",
+            "endDate": "2025-01-01",
+            "wte": 0.5
+          },
+          "changes": [
+            {
+              "id": "%s",
+              "type": "LTFT",
+              "startDate": "2024-07-01",
+              "wte": 0.75
+            },
+            {
+              "id": "%s",
+              "type": "LTFT",
+              "startDate": "2025-08-02",
+              "wte": 1.0
+            },
+            {
+              "id": "%s",
+              "type": "LTFT",
+              "startDate": "2026-09-03",
+              "wte": 0.8
+            }
+          ]
+        }
+        """.formatted(id, changeId1, changeId1, changeId2);
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+
+    mockMvc.perform(put("/api/cct/calculation/" + id)
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body))
+        .andExpect(jsonPath("$.errors", hasSize(2)))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/changes[1]/id")))
+        .andExpect(jsonPath("$.errors[0].detail", is("must be unique")))
+        .andExpect(jsonPath("$.errors[1].pointer", is("#/changes[2]/id")))
+        .andExpect(jsonPath("$.errors[1].detail", is("must be null or match existing value")));
+  }
+
+  @Test
   void shouldUpdateCalculation() throws Exception {
     CctCalculation entity = CctCalculation.builder()
         .traineeId(TRAINEE_ID)
@@ -741,6 +845,7 @@ class CctResourceIntegrationTest {
     entity = template.insert(entity);
 
     UUID id = entity.id();
+    UUID changeId = entity.changes().get(0).id();
     Instant created = entity.created();
     Instant lastModified = entity.lastModified();
     assertThat("Unexpected initial last modified date.", created, is(lastModified));
@@ -759,13 +864,19 @@ class CctResourceIntegrationTest {
           },
           "changes": [
             {
+              "id": "%s",
               "type": "LTFT",
               "startDate": "2024-07-01",
               "wte": 0.75
+            },
+            {
+              "type": "LTFT",
+              "startDate": "2025-08-02",
+              "wte": 1.0
             }
           ]
         }
-        """.formatted(id, created);
+        """.formatted(id, created, changeId);
 
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
 
@@ -777,6 +888,8 @@ class CctResourceIntegrationTest {
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.id").value(id.toString()))
         .andExpect(jsonPath("$.name").value("Test Calculation updated"))
+        .andExpect(jsonPath("$.changes[0].id").value(changeId.toString()))
+        .andExpect(jsonPath("$.changes[1].id").exists())
         .andExpect(jsonPath("$.created").value(created.toString()))
         .andReturn();
 

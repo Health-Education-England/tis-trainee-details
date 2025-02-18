@@ -21,11 +21,14 @@
 
 package uk.nhs.hee.trainee.details.config;
 
+import java.util.List;
 import java.util.UUID;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.config.EnableMongoAuditing;
 import org.springframework.data.mongodb.core.mapping.event.BeforeConvertCallback;
+import uk.nhs.hee.trainee.details.model.CctCalculation;
+import uk.nhs.hee.trainee.details.model.CctCalculation.CctChange;
 import uk.nhs.hee.trainee.details.model.UuidIdentifiedRecord;
 
 /**
@@ -35,12 +38,38 @@ import uk.nhs.hee.trainee.details.model.UuidIdentifiedRecord;
 @EnableMongoAuditing
 public class MongoConfiguration {
 
+  /**
+   * Populate the UUID-based ID field before conversion.
+   *
+   * @param <T> The type of the entity, extending {@link UuidIdentifiedRecord}.
+   * @return The updated entity.
+   */
   @Bean
-  public <T extends UuidIdentifiedRecord<T>> BeforeConvertCallback<T> beforeConvertCallback() {
+  public <T extends UuidIdentifiedRecord<T>> BeforeConvertCallback<T> populateUuidBeforeConvert() {
     return (entity, collection) -> {
       if (entity.id() == null) {
         entity = entity.withId(UUID.randomUUID());
       }
+      return entity;
+    };
+  }
+
+  /**
+   * Populate the {@link CctChange} IDs before conversion.
+   *
+   * @return The updated {@link CctCalculation}.
+   */
+  @Bean
+  public BeforeConvertCallback<CctCalculation> populateChangeUuidBeforeConvert() {
+    return (entity, collection) -> {
+
+      if (entity.changes() != null) {
+        List<CctChange> changes = entity.changes().stream()
+            .map(change -> change.id() != null ? change : change.withId(UUID.randomUUID()))
+            .toList();
+        entity = entity.withChanges(changes);
+      }
+
       return entity;
     };
   }

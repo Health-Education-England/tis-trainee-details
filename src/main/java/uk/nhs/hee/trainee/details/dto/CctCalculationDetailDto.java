@@ -101,12 +101,16 @@ public record CctCalculationDetailDto(
   /**
    * A CCT changes associated with a calculation.
    *
+   * @param id        The identifier of the CCT change.
    * @param type      The type of CCT change.
    * @param startDate The start date of the CCT change.
    * @param wte       The new desired whole time equivalent.
    */
   @Builder
   public record CctChangeDto(
+
+      @Null(groups = Create.class)
+      UUID id,
 
       @NotNull
       CctChangeType type,

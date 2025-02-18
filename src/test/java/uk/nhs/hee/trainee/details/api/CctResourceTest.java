@@ -27,6 +27,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -44,6 +45,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
 import uk.nhs.hee.trainee.details.service.CctService;
 
@@ -175,7 +177,7 @@ class CctResourceTest {
   }
 
   @Test
-  void shouldReturnUpdatedCalculation() {
+  void shouldReturnUpdatedCalculation() throws MethodArgumentNotValidException {
     UUID id = UUID.randomUUID();
     Instant created = Instant.now();
     CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
@@ -209,7 +211,7 @@ class CctResourceTest {
   }
 
   @Test
-  void shouldReturnBadRequestWhenUpdateIsInconsistent() {
+  void shouldReturnBadRequestWhenUpdateIsInconsistent() throws MethodArgumentNotValidException {
     UUID id1 = UUID.randomUUID();
     UUID id2 = UUID.randomUUID();
     CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
@@ -227,7 +229,7 @@ class CctResourceTest {
   }
 
   @Test
-  void shouldReturnBadRequestWhenUpdateHasNoEntityId() {
+  void shouldReturnBadRequestWhenUpdateHasNoEntityId() throws MethodArgumentNotValidException {
     UUID id = UUID.randomUUID();
     CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
         .name("Test Calculation")
@@ -242,7 +244,7 @@ class CctResourceTest {
   }
 
   @Test
-  void shouldReturnNotFoundWhenCalculationCannotBeUpdated() {
+  void shouldReturnNotFoundWhenCalculationCannotBeUpdated() throws MethodArgumentNotValidException {
     UUID id = UUID.randomUUID();
     Instant created = Instant.now();
     CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
@@ -261,5 +263,23 @@ class CctResourceTest {
 
     CctCalculationDetailDto responseBody = response.getBody();
     assertThat("Unexpected response body.", responseBody, nullValue());
+  }
+
+  @Test
+  void shouldNotCatchValidationErrorWhenUpdateCalculationValidationFails()
+      throws MethodArgumentNotValidException {
+    UUID id = UUID.randomUUID();
+    Instant created = Instant.now();
+    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
+        .id(id)
+        .name("Test Calculation")
+        .created(created)
+        .lastModified(created)
+        .build();
+
+    when(service.updateCalculation(any(), any())).thenThrow(MethodArgumentNotValidException.class);
+
+    assertThrows(MethodArgumentNotValidException.class,
+        () -> controller.updateCalculationDetails(id, dto));
   }
 }

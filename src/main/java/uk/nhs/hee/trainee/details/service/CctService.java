@@ -26,12 +26,20 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.BeanPropertyBindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
+import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto.CctChangeDto;
 import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
 import uk.nhs.hee.trainee.details.exception.NotRecordOwnerException;
 import uk.nhs.hee.trainee.details.mapper.CctMapper;
@@ -107,7 +115,7 @@ public class CctService {
 
     log.info("CCT calculation found: [{}]", entity.isPresent());
     return entity.map(cctCalculation
-        -> mapper.toDetailDto(cctCalculation, calculateCctDate(cctCalculation)))
+            -> mapper.toDetailDto(cctCalculation, calculateCctDate(cctCalculation)))
         .or(() -> entity.map(mapper::toDetailDto));
   }
 
@@ -134,11 +142,19 @@ public class CctService {
    * @return The updated CCT calculation, or optional empty if error.
    */
   public Optional<CctCalculationDetailDto> updateCalculation(UUID id,
-      CctCalculationDetailDto dto) {
+      CctCalculationDetailDto dto) throws MethodArgumentNotValidException {
     log.info("Updating CCT calculation [{}] with id [{}]", dto.name(), id);
 
     Optional<CctCalculationDetailDto> existingCalc = getCalculation(id);
     if (existingCalc.isPresent()) {
+
+      BeanPropertyBindingResult validationResult = validateChangeIds(dto.changes(),
+          existingCalc.get().changes());
+      if (validationResult.hasErrors()) {
+        log.warn("CCT calculation [{}] cannot be updated: invalid changes.", id);
+        throw new MethodArgumentNotValidException(null, validationResult);
+      }
+
       CctCalculation entity = mapper.toEntity(dto, traineeIdentity.getTraineeId());
       entity = calculationRepository.save(entity);
       log.info("Updated CCT calculation [{}] with id [{}]", dto.name(), entity.id());
@@ -147,6 +163,49 @@ public class CctService {
       log.warn("CCT calculation [{}] cannot be updated: not found.", id);
     }
     return Optional.empty();
+  }
+
+  /**
+   * Validation the {@link CctChangeDto} IDs.
+   *
+   * @param newChanges      The new changes being saved.
+   * @param existingChanges The existing changes from the database.
+   * @return True if valid, else false.
+   */
+  private BeanPropertyBindingResult validateChangeIds(List<CctChangeDto> newChanges,
+      List<CctChangeDto> existingChanges) {
+    BeanPropertyBindingResult result = new BeanPropertyBindingResult(newChanges, "newChanges");
+
+    Set<UUID> existingChangeIds = Set.of();
+    if (existingChanges != null) {
+      existingChangeIds = existingChanges.stream()
+          .map(CctChangeDto::id)
+          .filter(Objects::nonNull)
+          .collect(Collectors.toSet());
+    }
+
+    Set<UUID> uniqueNewChangeIds = new HashSet<>();
+
+    for (var iterator = newChanges.listIterator(); iterator.hasNext(); ) {
+      CctChangeDto newChange = iterator.next();
+      UUID newChangeId = newChange.id();
+
+      // Add an error if the caller has generated change IDs themselves.
+      if (newChangeId != null && !existingChangeIds.contains(newChangeId)) {
+        String field = "changes[%d].id".formatted(iterator.previousIndex());
+        result.addError(
+            new FieldError("CctChangeDto", field, "must be null or match existing value"));
+      }
+
+      // Add an error if change IDs are not unique
+      if (uniqueNewChangeIds.contains(newChangeId)) {
+        String field = "changes[%d].id".formatted(iterator.previousIndex());
+        result.addError(new FieldError("CctChangeDto", field, "must be unique"));
+      }
+      uniqueNewChangeIds.add(newChangeId);
+    }
+
+    return result;
   }
 
   /**

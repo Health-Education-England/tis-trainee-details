@@ -28,10 +28,13 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.mongodb.core.mapping.event.BeforeConvertCallback;
+import uk.nhs.hee.trainee.details.model.CctCalculation;
+import uk.nhs.hee.trainee.details.model.CctCalculation.CctChange;
 import uk.nhs.hee.trainee.details.model.UuidIdentifiedRecord;
 
 class MongoConfigurationTest {
@@ -47,7 +50,7 @@ class MongoConfigurationTest {
   void shouldSetUuidIdentifierBeforeConvertWhenEmpty() {
     UuidIdentifiedStub before = new UuidIdentifiedStub(null);
 
-    BeforeConvertCallback<UuidIdentifiedStub> callback = configuration.beforeConvertCallback();
+    BeforeConvertCallback<UuidIdentifiedStub> callback = configuration.populateUuidBeforeConvert();
     UuidIdentifiedStub after = callback.onBeforeConvert(new UuidIdentifiedStub(null), "");
 
     assertThat("Unexpected entity ID.", before.id(), nullValue());
@@ -60,12 +63,61 @@ class MongoConfigurationTest {
     UUID id = UUID.randomUUID();
     UuidIdentifiedStub before = new UuidIdentifiedStub(id);
 
-    BeforeConvertCallback<UuidIdentifiedStub> callback = configuration.beforeConvertCallback();
+    BeforeConvertCallback<UuidIdentifiedStub> callback = configuration.populateUuidBeforeConvert();
     UuidIdentifiedStub after = callback.onBeforeConvert(before, "");
 
     assertThat("Unexpected entity ID.", before.id(), is(id));
     assertThat("Unexpected entity ID.", after.id(), is(id));
     assertThat("Unexpected entity.", after, sameInstance(before));
+  }
+
+  @Test
+  void shouldSetCctChangeUuidsBeforeConvertWhenEmpty() {
+    CctChange beforeChange = CctChange.builder().id(null).build();
+    CctCalculation beforeCalc = CctCalculation.builder()
+        .changes(List.of(beforeChange))
+        .build();
+
+    var callback = configuration.populateChangeUuidBeforeConvert();
+    CctCalculation afterCalc = callback.onBeforeConvert(beforeCalc, "");
+    CctChange afterChange = afterCalc.changes().get(0);
+
+    assertThat("Unexpected change ID.", beforeChange.id(), nullValue());
+    assertThat("Unexpected change ID.", afterChange.id(), notNullValue());
+    assertThat("Unexpected entity.", afterChange, not(sameInstance(beforeChange)));
+  }
+
+  @Test
+  void shouldNotSetCctChangeUuidsBeforeConvertWhenPopulated() {
+    UUID id = UUID.randomUUID();
+    CctChange beforeChange = CctChange.builder().id(id).build();
+    CctCalculation beforeCalc = CctCalculation.builder()
+        .changes(List.of(beforeChange))
+        .build();
+
+    var callback = configuration.populateChangeUuidBeforeConvert();
+    CctCalculation afterCalc = callback.onBeforeConvert(beforeCalc, "");
+    CctChange afterChange = afterCalc.changes().get(0);
+
+    assertThat("Unexpected change ID.", beforeChange.id(), is(id));
+    assertThat("Unexpected change ID.", afterChange.id(), is(id));
+    assertThat("Unexpected entity.", afterChange, sameInstance(beforeChange));
+  }
+
+  @Test
+  void shouldHandleAllCctChangeUuidsBeforeConvert() {
+    UUID id = UUID.randomUUID();
+    CctChange beforeChange1 = CctChange.builder().id(id).build();
+    CctChange beforeChange2 = CctChange.builder().build();
+    CctCalculation beforeCalc = CctCalculation.builder()
+        .changes(List.of(beforeChange1, beforeChange2))
+        .build();
+
+    var callback = configuration.populateChangeUuidBeforeConvert();
+    CctCalculation afterCalc = callback.onBeforeConvert(beforeCalc, "");
+
+    assertThat("Unexpected entity ID.", afterCalc.changes().get(0).id(), is(id));
+    assertThat("Unexpected entity ID.", afterCalc.changes().get(1).id(), notNullValue());
   }
 
   /**

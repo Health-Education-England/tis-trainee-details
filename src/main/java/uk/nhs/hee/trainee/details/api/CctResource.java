@@ -29,6 +29,7 @@ import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -93,7 +94,8 @@ public class CctResource {
    */
   @PutMapping("/calculation/{id}")
   public ResponseEntity<CctCalculationDetailDto> updateCalculationDetails(@PathVariable UUID id,
-      @Validated @RequestBody CctCalculationDetailDto calculation) {
+      @Validated @RequestBody CctCalculationDetailDto calculation)
+      throws MethodArgumentNotValidException {
     log.info("Request to update CCT calculation[{}]", id);
     Optional<CctCalculationDetailDto> savedCalculation;
 

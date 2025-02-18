@@ -23,11 +23,13 @@ package uk.nhs.hee.trainee.details.service;
 
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -44,6 +46,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto.CctChangeDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto.CctProgrammeMembershipDto;
@@ -382,9 +386,12 @@ class CctServiceTest {
   }
 
   @Test
-  void shouldUpdateExistingCalculationIfExistsAndOwnedByUser() {
+  void shouldUpdateExistingCalculationIfExistsAndOwnedByUser()
+      throws MethodArgumentNotValidException {
     UUID pmId = UUID.randomUUID();
     UUID id = UUID.randomUUID();
+    UUID changeId1 = UUID.randomUUID();
+    UUID changeId2 = UUID.randomUUID();
     Instant created = Instant.now();
 
     CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
@@ -399,10 +406,10 @@ class CctServiceTest {
             .wte(1.0)
             .build())
         .changes(List.of(
-            CctChangeDto.builder().type(LTFT).startDate(LocalDate.EPOCH.plusMonths(6))
+            CctChangeDto.builder().id(changeId1).type(LTFT).startDate(LocalDate.EPOCH.plusMonths(6))
                 .wte(0.5).build(),
-            CctChangeDto.builder().type(LTFT).startDate(LocalDate.EPOCH.plusMonths(13))
-                .wte(0.75).build()
+            CctChangeDto.builder().type(LTFT).startDate(LocalDate.EPOCH.plusMonths(13)).wte(0.75)
+                .build()
         ))
         .build();
 
@@ -415,7 +422,7 @@ class CctServiceTest {
             .wte(1.0)
             .build())
         .changes(List.of(
-            CctChange.builder().type(LTFT).startDate(LocalDate.MIN).wte(0.5).build()))
+            CctChange.builder().id(changeId1).type(LTFT).startDate(LocalDate.MIN).wte(0.5).build()))
         .build();
     when(calculationRepository.findById(any())).thenReturn(Optional.of(existingCalc));
 
@@ -441,11 +448,13 @@ class CctServiceTest {
               .build())
           .changes(List.of(
               CctChange.builder()
+                  .id(changeId1)
                   .type(change1.type())
                   .startDate(change1.startDate())
                   .wte(change1.wte())
                   .build(),
               CctChange.builder()
+                  .id(changeId2)
                   .type(change2.type())
                   .startDate(change2.startDate())
                   .wte(change2.wte()).build()
@@ -476,12 +485,14 @@ class CctServiceTest {
     assertThat("Unexpected change count.", changes.size(), is(2));
 
     CctChangeDto change1 = changes.get(0);
+    assertThat("Unexpected change ID.", change1.id(), is(changeId1));
     assertThat("Unexpected change type.", change1.type(), is(LTFT));
     assertThat("Unexpected change type.", change1.startDate(),
         is(LocalDate.EPOCH.plusMonths(6)));
     assertThat("Unexpected change type.", change1.wte(), is(0.5));
 
     CctChangeDto change2 = changes.get(1);
+    assertThat("Unexpected change ID.", change2.id(), is(changeId2));
     assertThat("Unexpected change type.", change2.type(), is(LTFT));
     assertThat("Unexpected change type.", change2.startDate(),
         is(LocalDate.EPOCH.plusMonths(13)));
@@ -489,7 +500,7 @@ class CctServiceTest {
   }
 
   @Test
-  void shouldNotUpdateExistingCalculationIfNotExists() {
+  void shouldNotUpdateExistingCalculationIfNotExists() throws MethodArgumentNotValidException {
     UUID pmId = UUID.randomUUID();
     UUID id = UUID.randomUUID();
     Instant created = Instant.now();
@@ -520,6 +531,84 @@ class CctServiceTest {
     assertThat("Unexpected saved calculation.", updatedDtoOptional.isPresent(), is(false));
     verify(calculationRepository).findById(id);
     verifyNoMoreInteractions(calculationRepository);
+  }
+
+  @Test
+  void shouldNotUpdateExistingCalculationIfChangeIdsInvalid() {
+    UUID pmId = UUID.randomUUID();
+    UUID id = UUID.randomUUID();
+    UUID changeId1 = UUID.randomUUID();
+    UUID changeId2 = UUID.randomUUID();
+    UUID changeId3 = UUID.randomUUID();
+
+    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
+        .id(id)
+        .name("Test Calculation")
+        .programmeMembership(CctProgrammeMembershipDto.builder()
+            .id(pmId)
+            .name("Test Programme")
+            .startDate(LocalDate.EPOCH)
+            .endDate(LocalDate.EPOCH.plusYears(1))
+            .wte(1.0)
+            .build())
+        .changes(List.of(
+            CctChangeDto.builder().id(changeId1).type(LTFT)
+                .startDate(LocalDate.EPOCH.plusMonths(1)).wte(0.5)
+                .build(),
+            CctChangeDto.builder().id(changeId2).type(LTFT)
+                .startDate(LocalDate.EPOCH.plusMonths(2)).wte(1.0)
+                .build(),
+            CctChangeDto.builder().id(changeId3).type(LTFT)
+                .startDate(LocalDate.EPOCH.plusMonths(3)).wte(0.8)
+                .build(),
+            CctChangeDto.builder().id(changeId3).type(LTFT)
+                .startDate(LocalDate.EPOCH.plusMonths(4)).wte(1.0)
+                .build(),
+            CctChangeDto.builder().type(LTFT)
+                .startDate(LocalDate.EPOCH.plusMonths(5)).wte(0.5)
+                .build()
+        ))
+        .build();
+
+    CctCalculation existingCalc = CctCalculation.builder()
+        .id(id)
+        .traineeId(TRAINEE_ID)
+        .programmeMembership(CctProgrammeMembership.builder()
+            .startDate(LocalDate.EPOCH)
+            .endDate(LocalDate.EPOCH.plusYears(1))
+            .wte(1.0)
+            .build())
+        .changes(List.of(
+            CctChange.builder().id(changeId1).type(LTFT).startDate(LocalDate.MIN).wte(0.5).build()))
+        .build();
+    when(calculationRepository.findById(any())).thenReturn(Optional.of(existingCalc));
+
+    MethodArgumentNotValidException exception = assertThrows(MethodArgumentNotValidException.class,
+        () -> service.updateCalculation(id, dto));
+
+    List<FieldError> fieldErrors = exception.getFieldErrors();
+    assertThat("Unexpected error count.", fieldErrors, hasSize(4));
+
+    FieldError fieldError = fieldErrors.get(0);
+    assertThat("Unexpected error field.", fieldError.getField(), is("changes[1].id"));
+    assertThat("Unexpected error message.", fieldError.getDefaultMessage(),
+        is("must be null or match existing value"));
+
+    fieldError = fieldErrors.get(1);
+    assertThat("Unexpected error field.", fieldError.getField(), is("changes[2].id"));
+    assertThat("Unexpected error message.", fieldError.getDefaultMessage(),
+        is("must be null or match existing value"));
+
+    fieldError = fieldErrors.get(2);
+    assertThat("Unexpected error field.", fieldError.getField(), is("changes[3].id"));
+    assertThat("Unexpected error message.", fieldError.getDefaultMessage(),
+        is("must be null or match existing value"));
+
+    fieldError = fieldErrors.get(3);
+    assertThat("Unexpected error field.", fieldError.getField(), is("changes[3].id"));
+    assertThat("Unexpected error message.", fieldError.getDefaultMessage(), is("must be unique"));
+
+    verify(calculationRepository, never()).save(any());
   }
 
   @Test
