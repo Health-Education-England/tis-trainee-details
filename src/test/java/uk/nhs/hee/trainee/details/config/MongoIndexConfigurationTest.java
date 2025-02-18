@@ -32,7 +32,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -46,6 +45,7 @@ import org.springframework.data.mongodb.core.index.IndexOperations;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 
 class MongoIndexConfigurationTest {
+
   private static final String NON_UNIQUE_INDEX_NAME = "traineeTisId_notUnique";
 
   private MongoIndexConfiguration configuration;
@@ -77,7 +77,7 @@ class MongoIndexConfigurationTest {
 
     List<String> indexKeys = indexes.stream()
         .flatMap(i -> i.getIndexKeys().keySet().stream())
-        .collect(Collectors.toList());
+        .toList();
     assertThat("Unexpected index.", indexKeys, hasItems("traineeTisId", "personalDetails.email"));
   }
 

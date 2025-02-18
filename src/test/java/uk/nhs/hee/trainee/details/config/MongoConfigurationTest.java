@@ -121,7 +121,7 @@ class MongoConfigurationTest {
   }
 
   /**
-   * A stub UUID identified entity
+   * A stub UUID identified entity.
    *
    * @param id The id of the entity, may be null.
    */
