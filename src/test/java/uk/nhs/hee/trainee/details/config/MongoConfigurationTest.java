@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright 2021 Crown Copyright (Health Education England)
+ * Copyright 2025 Crown Copyright (Health Education England)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -21,90 +21,120 @@
 
 package uk.nhs.hee.trainee.details.config;
 
-import static org.hamcrest.CoreMatchers.hasItems;
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.sameInstance;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatchers;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.index.IndexDefinition;
-import org.springframework.data.mongodb.core.index.IndexField;
-import org.springframework.data.mongodb.core.index.IndexInfo;
-import org.springframework.data.mongodb.core.index.IndexOperations;
-import uk.nhs.hee.trainee.details.model.TraineeProfile;
+import org.springframework.data.mongodb.core.mapping.event.BeforeConvertCallback;
+import uk.nhs.hee.trainee.details.model.CctCalculation;
+import uk.nhs.hee.trainee.details.model.CctCalculation.CctChange;
+import uk.nhs.hee.trainee.details.model.UuidIdentifiedRecord;
 
 class MongoConfigurationTest {
-  private static final String NON_UNIQUE_INDEX_NAME = "traineeTisId_notUnique";
 
   private MongoConfiguration configuration;
 
-  private MongoTemplate template;
-
   @BeforeEach
   void setUp() {
-    template = mock(MongoTemplate.class);
-    configuration = new MongoConfiguration(template);
-
-    IndexOperations indexOperations = mock(IndexOperations.class);
-    when(template.indexOps(ArgumentMatchers.<Class<TraineeProfile>>any()))
-        .thenReturn(indexOperations);
+    configuration = new MongoConfiguration();
   }
 
   @Test
-  void shouldInitIndexesForTraineeProfileCollection() {
-    IndexOperations indexOperations = mock(IndexOperations.class);
-    when(template.indexOps(TraineeProfile.class)).thenReturn(indexOperations);
+  void shouldSetUuidIdentifierBeforeConvertWhenEmpty() {
+    UuidIdentifiedStub before = new UuidIdentifiedStub(null);
 
-    configuration.initIndexes();
+    BeforeConvertCallback<UuidIdentifiedStub> callback = configuration.populateUuidBeforeConvert();
+    UuidIdentifiedStub after = callback.onBeforeConvert(new UuidIdentifiedStub(null), "");
 
-    ArgumentCaptor<IndexDefinition> indexCaptor = ArgumentCaptor.forClass(IndexDefinition.class);
-    verify(indexOperations, atLeastOnce()).ensureIndex(indexCaptor.capture());
-
-    List<IndexDefinition> indexes = indexCaptor.getAllValues();
-    assertThat("Unexpected number of indexes.", indexes.size(), is(2));
-
-    List<String> indexKeys = indexes.stream()
-        .flatMap(i -> i.getIndexKeys().keySet().stream())
-        .collect(Collectors.toList());
-    assertThat("Unexpected index.", indexKeys, hasItems("traineeTisId", "personalDetails.email"));
+    assertThat("Unexpected entity ID.", before.id(), nullValue());
+    assertThat("Unexpected entity ID.", after.id(), notNullValue());
+    assertThat("Unexpected entity.", after, not(sameInstance(before)));
   }
 
   @Test
-  void shouldReplaceNonUniqueIndexForTraineeTisIdWithUniqueIndex() {
-    IndexField indexField = IndexField.create("traineeTisId", Sort.Direction.ASC);
-    IndexInfo indexInfo = new IndexInfo(List.of(indexField),
-        NON_UNIQUE_INDEX_NAME, false, false, "");
+  void shouldNotSetUuidIdentifierBeforeConvertWhenPopulated() {
+    UUID id = UUID.randomUUID();
+    UuidIdentifiedStub before = new UuidIdentifiedStub(id);
 
-    IndexOperations indexOperations = mock(IndexOperations.class);
-    when(template.indexOps(TraineeProfile.class)).thenReturn(indexOperations);
-    when(indexOperations.getIndexInfo()).thenReturn(List.of(indexInfo));
+    BeforeConvertCallback<UuidIdentifiedStub> callback = configuration.populateUuidBeforeConvert();
+    UuidIdentifiedStub after = callback.onBeforeConvert(before, "");
 
-    configuration.initIndexes();
+    assertThat("Unexpected entity ID.", before.id(), is(id));
+    assertThat("Unexpected entity ID.", after.id(), is(id));
+    assertThat("Unexpected entity.", after, sameInstance(before));
+  }
 
-    ArgumentCaptor<IndexDefinition> indexCaptor = ArgumentCaptor.forClass(IndexDefinition.class);
-    verify(indexOperations, atLeastOnce()).ensureIndex(indexCaptor.capture());
-    ArgumentCaptor<String> indexCaptorDel = ArgumentCaptor.forClass(String.class);
-    verify(indexOperations, atLeastOnce()).dropIndex(indexCaptorDel.capture());
+  @Test
+  void shouldSetCctChangeUuidsBeforeConvertWhenEmpty() {
+    CctChange beforeChange = CctChange.builder().id(null).build();
+    CctCalculation beforeCalc = CctCalculation.builder()
+        .changes(List.of(beforeChange))
+        .build();
 
-    List<IndexDefinition> indexes = indexCaptor.getAllValues();
-    String indexDeleted = indexCaptorDel.getValue();
+    var callback = configuration.populateChangeUuidBeforeConvert();
+    CctCalculation afterCalc = callback.onBeforeConvert(beforeCalc, "");
+    CctChange afterChange = afterCalc.changes().get(0);
 
-    Optional<IndexDefinition> idxTraineeTisId = indexes.stream()
-        .filter(i -> i.getIndexKeys().containsKey("traineeTisId")).findFirst();
-    assertTrue(idxTraineeTisId.isPresent());
-    assertTrue(idxTraineeTisId.get().getIndexOptions().getBoolean("unique"));
-    assertThat("Unexpected index deleted", indexDeleted, is(NON_UNIQUE_INDEX_NAME));
+    assertThat("Unexpected change ID.", beforeChange.id(), nullValue());
+    assertThat("Unexpected change ID.", afterChange.id(), notNullValue());
+    assertThat("Unexpected entity.", afterChange, not(sameInstance(beforeChange)));
+  }
+
+  @Test
+  void shouldNotSetCctChangeUuidsBeforeConvertWhenPopulated() {
+    UUID id = UUID.randomUUID();
+    CctChange beforeChange = CctChange.builder().id(id).build();
+    CctCalculation beforeCalc = CctCalculation.builder()
+        .changes(List.of(beforeChange))
+        .build();
+
+    var callback = configuration.populateChangeUuidBeforeConvert();
+    CctCalculation afterCalc = callback.onBeforeConvert(beforeCalc, "");
+    CctChange afterChange = afterCalc.changes().get(0);
+
+    assertThat("Unexpected change ID.", beforeChange.id(), is(id));
+    assertThat("Unexpected change ID.", afterChange.id(), is(id));
+    assertThat("Unexpected entity.", afterChange, sameInstance(beforeChange));
+  }
+
+  @Test
+  void shouldHandleAllCctChangeUuidsBeforeConvert() {
+    UUID id = UUID.randomUUID();
+    CctChange beforeChange1 = CctChange.builder().id(id).build();
+    CctChange beforeChange2 = CctChange.builder().build();
+    CctCalculation beforeCalc = CctCalculation.builder()
+        .changes(List.of(beforeChange1, beforeChange2))
+        .build();
+
+    var callback = configuration.populateChangeUuidBeforeConvert();
+    CctCalculation afterCalc = callback.onBeforeConvert(beforeCalc, "");
+
+    assertThat("Unexpected entity ID.", afterCalc.changes().get(0).id(), is(id));
+    assertThat("Unexpected entity ID.", afterCalc.changes().get(1).id(), notNullValue());
+  }
+
+  /**
+   * A stub UUID identified entity.
+   *
+   * @param id The id of the entity, may be null.
+   */
+  private record UuidIdentifiedStub(UUID id) implements UuidIdentifiedRecord<UuidIdentifiedStub> {
+
+    @Override
+    public UUID id() {
+      return id;
+    }
+
+    @Override
+    public UuidIdentifiedStub withId(UUID id) {
+      return new UuidIdentifiedStub(id);
+    }
   }
 }

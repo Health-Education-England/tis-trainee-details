@@ -21,8 +21,6 @@
 
 package uk.nhs.hee.trainee.details.dto;
 
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -33,7 +31,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import lombok.Builder;
-import org.bson.types.ObjectId;
 import org.hibernate.validator.constraints.Range;
 import uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType;
 import uk.nhs.hee.trainee.details.dto.validation.Create;
@@ -52,9 +49,8 @@ import uk.nhs.hee.trainee.details.dto.validation.Create;
 @Builder
 public record CctCalculationDetailDto(
 
-    @JsonSerialize(using = ToStringSerializer.class)
     @Null(groups = Create.class)
-    ObjectId id,
+    UUID id,
 
     @NotBlank
     String name,
@@ -105,12 +101,16 @@ public record CctCalculationDetailDto(
   /**
    * A CCT changes associated with a calculation.
    *
+   * @param id        The identifier of the CCT change.
    * @param type      The type of CCT change.
    * @param startDate The start date of the CCT change.
    * @param wte       The new desired whole time equivalent.
    */
   @Builder
   public record CctChangeDto(
+
+      @Null(groups = Create.class)
+      UUID id,
 
       @NotNull
       CctChangeType type,

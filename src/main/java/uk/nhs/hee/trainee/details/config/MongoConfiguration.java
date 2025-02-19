@@ -21,15 +21,15 @@
 
 package uk.nhs.hee.trainee.details.config;
 
-import jakarta.annotation.PostConstruct;
+import java.util.List;
+import java.util.UUID;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.mongodb.config.EnableMongoAuditing;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.index.Index;
-import org.springframework.data.mongodb.core.index.IndexInfo;
-import org.springframework.data.mongodb.core.index.IndexOperations;
-import uk.nhs.hee.trainee.details.model.TraineeProfile;
+import org.springframework.data.mongodb.core.mapping.event.BeforeConvertCallback;
+import uk.nhs.hee.trainee.details.model.CctCalculation;
+import uk.nhs.hee.trainee.details.model.CctCalculation.CctChange;
+import uk.nhs.hee.trainee.details.model.UuidIdentifiedRecord;
 
 /**
  * Configuration for the Mongo database.
@@ -38,27 +38,39 @@ import uk.nhs.hee.trainee.details.model.TraineeProfile;
 @EnableMongoAuditing
 public class MongoConfiguration {
 
-  private final MongoTemplate template;
-
-  MongoConfiguration(MongoTemplate template) {
-    this.template = template;
+  /**
+   * Populate the UUID-based ID field before conversion.
+   *
+   * @param <T> The type of the entity, extending {@link UuidIdentifiedRecord}.
+   * @return The updated entity.
+   */
+  @Bean
+  public <T extends UuidIdentifiedRecord<T>> BeforeConvertCallback<T> populateUuidBeforeConvert() {
+    return (entity, collection) -> {
+      if (entity.id() == null) {
+        entity = entity.withId(UUID.randomUUID());
+      }
+      return entity;
+    };
   }
 
   /**
-   * Add custom indexes to the Mongo collections.
+   * Populate the {@link CctChange} IDs before conversion.
+   *
+   * @return The updated {@link CctCalculation}.
    */
-  @PostConstruct
-  public void initIndexes() {
-    IndexOperations traineeProfileIndexOps = template.indexOps(TraineeProfile.class);
-    traineeProfileIndexOps.ensureIndex(new Index().on("personalDetails.email", Direction.ASC));
+  @Bean
+  public BeforeConvertCallback<CctCalculation> populateChangeUuidBeforeConvert() {
+    return (entity, collection) -> {
 
-    //ensure unique index on traineeTisId
-    for (IndexInfo idx : traineeProfileIndexOps.getIndexInfo()) {
-      if (idx.getIndexFields().stream().anyMatch(i -> i.getKey().equals("traineeTisId"))
-          && !idx.isUnique()) {
-        traineeProfileIndexOps.dropIndex(idx.getName());
+      if (entity.changes() != null) {
+        List<CctChange> changes = entity.changes().stream()
+            .map(change -> change.id() != null ? change : change.withId(UUID.randomUUID()))
+            .toList();
+        entity = entity.withChanges(changes);
       }
-    }
-    traineeProfileIndexOps.ensureIndex(new Index().on("traineeTisId", Direction.ASC).unique());
+
+      return entity;
+    };
   }
 }

@@ -21,7 +21,6 @@
 
 package uk.nhs.hee.trainee.details.service;
 
-import static java.time.temporal.ChronoUnit.YEARS;
 import static uk.nhs.hee.trainee.details.model.HrefType.ABSOLUTE_URL;
 import static uk.nhs.hee.trainee.details.model.HrefType.NON_HREF;
 import static uk.nhs.hee.trainee.details.model.HrefType.PROTOCOL_EMAIL;
@@ -538,8 +537,7 @@ public class ProgrammeMembershipService {
                 templatePath, Set.of(), TemplateMode.HTML, null);
 
             return pdfService.generatePdf(templateSpec, templateVariables);
-          }
-          else {
+          } else {
             throw new IllegalArgumentException("Programme membership " + programmeMembershipId
                 + " not starting in " + PM_CONFIRM_WEEKS + " weeks.");
           }
@@ -763,9 +761,8 @@ public class ProgrammeMembershipService {
    * @return The specific contact of the owner, or the default message if not found.
    */
   protected String getOwnerContact(List<Map<String, String>> ownerContactList,
-                                   LocalOfficeContactType contactType,
-                                   LocalOfficeContactType fallbackContactType,
-                                   String defaultMessage) {
+      LocalOfficeContactType contactType, LocalOfficeContactType fallbackContactType,
+      String defaultMessage) {
 
     Optional<Map<String, String>> ownerContact = ownerContactList.stream()
         .filter(c ->
@@ -795,8 +792,7 @@ public class ProgrammeMembershipService {
    * @return The specific contact of the local office, or the default message if not found.
    */
   public String getOwnerContact(String localOfficeName, LocalOfficeContactType contactType,
-                                LocalOfficeContactType fallbackContactType,
-                                String defaultMessage) {
+      LocalOfficeContactType fallbackContactType, String defaultMessage) {
     return getOwnerContact(
         getOwnerContactList(localOfficeName), contactType, fallbackContactType, defaultMessage);
   }

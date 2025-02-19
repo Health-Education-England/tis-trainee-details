@@ -22,7 +22,7 @@
 package uk.nhs.hee.trainee.details.repository;
 
 import java.util.List;
-import org.bson.types.ObjectId;
+import java.util.UUID;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 import uk.nhs.hee.trainee.details.model.CctCalculation;
@@ -31,7 +31,7 @@ import uk.nhs.hee.trainee.details.model.CctCalculation;
  * A repository for CCT calculations.
  */
 @Repository
-public interface CctCalculationRepository extends MongoRepository<CctCalculation, ObjectId> {
+public interface CctCalculationRepository extends MongoRepository<CctCalculation, UUID> {
 
   /**
    * Find all calculations belonging to the given trainee, ordered by last modified.
