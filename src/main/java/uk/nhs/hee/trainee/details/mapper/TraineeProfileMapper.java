@@ -69,6 +69,7 @@ public abstract class TraineeProfileMapper {
 
   @BeanMapping(ignoreByDefault = true)
   @Mapping(target = "personalDetails.publicHealthNumber", source = "publicHealthNumber")
+  @Mapping(target = "personalDetails.role", source = "role")
   public abstract void updateBasicDetails(@MappingTarget TraineeProfile target,
       PersonalDetails source);
 
@@ -109,6 +110,7 @@ public abstract class TraineeProfileMapper {
   @BeanMapping(ignoreByDefault = true)
   @Mapping(target = "personalDetails.dateOfBirth", source = "dateOfBirth")
   @Mapping(target = "personalDetails.gender", source = "gender")
+  @Mapping(target = "personalDetails.role", source = "role")
   public abstract void updatePersonalInfo(@MappingTarget TraineeProfile target,
       PersonalDetails source);
 }

@@ -40,6 +40,7 @@ public class PersonalDetailsDto implements SignedDto {
   private String knownAs;
   private String maidenName;
   private String title;
+  private String role;
   @JsonAlias("owner")
   private String personOwner;
   private LocalDate dateOfBirth;

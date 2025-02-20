@@ -33,6 +33,7 @@ public class PersonalDetails {
   private String maidenName; // ContactDetails
   private String title; // ContactDetails
   private String personOwner; // PersonOwner
+  private String role; // PersonalDetails
   private LocalDate dateOfBirth; // PersonalDetails
   private String gender; // PersonalDetails
   private String qualification; // TODO: Remove when FE can handle sub-collection.
