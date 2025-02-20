@@ -112,6 +112,7 @@ class TraineeProfileResourceTest {
   private static final String PERSON_ADDRESS4 = "UK";
   private static final String PERSON_POSTCODE = "SW1A1AA";
   private static final String PERSON_GMC = "11111111";
+  private static final String PERSON_ROLE = "role";
 
   private static final String PROGRAMME_TISID = "1";
   private static final String PROGRAMME_NAME = "General Practice";
@@ -194,6 +195,7 @@ class TraineeProfileResourceTest {
     personalDetails.setAddress4(PERSON_ADDRESS4);
     personalDetails.setPostCode(PERSON_POSTCODE);
     personalDetails.setGmcNumber(PERSON_GMC);
+    personalDetails.setRole(PERSON_ROLE);
   }
 
   /**
@@ -308,6 +310,7 @@ class TraineeProfileResourceTest {
         .andExpect(jsonPath("$.personalDetails.address4").value(PERSON_ADDRESS4))
         .andExpect(jsonPath("$.personalDetails.postCode").value(PERSON_POSTCODE))
         .andExpect(jsonPath("$.personalDetails.gmcNumber").value(PERSON_GMC))
+        .andExpect(jsonPath("$.personalDetails.role").value(PERSON_ROLE))
         .andExpect(jsonPath("$.personalDetails.signature.hmac").value(signature.getHmac()))
         .andExpect(jsonPath("$.personalDetails.signature.signedAt").value(
             signature.getSignedAt().toString()))
@@ -441,15 +444,16 @@ class TraineeProfileResourceTest {
   void getUserAccountShouldReturnAccountDetailsWhenProfileFoundByTisId() throws Exception {
     when(service.getTraineeDetailsByTisId(DEFAULT_TIS_ID_1))
         .thenReturn(Optional.of(
-            new UserDetails(
-                PERSON_EMAIL, PERSON_TITLE, PERSON_SURNAME, PERSON_FORENAME, PERSON_GMC)));
+            new UserDetails(PERSON_EMAIL, PERSON_TITLE, PERSON_SURNAME, PERSON_FORENAME, PERSON_GMC,
+                PERSON_ROLE)));
 
     mockMvc.perform(get("/api/trainee-profile/account-details/{tisId}", DEFAULT_TIS_ID_1)
             .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.email").value(PERSON_EMAIL))
-        .andExpect(jsonPath("$.familyName").value(PERSON_SURNAME));
+        .andExpect(jsonPath("$.familyName").value(PERSON_SURNAME))
+        .andExpect(jsonPath("$.role").value(PERSON_ROLE));
   }
 
   @ParameterizedTest

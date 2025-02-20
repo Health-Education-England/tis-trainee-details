@@ -29,12 +29,14 @@ package uk.nhs.hee.trainee.details.dto;
  * @param familyName The profile family name.
  * @param givenName  The profile given name.
  * @param gmcNumber  The profile GMC number.
+ * @param role       The profile TIS role(s).
  */
 public record UserDetails(
     String email,
     String title,
     String familyName,
     String givenName,
-    String gmcNumber) {
+    String gmcNumber,
+    String role) {
 
 }
