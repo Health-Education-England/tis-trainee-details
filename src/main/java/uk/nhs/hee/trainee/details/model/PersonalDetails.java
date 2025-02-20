@@ -24,6 +24,9 @@ package uk.nhs.hee.trainee.details.model;
 import java.time.LocalDate;
 import lombok.Data;
 
+/**
+ * Trainee doctor personal details.
+ */
 @Data
 public class PersonalDetails {
 
