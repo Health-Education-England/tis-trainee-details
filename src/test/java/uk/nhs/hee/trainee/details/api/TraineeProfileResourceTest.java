@@ -195,7 +195,7 @@ class TraineeProfileResourceTest {
     personalDetails.setAddress4(PERSON_ADDRESS4);
     personalDetails.setPostCode(PERSON_POSTCODE);
     personalDetails.setGmcNumber(PERSON_GMC);
-    personalDetails.setRole(PERSON_ROLE);
+    personalDetails.setRole(List.of(PERSON_ROLE));
   }
 
   /**
@@ -445,7 +445,7 @@ class TraineeProfileResourceTest {
     when(service.getTraineeDetailsByTisId(DEFAULT_TIS_ID_1))
         .thenReturn(Optional.of(
             new UserDetails(PERSON_EMAIL, PERSON_TITLE, PERSON_SURNAME, PERSON_FORENAME, PERSON_GMC,
-                PERSON_ROLE)));
+                List.of(PERSON_ROLE))));
 
     mockMvc.perform(get("/api/trainee-profile/account-details/{tisId}", DEFAULT_TIS_ID_1)
             .contentType(MediaType.APPLICATION_JSON))
@@ -453,7 +453,7 @@ class TraineeProfileResourceTest {
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.email").value(PERSON_EMAIL))
         .andExpect(jsonPath("$.familyName").value(PERSON_SURNAME))
-        .andExpect(jsonPath("$.role").value(PERSON_ROLE));
+        .andExpect(jsonPath("$.role[0]").value(PERSON_ROLE));
   }
 
   @ParameterizedTest

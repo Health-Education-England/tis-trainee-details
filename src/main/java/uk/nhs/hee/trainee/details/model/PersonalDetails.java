@@ -22,6 +22,7 @@
 package uk.nhs.hee.trainee.details.model;
 
 import java.time.LocalDate;
+import java.util.List;
 import lombok.Data;
 
 /**
@@ -36,7 +37,7 @@ public class PersonalDetails {
   private String maidenName; // ContactDetails
   private String title; // ContactDetails
   private String personOwner; // PersonOwner
-  private String role; // PersonalDetails
+  private List<String> role; // PersonalDetails
   private LocalDate dateOfBirth; // PersonalDetails
   private String gender; // PersonalDetails
   private String qualification; // TODO: Remove when FE can handle sub-collection.

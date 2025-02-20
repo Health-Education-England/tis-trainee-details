@@ -24,6 +24,7 @@ package uk.nhs.hee.trainee.details.dto;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import java.time.LocalDate;
+import java.util.List;
 import lombok.Data;
 import uk.nhs.hee.trainee.details.dto.deserializer.LowerCaseDeserializer;
 import uk.nhs.hee.trainee.details.dto.signature.Signature;
@@ -40,7 +41,7 @@ public class PersonalDetailsDto implements SignedDto {
   private String knownAs;
   private String maidenName;
   private String title;
-  private String role;
+  private List<String> role;
   @JsonAlias("owner")
   private String personOwner;
   private LocalDate dateOfBirth;

@@ -21,6 +21,8 @@
 
 package uk.nhs.hee.trainee.details.dto;
 
+import java.util.List;
+
 /**
  * User details for an individual user.
  *
@@ -37,6 +39,6 @@ public record UserDetails(
     String familyName,
     String givenName,
     String gmcNumber,
-    String role) {
+    List<String> role) {
 
 }
