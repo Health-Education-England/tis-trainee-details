@@ -69,6 +69,7 @@ public abstract class TraineeProfileMapper {
 
   @BeanMapping(ignoreByDefault = true)
   @Mapping(target = "personalDetails.publicHealthNumber", source = "publicHealthNumber")
+  @Mapping(target = "personalDetails.role", source = "role")
   public abstract void updateBasicDetails(@MappingTarget TraineeProfile target,
       PersonalDetails source);
 

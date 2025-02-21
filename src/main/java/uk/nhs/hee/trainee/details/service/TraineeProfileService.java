@@ -140,7 +140,8 @@ public class TraineeProfileService {
       String familyName = traineeProfile.getPersonalDetails().getSurname();
       String givenName = traineeProfile.getPersonalDetails().getForenames();
       String gmcNumber = traineeProfile.getPersonalDetails().getGmcNumber();
-      return Optional.of(new UserDetails(email, title, familyName, givenName, gmcNumber));
+      List<String> role = traineeProfile.getPersonalDetails().getRole();
+      return Optional.of(new UserDetails(email, title, familyName, givenName, gmcNumber, role));
     }
     return Optional.empty();
   }
