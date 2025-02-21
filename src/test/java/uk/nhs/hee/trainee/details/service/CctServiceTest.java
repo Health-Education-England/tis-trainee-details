@@ -102,6 +102,7 @@ class CctServiceTest {
             .startDate(LocalDate.EPOCH)
             .endDate(LocalDate.EPOCH.plusYears(1))
             .wte(1.0)
+            .designatedBodyCode("testDbc")
             .build())
         .created(created1)
         .lastModified(lastModified1)
@@ -125,6 +126,7 @@ class CctServiceTest {
             .startDate(LocalDate.EPOCH)
             .endDate(LocalDate.EPOCH.plusYears(1))
             .wte(1.0)
+            .designatedBodyCode("testDbc")
             .build())
         .changes(List.of(CctChange.builder()
             .startDate(LocalDate.EPOCH)
@@ -200,6 +202,7 @@ class CctServiceTest {
             .startDate(LocalDate.EPOCH)
             .endDate(LocalDate.EPOCH.plusYears(1))
             .wte(1.0)
+            .designatedBodyCode("testDbc")
             .build())
         .changes(List.of(
             CctChange.builder().type(LTFT).startDate(LocalDate.EPOCH.plusMonths(6))
@@ -230,6 +233,7 @@ class CctServiceTest {
     assertThat("Unexpected PM start date.", pm.startDate(), is(LocalDate.EPOCH));
     assertThat("Unexpected PM end date.", pm.endDate(), is(LocalDate.EPOCH.plusYears(1)));
     assertThat("Unexpected PM WTE.", pm.wte(), is(1.0));
+    assertThat("Unexpected PM DBC.", pm.designatedBodyCode(), is("testDbc"));
 
     List<CctChangeDto> changes = dto.changes();
     assertThat("Unexpected change count.", changes.size(), is(2));
@@ -259,6 +263,7 @@ class CctServiceTest {
             .startDate(LocalDate.EPOCH)
             .endDate(LocalDate.EPOCH.plusYears(1))
             .wte(1.0)
+            .designatedBodyCode("testDbc")
             .build())
         .changes(List.of(
             CctChangeDto.builder().type(LTFT).startDate(LocalDate.EPOCH.plusMonths(6))
@@ -285,6 +290,7 @@ class CctServiceTest {
               .startDate(pm.startDate())
               .endDate(pm.endDate())
               .wte(pm.wte())
+              .designatedBodyCode("testDbc")
               .build())
           .changes(List.of(
               CctChange.builder()
@@ -312,6 +318,7 @@ class CctServiceTest {
     assertThat("Unexpected PM start date.", pm.startDate(), is(LocalDate.EPOCH));
     assertThat("Unexpected PM end date.", pm.endDate(), is(LocalDate.EPOCH.plusYears(1)));
     assertThat("Unexpected PM WTE.", pm.wte(), is(1.0));
+    assertThat("Unexpected PM DBC.", pm.designatedBodyCode(), is("testDbc"));
 
     List<CctChangeDto> changes = savedDto.changes();
     assertThat("Unexpected change count.", changes.size(), is(2));
@@ -343,6 +350,7 @@ class CctServiceTest {
             .startDate(LocalDate.EPOCH)
             .endDate(LocalDate.EPOCH.plusYears(1))
             .wte(1.0)
+            .designatedBodyCode("testDbc")
             .build())
         .changes(List.of(
             CctChangeDto.builder().type(LTFT).startDate(LocalDate.EPOCH.plusMonths(6))
@@ -368,6 +376,7 @@ class CctServiceTest {
     assertThat("Unexpected PM start date.", pm.startDate(), is(LocalDate.EPOCH));
     assertThat("Unexpected PM end date.", pm.endDate(), is(LocalDate.EPOCH.plusYears(1)));
     assertThat("Unexpected PM WTE.", pm.wte(), is(1.0));
+    assertThat("Unexpected PM DBC.", pm.designatedBodyCode(), is("testDbc"));
 
     List<CctChangeDto> changes = calculatedDto.changes();
     assertThat("Unexpected change count.", changes.size(), is(2));
@@ -404,6 +413,7 @@ class CctServiceTest {
             .startDate(LocalDate.EPOCH)
             .endDate(LocalDate.EPOCH.plusYears(1))
             .wte(1.0)
+            .designatedBodyCode("testDbc")
             .build())
         .changes(List.of(
             CctChangeDto.builder().id(changeId1).type(LTFT).startDate(LocalDate.EPOCH.plusMonths(6))
@@ -420,6 +430,7 @@ class CctServiceTest {
             .startDate(LocalDate.EPOCH)
             .endDate(LocalDate.EPOCH.plusYears(1))
             .wte(1.0)
+            .designatedBodyCode("testDbc")
             .build())
         .changes(List.of(
             CctChange.builder().id(changeId1).type(LTFT).startDate(LocalDate.MIN).wte(0.5).build()))
@@ -445,6 +456,7 @@ class CctServiceTest {
               .startDate(pm.startDate())
               .endDate(pm.endDate())
               .wte(pm.wte())
+              .designatedBodyCode(pm.designatedBodyCode())
               .build())
           .changes(List.of(
               CctChange.builder()
@@ -480,6 +492,7 @@ class CctServiceTest {
     assertThat("Unexpected PM start date.", pm.startDate(), is(LocalDate.EPOCH));
     assertThat("Unexpected PM end date.", pm.endDate(), is(LocalDate.EPOCH.plusYears(1)));
     assertThat("Unexpected PM WTE.", pm.wte(), is(1.0));
+    assertThat("Unexpected PM DBC.", pm.designatedBodyCode(), is("testDbc"));
 
     List<CctChangeDto> changes = updatedDto.changes();
     assertThat("Unexpected change count.", changes.size(), is(2));
@@ -515,6 +528,7 @@ class CctServiceTest {
             .startDate(LocalDate.EPOCH)
             .endDate(LocalDate.EPOCH.plusYears(1))
             .wte(1.0)
+            .designatedBodyCode("testDbc")
             .build())
         .changes(List.of(
             CctChangeDto.builder().type(LTFT).startDate(LocalDate.EPOCH.plusMonths(6))
@@ -550,6 +564,7 @@ class CctServiceTest {
             .startDate(LocalDate.EPOCH)
             .endDate(LocalDate.EPOCH.plusYears(1))
             .wte(1.0)
+            .designatedBodyCode("testDbc")
             .build())
         .changes(List.of(
             CctChangeDto.builder().id(changeId1).type(LTFT)
@@ -577,6 +592,7 @@ class CctServiceTest {
             .startDate(LocalDate.EPOCH)
             .endDate(LocalDate.EPOCH.plusYears(1))
             .wte(1.0)
+            .designatedBodyCode("testDbc")
             .build())
         .changes(List.of(
             CctChange.builder().id(changeId1).type(LTFT).startDate(LocalDate.MIN).wte(0.5).build()))
@@ -626,6 +642,7 @@ class CctServiceTest {
             .startDate(LocalDate.EPOCH)
             .endDate(pmEndDate)
             .wte(1.0)
+            .designatedBodyCode("testDbc")
             .build())
         .changes(List.of(
             CctChange.builder().type(LTFT).startDate(pmEndDate.plusDays(1))
@@ -644,6 +661,7 @@ class CctServiceTest {
             .startDate(pmStartDate)
             .endDate(LocalDate.EPOCH.plusYears(1))
             .wte(1.0)
+            .designatedBodyCode("testDbc")
             .build())
         .changes(List.of(
             CctChange.builder().type(LTFT).startDate(LocalDate.MIN)
@@ -656,6 +674,7 @@ class CctServiceTest {
             .startDate(pmStartDate)
             .endDate(LocalDate.EPOCH.plusYears(1))
             .wte(1.0)
+            .designatedBodyCode("testDbc")
             .build())
         .changes(List.of(
             CctChange.builder().type(LTFT).startDate(pmStartDate)
@@ -674,6 +693,7 @@ class CctServiceTest {
             .startDate(pmStartDate)
             .endDate(LocalDate.EPOCH.plusYears(1))
             .wte(1.0)
+            .designatedBodyCode("testDbc")
             .build())
         .changes(List.of(
             CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(3))
@@ -690,6 +710,7 @@ class CctServiceTest {
             .startDate(pmStartDate)
             .endDate(LocalDate.EPOCH.plusYears(1))
             .wte(1.0)
+            .designatedBodyCode("testDbc")
             .build())
         .changes(List.of(
             CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(9))
@@ -713,6 +734,7 @@ class CctServiceTest {
             .startDate(pmStartDate)
             .endDate(LocalDate.EPOCH.plusYears(1))
             .wte(1.0)
+            .designatedBodyCode("testDbc")
             .build())
         .changes(List.of(
             CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(3))
@@ -733,6 +755,7 @@ class CctServiceTest {
             .startDate(pmStartDate)
             .endDate(LocalDate.of(2028, 1, 1))
             .wte(1.0)
+            .designatedBodyCode("testDbc")
             .build())
         .changes(List.of(
             CctChange.builder().type(LTFT).startDate(pmStartDate)
@@ -763,6 +786,7 @@ class CctServiceTest {
             .startDate(pmStartDate)
             .endDate(pmEndDate)
             .wte(1.0)
+            .designatedBodyCode("testDbc")
             .build())
         .changes(List.of(
             CctChange.builder().type(LTFT).startDate(pmStartDate)
