@@ -96,7 +96,6 @@ public record CctCalculationDetailDto(
       @Range(min = 0, max = 1)
       Double wte,
 
-      @NotNull
       String designatedBodyCode) {
 
   }
