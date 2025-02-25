@@ -82,7 +82,8 @@ public record CctCalculation(
       String name,
       LocalDate startDate,
       LocalDate endDate,
-      double wte) {
+      double wte,
+      String designatedBodyCode) {
 
   }
 
