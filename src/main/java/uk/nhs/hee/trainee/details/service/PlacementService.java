@@ -221,12 +221,14 @@ public class PlacementService {
             && pm.getProgrammeCompletionDate().isAfter(dayBeforePlacementStart))
         .toList();
     return pmsInPeriod.stream()
-        .filter(pm -> !pm.getManagingDeanery().equalsIgnoreCase("North East"))
         .anyMatch(pmInRollout -> {
-          LocalDate notificationEpoch = pmInRollout.getManagingDeanery()
-              .equalsIgnoreCase("Thames Valley")
-              ? LocalDate.of(2025, 1, 31)
-              : LocalDate.of(2024, 10, 31);
+          LocalDate notificationEpoch = LocalDate.of(2024, 10, 31);
+          if (pmInRollout.getManagingDeanery().equalsIgnoreCase("Thames Valley")) {
+            notificationEpoch = LocalDate.of(2025, 1, 31);
+          }
+          if (pmInRollout.getManagingDeanery().equalsIgnoreCase("North East")) {
+            notificationEpoch = LocalDate.of(2025, 4, 13);
+          }
           return (placement.getStartDate().isAfter(notificationEpoch));
         });
   }

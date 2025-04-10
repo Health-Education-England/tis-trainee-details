@@ -55,6 +55,7 @@ class PlacementServiceTest {
   private static final LocalDate END_DATE = START_DATE.plusYears(1);
   private static final LocalDate START_DATE_ROLLOUT = LocalDate.of(2024, 11, 1);
   private static final LocalDate START_DATE_ROLLOUT_TV = LocalDate.of(2025, 2, 1);
+  private static final LocalDate START_DATE_ROLLOUT_NE = LocalDate.of(2025, 4, 14);
   private static final String SITE = "site-";
   private static final String SITE_LOCATION = "siteLocation-";
   private static final String SITE_KNOWN_AS = "siteKnownAs-";
@@ -566,9 +567,13 @@ class PlacementServiceTest {
   @MethodSource("listLoRollout2024")
   void rollout2024ShouldBeFalseIfProgrammeMembershipsFinishedBeforePlacement(String deanery) {
     TraineeProfile traineeProfile = new TraineeProfile();
-    LocalDate okStartDate = deanery.equalsIgnoreCase("Thames Valley")
-        ? START_DATE_ROLLOUT_TV
-        : START_DATE_ROLLOUT;
+    LocalDate okStartDate = START_DATE_ROLLOUT;
+    if (deanery.equalsIgnoreCase("Thames Valley")) {
+      okStartDate = START_DATE_ROLLOUT_TV;
+    }
+    if (deanery.equalsIgnoreCase("North East")) {
+      okStartDate = START_DATE_ROLLOUT_NE;
+    }
     traineeProfile.setPlacements(
         List.of(createPlacement(EXISTING_PLACEMENT_ID, "", okStartDate)));
     LocalDate dateFinished = okStartDate.minusDays(1);
@@ -586,9 +591,13 @@ class PlacementServiceTest {
   @MethodSource("listLoRollout2024")
   void rollout2024ShouldBeFalseIfProgrammeMembershipsStartMonthAfterPlacement(String deanery) {
     TraineeProfile traineeProfile = new TraineeProfile();
-    LocalDate okStartDate = deanery.equalsIgnoreCase("Thames Valley")
-        ? START_DATE_ROLLOUT_TV
-        : START_DATE_ROLLOUT;
+    LocalDate okStartDate = START_DATE_ROLLOUT;
+    if (deanery.equalsIgnoreCase("Thames Valley")) {
+      okStartDate = START_DATE_ROLLOUT_TV;
+    }
+    if (deanery.equalsIgnoreCase("North East")) {
+      okStartDate = START_DATE_ROLLOUT_NE;
+    }
     traineeProfile.setPlacements(
         List.of(createPlacement(EXISTING_PLACEMENT_ID, "", okStartDate)));
     traineeProfile.setProgrammeMemberships(
@@ -605,9 +614,13 @@ class PlacementServiceTest {
   @ParameterizedTest
   @MethodSource("listLoRollout2024")
   void rollout2024ShouldBeFalseIfPmInRolloutButPlacementStartBeforeRollout(String deanery) {
-    LocalDate okStartDate = deanery.equalsIgnoreCase("Thames Valley")
-        ? START_DATE_ROLLOUT_TV
-        : START_DATE_ROLLOUT;
+    LocalDate okStartDate = START_DATE_ROLLOUT;
+    if (deanery.equalsIgnoreCase("Thames Valley")) {
+      okStartDate = START_DATE_ROLLOUT_TV;
+    }
+    if (deanery.equalsIgnoreCase("North East")) {
+      okStartDate = START_DATE_ROLLOUT_NE;
+    }
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setPlacements(
         List.of(createPlacement(EXISTING_PLACEMENT_ID, "", okStartDate.minusDays(1))));
@@ -626,9 +639,13 @@ class PlacementServiceTest {
   @ParameterizedTest
   @MethodSource("listLoRollout2024")
   void rollout2024ShouldBeTrueIfDeaneryInRolloutAndPlacementStartInRollout(String deanery) {
-    LocalDate okStartDate = deanery.equalsIgnoreCase("Thames Valley")
-        ? START_DATE_ROLLOUT_TV
-        : START_DATE_ROLLOUT;
+    LocalDate okStartDate = START_DATE_ROLLOUT;
+    if (deanery.equalsIgnoreCase("Thames Valley")) {
+      okStartDate = START_DATE_ROLLOUT_TV;
+    }
+    if (deanery.equalsIgnoreCase("North East")) {
+      okStartDate = START_DATE_ROLLOUT_NE;
+    }
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setPlacements(
         List.of(createPlacement(EXISTING_PLACEMENT_ID, "", okStartDate)));
@@ -648,9 +665,13 @@ class PlacementServiceTest {
   @MethodSource("listLoRollout2024")
   void rollout2024ShouldBeTrueIfPmStartingLaterInMonthInPilotAndPlacementStartInRollout(
       String deanery) {
-    LocalDate okStartDate = deanery.equalsIgnoreCase("Thames Valley")
-        ? START_DATE_ROLLOUT_TV
-        : START_DATE_ROLLOUT;
+    LocalDate okStartDate = START_DATE_ROLLOUT;
+    if (deanery.equalsIgnoreCase("Thames Valley")) {
+      okStartDate = START_DATE_ROLLOUT_TV;
+    }
+    if (deanery.equalsIgnoreCase("North East")) {
+      okStartDate = START_DATE_ROLLOUT_NE;
+    }
     LocalDate laterInSameMonth = okStartDate.plusDays(10);
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setPlacements(
@@ -668,24 +689,6 @@ class PlacementServiceTest {
     boolean isPilotRollout2024 = service.isPilotRollout2024(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
 
     assertThat("Unexpected isPilotRollout2024 value.", isPilotRollout2024, is(true));
-  }
-
-  @Test
-  void rollout2024ShouldBeFalseIfStartDateInRolloutButNotDeanery() {
-    TraineeProfile traineeProfile = new TraineeProfile();
-    traineeProfile.setPlacements(
-        List.of(createPlacement(EXISTING_PLACEMENT_ID, "", START_DATE_ROLLOUT)));
-    traineeProfile.setProgrammeMemberships(
-        List.of(getProgrammeMembership("rollout", LocalDate.MIN, LocalDate.MAX,
-            "North East")));
-
-    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
-    when(programmeMembershipService.isPilotRollout2024(TRAINEE_TIS_ID, "rollout"))
-        .thenReturn(true);
-
-    boolean isPilotRollout2024 = service.isPilotRollout2024(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
-
-    assertThat("Unexpected isPilotRollout2024 value.", isPilotRollout2024, is(false));
   }
 
   /**
