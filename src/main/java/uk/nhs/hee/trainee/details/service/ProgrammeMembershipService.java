@@ -106,6 +106,7 @@ public class ProgrammeMembershipService {
       "Wessex",
       "Yorkshire and the Humber",
       "South West",
+      "North East",
       "North West",
       "Thames Valley");
 
@@ -447,9 +448,13 @@ public class ProgrammeMembershipService {
       return false;
     }
 
-    LocalDate notificationEpoch = managingDeanery.equalsIgnoreCase("Thames Valley")
-        ? LocalDate.of(2025, 1, 31)
-        : LocalDate.of(2024, 10, 31);
+    LocalDate notificationEpoch = LocalDate.of(2024, 10, 31);
+    if (managingDeanery.equalsIgnoreCase("Thames Valley")) {
+      notificationEpoch = LocalDate.of(2025, 1, 31);
+    }
+    if (managingDeanery.equalsIgnoreCase("North East")) {
+      notificationEpoch = LocalDate.of(2025, 4, 13);
+    }
     return ((PILOT_2024_ROLLOUT_LOCAL_OFFICES.stream()
         .anyMatch(lo -> lo.equalsIgnoreCase(managingDeanery)))
         && startDate.isAfter(notificationEpoch));

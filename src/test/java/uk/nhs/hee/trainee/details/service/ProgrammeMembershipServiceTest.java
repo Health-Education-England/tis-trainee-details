@@ -1464,9 +1464,13 @@ class ProgrammeMembershipServiceTest {
   @ParameterizedTest
   @MethodSource("listLoRollout2024")
   void rollout2024ShouldBeTrueIfLoWithAllProgrammesAndOkStartDate(String deanery) {
-    LocalDate notificationEpoch = deanery.equalsIgnoreCase("Thames Valley")
-        ? LocalDate.of(2025, 1, 31)
-        : LocalDate.of(2024, 10, 31);
+    LocalDate notificationEpoch = LocalDate.of(2024, 10, 31);
+    if (deanery.equalsIgnoreCase("Thames Valley")) {
+      notificationEpoch = LocalDate.of(2025, 1, 31);
+    }
+    if (deanery.equalsIgnoreCase("North East")) {
+      notificationEpoch = LocalDate.of(2025, 4, 13);
+    }
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
@@ -1531,9 +1535,43 @@ class ProgrammeMembershipServiceTest {
     assertThat("Unexpected isPilotRollout2024 value.", isPilotRollout2024, is(true));
   }
 
+  @Test
+  void rollout2024ShouldBeFalseIfNeLoWithTooEarlyStartDate() {
+    LocalDate dateOutOfRange = LocalDate.of(2025, 4, 13);
+    String deanery = "North East";
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, dateOutOfRange, END_DATE, deanery, TSS_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, CURRICULUM_SPECIALTY)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilotRollout2024 = service.isPilotRollout2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilotRollout2024 value.", isPilotRollout2024, is(false));
+  }
+
+  @Test
+  void rollout2024ShouldBeTrueIfNeLoWithCorrectStartDate() {
+    LocalDate dateInRange = LocalDate.of(2025, 4, 14);
+    String deanery = "North East";
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE, deanery, TSS_CURRICULA.get(0),
+            CURRICULUM_SPECIALTY_CODE, CURRICULUM_SPECIALTY)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilotRollout2024 = service.isPilotRollout2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilotRollout2024 value.", isPilotRollout2024, is(true));
+  }
+
   @ParameterizedTest
   @NullSource
-  @ValueSource(strings = {"North East", "Defence Postgraduate Medical Deanery"})
+  @ValueSource(strings = {"Defence Postgraduate Medical Deanery"})
   void rollout2024ShouldBeFalseIfNonRolloutLo(String deanery) {
     LocalDate dateInRange = LocalDate.of(2024, 12, 1);
     TraineeProfile traineeProfile = new TraineeProfile();
