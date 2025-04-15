@@ -59,8 +59,11 @@ public class TraineeIdentityInterceptor implements HandlerInterceptor {
 
     // Non-CCT endpoints are a mix of authenticated (public) and unauthenticated (internal), limit
     // trainee ID verification to CCT endpoints for now.
-    if (traineeIdentity.getTraineeId() == null
-        && request.getRequestURI().matches("^/api/cct(/.+)?$")) {
+    String requestUri = request.getRequestURI();
+    boolean identityRequired = requestUri.matches("^/api/cct(/.+)?$")
+        || requestUri.equals("/api/features");
+
+    if (identityRequired && traineeIdentity.getTraineeId() == null) {
       response.setStatus(HttpStatus.FORBIDDEN.value());
       return false;
     }

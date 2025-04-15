@@ -42,6 +42,13 @@ application:
       personal-info-update: ${PERSONAL_INFO_UPDATE_QUEUE_URL:}
       person-owner-update: ${PERSON_OWNER_UPDATE_QUEUE_URL:}
   environment: ${ENVIRONMENT:local}
+  features:
+    ltft:
+      deaneries:
+        - North West London
+        - North Central and East London
+        - South London
+        - South West
   signature:
     secret-key: ${SIGNATURE_SECRET_KEY}
     expire-after:  # Minutes

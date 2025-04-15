@@ -35,7 +35,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
@@ -187,7 +186,7 @@ class RestResponseEntityExceptionHandlerTest {
       Map<String, List<String>> parametersToMessages) implements MethodValidationResult {
 
     @Override
-    public @NotNull Object getTarget() {
+    public Object getTarget() {
       return "testTarget";
     }
 
@@ -202,7 +201,7 @@ class RestResponseEntityExceptionHandlerTest {
     }
 
     @Override
-    public @NotNull List<ParameterValidationResult> getAllValidationResults() {
+    public List<ParameterValidationResult> getAllValidationResults() {
       return parametersToMessages.entrySet().stream()
           .map(entry -> {
             String parameterName = entry.getKey();
