@@ -24,6 +24,7 @@ package uk.nhs.hee.trainee.details.interceptor;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -36,6 +37,9 @@ import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
  */
 @Slf4j
 public class TraineeIdentityInterceptor implements HandlerInterceptor {
+
+  private static final String TIS_ID_ATTRIBUTE = "custom:tisId";
+  private static final String GROUPS_ATTRIBUTE = "cognito:groups";
 
   private final TraineeIdentity traineeIdentity;
 
@@ -50,8 +54,11 @@ public class TraineeIdentityInterceptor implements HandlerInterceptor {
 
     if (authToken != null) {
       try {
-        String traineeId = AuthTokenUtil.getTraineeTisId(authToken);
+        String traineeId = AuthTokenUtil.getAttribute(authToken, TIS_ID_ATTRIBUTE);
         traineeIdentity.setTraineeId(traineeId);
+
+        Set<String> groups = AuthTokenUtil.getAttributes(authToken, GROUPS_ATTRIBUTE);
+        traineeIdentity.setGroups(groups);
       } catch (IOException e) {
         log.warn("Unable to extract trainee ID from authorization token.", e);
       }
@@ -59,11 +66,8 @@ public class TraineeIdentityInterceptor implements HandlerInterceptor {
 
     // Non-CCT endpoints are a mix of authenticated (public) and unauthenticated (internal), limit
     // trainee ID verification to CCT endpoints for now.
-    String requestUri = request.getRequestURI();
-    boolean identityRequired = requestUri.matches("^/api/cct(/.+)?$")
-        || requestUri.equals("/api/features");
-
-    if (identityRequired && traineeIdentity.getTraineeId() == null) {
+    if (request.getRequestURI().matches("^/api/cct(/.+)?$")
+        && traineeIdentity.getTraineeId() == null) {
       response.setStatus(HttpStatus.FORBIDDEN.value());
       return false;
     }

@@ -21,6 +21,8 @@
 
 package uk.nhs.hee.trainee.details.config;
 
+import java.time.LocalDate;
+import java.util.Map;
 import java.util.Set;
 import lombok.Builder;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -30,16 +32,16 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  */
 @Builder
 @ConfigurationProperties(prefix = "application.features")
-public record FeaturesProperties(Ltft ltft) {
+public record FeaturesProperties(Map<String, Tranche> ltft) {
 
   /**
-   * LTFT feature flag application properties.
+   * A tranche of deaneries for feature rollout.
    *
-   * @param deaneries The managing deaneries to enable LTFT for.
+   * @param startDate The start date of the tranche.
+   * @param deaneries The managing deaneries in the tranche.
    */
   @Builder
-  public record Ltft(Set<String> deaneries) {
+  public record Tranche(LocalDate startDate, Set<String> deaneries) {
 
   }
-
 }

@@ -25,30 +25,62 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+/**
+ * A utility for getting attribute from authentication tokens.
+ */
 public class AuthTokenUtil {
-
-  private static final String TIS_ID_ATTRIBUTE = "custom:tisId";
 
   private static final ObjectMapper mapper = new ObjectMapper();
 
+  /**
+   * Hide the constructor.
+   */
   private AuthTokenUtil() {
+
   }
 
   /**
-   * Get the trainee's TIS ID from the provided token.
+   * Get a set of strings from the provided token.
    *
-   * @param token The token to use.
-   * @return The trainee's TIS ID.
+   * @param token          The token to use.
+   * @param arrayAttribute The attribute key of an array in the token.
+   * @return A set of strings from the token array.
    * @throws IOException If the token's payload was not a Map.
    */
-  public static String getTraineeTisId(String token) throws IOException {
+  public static Set<String> getAttributes(String token, String arrayAttribute) throws IOException {
+    List<String> groups = (List<String>) getTokenPayload(token).get(arrayAttribute);
+    return groups == null ? null : groups.stream().collect(Collectors.toUnmodifiableSet());
+  }
+
+  /**
+   * Get a string attribute value from the provided token.
+   *
+   * @param token     The token to use.
+   * @param attribute The attribute key.
+   * @return The string value of the attribute.
+   * @throws IOException If the token's payload was not a Map.
+   */
+  public static String getAttribute(String token, String attribute) throws IOException {
+    return (String) getTokenPayload(token).get(attribute);
+  }
+
+  /**
+   * Get the payload from the provided token.
+   *
+   * @param token The token to use.
+   * @return The extracted payload.
+   * @throws IOException If the token's payload was not a Map.
+   */
+  private static Map<?, ?> getTokenPayload(String token) throws IOException {
     String[] tokenSections = token.split("\\.");
     byte[] payloadBytes = Base64.getUrlDecoder()
         .decode(tokenSections[1].getBytes(StandardCharsets.UTF_8));
 
-    Map<?, ?> payload = mapper.readValue(payloadBytes, Map.class);
-    return (String) payload.get(TIS_ID_ATTRIBUTE);
+    return mapper.readValue(payloadBytes, Map.class);
   }
 }
