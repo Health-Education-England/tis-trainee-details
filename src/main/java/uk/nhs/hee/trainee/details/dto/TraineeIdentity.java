@@ -21,6 +21,7 @@
 
 package uk.nhs.hee.trainee.details.dto;
 
+import java.util.Set;
 import lombok.Data;
 
 /**
@@ -30,4 +31,5 @@ import lombok.Data;
 public class TraineeIdentity {
 
   String traineeId;
+  Set<String> groups;
 }

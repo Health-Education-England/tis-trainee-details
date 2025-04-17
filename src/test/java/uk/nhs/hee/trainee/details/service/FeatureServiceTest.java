@@ -29,6 +29,7 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,7 +37,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import uk.nhs.hee.trainee.details.config.FeaturesProperties;
-import uk.nhs.hee.trainee.details.config.FeaturesProperties.Ltft;
+import uk.nhs.hee.trainee.details.config.FeaturesProperties.Tranche;
 import uk.nhs.hee.trainee.details.dto.FeaturesDto;
 import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
@@ -56,9 +57,10 @@ class FeatureServiceTest {
 
     profileService = mock(TraineeProfileService.class);
     FeaturesProperties featuresProperties = FeaturesProperties.builder()
-        .ltft(Ltft.builder()
+        .ltft(Map.of("pilot", Tranche.builder()
+            .startDate(LocalDate.EPOCH)
             .deaneries(Set.of("test 1", "test 2", "test 3"))
-            .build())
+            .build()))
         .build();
 
     service = new FeatureService(traineeIdentity, profileService, featuresProperties,
@@ -121,6 +123,36 @@ class FeatureServiceTest {
 
   @ParameterizedTest
   @ValueSource(strings = {"test 1", "test 2", "test 3"})
+  void shouldDisableLtftWhenNoTranchesStarted(String deanery) {
+    TraineeProfile profile = new TraineeProfile();
+    profile.setTraineeTisId(TRAINEE_ID);
+
+    ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setManagingDeanery(deanery);
+    pm.setEndDate(LocalDate.now().plusDays(1));
+    profile.setProgrammeMemberships(List.of(pm));
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
+
+    TraineeIdentity traineeIdentity = new TraineeIdentity();
+    traineeIdentity.setTraineeId(TRAINEE_ID);
+
+    FeaturesProperties featuresProperties = FeaturesProperties.builder()
+        .ltft(Map.of("pilot", Tranche.builder()
+            .startDate(LocalDate.MAX)
+            .deaneries(Set.of("test 1", "test 2", "test 3"))
+            .build()))
+        .build();
+
+    service = new FeatureService(traineeIdentity, profileService, featuresProperties,
+        ZoneId.of("UTC"));
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected LTFT flag.", features.ltft(), is(false));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"test 1", "test 2", "test 3"})
   void shouldEnableLtftWhenProgrammeInQualifyingDeaneryNotEnded(String deanery) {
     TraineeProfile profile = new TraineeProfile();
     profile.setTraineeTisId(TRAINEE_ID);
@@ -130,6 +162,107 @@ class FeatureServiceTest {
     pm.setEndDate(LocalDate.now().plusDays(1));
     profile.setProgrammeMemberships(List.of(pm));
     when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected LTFT flag.", features.ltft(), is(true));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"test 1", "test 2", "test 3"})
+  void shouldCombineStartedLtftTranches(String deanery) {
+    TraineeProfile profile = new TraineeProfile();
+    profile.setTraineeTisId(TRAINEE_ID);
+
+    ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setManagingDeanery(deanery);
+    pm.setEndDate(LocalDate.now().plusDays(1));
+    profile.setProgrammeMemberships(List.of(pm));
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
+
+    TraineeIdentity traineeIdentity = new TraineeIdentity();
+    traineeIdentity.setTraineeId(TRAINEE_ID);
+
+    FeaturesProperties featuresProperties = FeaturesProperties.builder()
+        .ltft(Map.of(
+            "tranche1", Tranche.builder()
+                .startDate(LocalDate.EPOCH)
+                .deaneries(Set.of("test 1", "test 2"))
+                .build(),
+            "tranche2", Tranche.builder()
+                .startDate(LocalDate.now())
+                .deaneries(Set.of("test 3"))
+                .build()))
+        .build();
+
+    service = new FeatureService(traineeIdentity, profileService, featuresProperties,
+        ZoneId.of("UTC"));
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected LTFT flag.", features.ltft(), is(true));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"future 1", "future 2", "future 3"})
+  void shouldNotCombineNotStartedLtftTranches(String deanery) {
+    TraineeProfile profile = new TraineeProfile();
+    profile.setTraineeTisId(TRAINEE_ID);
+
+    ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setManagingDeanery(deanery);
+    pm.setEndDate(LocalDate.now().plusDays(1));
+    profile.setProgrammeMemberships(List.of(pm));
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
+
+    TraineeIdentity traineeIdentity = new TraineeIdentity();
+    traineeIdentity.setTraineeId(TRAINEE_ID);
+
+    FeaturesProperties featuresProperties = FeaturesProperties.builder()
+        .ltft(Map.of(
+            "tranche1", Tranche.builder()
+                .startDate(LocalDate.EPOCH)
+                .deaneries(Set.of("test 1", "test 2", "test 3"))
+                .build(),
+            "tranche2", Tranche.builder()
+                .startDate(LocalDate.MAX)
+                .deaneries(Set.of("future 1", "future 2", "future 3"))
+                .build()))
+        .build();
+
+    service = new FeatureService(traineeIdentity, profileService, featuresProperties,
+        ZoneId.of("UTC"));
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected LTFT flag.", features.ltft(), is(false));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"test 1", "test 2", "test 3"})
+  void shouldEnableLtftWhenNoTranchesStartedAndBetaUser(String deanery) {
+    TraineeProfile profile = new TraineeProfile();
+    profile.setTraineeTisId(TRAINEE_ID);
+
+    ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setManagingDeanery(deanery);
+    pm.setEndDate(LocalDate.now().plusDays(1));
+    profile.setProgrammeMemberships(List.of(pm));
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
+
+    TraineeIdentity traineeIdentity = new TraineeIdentity();
+    traineeIdentity.setTraineeId(TRAINEE_ID);
+    traineeIdentity.setGroups(Set.of("beta-participant"));
+
+    FeaturesProperties featuresProperties = FeaturesProperties.builder()
+        .ltft(Map.of("pilot", Tranche.builder()
+            .startDate(LocalDate.MAX)
+            .deaneries(Set.of("test 1", "test 2", "test 3"))
+            .build()))
+        .build();
+
+    service = new FeatureService(traineeIdentity, profileService, featuresProperties,
+        ZoneId.of("UTC"));
 
     FeaturesDto features = service.getFeatures();
 

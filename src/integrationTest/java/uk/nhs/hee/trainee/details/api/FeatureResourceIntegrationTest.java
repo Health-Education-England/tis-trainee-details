@@ -52,7 +52,7 @@ import uk.nhs.hee.trainee.details.TestJwtUtil;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 
-@SpringBootTest
+@SpringBootTest(properties = "application.features.ltft.pilot.start-date=1970-01-01")
 @ActiveProfiles("test")
 @Testcontainers(disabledWithoutDocker = true)
 @AutoConfigureMockMvc
@@ -79,23 +79,24 @@ class FeatureResourceIntegrationTest {
   }
 
   @Test
-  void shouldBeForbiddenGettingFeaturesWhenNoToken() throws Exception {
+  void shouldDisableLtftWhenNoToken() throws Exception {
     mockMvc.perform(get("/api/features"))
-        .andExpect(status().isForbidden())
-        .andExpect(jsonPath("$").doesNotExist());
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.ltft", is(false)));
   }
 
   @Test
-  void shouldBeForbiddenGettingFeaturesWhenNoTraineeId() throws Exception {
+  void shouldDisableLtftWhenNoTraineeId() throws Exception {
     String token = TestJwtUtil.generateToken("{}");
     mockMvc.perform(get("/api/features")
             .header(HttpHeaders.AUTHORIZATION, token))
-        .andExpect(status().isForbidden())
-        .andExpect(jsonPath("$").doesNotExist());
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.ltft", is(false)));
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"North West London", "North Central and East London", "South London", "South West"})
+  @ValueSource(strings = {"North West London", "North Central and East London", "South London",
+      "South West"})
   void shouldEnableLtftWhenQualifyingProgrammeExists(String deanery) throws Exception {
     TraineeProfile profile = new TraineeProfile();
     profile.setTraineeTisId(TRAINEE_ID);

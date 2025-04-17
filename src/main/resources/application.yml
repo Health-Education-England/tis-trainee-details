@@ -44,11 +44,13 @@ application:
   environment: ${ENVIRONMENT:local}
   features:
     ltft:
-      deaneries:
-        - North West London
-        - North Central and East London
-        - South London
-        - South West
+      pilot:
+        start-date: 2025-04-28
+        deaneries:
+          - North West London
+          - North Central and East London
+          - South London
+          - South West
   signature:
     secret-key: ${SIGNATURE_SECRET_KEY}
     expire-after:  # Minutes

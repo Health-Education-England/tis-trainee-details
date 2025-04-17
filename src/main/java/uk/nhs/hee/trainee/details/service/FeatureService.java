@@ -23,6 +23,8 @@ package uk.nhs.hee.trainee.details.service;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -88,12 +90,21 @@ public class FeatureService {
       return false;
     }
 
+    Set<String> groups = identity.getGroups();
+    boolean isBetaUser = groups != null && groups.contains("beta-participant");
+
     LocalDate now = LocalDate.now(timezone);
 
-    boolean enabled = profile.getProgrammeMemberships().stream()
+    Set<String> enabledDeaneries = featuresProperties.ltft().entrySet().stream()
+        .filter(tranche -> !tranche.getValue().startDate().isAfter(now))
+        .peek(tranche -> log.debug("LTFT tranche enabled: {}", tranche.getKey()))
+        .flatMap(tranche -> tranche.getValue().deaneries().stream())
+        .collect(Collectors.toSet());
+
+    boolean enabled = isBetaUser || profile.getProgrammeMemberships().stream()
         .filter(pm -> pm.getEndDate().isAfter(now)) // Past programmes are not valid for LTFT.
         .map(ProgrammeMembership::getManagingDeanery)
-        .anyMatch(md -> featuresProperties.ltft().deaneries().contains(md));
+        .anyMatch(enabledDeaneries::contains);
 
     log.info("LTFT enabled for trainee {}: {}", profile.getTraineeTisId(), enabled);
 
