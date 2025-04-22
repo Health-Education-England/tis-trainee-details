@@ -203,6 +203,7 @@ class CctServiceTest {
             .endDate(LocalDate.EPOCH.plusYears(1))
             .wte(1.0)
             .designatedBodyCode("testDbc")
+            .managingDeanery("Test Deanery")
             .build())
         .changes(List.of(
             CctChange.builder().type(LTFT).startDate(LocalDate.EPOCH.plusMonths(6))
@@ -234,6 +235,7 @@ class CctServiceTest {
     assertThat("Unexpected PM end date.", pm.endDate(), is(LocalDate.EPOCH.plusYears(1)));
     assertThat("Unexpected PM WTE.", pm.wte(), is(1.0));
     assertThat("Unexpected PM DBC.", pm.designatedBodyCode(), is("testDbc"));
+    assertThat("Unexpected PM deanery.", pm.managingDeanery(), is("Test Deanery"));
 
     List<CctChangeDto> changes = dto.changes();
     assertThat("Unexpected change count.", changes.size(), is(2));
@@ -291,6 +293,7 @@ class CctServiceTest {
               .endDate(pm.endDate())
               .wte(pm.wte())
               .designatedBodyCode("testDbc")
+              .managingDeanery("Test Deanery")
               .build())
           .changes(List.of(
               CctChange.builder()
@@ -319,6 +322,7 @@ class CctServiceTest {
     assertThat("Unexpected PM end date.", pm.endDate(), is(LocalDate.EPOCH.plusYears(1)));
     assertThat("Unexpected PM WTE.", pm.wte(), is(1.0));
     assertThat("Unexpected PM DBC.", pm.designatedBodyCode(), is("testDbc"));
+    assertThat("Unexpected PM deanery.", pm.managingDeanery(), is("Test Deanery"));
 
     List<CctChangeDto> changes = savedDto.changes();
     assertThat("Unexpected change count.", changes.size(), is(2));
@@ -351,6 +355,7 @@ class CctServiceTest {
             .endDate(LocalDate.EPOCH.plusYears(1))
             .wte(1.0)
             .designatedBodyCode("testDbc")
+            .managingDeanery("Test Deanery")
             .build())
         .changes(List.of(
             CctChangeDto.builder().type(LTFT).startDate(LocalDate.EPOCH.plusMonths(6))
@@ -377,6 +382,7 @@ class CctServiceTest {
     assertThat("Unexpected PM end date.", pm.endDate(), is(LocalDate.EPOCH.plusYears(1)));
     assertThat("Unexpected PM WTE.", pm.wte(), is(1.0));
     assertThat("Unexpected PM DBC.", pm.designatedBodyCode(), is("testDbc"));
+    assertThat("Unexpected PM deanery.", pm.managingDeanery(), is("Test Deanery"));
 
     List<CctChangeDto> changes = calculatedDto.changes();
     assertThat("Unexpected change count.", changes.size(), is(2));
@@ -457,6 +463,7 @@ class CctServiceTest {
               .endDate(pm.endDate())
               .wte(pm.wte())
               .designatedBodyCode(pm.designatedBodyCode())
+              .managingDeanery("Test Deanery")
               .build())
           .changes(List.of(
               CctChange.builder()
@@ -493,6 +500,7 @@ class CctServiceTest {
     assertThat("Unexpected PM end date.", pm.endDate(), is(LocalDate.EPOCH.plusYears(1)));
     assertThat("Unexpected PM WTE.", pm.wte(), is(1.0));
     assertThat("Unexpected PM DBC.", pm.designatedBodyCode(), is("testDbc"));
+    assertThat("Unexpected PM deanery.", pm.managingDeanery(), is("Test Deanery"));
 
     List<CctChangeDto> changes = updatedDto.changes();
     assertThat("Unexpected change count.", changes.size(), is(2));
