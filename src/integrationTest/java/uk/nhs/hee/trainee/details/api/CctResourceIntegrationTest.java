@@ -328,6 +328,7 @@ class CctResourceIntegrationTest {
             .endDate(LocalDate.parse("2025-01-01"))
             .wte(1.0)
             .designatedBodyCode("testDbc")
+            .managingDeanery("Test Deanery")
             .build())
         .changes(List.of(
             CctChange.builder()
@@ -354,6 +355,7 @@ class CctResourceIntegrationTest {
         .andExpect(jsonPath("$.programmeMembership.endDate").value("2025-01-01"))
         .andExpect(jsonPath("$.programmeMembership.wte").value(1))
         .andExpect(jsonPath("$.programmeMembership.designatedBodyCode").value("testDbc"))
+        .andExpect(jsonPath("$.programmeMembership.managingDeanery").value("Test Deanery"))
         .andExpect(jsonPath("$.changes").isArray())
         .andExpect(jsonPath("$.changes", hasSize(1)))
         .andExpect(jsonPath("$.changes[0].type").value("LTFT"))
@@ -508,7 +510,8 @@ class CctResourceIntegrationTest {
             "startDate": "2024-01-01",
             "endDate": "2025-01-01",
             "wte": 0.5,
-            "designatedBodyCode": "testDbc"
+            "designatedBodyCode": "testDbc",
+            "managingDeanery": "Test Deanery"
           },
           "changes": %s
         }
@@ -535,7 +538,8 @@ class CctResourceIntegrationTest {
             "startDate": "2024-01-01",
             "endDate": "2025-01-01",
             "wte": 0.5,
-            "designatedBodyCode": "testDbc"
+            "designatedBodyCode": "testDbc",
+            "managingDeanery": "Test Deanery"
           },
           "changes": [
             {
@@ -587,7 +591,8 @@ class CctResourceIntegrationTest {
             "startDate": "2024-01-01",
             "endDate": "2025-01-01",
             "wte": 0.5,
-            "designatedBodyCode": "testDbc"
+            "designatedBodyCode": "testDbc",
+            "managingDeanery": "Test Deanery"
           },
           "changes": [
             {
@@ -714,7 +719,8 @@ class CctResourceIntegrationTest {
             "startDate": "2024-01-01",
             "endDate": "2025-01-01",
             "wte": 0.5,
-            "designatedBodyCode": "testDbc"
+            "designatedBodyCode": "testDbc",
+            "managingDeanery": "Test Deanery"
           },
           "changes": [
             {
@@ -748,7 +754,8 @@ class CctResourceIntegrationTest {
             "startDate": "2024-01-01",
             "endDate": "2025-01-01",
             "wte": 0.5,
-            "designatedBodyCode": "testDbc"
+            "designatedBodyCode": "testDbc",
+            "managingDeanery": "Test Deanery"
           },
           "changes": [
             {
@@ -779,6 +786,7 @@ class CctResourceIntegrationTest {
             .endDate(LocalDate.of(2025, 1, 1))
             .wte(0.5)
             .designatedBodyCode("testDbc")
+            .managingDeanery("Test Deanery")
             .build())
         .changes(List.of(
                 CctChange.builder().type(LTFT).startDate(LocalDate.of(2024, 11, 1))
@@ -803,7 +811,8 @@ class CctResourceIntegrationTest {
             "startDate": "2024-01-01",
             "endDate": "2025-01-01",
             "wte": 0.5,
-            "designatedBodyCode": "testDbc"
+            "designatedBodyCode": "testDbc",
+            "managingDeanery": "Test Deanery"
           },
           "changes": [
             {
@@ -851,6 +860,7 @@ class CctResourceIntegrationTest {
             .endDate(LocalDate.of(2025, 1, 1))
             .wte(0.5)
             .designatedBodyCode("testDbc")
+            .managingDeanery("Test Deanery")
             .build())
         .changes(List.of(
             CctChange.builder().type(LTFT).startDate(LocalDate.of(2024, 11, 1))
@@ -876,7 +886,8 @@ class CctResourceIntegrationTest {
             "startDate": "2024-01-01",
             "endDate": "2025-01-01",
             "wte": 0.5,
-            "designatedBodyCode": "testDbc"
+            "designatedBodyCode": "testDbc",
+            "managingDeanery": "Test Deanery"
           },
           "changes": [
             {

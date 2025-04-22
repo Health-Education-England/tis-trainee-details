@@ -96,7 +96,9 @@ public record CctCalculationDetailDto(
       @Range(min = 0, max = 1)
       Double wte,
 
-      String designatedBodyCode) {
+      String designatedBodyCode,
+
+      String managingDeanery) {
 
   }
 
