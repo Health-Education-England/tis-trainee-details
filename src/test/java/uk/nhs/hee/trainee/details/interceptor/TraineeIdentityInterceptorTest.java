@@ -24,7 +24,10 @@ package uk.nhs.hee.trainee.details.interceptor;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.hasSize;
 
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -59,7 +62,7 @@ class TraineeIdentityInterceptorTest {
 
   @ParameterizedTest
   @ValueSource(strings = {"/api/cct", "/api/cct/calculator", "/api/cct/calculator/1",
-      "/api/cct/test/1", "/api/features"})
+      "/api/cct/test/1"})
   void shouldReturnFalseAndNotSetTraineeIdWhenNoAuthTokenAndIdRequiredEndpoint(String uri) {
     MockHttpServletRequest request = new MockHttpServletRequest();
     request.setRequestURI(uri);
@@ -84,7 +87,7 @@ class TraineeIdentityInterceptorTest {
 
   @ParameterizedTest
   @ValueSource(strings = {"/api/cct", "/api/cct/calculator", "/api/cct/calculator/1",
-      "/api/cct/test/1", "/api/features"})
+      "/api/cct/test/1"})
   void shouldReturnFalseAndNotSetTraineeIdWhenTokenNotMapAndIdRequiredEndpoint(String uri) {
     MockHttpServletRequest request = new MockHttpServletRequest();
     request.addHeader(HttpHeaders.AUTHORIZATION, TestJwtUtil.generateToken("[]"));
@@ -110,7 +113,7 @@ class TraineeIdentityInterceptorTest {
 
   @ParameterizedTest
   @ValueSource(strings = {"/api/cct", "/api/cct/calculator", "/api/cct/calculator/1",
-      "/api/cct/test/1", "/api/features"})
+      "/api/cct/test/1"})
   void shouldReturnFalseAndNotSetTraineeIdWhenNoTisIdInAuthTokenAndIdRequiredEndpoint(String uri) {
     MockHttpServletRequest request = new MockHttpServletRequest();
     request.addHeader(HttpHeaders.AUTHORIZATION, TestJwtUtil.generateToken("{}"));
@@ -124,7 +127,7 @@ class TraineeIdentityInterceptorTest {
 
   @ParameterizedTest
   @ValueSource(strings = {"/api/cct", "/api/cct/calculator", "/api/cct/calculator/1",
-      "/api/cct/test/1", "/api/test", "/api/features"})
+      "/api/cct/test/1", "/api/test"})
   void shouldReturnTrueAndSetTraineeIdWhenTisIdInAuthToken() {
     MockHttpServletRequest request = new MockHttpServletRequest();
     request.addHeader(HttpHeaders.AUTHORIZATION, TestJwtUtil.generateTokenForTisId("40"));
@@ -133,5 +136,52 @@ class TraineeIdentityInterceptorTest {
 
     assertThat("Unexpected result.", result, is(true));
     assertThat("Unexpected trainee ID.", traineeIdentity.getTraineeId(), is("40"));
+  }
+
+  @Test
+  void shouldNotSetGroupsWhenCognitoGroupsNotInAuthToken() {
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    request.addHeader(HttpHeaders.AUTHORIZATION, TestJwtUtil.generateTokenForTisId("40"));
+
+    interceptor.preHandle(request, new MockHttpServletResponse(), new Object());
+
+    assertThat("Unexpected groups.", traineeIdentity.getGroups(), nullValue());
+  }
+
+  @Test
+  void shouldSetEmptyGroupsWhenCognitoGroupsEmptyInAuthToken() {
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    String payload = """
+        {
+          "cognito:groups": []
+        }
+        """;
+    request.addHeader(HttpHeaders.AUTHORIZATION, TestJwtUtil.generateToken(payload));
+
+    interceptor.preHandle(request, new MockHttpServletResponse(), new Object());
+
+    Set<String> groups = traineeIdentity.getGroups();
+    assertThat("Unexpected group count.", groups, hasSize(0));
+  }
+
+  @Test
+  void shouldSetGroupsWhenCognitoGroupsInAuthToken() {
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    String payload = """
+        {
+          "cognito:groups": [
+            "group1",
+            "group2",
+            "group3"
+          ]
+        }
+        """;
+    request.addHeader(HttpHeaders.AUTHORIZATION, TestJwtUtil.generateToken(payload));
+
+    interceptor.preHandle(request, new MockHttpServletResponse(), new Object());
+
+    Set<String> groups = traineeIdentity.getGroups();
+    assertThat("Unexpected group count.", groups, hasSize(3));
+    assertThat("Unexpected groups.", groups, hasItems("group1", "group2", "group3"));
   }
 }
