@@ -33,6 +33,8 @@ import java.io.IOException;
 import java.time.ZoneId;
 import java.util.Map;
 import java.util.Set;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.io.RandomAccessReadBuffer;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,7 +65,7 @@ class PdfGeneratingServiceTest {
 
     byte[] resultByte =  service.generatePdf(templateSpec, Map.of());
     ByteArrayInputStream resultStream = new ByteArrayInputStream(resultByte);
-    PDDocument pdf = PDDocument.load(resultStream);
+    PDDocument pdf = Loader.loadPDF(new RandomAccessReadBuffer(resultStream));
     String pdfText = new PDFTextStripper().getText(pdf);
 
     assertThat("Unexpected content.", pdfText, is("test content" + System.lineSeparator()));

@@ -9,5 +9,7 @@ jobs:
   analysis:
     name: Analyse PR
     uses: health-education-england/.github/.github/workflows/pr-analysis-gradle.yml@main
+    with:
+      publish-build-scan: true
     secrets:
       sonar-token: ${{ secrets.SONAR_TOKEN }}
