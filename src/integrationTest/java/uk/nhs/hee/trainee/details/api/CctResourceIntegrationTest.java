@@ -27,6 +27,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.IsNot.not;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -929,5 +930,82 @@ class CctResourceIntegrationTest {
     assertThat("Unexpected missing saved entity.", updatedEntity, notNullValue());
     assertThat("Unexpected updated entity name.", updatedEntity.name(),
         is("Test Calculation updated"));
+  }
+
+  @Test
+  void shouldBeForbiddenDeletingCalculationWhenNoToken() throws Exception {
+    mockMvc.perform(delete("/api/cct/calculation/{id}", "1"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$").doesNotExist());
+  }
+
+  @Test
+  void shouldBeForbiddenDeletingCalculationWhenNoTraineeId() throws Exception {
+    String token = TestJwtUtil.generateToken("{}");
+    mockMvc.perform(delete("/api/cct/calculation/{id}", "1")
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$").doesNotExist());
+  }
+
+  @Test
+  void shouldNotDeleteCalculationWhenNotOwnedByUser() throws Exception {
+    UUID id = UUID.randomUUID();
+    CctCalculation entity = CctCalculation.builder()
+        .id(id)
+        .traineeId(TRAINEE_ID)
+        .build();
+    template.insert(entity);
+
+    String token = TestJwtUtil.generateTokenForTisId(UUID.randomUUID().toString());
+    mockMvc.perform(delete("/api/cct/calculation/{id}", id)
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$").doesNotExist());
+  }
+
+  @Test
+  void shouldReturnNotFoundWhenDeletingCalculationThatDoesNotExist() throws Exception {
+    UUID id = UUID.randomUUID();
+    CctCalculation entity = CctCalculation.builder()
+        .id(id)
+        .traineeId(TRAINEE_ID)
+        .build();
+    template.insert(entity);
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+
+    UUID anotherId = UUID.randomUUID();
+    mockMvc.perform(delete("/api/cct/calculation/" + anotherId)
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void shouldDeleteCalculation() throws Exception {
+    UUID id = UUID.randomUUID();
+    CctCalculation entity = CctCalculation.builder()
+        .id(id)
+        .traineeId(TRAINEE_ID)
+        .programmeMembership(CctProgrammeMembership.builder()
+            .startDate(LocalDate.of(2024, 1, 1))
+            .endDate(LocalDate.of(2025, 1, 1))
+            .wte(0.5)
+            .designatedBodyCode("testDbc")
+            .managingDeanery("Test Deanery")
+            .build())
+        .changes(List.of(
+            CctChange.builder().type(LTFT).startDate(LocalDate.of(2024, 11, 1))
+                .wte(1.0)
+                .build()))
+        .build();
+    template.insert(entity);
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+
+    mockMvc.perform(delete("/api/cct/calculation/" + id)
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isOk())
+        .andExpect(content().string("true"));
   }
 }
