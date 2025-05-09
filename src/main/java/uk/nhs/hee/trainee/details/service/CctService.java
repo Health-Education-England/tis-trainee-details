@@ -166,6 +166,27 @@ public class CctService {
   }
 
   /**
+   * Delete a CCT calculation.
+   *
+   * @param id  The ID of the CCT calculation to delete
+   * @return True if deleted, otherwise false.
+   */
+  public boolean deleteCalculation(UUID id) {
+    log.info("Deleting CCT calculation with id [{}]", id);
+
+    Optional<CctCalculationDetailDto> existingCalc = getCalculation(id);
+    if (existingCalc.isPresent()) {
+      calculationRepository.deleteById(id);
+      log.info("Deleted CCT calculation with id [{}]", id);
+      return true;
+    } else {
+      log.warn("CCT calculation cannot be deleted: "
+          + "id {} not found or does not belong to current user.", id);
+    }
+    return false;
+  }
+
+  /**
    * Validation the {@link CctChangeDto} IDs.
    *
    * @param newChanges      The new changes being saved.

@@ -804,4 +804,44 @@ class CctServiceTest {
     assertThat("Unexpected CCT date.", service.calculateCctDate(entity),
         is(LocalDate.of(2033, 12, 6)));
   }
+
+  @Test
+  void shouldNotDeleteCalculationIfNotExists() {
+    UUID id = UUID.randomUUID();
+
+    when(calculationRepository.findById(any())).thenReturn(Optional.empty());
+
+    boolean result = service.deleteCalculation(id);
+
+    assertThat("Unexpected delete calculation result.", result, is(false));
+    verify(calculationRepository).findById(id);
+    verifyNoMoreInteractions(calculationRepository);
+  }
+
+  @Test
+  void shouldDeleteCalculationIfExists() {
+    UUID id = UUID.randomUUID();
+
+    CctCalculation entity = CctCalculation.builder()
+        .id(id)
+        .programmeMembership(CctProgrammeMembership.builder()
+            .startDate(LocalDate.EPOCH)
+            .endDate(LocalDate.EPOCH.plusYears(1))
+            .wte(1.0)
+            .designatedBodyCode("testDbc")
+            .build())
+        .changes(List.of(
+            CctChange.builder().type(LTFT).startDate(LocalDate.MIN)
+                .wte(0.5).build()))
+        .traineeId(TRAINEE_ID)
+        .build();
+    when(calculationRepository.findById(any())).thenReturn(Optional.of(entity));
+
+    boolean result = service.deleteCalculation(id);
+
+    assertThat("Unexpected delete calculation result.", result, is(true));
+    verify(calculationRepository).findById(id);
+    verify(calculationRepository).deleteById(id);
+    verifyNoMoreInteractions(calculationRepository);
+  }
 }

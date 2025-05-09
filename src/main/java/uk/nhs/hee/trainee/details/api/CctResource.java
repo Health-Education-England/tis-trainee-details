@@ -27,9 +27,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -37,6 +40,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
 import uk.nhs.hee.trainee.details.dto.validation.Create;
 import uk.nhs.hee.trainee.details.service.CctService;
@@ -111,6 +115,26 @@ public class CctResource {
     }
 
     return ResponseEntity.of(savedCalculation);
+  }
+
+  /**
+   * Delete an existing CCT calculation with the given ID.
+   *
+   * @param id The ID of the calculation to delete.
+   * @return True if the calculation was deleted, false if not found.
+   */
+  @DeleteMapping("/calculation/{id}")
+  public ResponseEntity<Boolean> deleteCalculation(@PathVariable UUID id) {
+    log.info("Request to delete CCT calculation[{}]", id);
+    try {
+      boolean foundCalculation = service.deleteCalculation(id);
+      if (!foundCalculation) {
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "CCT calculation not found.");
+      }
+    } catch (IllegalArgumentException | InvalidDataAccessApiUsageException e) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getLocalizedMessage());
+    }
+    return ResponseEntity.ok(true);
   }
 
   /**

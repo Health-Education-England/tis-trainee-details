@@ -43,9 +43,11 @@ import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.server.ResponseStatusException;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
 import uk.nhs.hee.trainee.details.service.CctService;
 
@@ -281,5 +283,53 @@ class CctResourceTest {
 
     assertThrows(MethodArgumentNotValidException.class,
         () -> controller.updateCalculationDetails(id, dto));
+  }
+
+  @Test
+  void shouldDeleteCalculationWhenCalculationFound() {
+    UUID id = UUID.randomUUID();
+    when(service.deleteCalculation(id))
+        .thenReturn(true);
+
+    ResponseEntity<Boolean> result = controller.deleteCalculation(id);
+
+    assertThat("Unexpected result.", result.getBody(), is(true));
+  }
+
+
+  @Test
+  void shouldThrowBadRequestWhenDeletePlacementIllegalArgumentException() {
+    UUID id = UUID.randomUUID();
+    when(service
+        .deleteCalculation(id))
+        .thenThrow(new IllegalArgumentException());
+
+    ResponseStatusException exception = assertThrows(ResponseStatusException.class,
+        () -> controller.deleteCalculation(id));
+    assertThat("Unexpected status code.", exception.getStatusCode(), is(BAD_REQUEST));
+  }
+
+  @Test
+  void shouldThrowBadRequestWhenDeletePlacementInvalidDataAccessApiUsageException() {
+    UUID id = UUID.randomUUID();
+    when(service
+        .deleteCalculation(id))
+        .thenThrow(new InvalidDataAccessApiUsageException("error"));
+
+    ResponseStatusException exception = assertThrows(ResponseStatusException.class,
+        () -> controller.deleteCalculation(id));
+    assertThat("Unexpected status code.", exception.getStatusCode(), is(BAD_REQUEST));
+  }
+
+  @Test
+  void shouldThrowNotFoundWhenCannotDeletePlacement() {
+    UUID id = UUID.randomUUID();
+    when(service
+        .deleteCalculation(id))
+        .thenReturn(false);
+
+    ResponseStatusException exception = assertThrows(ResponseStatusException.class,
+        () -> controller.deleteCalculation(id));
+    assertThat("Unexpected status code.", exception.getStatusCode(), is(NOT_FOUND));
   }
 }
