@@ -180,8 +180,8 @@ public class CctService {
       log.info("Deleted CCT calculation with id [{}]", id);
       return true;
     } else {
-      log.warn("CCT calculation cannot be deleted: " +
-          "id {} not found or does not belong to current user.", id);
+      log.warn("CCT calculation cannot be deleted: "
+          + "id {} not found or does not belong to current user.", id);
     }
     return false;
   }
