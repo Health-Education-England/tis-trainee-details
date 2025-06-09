@@ -21,12 +21,14 @@
 
 package uk.nhs.hee.trainee.details.dto;
 
+import java.util.List;
 import lombok.Builder;
 
 /**
  * A DTO for trainee details feature flags.
  */
 @Builder
-public record FeaturesDto(boolean ltft) {
+public record FeaturesDto(boolean ltft,
+                          List<String> enabledProgrammes) {
 
 }

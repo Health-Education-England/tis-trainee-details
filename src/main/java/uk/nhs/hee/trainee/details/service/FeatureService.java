@@ -23,6 +23,8 @@ package uk.nhs.hee.trainee.details.service;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +45,7 @@ public class FeatureService {
 
   private final TraineeIdentity identity;
   private final TraineeProfileService profileService;
+  private final ProgrammeMembershipService pmService;
   private final FeaturesProperties featuresProperties;
   private final ZoneId timezone;
 
@@ -55,11 +58,13 @@ public class FeatureService {
    * @param timezone           The timezone to use.
    */
   public FeatureService(TraineeIdentity identity, TraineeProfileService profileService,
-      FeaturesProperties featuresProperties, @Value("${application.timezone}") ZoneId timezone) {
+      FeaturesProperties featuresProperties, @Value("${application.timezone}") ZoneId timezone,
+      ProgrammeMembershipService pmService) {
     this.identity = identity;
     this.profileService = profileService;
     this.featuresProperties = featuresProperties;
     this.timezone = timezone;
+    this.pmService = pmService;
   }
 
   /**
@@ -73,8 +78,17 @@ public class FeatureService {
 
     TraineeProfile profile = profileService.getTraineeProfileByTraineeTisId(traineeId);
 
+    List<String> enabledProgrammes = new ArrayList<>();
+    if (profile != null) {
+      enabledProgrammes = profile.getProgrammeMemberships().stream()
+          .map(ProgrammeMembership::getTisId)
+          .filter(tisId -> pmService.isPilotRollout2024(profile.getTraineeTisId(), tisId))
+          .toList();
+    }
+
     return FeaturesDto.builder()
         .ltft(isLtftEnabled(profile))
+        .enabledProgrammes(enabledProgrammes)
         .build();
   }
 

@@ -21,6 +21,7 @@
 
 package uk.nhs.hee.trainee.details.api;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -49,6 +50,7 @@ import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import uk.nhs.hee.trainee.details.TestJwtUtil;
+import uk.nhs.hee.trainee.details.model.Curriculum;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 
@@ -86,6 +88,14 @@ class FeatureResourceIntegrationTest {
   }
 
   @Test
+  void shouldHaveNoEnabledProgrammesWhenNoToken() throws Exception {
+    mockMvc.perform(get("/api/features"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.enabledProgrammes").isArray())
+        .andExpect(jsonPath("$.enabledProgrammes", hasSize(0)));
+  }
+
+  @Test
   void shouldDisableLtftWhenNoTraineeId() throws Exception {
     String token = TestJwtUtil.generateToken("{}");
     mockMvc.perform(get("/api/features")
@@ -94,15 +104,34 @@ class FeatureResourceIntegrationTest {
         .andExpect(jsonPath("$.ltft", is(false)));
   }
 
+  @Test
+  void shouldHaveNoEnabledProgrammesWhenNoTraineeId() throws Exception {
+    String token = TestJwtUtil.generateToken("{}");
+    mockMvc.perform(get("/api/features")
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.enabledProgrammes").isArray())
+        .andExpect(jsonPath("$.enabledProgrammes", hasSize(0)));
+  }
+
   @ParameterizedTest
   @ValueSource(strings = {"North West London", "North Central and East London", "South London",
       "South West"})
-  void shouldEnableLtftWhenQualifyingProgrammeExists(String deanery) throws Exception {
+  void shouldEnableLtftAndSetEnabledProgrammesWhenQualifyingProgrammeExists(String deanery)
+      throws Exception {
     TraineeProfile profile = new TraineeProfile();
     profile.setTraineeTisId(TRAINEE_ID);
 
+    String pmId = UUID.randomUUID().toString();
     ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setTisId(pmId);
+    pm.setProgrammeMembershipType("In pilot");
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSubType("MEDICAL_CURRICULUM");
+    curriculum.setCurriculumSpecialty("Not excluded specialty");
+    pm.setCurricula(List.of(curriculum));
     pm.setManagingDeanery(deanery);
+    pm.setStartDate(LocalDate.of(2025, 2, 1));
     pm.setEndDate(LocalDate.now().plusDays(1));
     profile.setProgrammeMemberships(List.of(pm));
 
@@ -112,6 +141,9 @@ class FeatureResourceIntegrationTest {
     mockMvc.perform(get("/api/features")
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.ltft", is(true)));
+        .andExpect(jsonPath("$.ltft", is(true)))
+        .andExpect(jsonPath("$.enabledProgrammes").isArray())
+        .andExpect(jsonPath("$.enabledProgrammes", hasSize(1)))
+        .andExpect(jsonPath("$.enabledProgrammes[0]", is(pmId)));
   }
 }
