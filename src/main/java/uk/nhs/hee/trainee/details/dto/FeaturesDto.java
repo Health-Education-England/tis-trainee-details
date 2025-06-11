@@ -29,6 +29,6 @@ import lombok.Builder;
  */
 @Builder
 public record FeaturesDto(boolean ltft,
-                          List<String> enabledProgrammes) {
+                          List<String> ltftProgrammes) {
 
 }

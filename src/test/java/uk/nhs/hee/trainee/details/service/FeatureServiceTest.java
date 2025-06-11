@@ -49,7 +49,6 @@ class FeatureServiceTest {
 
   private FeatureService service;
   private TraineeProfileService profileService;
-  private ProgrammeMembershipService pmService;
 
   @BeforeEach
   void setUp() {
@@ -63,20 +62,19 @@ class FeatureServiceTest {
             .deaneries(Set.of("test 1", "test 2", "test 3"))
             .build()))
         .build();
-    pmService = mock(ProgrammeMembershipService.class);
 
     service = new FeatureService(traineeIdentity, profileService, featuresProperties,
-        ZoneId.of("UTC"), pmService);
+        ZoneId.of("UTC"));
   }
 
   @Test
-  void shouldDisableLtftAndEmptyEnabledProgrammesWhenNoProfileFound() {
+  void shouldDisableLtftAndEmptyLtftProgrammesWhenNoProfileFound() {
     when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(null);
 
     FeaturesDto features = service.getFeatures();
 
     assertThat("Unexpected LTFT flag.", features.ltft(), is(false));
-    assertThat("Unexpected enabled programme count.", features.enabledProgrammes().size(), is(0));
+    assertThat("Unexpected enabled programme count.", features.ltftProgrammes().size(), is(0));
   }
 
   @Test
@@ -147,7 +145,7 @@ class FeatureServiceTest {
         .build();
 
     service = new FeatureService(traineeIdentity, profileService, featuresProperties,
-        ZoneId.of("UTC"), pmService);
+        ZoneId.of("UTC"));
 
     FeaturesDto features = service.getFeatures();
 
@@ -199,7 +197,7 @@ class FeatureServiceTest {
         .build();
 
     service = new FeatureService(traineeIdentity, profileService, featuresProperties,
-        ZoneId.of("UTC"), pmService);
+        ZoneId.of("UTC"));
 
     FeaturesDto features = service.getFeatures();
 
@@ -234,7 +232,7 @@ class FeatureServiceTest {
         .build();
 
     service = new FeatureService(traineeIdentity, profileService, featuresProperties,
-        ZoneId.of("UTC"), pmService);
+        ZoneId.of("UTC"));
 
     FeaturesDto features = service.getFeatures();
 
@@ -265,7 +263,7 @@ class FeatureServiceTest {
         .build();
 
     service = new FeatureService(traineeIdentity, profileService, featuresProperties,
-        ZoneId.of("UTC"), pmService);
+        ZoneId.of("UTC"));
 
     FeaturesDto features = service.getFeatures();
 
@@ -273,28 +271,37 @@ class FeatureServiceTest {
   }
 
   @Test
-  void shouldIncludeListOfPilotRolloutProgrammes() {
-    String pm1Id = UUID.randomUUID().toString();
-    String pm2Id = UUID.randomUUID().toString();
+  void shouldIncludeListOfLtftEnabledProgrammes() {
     TraineeProfile profile = new TraineeProfile();
     profile.setTraineeTisId(TRAINEE_ID);
 
+    //ltft compliant
+    String pm1Id = UUID.randomUUID().toString();
     ProgrammeMembership pm1 = new ProgrammeMembership();
     pm1.setEndDate(LocalDate.now().plusDays(1));
+    pm1.setManagingDeanery("test 1");
     pm1.setTisId(pm1Id);
 
+    //finished
+    String pm2Id = UUID.randomUUID().toString();
     ProgrammeMembership pm2 = new ProgrammeMembership();
-    pm2.setEndDate(LocalDate.now().plusDays(1));
+    pm2.setEndDate(LocalDate.now().minusDays(1));
+    pm2.setManagingDeanery("test 1");
     pm2.setTisId(pm2Id);
 
-    profile.setProgrammeMemberships(List.of(pm1, pm2));
+    //wrong deanery
+    String pm3Id = UUID.randomUUID().toString();
+    ProgrammeMembership pm3 = new ProgrammeMembership();
+    pm3.setEndDate(LocalDate.now().plusDays(1));
+    pm3.setManagingDeanery("not in list");
+    pm3.setTisId(pm3Id);
+
+    profile.setProgrammeMemberships(List.of(pm1, pm2, pm3));
     when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
-    when(pmService.isPilotRollout2024(TRAINEE_ID, pm1Id)).thenReturn(true);
-    when(pmService.isPilotRollout2024(TRAINEE_ID, pm2Id)).thenReturn(false);
 
     FeaturesDto features = service.getFeatures();
 
-    assertThat("Unexpected enabled programme count.", features.enabledProgrammes().size(), is(1));
-    assertThat("Unexpected enabled programme ID.", features.enabledProgrammes().get(0), is(pm1Id));
+    assertThat("Unexpected enabled programme count.", features.ltftProgrammes().size(), is(1));
+    assertThat("Unexpected enabled programme ID.", features.ltftProgrammes().get(0), is(pm1Id));
   }
 }

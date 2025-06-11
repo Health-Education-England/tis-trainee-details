@@ -23,7 +23,6 @@ package uk.nhs.hee.trainee.details.service;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -45,7 +44,6 @@ public class FeatureService {
 
   private final TraineeIdentity identity;
   private final TraineeProfileService profileService;
-  private final ProgrammeMembershipService pmService;
   private final FeaturesProperties featuresProperties;
   private final ZoneId timezone;
 
@@ -58,13 +56,11 @@ public class FeatureService {
    * @param timezone           The timezone to use.
    */
   public FeatureService(TraineeIdentity identity, TraineeProfileService profileService,
-      FeaturesProperties featuresProperties, @Value("${application.timezone}") ZoneId timezone,
-      ProgrammeMembershipService pmService) {
+      FeaturesProperties featuresProperties, @Value("${application.timezone}") ZoneId timezone) {
     this.identity = identity;
     this.profileService = profileService;
     this.featuresProperties = featuresProperties;
     this.timezone = timezone;
-    this.pmService = pmService;
   }
 
   /**
@@ -78,17 +74,11 @@ public class FeatureService {
 
     TraineeProfile profile = profileService.getTraineeProfileByTraineeTisId(traineeId);
 
-    List<String> enabledProgrammes = new ArrayList<>();
-    if (profile != null) {
-      enabledProgrammes = profile.getProgrammeMemberships().stream()
-          .map(ProgrammeMembership::getTisId)
-          .filter(tisId -> pmService.isPilotRollout2024(profile.getTraineeTisId(), tisId))
-          .toList();
-    }
+    List<String> ltftProgrammes = getLtftEnabledProgrammes(profile);
 
     return FeaturesDto.builder()
-        .ltft(isLtftEnabled(profile))
-        .enabledProgrammes(enabledProgrammes)
+        .ltft(isLtftEnabled(profile, ltftProgrammes))
+        .ltftProgrammes(ltftProgrammes)
         .build();
   }
 
@@ -96,9 +86,10 @@ public class FeatureService {
    * Whether the given profile is allowed access to Less Than Full Time functionality.
    *
    * @param profile The trainee profile to check.
+   * @param ltftProgrammes The LTFT-enabled programmes for the trainee.
    * @return Whether the trainee should have access to LTFT.
    */
-  private boolean isLtftEnabled(TraineeProfile profile) {
+  private boolean isLtftEnabled(TraineeProfile profile, List<String> ltftProgrammes) {
     if (profile == null) {
       log.info("LTFT disabled due to missing profile.");
       return false;
@@ -106,6 +97,24 @@ public class FeatureService {
 
     Set<String> groups = identity.getGroups();
     boolean isBetaUser = groups != null && groups.contains("beta-participant");
+
+    boolean enabled = isBetaUser || !ltftProgrammes.isEmpty();
+
+    log.info("LTFT enabled for trainee {}: {}", profile.getTraineeTisId(), enabled);
+
+    return enabled;
+  }
+
+  /**
+   * Get the list of LTFT-enabled programmes for the given profile.
+   *
+   * @param profile The trainee profile to check.
+   * @return The list of LTFT-enabled programmes, or an empty list if LTFT is not enabled.
+   */
+  private List<String> getLtftEnabledProgrammes(TraineeProfile profile) {
+    if (profile == null) {
+      return List.of();
+    }
 
     LocalDate now = LocalDate.now(timezone);
 
@@ -115,13 +124,16 @@ public class FeatureService {
         .flatMap(tranche -> tranche.getValue().deaneries().stream())
         .collect(Collectors.toSet());
 
-    boolean enabled = isBetaUser || profile.getProgrammeMemberships().stream()
-        .filter(pm -> pm.getEndDate().isAfter(now)) // Past programmes are not valid for LTFT.
-        .map(ProgrammeMembership::getManagingDeanery)
-        .anyMatch(enabledDeaneries::contains);
+    List<String> ltftPmIds = profile.getProgrammeMemberships().stream()
+        // Past programmes are not valid for LTFT.
+        .filter(pm -> pm.getEndDate().isAfter(now)
+            && enabledDeaneries.contains(pm.getManagingDeanery()))
+        .map(ProgrammeMembership::getTisId)
+        .toList();
 
-    log.info("LTFT enabled for trainee {}: {}", profile.getTraineeTisId(), enabled);
+    log.info("LTFT enabled programme memberships for trainee {}: {}",
+        profile.getTraineeTisId(), ltftPmIds);
 
-    return enabled;
+    return ltftPmIds;
   }
 }

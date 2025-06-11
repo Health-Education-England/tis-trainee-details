@@ -50,7 +50,6 @@ import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import uk.nhs.hee.trainee.details.TestJwtUtil;
-import uk.nhs.hee.trainee.details.model.Curriculum;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 
@@ -91,8 +90,8 @@ class FeatureResourceIntegrationTest {
   void shouldHaveNoEnabledProgrammesWhenNoToken() throws Exception {
     mockMvc.perform(get("/api/features"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.enabledProgrammes").isArray())
-        .andExpect(jsonPath("$.enabledProgrammes", hasSize(0)));
+        .andExpect(jsonPath("$.ltftProgrammes").isArray())
+        .andExpect(jsonPath("$.ltftProgrammes", hasSize(0)));
   }
 
   @Test
@@ -110,14 +109,14 @@ class FeatureResourceIntegrationTest {
     mockMvc.perform(get("/api/features")
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.enabledProgrammes").isArray())
-        .andExpect(jsonPath("$.enabledProgrammes", hasSize(0)));
+        .andExpect(jsonPath("$.ltftProgrammes").isArray())
+        .andExpect(jsonPath("$.ltftProgrammes", hasSize(0)));
   }
 
   @ParameterizedTest
   @ValueSource(strings = {"North West London", "North Central and East London", "South London",
       "South West"})
-  void shouldEnableLtftAndSetEnabledProgrammesWhenQualifyingProgrammeExists(String deanery)
+  void shouldEnableLtftAndSetLtftProgrammesWhenQualifyingProgrammeExists(String deanery)
       throws Exception {
     TraineeProfile profile = new TraineeProfile();
     profile.setTraineeTisId(TRAINEE_ID);
@@ -125,13 +124,7 @@ class FeatureResourceIntegrationTest {
     String pmId = UUID.randomUUID().toString();
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setTisId(pmId);
-    pm.setProgrammeMembershipType("In pilot");
-    Curriculum curriculum = new Curriculum();
-    curriculum.setCurriculumSubType("MEDICAL_CURRICULUM");
-    curriculum.setCurriculumSpecialty("Not excluded specialty");
-    pm.setCurricula(List.of(curriculum));
     pm.setManagingDeanery(deanery);
-    pm.setStartDate(LocalDate.of(2025, 2, 1));
     pm.setEndDate(LocalDate.now().plusDays(1));
     profile.setProgrammeMemberships(List.of(pm));
 
@@ -142,8 +135,8 @@ class FeatureResourceIntegrationTest {
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.ltft", is(true)))
-        .andExpect(jsonPath("$.enabledProgrammes").isArray())
-        .andExpect(jsonPath("$.enabledProgrammes", hasSize(1)))
-        .andExpect(jsonPath("$.enabledProgrammes[0]", is(pmId)));
+        .andExpect(jsonPath("$.ltftProgrammes").isArray())
+        .andExpect(jsonPath("$.ltftProgrammes", hasSize(1)))
+        .andExpect(jsonPath("$.ltftProgrammes[0]", is(pmId)));
   }
 }
