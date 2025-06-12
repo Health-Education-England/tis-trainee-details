@@ -21,6 +21,7 @@
 
 package uk.nhs.hee.trainee.details.api;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -86,6 +87,14 @@ class FeatureResourceIntegrationTest {
   }
 
   @Test
+  void shouldHaveNoEnabledProgrammesWhenNoToken() throws Exception {
+    mockMvc.perform(get("/api/features"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.ltftProgrammes").isArray())
+        .andExpect(jsonPath("$.ltftProgrammes", hasSize(0)));
+  }
+
+  @Test
   void shouldDisableLtftWhenNoTraineeId() throws Exception {
     String token = TestJwtUtil.generateToken("{}");
     mockMvc.perform(get("/api/features")
@@ -94,14 +103,27 @@ class FeatureResourceIntegrationTest {
         .andExpect(jsonPath("$.ltft", is(false)));
   }
 
+  @Test
+  void shouldHaveNoEnabledProgrammesWhenNoTraineeId() throws Exception {
+    String token = TestJwtUtil.generateToken("{}");
+    mockMvc.perform(get("/api/features")
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.ltftProgrammes").isArray())
+        .andExpect(jsonPath("$.ltftProgrammes", hasSize(0)));
+  }
+
   @ParameterizedTest
   @ValueSource(strings = {"North West London", "North Central and East London", "South London",
       "South West"})
-  void shouldEnableLtftWhenQualifyingProgrammeExists(String deanery) throws Exception {
+  void shouldEnableLtftAndSetLtftProgrammesWhenQualifyingProgrammeExists(String deanery)
+      throws Exception {
     TraineeProfile profile = new TraineeProfile();
     profile.setTraineeTisId(TRAINEE_ID);
 
+    String pmId = UUID.randomUUID().toString();
     ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setTisId(pmId);
     pm.setManagingDeanery(deanery);
     pm.setEndDate(LocalDate.now().plusDays(1));
     profile.setProgrammeMemberships(List.of(pm));
@@ -112,6 +134,9 @@ class FeatureResourceIntegrationTest {
     mockMvc.perform(get("/api/features")
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.ltft", is(true)));
+        .andExpect(jsonPath("$.ltft", is(true)))
+        .andExpect(jsonPath("$.ltftProgrammes").isArray())
+        .andExpect(jsonPath("$.ltftProgrammes", hasSize(1)))
+        .andExpect(jsonPath("$.ltftProgrammes[0]", is(pmId)));
   }
 }

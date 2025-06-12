@@ -68,12 +68,13 @@ class FeatureServiceTest {
   }
 
   @Test
-  void shouldDisableLtftWhenNoProfileFound() {
+  void shouldDisableLtftAndEmptyLtftProgrammesWhenNoProfileFound() {
     when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(null);
 
     FeaturesDto features = service.getFeatures();
 
     assertThat("Unexpected LTFT flag.", features.ltft(), is(false));
+    assertThat("Unexpected enabled programme count.", features.ltftProgrammes().size(), is(0));
   }
 
   @Test
@@ -267,5 +268,40 @@ class FeatureServiceTest {
     FeaturesDto features = service.getFeatures();
 
     assertThat("Unexpected LTFT flag.", features.ltft(), is(true));
+  }
+
+  @Test
+  void shouldIncludeListOfLtftEnabledProgrammes() {
+    TraineeProfile profile = new TraineeProfile();
+    profile.setTraineeTisId(TRAINEE_ID);
+
+    //ltft compliant
+    String pm1Id = UUID.randomUUID().toString();
+    ProgrammeMembership pm1 = new ProgrammeMembership();
+    pm1.setEndDate(LocalDate.now().plusDays(1));
+    pm1.setManagingDeanery("test 1");
+    pm1.setTisId(pm1Id);
+
+    //finished
+    String pm2Id = UUID.randomUUID().toString();
+    ProgrammeMembership pm2 = new ProgrammeMembership();
+    pm2.setEndDate(LocalDate.now().minusDays(1));
+    pm2.setManagingDeanery("test 1");
+    pm2.setTisId(pm2Id);
+
+    //wrong deanery
+    String pm3Id = UUID.randomUUID().toString();
+    ProgrammeMembership pm3 = new ProgrammeMembership();
+    pm3.setEndDate(LocalDate.now().plusDays(1));
+    pm3.setManagingDeanery("not in list");
+    pm3.setTisId(pm3Id);
+
+    profile.setProgrammeMemberships(List.of(pm1, pm2, pm3));
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected enabled programme count.", features.ltftProgrammes().size(), is(1));
+    assertThat("Unexpected enabled programme ID.", features.ltftProgrammes().get(0), is(pm1Id));
   }
 }
