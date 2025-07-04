@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "uk.nhs.hee.trainee.details"
-version = "1.28.0"
+version = "1.28.1"
 
 configurations {
   compileOnly {
@@ -59,6 +59,8 @@ dependencies {
 
   // PDF
   implementation(libs.bundles.pdf.publishing)
+  // TODO: add to lib bundle
+  implementation("io.github.openhtmltopdf:openhtmltopdf-svg-support:${libs.versions.openhtmltopdf.get()}")
 }
 
 java {
