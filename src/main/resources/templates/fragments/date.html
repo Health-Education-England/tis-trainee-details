@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Date</title>
+  </head>
+  <body>
+    <time th:fragment="date(timestamp)" datetime="1970-01-01" th:datetime="${#temporals.format(timestamp, 'yyyy-MM-dd')}"><th:block th:text="${#temporals.format(timestamp, 'd MMMM yyyy')}">1 January 1970</th:block></time>
+  </body>
+</html>
