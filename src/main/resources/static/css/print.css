@@ -1,0 +1,86 @@
+@font-face {
+  font-family: "Frutiger W01";
+  font-style: normal;
+  font-weight: 400;
+  src: url("https://assets.nhs.uk/fonts/FrutigerLTW01-55Roman.eot?#iefix");
+  src:
+    url("https://assets.nhs.uk/fonts/FrutigerLTW01-55Roman.eot?#iefix") format("eot"),
+    url("https://assets.nhs.uk/fonts/FrutigerLTW01-55Roman.woff2") format("woff2"),
+    url("https://assets.nhs.uk/fonts/FrutigerLTW01-55Roman.woff") format("woff"),
+    url("https://assets.nhs.uk/fonts/FrutigerLTW01-55Roman.ttf") format("truetype"),
+    url("https://assets.nhs.uk/fonts/FrutigerLTW01-55Roman.svg#7def0e34-f28d-434f-b2ec-472bde847115") format("svg");
+}
+
+@font-face {
+  font-family: "Frutiger W01";
+  font-style: normal;
+  font-weight: 600;
+  src: url("https://assets.nhs.uk/fonts/FrutigerLTW01-65Bold.eot?#iefix");
+  src:
+    url("https://assets.nhs.uk/fonts/FrutigerLTW01-65Bold.eot?#iefix") format("eot"),
+    url("https://assets.nhs.uk/fonts/FrutigerLTW01-65Bold.woff2") format("woff2"),
+    url("https://assets.nhs.uk/fonts/FrutigerLTW01-65Bold.woff") format("woff"),
+    url("https://assets.nhs.uk/fonts/FrutigerLTW01-65Bold.ttf") format("truetype"),
+    url("https://assets.nhs.uk/fonts/FrutigerLTW01-65Bold.svg#eae74276-dd78-47e4-9b27-dac81c3411ca") format("svg");
+}
+
+body {
+  color: #231f20;
+  background-color: white;
+  font-family: "Frutiger W01", Arial, sans-serif;
+  font-size: 12pt;
+  line-height: 1.2;
+  padding: 10mm;
+}
+
+header {
+  .logo {
+    text-align: right;
+
+    img {
+      height: 17.5491mm;
+      width: 23.3934mm;
+      margin-bottom: 9mm;
+    }
+  }
+}
+
+.sign-off span {
+  display: block;
+}
+
+address {
+  font-style: normal;
+}
+
+address.from {
+  text-align: right;
+}
+
+.sent {
+  text-align: right;
+  padding: 5mm 0mm 5mm 0mm;
+}
+
+@media screen {
+  html {
+    background-color: gray;
+    display: table;
+    margin: auto;
+  }
+
+  body.page {
+    height: 297mm;
+    width: 210mm;
+  }
+}
+
+@media print {
+  body, html {
+    background-color: white;
+  }
+}
+
+@page {
+  size: a4 portrait;
+}

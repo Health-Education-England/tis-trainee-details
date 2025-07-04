@@ -59,6 +59,8 @@ dependencies {
 
   // PDF
   implementation(libs.bundles.pdf.publishing)
+  // TODO: add to lib bundle
+  implementation("io.github.openhtmltopdf:openhtmltopdf-svg-support:${libs.versions.openhtmltopdf.get()}")
 }
 
 java {

@@ -3,16 +3,16 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
   <title>Programme Confirmation</title>
+  <link rel="stylesheet" href="/static/css/print.css">
 </head>
-<body
+<body class="page"
   th:with="programmeName=${not #strings.isEmpty(pm.programmeName)} ? ${pm.programmeName} : _"
 >
-<main class="nhsuk-width-container nhsuk-u-margin-top-5">
-  <div style="text-align:right"><img style="margin-right:25px" src='https://trainee.tis.nhs.uk/nhse-logo.png' alt="NHS England logo"/></div>
+<main>
+  <div class="header"><img class="logo" src="/static/nhs-england_logo_blue_right.svg" alt="NHS England logo"/></div>
   <div>
-    <p>Date <th:block th:text="${#dates.format(#dates.createNow(), 'dd MMMM yyyy')}"></th:block></p>
-    <br/>
-    <h4 class="card-heading-spaced-top">
+    <div class="date">Date <th:block th:text="${#dates.format(#dates.createNow(), 'dd MMMM yyyy')}"></th:block></div>
+    <h4>
       CONFIRMATION OF APPOINTMENT TO <th:block th:text="${not #strings.isEmpty(pm.programmeName)} ? ${#strings.toUpperCase(pm.programmeName)} : _">(Programme Name Missing)</th:block>
         FOR DR <th:block th:text="${#strings.toUpperCase(trainee.forenames)}"></th:block> <th:block th:text="${not #strings.isEmpty(trainee.surname)} ? ${#strings.toUpperCase(trainee.surname)} : _">(Surname Missing)</th:block>
     </h4>
@@ -44,10 +44,15 @@
       ><span th:case="*"><span th:text="${localOfficeContact}"></span></span
       ></th:block>.
     </p>
-    <br/>
-    <p>Yours faithfully,
-      <br/>NHS England <th:block th:text="${pm.managingDeanery}">Local Office</th:block>
-    </p>
+    <div class="sign-off">
+      <p>Yours sincerely,</p>
+      <div class="signature">
+        <p>
+          <strong>NHS England</strong></span>
+          <span><th:block th:text="${pm.managingDeanery}">Local Office</th:block></span>
+        </p>
+      </div>
+    </div>
   </div>
 </main>
 </body>

@@ -21,8 +21,11 @@
 
 package uk.nhs.hee.trainee.details.service;
 
+import com.openhtmltopdf.extend.SVGDrawer;
+import com.openhtmltopdf.pdfboxout.PDFontSupplier;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.openhtmltopdf.slf4j.Slf4jLogger;
+import com.openhtmltopdf.svgsupport.BatikSVGDrawer;
 import com.openhtmltopdf.util.XRLog;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -31,6 +34,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.jsoup.Jsoup;
 import org.jsoup.helper.W3CDom;
 import org.jsoup.nodes.Document;
@@ -86,6 +90,7 @@ public class PdfGeneratingService {
     ByteArrayOutputStream os = new ByteArrayOutputStream();
     new PdfRendererBuilder()
         .toStream(os)
+        .useSVGDrawer(new BatikSVGDrawer())
         .withW3cDocument(W3CDom.convert(parsedBody), "classpath:/")
         .run();
 

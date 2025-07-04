@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Letter Layout</title>
+  <link rel="stylesheet" href="/static/css/print.css">
+</head>
+<body class="page">
+<header>
+  <div class="logo">
+    <img src="/static/nhs-england_logo_blue_right.svg" alt="NHS England logo">
+  </div>
+</header>
+<main>
+  <address class="from">
+    <div>NHS England</div>
+    <div>Wellington House</div>
+    <div>133-155 Waterloo Road</div>
+    <div>London</div>
+    <div>SE1 8UG</div>
+  </address>
+  <div class="sent">
+    <!-- set timezone: #temporals.createTodayForTimeZone(var.timezone) -->
+    <time th:replace="~{fragments/date/v1.0.0 :: date(${#temporals.createTodayForTimeZone(timezone)})}">1 January 1970</time>
+  </div>
+  <address class="to">
+    <div>Dr Anthony Gilliam</div>
+    <div>3 Piccadilly Place</div>
+    <div>Manchester</div>
+    <div>M1 3BN</div>
+  </address>
+  <div class="greeting"><p>Dear Dr Gilliam,</p></div>
+  <div class="subject"><p><strong>CONFIRMATION OF APPOINTMENT TO PAEDIATRICS FOR DR ANTHONY GILLIAM</strong></p></div>
+  <section>
+    <p>I am writing to confirm that Dr Anthony Gilliam (GMC: 8999999) has been appointed to a Paediatrics
+      Training Programme with NHS England Health Education England East of England from 2 September
+      2024. Please note that NHS England Health Education England East of England is not an employing
+      body.</p>
+    <p>
+      Dr Gilliam is currently in a Training Programme between 2 September 2024 and 5 September 2028 and
+      will be employed by a Trust. Continuation in the programme is subject to satisfactory progress at annual
+      reviews. Please note Dr Gilliam will rotate through a number of employing NHS Trusts and/or other
+      employing organisations.
+    </p>
+    <p>
+      Dr Gilliam's salary would be in line with NHS employers contract/PayScale. Please click on link for
+      information <a
+      href="https://www.nhsemployers.org/articles/pay-and-conditions-circulars-medical-and-dental-staff"
+      th:target="_blank">Pay and conditions circulars for medical and dental staff | NHS Employers</a>.
+    </p>
+    <p>
+      If you require any further information, please do not hesitate to contact NHS England Health Education
+      England East of England via your local office.</p>
+  </section>
+  <div class="sign-off">
+    <p><span>Yours sincerely,</span></p>
+    <div class="signature">
+    <p>
+      <span><strong>NHS England</strong></span>
+      <span>Health Education England East of England</span>
+    </p>
+    </div>
+  </div>
+</main>
+</body>
+</html>
