@@ -22,13 +22,7 @@
     <!-- set timezone: #temporals.createTodayForTimeZone(var.timezone) -->
     <time th:replace="~{fragments/date/v1.0.0 :: date(${#temporals.createTodayForTimeZone(timezone)})}">1 January 1970</time>
   </div>
-  <address class="to">
-    <div>Dr Anthony Gilliam</div>
-    <div>3 Piccadilly Place</div>
-    <div>Manchester</div>
-    <div>M1 3BN</div>
-  </address>
-  <div class="greeting"><p>Dear Dr Gilliam,</p></div>
+  <div class="greeting"><p>To whom it may concern,</p></div>
   <div class="subject"><p><strong>CONFIRMATION OF APPOINTMENT TO PAEDIATRICS FOR DR ANTHONY GILLIAM</strong></p></div>
   <section>
     <p>I am writing to confirm that Dr Anthony Gilliam (GMC: 8999999) has been appointed to a Paediatrics
@@ -54,10 +48,10 @@
   <div class="sign-off">
     <p><span>Yours sincerely,</span></p>
     <div class="signature">
-    <p>
-      <span><strong>NHS England</strong></span>
-      <span>Health Education England East of England</span>
-    </p>
+      <p>
+        <span><strong>NHS England</strong></span>
+        <span>Health Education England East of England</span>
+      </p>
     </div>
   </div>
 </main>
