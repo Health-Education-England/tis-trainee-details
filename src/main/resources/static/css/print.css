@@ -33,16 +33,14 @@ body {
   padding: 10mm;
 }
 
-header {
-  .logo {
-    text-align: right;
+header .logo {
+  text-align: right;
+}
 
-    img {
-      height: 17.5491mm;
-      width: 23.3934mm;
-      margin-bottom: 9mm;
-    }
-  }
+header .logo img {
+  height: 17.5491mm;
+  width: 23.3934mm;
+  margin-bottom: 9mm;
 }
 
 .sign-off span {
