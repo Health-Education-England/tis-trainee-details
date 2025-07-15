@@ -20,25 +20,25 @@
 <main>
     <h1>
       CONFIRMATION OF APPOINTMENT TO <th:block th:text="${#strings.toUpperCase(programmeName)}?: _">[Programme Name]</th:block>
-      FOR DR <th:block th:text="${#strings.toUpperCase(trainee.forenames)}"></th:block> <th:block th:text="${not #strings.isEmpty(trainee.surname)} ? ${#strings.toUpperCase(trainee.surname)} : _">[Surname]</th:block>
+      FOR DR <th:block th:text="${#strings.toUpperCase(trainee?.forenames)}"></th:block> <th:block th:text="${not #strings.isEmpty(trainee?.surname)} ? ${#strings.toUpperCase(trainee.surname)} : _">[Surname]</th:block>
     </h1>
     <p>To Whom It May Concern:</p>
-    <p>Please accept this as confirmation that Dr <th:block th:text="${#strings.capitalize(trainee.forenames)}"></th:block> <th:block th:text="${not #strings.isEmpty(trainee.surname)} ? ${#strings.capitalize(trainee.surname)} : _">[Surname]</th:block
-      > (GMC: <th:block th:text="${not #strings.isEmpty(trainee.gmcNumber) ? trainee.gmcNumber : 'unknown'}">[GMC Number]</th:block
+    <p>Please accept this as confirmation that Dr <th:block th:text="${#strings.capitalize(trainee?.forenames)}"></th:block> <th:block th:text="${not #strings.isEmpty(trainee?.surname)} ? ${#strings.capitalize(trainee.surname)} : _">[Surname]</th:block
+      > (GMC: <th:block th:text="${not #strings.isEmpty(trainee?.gmcNumber) ? trainee.gmcNumber : 'unknown'}">[GMC Number]</th:block
       >) has been appointed to a <th:block th:text="${programmeName}?: _">[Programme Name]</th:block
       > Training Programme with NHS England <th:block th:text="${not #strings.isEmpty(pm.managingDeanery)} ? ${pm.managingDeanery} : _">[Local Office]</th:block
       > from <time th:replace="~{fragments/date :: date(${pm.startDate})}">[Start Date]</time
       >. Please note that NHS England <th:block th:text="${not #strings.isEmpty(pm.managingDeanery)} ? ${pm.managingDeanery} : _">[Local Office]</th:block> is not an employing body.
     </p>
     <p>
-      Dr <th:block th:text="${not #strings.isEmpty(trainee.surname)} ? ${#strings.capitalize(trainee.surname)} : _">[Surname]</th:block
+      Dr <th:block th:text="${not #strings.isEmpty(trainee?.surname)} ? ${#strings.capitalize(trainee.surname)} : _">[Surname]</th:block
       > is currently in a Training Programme between <time th:replace="~{fragments/date :: date(${pm.startDate})}">[Start Date]</time
       > and <time th:replace="~{fragments/date :: date(${pm.endDate})}">[End Date]</time
-      > and will be employed by a Trust. Continuation in the programme is subject to satisfactory progress at annual reviews. Please note Dr <th:block th:text="${not #strings.isEmpty(trainee.surname)} ? ${#strings.capitalize(trainee.surname)} : _">[Surname]</th:block
+      > and will be employed by a Trust. Continuation in the programme is subject to satisfactory progress at annual reviews. Please note Dr <th:block th:text="${not #strings.isEmpty(trainee?.surname)} ? ${#strings.capitalize(trainee.surname)} : _">[Surname]</th:block
       > will rotate through a number of employing NHS Trusts and/or other employing organisations.
     </p>
     <p>
-      Dr <th:block th:text="${not #strings.isEmpty(trainee.surname)} ? ${#strings.capitalize(trainee.surname)} : _">[Surname]</th:block
+      Dr <th:block th:text="${not #strings.isEmpty(trainee?.surname)} ? ${#strings.capitalize(trainee.surname)} : _">[Surname]</th:block
       >'s salary would be in line with NHS employers contract/PayScale. See
       <a
         href="https://www.nhsemployers.org/articles/pay-and-conditions-circulars-medical-and-dental-staff"
@@ -47,9 +47,9 @@
     <p>If you require any further information, please do not hesitate to contact NHS England
       <th:block th:text="${not #strings.isEmpty(pm.managingDeanery)} ? ${pm.managingDeanery} : _"> [Local Office]</th:block> via <th:block th:switch="${contactHref}"
       ><span th:case="url"><a th:href="${localOfficeContact}"><span th:text="${localOfficeContact}"></span></a></span
-      ><span th:case="email"><a th:href="|mailto:${localOfficeContact}?subject=Programme Confirmation (${programmeName}) - GMC: ${not #strings.isEmpty(trainee.gmcNumber) ? trainee.gmcNumber : 'unknown'}, Prog No: ${not #strings.isEmpty(pm.programmeNumber) ? pm.programmeNumber : 'unknown'}|"><span th:text="${localOfficeContact}"></span></a></span
+      ><span th:case="email"><a th:href="|mailto:${localOfficeContact}?subject=Programme Confirmation (${programmeName}) - GMC: ${not #strings.isEmpty(trainee?.gmcNumber) ? trainee.gmcNumber : 'unknown'}, Prog No: ${not #strings.isEmpty(pm.programmeNumber) ? pm.programmeNumber : 'unknown'}|"><span th:text="${localOfficeContact}"></span></a></span
       ><span th:case="*"><span th:text="${localOfficeContact}"></span></span
-      >[Contact]</th:block>.
+      ></th:block>.
     </p>
     <br/>
     <div class="sign-off">
