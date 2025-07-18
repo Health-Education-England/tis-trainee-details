@@ -12,28 +12,30 @@
   <div class="logo">
     <img src="/static/nhs-england_logo_blue_right.svg" alt="NHS England logo">
   </div>
-  <address class="from" th:replace="~{fragments/address :: from}">[From Address]</address>
+  <!-- TODO: confirm FROM address and re-add
+    <address class="from" th:replace="~{fragments/address :: from}">[From Address]</address>
+  -->
   <div class="sent">
     <time th:replace="~{fragments/date :: date(${#temporals.createTodayForTimeZone(timezone)})}">[Sent Date]</time>
   </div>
 </header>
 <main>
     <h1>
-      CONFIRMATION OF APPOINTMENT TO <th:block th:text="${#strings.toUpperCase(programmeName)}?: _">[Programme Name]</th:block>
-      FOR DR <th:block th:text="${#strings.toUpperCase(trainee?.forenames)}"></th:block> <th:block th:text="${not #strings.isEmpty(trainee?.surname)} ? ${#strings.toUpperCase(trainee.surname)} : _">[Surname]</th:block>
+      CONFIRMATION OF APPOINTMENT TO <th:block th:text="${#strings.toUpperCase(programmeName)}?: _">[PROGRAMME NAME]</th:block>
+      FOR DR <th:block th:text="${#strings.toUpperCase(trainee?.forenames)}">[FORENAMES]</th:block> <th:block th:text="${not #strings.isEmpty(trainee?.surname)} ? ${#strings.toUpperCase(trainee.surname)} : _">[SURNAME]</th:block>
     </h1>
     <p>To Whom It May Concern:</p>
-    <p>Please accept this as confirmation that Dr <th:block th:text="${#strings.capitalize(trainee?.forenames)}"></th:block> <th:block th:text="${not #strings.isEmpty(trainee?.surname)} ? ${#strings.capitalize(trainee.surname)} : _">[Surname]</th:block
+    <p>Please accept this as confirmation that Dr <th:block th:text="${#strings.capitalize(trainee?.forenames)}">[Forenames]</th:block> <th:block th:text="${not #strings.isEmpty(trainee?.surname)} ? ${#strings.capitalize(trainee.surname)} : _">[Surname]</th:block
       > (GMC: <th:block th:text="${not #strings.isEmpty(trainee?.gmcNumber) ? trainee.gmcNumber : 'unknown'}">[GMC Number]</th:block
       >) has been appointed to a <th:block th:text="${programmeName}?: _">[Programme Name]</th:block
       > Training Programme with NHS England <th:block th:text="${not #strings.isEmpty(pm.managingDeanery)} ? ${pm.managingDeanery} : _">[Local Office]</th:block
-      > from <time th:replace="~{fragments/date :: date(${pm.startDate})}">[Start Date]</time
+      > from <time th:replace="${pm?.startDate} ? ~{fragments/date :: date(${pm.startDate})} : _">[Start Date]</time
       >. Please note that NHS England <th:block th:text="${not #strings.isEmpty(pm.managingDeanery)} ? ${pm.managingDeanery} : _">[Local Office]</th:block> is not an employing body.
     </p>
     <p>
       Dr <th:block th:text="${not #strings.isEmpty(trainee?.surname)} ? ${#strings.capitalize(trainee.surname)} : _">[Surname]</th:block
-      > is currently in a Training Programme between <time th:replace="~{fragments/date :: date(${pm.startDate})}">[Start Date]</time
-      > and <time th:replace="~{fragments/date :: date(${pm.endDate})}">[End Date]</time
+      > is currently in a Training Programme between <time th:replace="${pm?.startDate} ? ~{fragments/date :: date(${pm.startDate})} : _">[Start Date]</time
+      > and <time th:replace="${pm?.endDate} ? ~{fragments/date :: date(${pm.endDate})} : _">[End Date]</time
       > and will be employed by a Trust. Continuation in the programme is subject to satisfactory progress at annual reviews. Please note Dr <th:block th:text="${not #strings.isEmpty(trainee?.surname)} ? ${#strings.capitalize(trainee.surname)} : _">[Surname]</th:block
       > will rotate through a number of employing NHS Trusts and/or other employing organisations.
     </p>
@@ -48,19 +50,20 @@
       <th:block th:text="${not #strings.isEmpty(pm.managingDeanery)} ? ${pm.managingDeanery} : _"> [Local Office]</th:block> via <th:block th:switch="${contactHref}"
       ><span th:case="url"><a th:href="${localOfficeContact}"><span th:text="${localOfficeContact}"></span></a></span
       ><span th:case="email"><a th:href="|mailto:${localOfficeContact}?subject=Programme Confirmation (${programmeName}) - GMC: ${not #strings.isEmpty(trainee?.gmcNumber) ? trainee.gmcNumber : 'unknown'}, Prog No: ${not #strings.isEmpty(pm.programmeNumber) ? pm.programmeNumber : 'unknown'}|"><span th:text="${localOfficeContact}"></span></a></span
-      ><span th:case="*"><span th:text="${localOfficeContact}"></span></span
+      ><span th:case="*"><span th:text="${not #strings.isEmpty(localOfficeContact)} ? ${localOfficeContact} : _">[Contact]</span></span
       ></th:block>.
     </p>
-    <br/>
-    <div class="sign-off">
-      <p><span>Yours faithfully,</span></p>
-      <div class="signature">
-        <p>
-          <span><strong>NHS England</strong></span>
-          <span><th:block th:text="${pm?.managingDeanery}?: _">[Local Office]</th:block></span>
-        </p>
-      </div>
-    </div>
 </main>
+<footer>
+  <div class="sign-off">
+    <p><span>Yours faithfully,</span></p>
+    <div class="signature">
+      <p>
+        <span><strong>NHS England</strong></span>
+        <span><th:block th:text="${pm?.managingDeanery}?: _">[Local Office]</th:block></span>
+      </p>
+    </div>
+  </div>
+</footer>
 </body>
 </html>

@@ -527,7 +527,7 @@ public class ProgrammeMembershipService {
             // Template Variables
             String contact = getOwnerContact(programmeMembership.getManagingDeanery(),
                 LocalOfficeContactType.ONBOARDING_SUPPORT,
-                LocalOfficeContactType.TSS_SUPPORT, DEFAULT_NO_CONTACT_MESSAGE);
+                LocalOfficeContactType.TSS_SUPPORT, "");
 
             Map<String, Object> templateVariables = new HashMap<>();
             templateVariables.put("pm", programmeMembership);
