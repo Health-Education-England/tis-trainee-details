@@ -89,6 +89,7 @@ class ProgrammeMembershipResourceTest {
   @MockBean
   private EventPublishService eventPublishService;
 
+
   @MockBean
   private SignatureService signatureService;
 

@@ -1,0 +1,96 @@
+@font-face {
+  font-family: "Frutiger W01";
+  font-style: normal;
+  font-weight: 400;
+  src: url("https://assets.nhs.uk/fonts/FrutigerLTW01-55Roman.eot?#iefix");
+  src:
+    url("https://assets.nhs.uk/fonts/FrutigerLTW01-55Roman.eot?#iefix") format("eot"),
+    url("https://assets.nhs.uk/fonts/FrutigerLTW01-55Roman.woff2") format("woff2"),
+    url("https://assets.nhs.uk/fonts/FrutigerLTW01-55Roman.woff") format("woff"),
+    url("https://assets.nhs.uk/fonts/FrutigerLTW01-55Roman.ttf") format("truetype"),
+    url("https://assets.nhs.uk/fonts/FrutigerLTW01-55Roman.svg#7def0e34-f28d-434f-b2ec-472bde847115") format("svg");
+}
+
+@font-face {
+  font-family: "Frutiger W01";
+  font-style: normal;
+  font-weight: 600;
+  src: url("https://assets.nhs.uk/fonts/FrutigerLTW01-65Bold.eot?#iefix");
+  src:
+    url("https://assets.nhs.uk/fonts/FrutigerLTW01-65Bold.eot?#iefix") format("eot"),
+    url("https://assets.nhs.uk/fonts/FrutigerLTW01-65Bold.woff2") format("woff2"),
+    url("https://assets.nhs.uk/fonts/FrutigerLTW01-65Bold.woff") format("woff"),
+    url("https://assets.nhs.uk/fonts/FrutigerLTW01-65Bold.ttf") format("truetype"),
+    url("https://assets.nhs.uk/fonts/FrutigerLTW01-65Bold.svg#eae74276-dd78-47e4-9b27-dac81c3411ca") format("svg");
+}
+
+body {
+  color: #231f20;
+  background-color: white;
+  font-family: "Frutiger W01", Arial, sans-serif;
+  font-size: 12pt;
+  line-height: 1.2;
+  padding: 10mm;
+}
+
+address {
+  font-style: normal;
+}
+
+h1 {
+  font-size: inherit;
+}
+
+time {
+  white-space: nowrap;
+}
+
+header {
+  margin-bottom: 2.4rem;
+}
+
+header .logo {
+  text-align: right;
+  margin-bottom: 9mm;
+}
+
+header .logo img {
+  height: 17.5491mm;
+  width: 23.3934mm;
+}
+
+header address.from {
+  text-align: right;
+  margin: 1.2rem 0 1.2rem 0;
+}
+
+header .sent {
+  text-align: right;
+  margin: 1.2rem 0 1.2rem 0;
+}
+
+footer {
+  margin-top: 2.4rem;
+}
+
+footer .sign-off span {
+  display: block;
+}
+
+@media screen {
+  html {
+    background-color: gray;
+    display: table;
+    margin: auto;
+  }
+
+  body.page {
+    height: 297mm;
+    width: 210mm;
+  }
+}
+
+@page {
+  size: a4 portrait;
+  margin: 0;
+}
