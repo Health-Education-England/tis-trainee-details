@@ -30,8 +30,13 @@ import org.mapstruct.MappingTarget;
 import org.springframework.beans.factory.annotation.Autowired;
 import uk.nhs.hee.trainee.details.dto.TraineeProfileDto;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
+import uk.nhs.hee.trainee.details.model.Placement;
+import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
+import uk.nhs.hee.trainee.details.model.Qualification;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.service.TrainingNumberGenerator;
+
+import java.util.List;
 
 /**
  * A mapper to convert Trainee Profiles between entity and DTO representations.
@@ -112,4 +117,10 @@ public abstract class TraineeProfileMapper {
   @Mapping(target = "personalDetails.gender", source = "gender")
   public abstract void updatePersonalInfo(@MappingTarget TraineeProfile target,
       PersonalDetails source);
+
+  public abstract TraineeProfile cloneTraineeProfile(TraineeProfile source);
+  public abstract PersonalDetails clonePersonalDetails(PersonalDetails source);
+  public abstract List<Qualification> cloneQualifications(List<Qualification> source);
+  public abstract List<ProgrammeMembership> cloneProgrammeMemberships(List<ProgrammeMembership> source);
+  public abstract List<Placement> clonePlacements(List<Placement> source);
 }

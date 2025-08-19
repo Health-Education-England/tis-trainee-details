@@ -180,12 +180,17 @@ public class PersonalDetailsService {
   private Optional<PersonalDetails> updatePersonalDetailsByTisId(String tisId,
       PersonalDetails personalDetails, BiConsumer<TraineeProfile, PersonalDetails> updateFunction) {
     TraineeProfile traineeProfile = repository.findByTraineeTisId(tisId);
-
     if (traineeProfile == null) {
       return Optional.empty();
     }
 
+    TraineeProfile originalDto = mapper.cloneTraineeProfile(traineeProfile);
     updateFunction.accept(traineeProfile, personalDetails);
+
+    if (traineeProfile.equals(originalDto)) {
+      log.info("No new changes in traineeProfile for {}, ignore update.", tisId);
+      return Optional.empty();
+    }
     return Optional.of(repository.save(traineeProfile).getPersonalDetails());
   }
 }

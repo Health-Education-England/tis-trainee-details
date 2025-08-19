@@ -88,6 +88,9 @@ public class BasicDetailsResource {
     if (tisId == null) {
       log.warn("No trainee ID provided.");
       return ResponseEntity.badRequest().build();
+    } else if (tisId.startsWith("-")) {
+      log.warn("Tester trainee ID provided. Ignore GMC number update.");
+      return ResponseEntity.badRequest().build();
     }
 
     log.info("Updating GMC number of trainee {}.", tisId);

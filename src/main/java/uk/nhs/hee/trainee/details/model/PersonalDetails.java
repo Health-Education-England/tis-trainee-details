@@ -24,6 +24,7 @@ package uk.nhs.hee.trainee.details.model;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
  * Trainee doctor personal details.
@@ -52,6 +53,7 @@ public class PersonalDetails {
   private String address4; // ContactDetails
   private String postCode; // ContactDetails
   private String gmcNumber; // GmcDetails
+  @EqualsAndHashCode.Exclude
   private String gmcStatus; // GmcDetails
   private String gdcNumber; // GdcDetails
   private String gdcStatus; // GdcDetails
