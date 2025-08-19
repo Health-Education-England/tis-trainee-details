@@ -21,6 +21,7 @@
 
 package uk.nhs.hee.trainee.details.mapper;
 
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.mapstruct.AfterMapping;
 import org.mapstruct.BeanMapping;
@@ -35,8 +36,6 @@ import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.Qualification;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.service.TrainingNumberGenerator;
-
-import java.util.List;
 
 /**
  * A mapper to convert Trainee Profiles between entity and DTO representations.
@@ -119,8 +118,13 @@ public abstract class TraineeProfileMapper {
       PersonalDetails source);
 
   public abstract TraineeProfile cloneTraineeProfile(TraineeProfile source);
+
   public abstract PersonalDetails clonePersonalDetails(PersonalDetails source);
+
   public abstract List<Qualification> cloneQualifications(List<Qualification> source);
-  public abstract List<ProgrammeMembership> cloneProgrammeMemberships(List<ProgrammeMembership> source);
+
+  public abstract List<ProgrammeMembership> cloneProgrammeMemberships(
+      List<ProgrammeMembership> source);
+
   public abstract List<Placement> clonePlacements(List<Placement> source);
 }
