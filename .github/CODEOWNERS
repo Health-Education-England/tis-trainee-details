@@ -1,0 +1,20 @@
+# Gradle dependencies
+* @Health-Education-England/trainee-backend
+
+# AWS configuration
+.aws/* @Health-Education-England/trainee-devops
+
+# CODEOWNERS file
+.github/CODEOWNERS @Health-Education-England/trainee-backend
+
+# GitHub Actions workflows
+.github/* @Health-Education-England/trainee-backend @Health-Education-England/trainee-devops
+
+# Idea modules
+.idea/* @Health-Education-England/trainee-devops
+
+# Build files
+.build/* @Health-Education-England/trainee-devops
+
+# Gradle wrapper
+.gradle/* @Health-Education-England/trainee-devops @Health-Education-England/trainee-backend
