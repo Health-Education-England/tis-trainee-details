@@ -203,7 +203,6 @@ class BasicDetailsResourceTest {
 
     GmcDetailsDto updatedDetails = gmcDetailsCaptor.getValue();
     assertThat("Unexpected GMC number.", updatedDetails.gmcNumber(), is("1234567"));
-    assertThat("Unexpected GMC status.", updatedDetails.gmcStatus(), is(DEFAULT_GMC_STATUS));
   }
 
   @Test

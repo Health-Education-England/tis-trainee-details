@@ -98,9 +98,6 @@ public class PersonalDetailsService {
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(gmcDetails.gmcNumber());
 
-    // Default all GMCs to registered until we can properly prompt/determine the correct status.
-    personalDetails.setGmcStatus("Registered with Licence");
-
     Optional<PersonalDetails> updatedDetails = updateGmcDetailsByTisId(tisId, personalDetails);
 
     updatedDetails.ifPresent(details -> {

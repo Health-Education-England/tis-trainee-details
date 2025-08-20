@@ -53,7 +53,6 @@ public class PersonalDetails {
   private String address4; // ContactDetails
   private String postCode; // ContactDetails
   private String gmcNumber; // GmcDetails
-  @EqualsAndHashCode.Exclude
   private String gmcStatus; // GmcDetails
   private String gdcNumber; // GdcDetails
   private String gdcStatus; // GdcDetails

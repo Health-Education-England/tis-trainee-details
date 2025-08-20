@@ -95,10 +95,8 @@ public class BasicDetailsResource {
 
     log.info("Updating GMC number of trainee {}.", tisId);
 
-    // Default all GMCs to registered until we can properly prompt/determine the correct status.
     GmcDetailsDto updatedGmcDetails = GmcDetailsDto.builder()
         .gmcNumber(gmcDetails.gmcNumber())
-        .gmcStatus("Registered with Licence")
         .build();
 
     Optional<PersonalDetails> entity = service.updateGmcDetailsWithTraineeProvidedDetails(tisId,

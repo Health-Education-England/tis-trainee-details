@@ -80,6 +80,7 @@ class PersonalDetailsServiceTest {
   private static final String MODIFIED_SUFFIX = "post";
   private static final String ORIGINAL_SUFFIX = "pre";
   private static final int ONE_HUNDRED = 100;
+  private static final String DEFAULT_GMC_STATUS = "Registered with Licence";
 
   private PersonalDetailsService service;
   private TraineeProfileRepository repository;
@@ -282,7 +283,8 @@ class PersonalDetailsServiceTest {
 
     PersonalDetails expectedPersonalDetails = createPersonalDetails(ORIGINAL_SUFFIX, 0);
     expectedPersonalDetails.setGmcNumber(GMC_NUMBER + MODIFIED_SUFFIX);
-    expectedPersonalDetails.setGmcStatus(GMC_STATUS + MODIFIED_SUFFIX);
+    // GMC number updated, so GMC status changes to DEFAULT_GMC_STATUS
+    expectedPersonalDetails.setGmcStatus(DEFAULT_GMC_STATUS);
 
     assertThat("Unexpected personal details.", personalDetails.get(), is(expectedPersonalDetails));
   }
@@ -301,7 +303,8 @@ class PersonalDetailsServiceTest {
 
     PersonalDetails expectedPersonalDetails = new PersonalDetails();
     expectedPersonalDetails.setGmcNumber(GMC_NUMBER + MODIFIED_SUFFIX);
-    expectedPersonalDetails.setGmcStatus(GMC_STATUS + MODIFIED_SUFFIX);
+    // GMC number updated, so GMC status changes to DEFAULT_GMC_STATUS
+    expectedPersonalDetails.setGmcStatus(DEFAULT_GMC_STATUS);
 
     assertThat("Unexpected personal details.", personalDetails.get(), is(expectedPersonalDetails));
   }
