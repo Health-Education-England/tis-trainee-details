@@ -310,6 +310,26 @@ class PersonalDetailsServiceTest {
   }
 
   @Test
+  void shouldNotSetDefaultGmcStatusWhenTraineeSkeletonFoundAndNullGmcNumber() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+
+    when(repository.findByTraineeTisId("40")).thenReturn(traineeProfile);
+    when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
+
+    Optional<PersonalDetails> personalDetails = service.updateGmcDetailsByTisId("40",
+        new PersonalDetails());
+
+    assertThat("Unexpected optional isEmpty flag.", personalDetails.isEmpty(), is(false));
+
+    PersonalDetails expectedPersonalDetails = new PersonalDetails();
+    expectedPersonalDetails.setGmcNumber(null);
+    // GMC number updated, so GMC status changes to DEFAULT_GMC_STATUS
+    expectedPersonalDetails.setGmcStatus(null);
+
+    assertThat("Unexpected personal details.", personalDetails.get(), is(expectedPersonalDetails));
+  }
+
+  @Test
   void shouldNotPublishEventWhenGmcDetailsNotProvidedByTrainee() {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setPersonalDetails(createPersonalDetails(ORIGINAL_SUFFIX, 0));

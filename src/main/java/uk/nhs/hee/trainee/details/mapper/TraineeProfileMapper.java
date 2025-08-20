@@ -119,7 +119,7 @@ public abstract class TraineeProfileMapper {
         target.getPersonalDetails().setGmcStatus("Registered with Licence");
       }
     } else if (source.getGmcNumber() != null) {
-      // If source GMC number has a new value
+      // If target personal details is null and source GMC number has a new value
       target.setPersonalDetails(new PersonalDetails());
       target.getPersonalDetails().setGmcStatus("Registered with Licence");
     }

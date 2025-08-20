@@ -24,7 +24,6 @@ package uk.nhs.hee.trainee.details.model;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 /**
  * Trainee doctor personal details.
