@@ -143,7 +143,7 @@ class BasicDetailsResourceTest {
   }
 
   @Test
-  void getShouldNotUpdateGmcNumberWhenTisIdNotExists() throws Exception {
+  void getReturnBadRequestThenUpdatedGmcDetailsEntityIsEmpty() throws Exception {
     GmcDetailsDto gmcDetails = GmcDetailsDto.builder()
         .gmcNumber(GMC_NUMBER)
         .build();
@@ -156,7 +156,7 @@ class BasicDetailsResourceTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(mapper.writeValueAsBytes(gmcDetails))
             .header(HttpHeaders.AUTHORIZATION, token))
-        .andExpect(status().isNotFound());
+        .andExpect(status().isBadRequest());
   }
 
   @Test

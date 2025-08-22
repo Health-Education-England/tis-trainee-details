@@ -89,7 +89,7 @@ public class BasicDetailsResource {
       log.warn("No trainee ID provided.");
       return ResponseEntity.badRequest().build();
     } else if (tisId.startsWith("-")) {
-      log.warn("Tester trainee ID provided. Ignore GMC number update.");
+      log.warn("Tester trainee ID {} provided. Ignore GMC number update.", tisId);
       return ResponseEntity.badRequest().build();
     }
 
@@ -101,7 +101,13 @@ public class BasicDetailsResource {
 
     Optional<PersonalDetails> entity = service.updateGmcDetailsWithTraineeProvidedDetails(tisId,
         updatedGmcDetails);
-    Optional<PersonalDetailsDto> dto = entity.map(mapper::toDto);
-    return ResponseEntity.of(dto);
+    if (entity.isPresent()) {
+      Optional<PersonalDetailsDto> dto = entity.map(mapper::toDto);
+      return ResponseEntity.of(dto);
+    }
+    else {
+      log.warn("GMC details not updated.");
+      return ResponseEntity.badRequest().build();
+    }
   }
 }
