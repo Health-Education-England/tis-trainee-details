@@ -98,9 +98,6 @@ public class PersonalDetailsService {
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(gmcDetails.gmcNumber());
 
-    // Default all GMCs to registered until we can properly prompt/determine the correct status.
-    personalDetails.setGmcStatus("Registered with Licence");
-
     Optional<PersonalDetails> updatedDetails = updateGmcDetailsByTisId(tisId, personalDetails);
 
     updatedDetails.ifPresent(details -> {
@@ -180,12 +177,17 @@ public class PersonalDetailsService {
   private Optional<PersonalDetails> updatePersonalDetailsByTisId(String tisId,
       PersonalDetails personalDetails, BiConsumer<TraineeProfile, PersonalDetails> updateFunction) {
     TraineeProfile traineeProfile = repository.findByTraineeTisId(tisId);
-
     if (traineeProfile == null) {
       return Optional.empty();
     }
 
+    TraineeProfile originalDto = mapper.cloneTraineeProfile(traineeProfile);
     updateFunction.accept(traineeProfile, personalDetails);
+
+    if (traineeProfile.equals(originalDto)) {
+      log.info("No new changes in traineeProfile for {}, ignore update.", tisId);
+      return Optional.empty();
+    }
     return Optional.of(repository.save(traineeProfile).getPersonalDetails());
   }
 }

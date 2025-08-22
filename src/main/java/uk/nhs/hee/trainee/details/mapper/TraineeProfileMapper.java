@@ -21,15 +21,21 @@
 
 package uk.nhs.hee.trainee.details.mapper;
 
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.mapstruct.AfterMapping;
 import org.mapstruct.BeanMapping;
+import org.mapstruct.BeforeMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
+import org.mapstruct.Named;
 import org.springframework.beans.factory.annotation.Autowired;
 import uk.nhs.hee.trainee.details.dto.TraineeProfileDto;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
+import uk.nhs.hee.trainee.details.model.Placement;
+import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
+import uk.nhs.hee.trainee.details.model.Qualification;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.service.TrainingNumberGenerator;
 
@@ -96,9 +102,31 @@ public abstract class TraineeProfileMapper {
   public abstract void updateGdcDetails(@MappingTarget TraineeProfile target,
       PersonalDetails source);
 
-  @BeanMapping(ignoreByDefault = true)
+  /**
+   * Pre GMC update process to set default GMC to registered if GMC number is updated.
+   *
+   * @param target The existing trainee profile.
+   * @param source The new personal details.
+   */
+  @Named("updateGmc")
+  @BeforeMapping
+  protected void perUpdateGmcDetails(@MappingTarget TraineeProfile target,
+      PersonalDetails source) {
+    if (target.getPersonalDetails() != null) {
+      // If the gmcNumber is updated
+      if (!target.getPersonalDetails().getGmcNumber().equals(source.getGmcNumber())) {
+        // Default all GMCs to registered until we can properly prompt/determine the correct status.
+        target.getPersonalDetails().setGmcStatus("Registered with Licence");
+      }
+    } else if (source.getGmcNumber() != null) {
+      // If target personal details is null and source GMC number has a new value
+      target.setPersonalDetails(new PersonalDetails());
+      target.getPersonalDetails().setGmcStatus("Registered with Licence");
+    }
+  }
+
+  @BeanMapping(ignoreByDefault = true, qualifiedByName = "updateGmc")
   @Mapping(target = "personalDetails.gmcNumber", source = "gmcNumber")
-  @Mapping(target = "personalDetails.gmcStatus", source = "gmcStatus")
   public abstract void updateGmcDetails(@MappingTarget TraineeProfile target,
       PersonalDetails source);
 
@@ -112,4 +140,15 @@ public abstract class TraineeProfileMapper {
   @Mapping(target = "personalDetails.gender", source = "gender")
   public abstract void updatePersonalInfo(@MappingTarget TraineeProfile target,
       PersonalDetails source);
+
+  public abstract TraineeProfile cloneTraineeProfile(TraineeProfile source);
+
+  public abstract PersonalDetails clonePersonalDetails(PersonalDetails source);
+
+  public abstract List<Qualification> cloneQualifications(List<Qualification> source);
+
+  public abstract List<ProgrammeMembership> cloneProgrammeMemberships(
+      List<ProgrammeMembership> source);
+
+  public abstract List<Placement> clonePlacements(List<Placement> source);
 }

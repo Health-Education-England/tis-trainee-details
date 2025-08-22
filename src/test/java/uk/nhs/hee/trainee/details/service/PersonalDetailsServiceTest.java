@@ -29,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -79,6 +80,7 @@ class PersonalDetailsServiceTest {
   private static final String MODIFIED_SUFFIX = "post";
   private static final String ORIGINAL_SUFFIX = "pre";
   private static final int ONE_HUNDRED = 100;
+  private static final String DEFAULT_GMC_STATUS = "Registered with Licence";
 
   private PersonalDetailsService service;
   private TraineeProfileRepository repository;
@@ -184,6 +186,23 @@ class PersonalDetailsServiceTest {
   }
 
   @Test
+  void shouldNotUpdateGdcDetailsWhenTraineeProfileNotChanged() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPersonalDetails(createPersonalDetails(ORIGINAL_SUFFIX, 0));
+
+    when(repository.findByTraineeTisId("40")).thenReturn(traineeProfile);
+    when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
+
+    // update with the same value
+    Optional<PersonalDetails> personalDetails = service.updateGdcDetailsByTisId("40",
+        createPersonalDetails(ORIGINAL_SUFFIX, 0));
+
+    assertThat("Unexpected optional isEmpty flag.", personalDetails.isEmpty(), is(true));
+    verify(repository, never()).save(any());
+    verifyNoInteractions(eventService);
+  }
+
+  @Test
   void shouldUpdateGdcDetailsWhenTraineeIdFound() {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setPersonalDetails(createPersonalDetails(ORIGINAL_SUFFIX, 0));
@@ -233,6 +252,23 @@ class PersonalDetailsServiceTest {
   }
 
   @Test
+  void shouldNotUpdateGmcDetailsWhenTraineeProfileNotChanged() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPersonalDetails(createPersonalDetails(ORIGINAL_SUFFIX, 0));
+
+    when(repository.findByTraineeTisId("40")).thenReturn(traineeProfile);
+    when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
+
+    // update with the same value
+    Optional<PersonalDetails> personalDetails = service.updateGmcDetailsByTisId("40",
+        createPersonalDetails(ORIGINAL_SUFFIX, 0));
+
+    assertThat("Unexpected optional isEmpty flag.", personalDetails.isEmpty(), is(true));
+    verify(repository, never()).save(any());
+    verifyNoInteractions(eventService);
+  }
+
+  @Test
   void shouldUpdateGmcDetailsWhenTraineeIdFound() {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setPersonalDetails(createPersonalDetails(ORIGINAL_SUFFIX, 0));
@@ -247,7 +283,8 @@ class PersonalDetailsServiceTest {
 
     PersonalDetails expectedPersonalDetails = createPersonalDetails(ORIGINAL_SUFFIX, 0);
     expectedPersonalDetails.setGmcNumber(GMC_NUMBER + MODIFIED_SUFFIX);
-    expectedPersonalDetails.setGmcStatus(GMC_STATUS + MODIFIED_SUFFIX);
+    // GMC number updated, so GMC status changes to DEFAULT_GMC_STATUS
+    expectedPersonalDetails.setGmcStatus(DEFAULT_GMC_STATUS);
 
     assertThat("Unexpected personal details.", personalDetails.get(), is(expectedPersonalDetails));
   }
@@ -266,7 +303,28 @@ class PersonalDetailsServiceTest {
 
     PersonalDetails expectedPersonalDetails = new PersonalDetails();
     expectedPersonalDetails.setGmcNumber(GMC_NUMBER + MODIFIED_SUFFIX);
-    expectedPersonalDetails.setGmcStatus(GMC_STATUS + MODIFIED_SUFFIX);
+    // GMC number updated, so GMC status changes to DEFAULT_GMC_STATUS
+    expectedPersonalDetails.setGmcStatus(DEFAULT_GMC_STATUS);
+
+    assertThat("Unexpected personal details.", personalDetails.get(), is(expectedPersonalDetails));
+  }
+
+  @Test
+  void shouldNotSetDefaultGmcStatusWhenTraineeSkeletonFoundAndNullGmcNumber() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+
+    when(repository.findByTraineeTisId("40")).thenReturn(traineeProfile);
+    when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
+
+    Optional<PersonalDetails> personalDetails = service.updateGmcDetailsByTisId("40",
+        new PersonalDetails());
+
+    assertThat("Unexpected optional isEmpty flag.", personalDetails.isEmpty(), is(false));
+
+    PersonalDetails expectedPersonalDetails = new PersonalDetails();
+    expectedPersonalDetails.setGmcNumber(null);
+    // GMC number updated, so GMC status changes to DEFAULT_GMC_STATUS
+    expectedPersonalDetails.setGmcStatus(null);
 
     assertThat("Unexpected personal details.", personalDetails.get(), is(expectedPersonalDetails));
   }
@@ -317,6 +375,23 @@ class PersonalDetailsServiceTest {
     assertThat("Unexpected optional isEmpty flag.", personalDetails.isEmpty(), is(true));
     verify(repository).findByTraineeTisId("notFound");
     verifyNoMoreInteractions(repository);
+  }
+
+  @Test
+  void shouldNotUpdateContactDetailsWhenTraineeProfileNotChanged() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPersonalDetails(createPersonalDetails(ORIGINAL_SUFFIX, 0));
+
+    when(repository.findByTraineeTisId("40")).thenReturn(traineeProfile);
+    when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
+
+    // update with the same value
+    Optional<PersonalDetails> personalDetails = service.updateContactDetailsByTisId("40",
+        createPersonalDetails(ORIGINAL_SUFFIX, 0));
+
+    assertThat("Unexpected optional isEmpty flag.", personalDetails.isEmpty(), is(true));
+    verify(repository, never()).save(any());
+    verifyNoInteractions(eventService);
   }
 
   @Test
@@ -391,6 +466,23 @@ class PersonalDetailsServiceTest {
   }
 
   @Test
+  void shouldNotUpdatePersonOwnerDetailsWhenTraineeProfileNotChanged() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPersonalDetails(createPersonalDetails(ORIGINAL_SUFFIX, 0));
+
+    when(repository.findByTraineeTisId("40")).thenReturn(traineeProfile);
+    when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
+
+    // update with the same value
+    Optional<PersonalDetails> personalDetails = service.updatePersonOwnerByTisId("40",
+        createPersonalDetails(ORIGINAL_SUFFIX, 0));
+
+    assertThat("Unexpected optional isEmpty flag.", personalDetails.isEmpty(), is(true));
+    verify(repository, never()).save(any());
+    verifyNoInteractions(eventService);
+  }
+
+  @Test
   void shouldNotUpdatePersonOwnerDetailsWhenTraineeIdFoundAndNewOwnerNull() {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setPersonalDetails(createPersonalDetails(ORIGINAL_SUFFIX, 0));
@@ -404,12 +496,8 @@ class PersonalDetailsServiceTest {
     Optional<PersonalDetails> personalDetails = service
         .updatePersonOwnerByTisId("40", newPersonalDetails);
 
-    assertThat("Unexpected optional isEmpty flag.", personalDetails.isEmpty(), is(false));
-
-    PersonalDetails expectedPersonalDetails = createPersonalDetails(ORIGINAL_SUFFIX, 0);
-    expectedPersonalDetails.setPersonOwner(PERSON_OWNER + ORIGINAL_SUFFIX);
-
-    assertThat("Unexpected personal details.", personalDetails.get(), is(expectedPersonalDetails));
+    assertThat("Unexpected optional isEmpty flag.", personalDetails.isEmpty(), is(true));
+    verify(repository, never()).save(any());
   }
 
   @Test
@@ -458,6 +546,24 @@ class PersonalDetailsServiceTest {
     assertTrue(personalDetails.isEmpty(), "Expected personal details to have been empty");
     verify(repository).findByTraineeTisId("notFound");
     verifyNoInteractions(personalDetailsMock);
+  }
+
+  @Test
+  void shouldNotUpdatePersonalInfoWhenTraineeProfileNotChanged() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPersonalDetails(createPersonalDetails(ORIGINAL_SUFFIX, 0));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+    when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
+
+    // update with the same value
+    Optional<PersonalDetails> personalDetails = service
+        .updatePersonalInfoByTisId(
+            TRAINEE_TIS_ID, createPersonalDetails(ORIGINAL_SUFFIX, 0));
+
+    assertThat("Unexpected optional isEmpty flag.", personalDetails.isEmpty(), is(true));
+    verify(repository, never()).save(any());
+    verifyNoInteractions(eventService);
   }
 
   @Test

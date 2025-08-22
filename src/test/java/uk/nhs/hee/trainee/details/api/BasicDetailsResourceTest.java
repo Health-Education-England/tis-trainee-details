@@ -160,6 +160,23 @@ class BasicDetailsResourceTest {
   }
 
   @Test
+  void getShouldNotUpdateGmcNumberWhenTisIdIsTester() throws Exception {
+    GmcDetailsDto gmcDetails = GmcDetailsDto.builder()
+        .gmcNumber(GMC_NUMBER)
+        .build();
+
+    String token = TestJwtUtil.generateTokenForTisId("-40");
+
+    when(service.updateGmcDetailsByTisId(any(), any())).thenReturn(Optional.empty());
+
+    this.mockMvc.perform(put("/api/basic-details/gmc-number")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(mapper.writeValueAsBytes(gmcDetails))
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
   void shouldUpdateGmcNumberWhenAuthorized() throws Exception {
     GmcDetailsDto gmcDetails = GmcDetailsDto.builder()
         .gmcNumber(GMC_NUMBER)
@@ -186,7 +203,6 @@ class BasicDetailsResourceTest {
 
     GmcDetailsDto updatedDetails = gmcDetailsCaptor.getValue();
     assertThat("Unexpected GMC number.", updatedDetails.gmcNumber(), is("1234567"));
-    assertThat("Unexpected GMC status.", updatedDetails.gmcStatus(), is(DEFAULT_GMC_STATUS));
   }
 
   @Test
