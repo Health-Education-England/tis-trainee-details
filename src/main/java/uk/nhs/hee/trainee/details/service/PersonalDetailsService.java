@@ -61,8 +61,9 @@ public class PersonalDetailsService {
       PersonalDetails personalDetails) {
     PersonalDetailsUpdated updatedDetails = updatePersonalDetailsByTisId(tisId, personalDetails,
         mapper::updateBasicDetails);
+    Optional<PersonalDetails> updatedPersonalDetails =  updatedDetails.getPersonalDetails();
 
-    if (updatedDetails.getPersonalDetails().isEmpty()) {
+    if (updatedPersonalDetails.isEmpty()) {
       TraineeProfile traineeProfile = new TraineeProfile();
       traineeProfile.setTraineeTisId(tisId);
       mapper.updateBasicDetails(traineeProfile, personalDetails);
@@ -71,7 +72,7 @@ public class PersonalDetailsService {
       eventService.publishProfileCreateEvent(savedProfile);
       return savedProfile.getPersonalDetails();
     } else {
-      return updatedDetails.getPersonalDetails().get();
+      return updatedPersonalDetails.get();
     }
   }
 
