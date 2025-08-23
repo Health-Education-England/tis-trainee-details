@@ -70,9 +70,9 @@ public class PersonalDetailsService {
 
       eventService.publishProfileCreateEvent(savedProfile);
       return savedProfile.getPersonalDetails();
+    } else {
+      return updatedDetails.getPersonalDetails().get();
     }
-
-    return updatedDetails.getPersonalDetails().get();
   }
 
   /**

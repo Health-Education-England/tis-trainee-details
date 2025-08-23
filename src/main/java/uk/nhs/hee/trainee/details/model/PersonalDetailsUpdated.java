@@ -21,10 +21,12 @@
 
 package uk.nhs.hee.trainee.details.model;
 
+import java.util.Optional;
 import lombok.Getter;
 
-import java.util.Optional;
-
+/**
+ * Return personal details updated result.
+ */
 public class PersonalDetailsUpdated {
 
   @Getter
