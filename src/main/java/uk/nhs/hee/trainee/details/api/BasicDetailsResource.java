@@ -101,13 +101,7 @@ public class BasicDetailsResource {
 
     Optional<PersonalDetails> entity = service.updateGmcDetailsWithTraineeProvidedDetails(tisId,
         updatedGmcDetails);
-    if (entity.isPresent()) {
-      Optional<PersonalDetailsDto> dto = entity.map(mapper::toDto);
-      return ResponseEntity.of(dto);
-    }
-    else {
-      log.warn("GMC details not updated.");
-      return ResponseEntity.badRequest().build();
-    }
+    Optional<PersonalDetailsDto> dto = entity.map(mapper::toDto);
+    return ResponseEntity.of(dto);
   }
 }

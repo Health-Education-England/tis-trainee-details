@@ -29,6 +29,7 @@ import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
 import uk.nhs.hee.trainee.details.dto.PersonalDetailsUpdateEvent;
 import uk.nhs.hee.trainee.details.mapper.PersonalDetailsMapper;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
+import uk.nhs.hee.trainee.details.model.PersonalDetailsUpdated;
 import uk.nhs.hee.trainee.details.service.PersonalDetailsService;
 
 /**
@@ -58,9 +59,9 @@ public class ContactDetailsListener {
 
     PersonalDetailsDto dto = event.update().personalDetails();
     PersonalDetails entity = mapper.toEntity(dto);
-    Optional<PersonalDetails> optionalEntity = service.updateContactDetailsByTisId(tisId, entity);
+    PersonalDetailsUpdated updatedDetails = service.updateContactDetailsByTisId(tisId, entity);
 
-    if (optionalEntity.isEmpty()) {
+    if (updatedDetails.getPersonalDetails().isEmpty()) {
       throw new IllegalArgumentException("Trainee not found.");
     }
   }

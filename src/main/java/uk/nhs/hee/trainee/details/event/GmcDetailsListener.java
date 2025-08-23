@@ -57,7 +57,7 @@ public class GmcDetailsListener {
 
     PersonalDetailsDto dto = event.update().personalDetails();
     PersonalDetails entity = mapper.toEntity(dto);
-    service.updateGmcDetailsByTisId(tisId, entity)
+    service.updateGmcDetailsByTisId(tisId, entity).getPersonalDetails()
         .orElseThrow(() -> new IllegalArgumentException("Trainee not found."));
   }
 }
