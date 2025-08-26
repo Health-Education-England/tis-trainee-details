@@ -38,6 +38,7 @@ import uk.nhs.hee.trainee.details.dto.PersonalDetailsUpdateEvent;
 import uk.nhs.hee.trainee.details.dto.PersonalDetailsUpdateEvent.Update;
 import uk.nhs.hee.trainee.details.mapper.PersonalDetailsMapperImpl;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
+import uk.nhs.hee.trainee.details.model.PersonalDetailsUpdated;
 import uk.nhs.hee.trainee.details.service.PersonalDetailsService;
 
 class ContactDetailsListenerTest {
@@ -63,7 +64,8 @@ class ContactDetailsListenerTest {
     Update update = new Update(dto);
     PersonalDetailsUpdateEvent event = new PersonalDetailsUpdateEvent(TIS_ID, update);
 
-    when(service.updateContactDetailsByTisId(eq(TIS_ID), any())).thenReturn(Optional.empty());
+    when(service.updateContactDetailsByTisId(eq(TIS_ID), any())).thenReturn(
+        new PersonalDetailsUpdated(false, Optional.empty()));
 
     assertThrows(IllegalArgumentException.class, () -> listener.updateContactDetails(event));
   }
@@ -80,7 +82,7 @@ class ContactDetailsListenerTest {
 
     ArgumentCaptor<PersonalDetails> entityCaptor = ArgumentCaptor.forClass(PersonalDetails.class);
     when(service.updateContactDetailsByTisId(eq(TIS_ID), entityCaptor.capture())).then(
-        inv -> Optional.of(inv.getArgument(1)));
+        inv -> new PersonalDetailsUpdated(true, Optional.of(inv.getArgument(1))));
 
     listener.updateContactDetails(event);
 

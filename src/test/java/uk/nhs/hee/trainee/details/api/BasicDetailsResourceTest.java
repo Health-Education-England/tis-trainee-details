@@ -58,6 +58,7 @@ import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
 import uk.nhs.hee.trainee.details.mapper.PersonalDetailsMapperImpl;
 import uk.nhs.hee.trainee.details.mapper.SignatureMapperImpl;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
+import uk.nhs.hee.trainee.details.model.PersonalDetailsUpdated;
 import uk.nhs.hee.trainee.details.service.PersonalDetailsService;
 import uk.nhs.hee.trainee.details.service.SignatureService;
 
@@ -150,7 +151,8 @@ class BasicDetailsResourceTest {
 
     String token = TestJwtUtil.generateTokenForTisId("40");
 
-    when(service.updateGmcDetailsByTisId(any(), any())).thenReturn(Optional.empty());
+    when(service.updateGmcDetailsByTisId(any(), any())).thenReturn(
+        new PersonalDetailsUpdated(false, Optional.empty()));
 
     this.mockMvc.perform(put("/api/basic-details/gmc-number")
             .contentType(MediaType.APPLICATION_JSON)
@@ -167,7 +169,8 @@ class BasicDetailsResourceTest {
 
     String token = TestJwtUtil.generateTokenForTisId("-40");
 
-    when(service.updateGmcDetailsByTisId(any(), any())).thenReturn(Optional.empty());
+    when(service.updateGmcDetailsByTisId(any(), any())).thenReturn(
+        new PersonalDetailsUpdated(false, Optional.empty()));
 
     this.mockMvc.perform(put("/api/basic-details/gmc-number")
             .contentType(MediaType.APPLICATION_JSON)

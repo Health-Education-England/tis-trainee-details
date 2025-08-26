@@ -29,6 +29,7 @@ import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.dto.GmcDetailsDto;
 import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapper;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
+import uk.nhs.hee.trainee.details.model.PersonalDetailsUpdated;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 
@@ -58,10 +59,11 @@ public class PersonalDetailsService {
    */
   public PersonalDetails createProfileOrUpdateBasicDetailsByTisId(String tisId,
       PersonalDetails personalDetails) {
-    Optional<PersonalDetails> updatedDetails = updatePersonalDetailsByTisId(tisId, personalDetails,
+    PersonalDetailsUpdated updatedDetails = updatePersonalDetailsByTisId(tisId, personalDetails,
         mapper::updateBasicDetails);
+    Optional<PersonalDetails> updatedPersonalDetails =  updatedDetails.getPersonalDetails();
 
-    if (updatedDetails.isEmpty()) {
+    if (updatedPersonalDetails.isEmpty()) {
       TraineeProfile traineeProfile = new TraineeProfile();
       traineeProfile.setTraineeTisId(tisId);
       mapper.updateBasicDetails(traineeProfile, personalDetails);
@@ -69,9 +71,9 @@ public class PersonalDetailsService {
 
       eventService.publishProfileCreateEvent(savedProfile);
       return savedProfile.getPersonalDetails();
+    } else {
+      return updatedPersonalDetails.get();
     }
-
-    return updatedDetails.get();
   }
 
   /**
@@ -81,7 +83,7 @@ public class PersonalDetailsService {
    * @param personalDetails The personal details to add to the trainee.
    * @return The updated personal details or empty if a trainee with the ID was not found.
    */
-  public Optional<PersonalDetails> updateGdcDetailsByTisId(String tisId,
+  public PersonalDetailsUpdated updateGdcDetailsByTisId(String tisId,
       PersonalDetails personalDetails) {
     return updatePersonalDetailsByTisId(tisId, personalDetails, mapper::updateGdcDetails);
   }
@@ -98,14 +100,17 @@ public class PersonalDetailsService {
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(gmcDetails.gmcNumber());
 
-    Optional<PersonalDetails> updatedDetails = updateGmcDetailsByTisId(tisId, personalDetails);
+    PersonalDetailsUpdated updatedDetails = updateGmcDetailsByTisId(tisId, personalDetails);
 
-    updatedDetails.ifPresent(details -> {
-      log.info("Trainee {} updated their GMC number to {}.", tisId, details.getGmcNumber());
-      eventService.publishGmcDetailsProvidedEvent(tisId, gmcDetails);
+    updatedDetails.getPersonalDetails().ifPresent(details -> {
+      // if gmcNumber is updated
+      if (updatedDetails.isUpdated()) {
+        log.info("Trainee {} updated their GMC number to {}.", tisId, details.getGmcNumber());
+        eventService.publishGmcDetailsProvidedEvent(tisId, gmcDetails);
+      }
     });
 
-    return updatedDetails;
+    return updatedDetails.getPersonalDetails();
   }
 
   /**
@@ -115,7 +120,7 @@ public class PersonalDetailsService {
    * @param personalDetails The personal details to add to the trainee.
    * @return The updated personal details or empty if a trainee with the ID was not found.
    */
-  public Optional<PersonalDetails> updateGmcDetailsByTisId(String tisId,
+  public PersonalDetailsUpdated updateGmcDetailsByTisId(String tisId,
       PersonalDetails personalDetails) {
     return updatePersonalDetailsByTisId(tisId, personalDetails, mapper::updateGmcDetails);
   }
@@ -127,7 +132,7 @@ public class PersonalDetailsService {
    * @param personalDetails The personal details to add to the trainee.
    * @return The updated personal details or empty if a trainee with the ID was not found.
    */
-  public Optional<PersonalDetails> updatePersonOwnerByTisId(String tisId,
+  public PersonalDetailsUpdated updatePersonOwnerByTisId(String tisId,
       PersonalDetails personalDetails) {
     BiConsumer<TraineeProfile, PersonalDetails> updateFunction;
 
@@ -149,7 +154,7 @@ public class PersonalDetailsService {
    * @param personalDetails The personal details to add to the trainee.
    * @return The updated personal details or empty if a trainee with the ID was not found.
    */
-  public Optional<PersonalDetails> updateContactDetailsByTisId(String tisId,
+  public PersonalDetailsUpdated updateContactDetailsByTisId(String tisId,
       PersonalDetails personalDetails) {
     return updatePersonalDetailsByTisId(tisId, personalDetails, mapper::updateContactDetails);
   }
@@ -161,7 +166,7 @@ public class PersonalDetailsService {
    * @param personalDetails The personal details to add to the trainee.
    * @return The updated personal details or empty if a trainee with the ID was not found.
    */
-  public Optional<PersonalDetails> updatePersonalInfoByTisId(String tisId,
+  public PersonalDetailsUpdated updatePersonalInfoByTisId(String tisId,
       PersonalDetails personalDetails) {
     return updatePersonalDetailsByTisId(tisId, personalDetails, mapper::updatePersonalInfo);
   }
@@ -174,11 +179,11 @@ public class PersonalDetailsService {
    * @param updateFunction  The function to use to update the personal details.
    * @return The updated personal details or empty if a trainee with the ID was not found.
    */
-  private Optional<PersonalDetails> updatePersonalDetailsByTisId(String tisId,
+  private PersonalDetailsUpdated updatePersonalDetailsByTisId(String tisId,
       PersonalDetails personalDetails, BiConsumer<TraineeProfile, PersonalDetails> updateFunction) {
     TraineeProfile traineeProfile = repository.findByTraineeTisId(tisId);
     if (traineeProfile == null) {
-      return Optional.empty();
+      return new PersonalDetailsUpdated(false, Optional.empty());
     }
 
     TraineeProfile originalDto = mapper.cloneTraineeProfile(traineeProfile);
@@ -186,8 +191,10 @@ public class PersonalDetailsService {
 
     if (traineeProfile.equals(originalDto)) {
       log.info("No new changes in traineeProfile for {}, ignore update.", tisId);
-      return Optional.empty();
+      return new PersonalDetailsUpdated(false,
+          Optional.of(originalDto.getPersonalDetails()));
     }
-    return Optional.of(repository.save(traineeProfile).getPersonalDetails());
+    return new PersonalDetailsUpdated(true,
+        Optional.of(repository.save(traineeProfile).getPersonalDetails()));
   }
 }
