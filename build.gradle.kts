@@ -55,7 +55,7 @@ dependencies {
   // Amazon AWS
   implementation("io.awspring.cloud:spring-cloud-aws-starter-sqs")
   implementation("io.awspring.cloud:spring-cloud-aws-starter-sns")
-  implementation(libs.aws.xray)
+  implementation(libs.aws.xray.spring)
 
   // PDF
   implementation(libs.bundles.pdf.publishing)
