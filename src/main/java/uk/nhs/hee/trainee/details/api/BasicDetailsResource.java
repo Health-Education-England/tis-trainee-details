@@ -88,7 +88,7 @@ public class BasicDetailsResource {
     if (tisId == null) {
       log.warn("No trainee ID provided.");
       return ResponseEntity.badRequest().build();
-    } else if (tisId.startsWith("-")) {
+    } else if (tisId.startsWith("-") && !tisId.equals("-1")) { // Our E2E Tester id is "-1"
       log.warn("Tester trainee ID {} provided. Ignore GMC number update.", tisId);
       return ResponseEntity.badRequest().build();
     }
