@@ -105,8 +105,14 @@ public class PersonalDetailsService {
     updatedDetails.getPersonalDetails().ifPresent(details -> {
       // if gmcNumber is updated
       if (updatedDetails.isUpdated()) {
-        log.info("Trainee {} updated their GMC number to {}.", tisId, details.getGmcNumber());
-        eventService.publishGmcDetailsProvidedEvent(tisId, gmcDetails);
+        // don't publish to TIS if it is a test user
+        if (tisId.startsWith("-")) {
+          log.warn("Tester trainee ID {} provided. Ignore GMC number update.", tisId);
+        }
+        else {
+          log.info("Trainee {} updated their GMC number to {}.", tisId, details.getGmcNumber());
+          eventService.publishGmcDetailsProvidedEvent(tisId, gmcDetails);
+        }
       }
     });
 

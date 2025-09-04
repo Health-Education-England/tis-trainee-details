@@ -382,6 +382,24 @@ class PersonalDetailsServiceTest {
   }
 
   @Test
+  void shouldNotPublishEventWhenTraineeIsTester() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPersonalDetails(createPersonalDetails(ORIGINAL_SUFFIX, 0));
+
+    when(repository.findByTraineeTisId("-40")).thenReturn(traineeProfile);
+    when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
+
+    GmcDetailsDto gmcDetails = GmcDetailsDto.builder()
+        .gmcNumber(GMC_NUMBER + MODIFIED_SUFFIX)
+        .gmcStatus(GMC_STATUS + MODIFIED_SUFFIX)
+        .build();
+
+    service.updateGmcDetailsWithTraineeProvidedDetails("-40", gmcDetails);
+
+    verifyNoInteractions(eventService);
+  }
+
+  @Test
   void shouldPublishEventWhenGmcDetailsProvidedByTrainee() {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setPersonalDetails(createPersonalDetails(ORIGINAL_SUFFIX, 0));

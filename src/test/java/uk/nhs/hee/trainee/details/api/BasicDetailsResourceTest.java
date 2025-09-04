@@ -162,53 +162,6 @@ class BasicDetailsResourceTest {
   }
 
   @Test
-  void getShouldNotUpdateGmcNumberWhenTisIdIsTester() throws Exception {
-    GmcDetailsDto gmcDetails = GmcDetailsDto.builder()
-        .gmcNumber(GMC_NUMBER)
-        .build();
-
-    String token = TestJwtUtil.generateTokenForTisId("-40");
-
-    when(service.updateGmcDetailsByTisId(any(), any())).thenReturn(
-        new PersonalDetailsUpdated(false, Optional.empty()));
-
-    this.mockMvc.perform(put("/api/basic-details/gmc-number")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(mapper.writeValueAsBytes(gmcDetails))
-            .header(HttpHeaders.AUTHORIZATION, token))
-        .andExpect(status().isBadRequest());
-  }
-
-  @Test
-  void shouldUpdateGmcNumberWhenTisIdIsEndTester() throws Exception {
-    GmcDetailsDto gmcDetails = GmcDetailsDto.builder()
-        .gmcNumber(GMC_NUMBER)
-        .build();
-
-    String token = TestJwtUtil.generateTokenForTisId("-1");
-
-    ArgumentCaptor<GmcDetailsDto> gmcDetailsCaptor = ArgumentCaptor.captor();
-    when(service.updateGmcDetailsWithTraineeProvidedDetails(eq("-1"), gmcDetailsCaptor.capture()))
-        .thenAnswer(inv -> {
-          GmcDetailsDto gmcDetailsArg = inv.getArgument(1);
-          PersonalDetails personalDetails = new PersonalDetails();
-          personalDetails.setGmcNumber(gmcDetailsArg.gmcNumber());
-          personalDetails.setGmcStatus(gmcDetailsArg.gmcStatus());
-          return Optional.of(personalDetails);
-        });
-
-    this.mockMvc.perform(put("/api/basic-details/gmc-number")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(mapper.writeValueAsBytes(gmcDetails))
-            .header(HttpHeaders.AUTHORIZATION, token))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.gmcNumber", is("1234567")));
-
-    GmcDetailsDto updatedDetails = gmcDetailsCaptor.getValue();
-    assertThat("Unexpected GMC number.", updatedDetails.gmcNumber(), is("1234567"));
-  }
-
-  @Test
   void shouldUpdateGmcNumberWhenAuthorized() throws Exception {
     GmcDetailsDto gmcDetails = GmcDetailsDto.builder()
         .gmcNumber(GMC_NUMBER)
