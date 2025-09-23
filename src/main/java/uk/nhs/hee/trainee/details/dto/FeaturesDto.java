@@ -22,13 +22,102 @@
 package uk.nhs.hee.trainee.details.dto;
 
 import java.util.List;
+import java.util.Set;
 import lombok.Builder;
 
 /**
  * A DTO for trainee details feature flags.
  */
 @Builder
-public record FeaturesDto(boolean ltft,
-                          List<String> ltftProgrammes) {
+public record FeaturesDto(
+    Feature actions,
+    Feature cct,
+    DetailsFeatures details,
+    FormFeatures forms,
+    Feature notifications,
 
+    // TODO: The API is unversioned, so these are needed until the client is updated.
+    boolean ltft,
+    List<String> ltftProgrammes) {
+
+
+  /**
+   * Generic feature flag.
+   *
+   * @param enabled Whether the feature is enabled.
+   */
+  public record Feature(boolean enabled) {
+
+  }
+
+  /**
+   * A sub-set of details flags.
+   *
+   * @param enabled    Whether details are enabled.
+   * @param placements Placement feature flag.
+   * @param profile    A sub-set of profile features.
+   * @param programmes A sub-set of programme features.
+   */
+  @Builder
+  public record DetailsFeatures(
+      boolean enabled,
+      Feature placements,
+      ProfileFeatures profile,
+      ProgrammeFeatures programmes) {
+
+    /**
+     * A sub-set of profile features.
+     *
+     * @param enabled   Whether the profile is enabled.
+     * @param gmcUpdate GMC Update feature flag.
+     */
+    @Builder
+    public record ProfileFeatures(
+        boolean enabled,
+        Feature gmcUpdate) {
+
+    }
+
+    /**
+     * A sub-set of programme features.
+     *
+     * @param enabled             Whether programme features are enabled.
+     * @param conditionsOfJoining Conditions of Joining feature flag.
+     * @param confirmation        Programme confirmation feature flag.
+     */
+    @Builder
+    public record ProgrammeFeatures(
+        boolean enabled,
+        Feature conditionsOfJoining,
+        Feature confirmation) {
+
+    }
+  }
+
+  /**
+   * A sub-set of form features.
+   *
+   * @param enabled Whether form features are enabled.
+   * @param formr   Form-R feature flags.
+   * @param ltft    A sub-set of LTFT features.
+   */
+  @Builder
+  public record FormFeatures(
+      boolean enabled,
+      Feature formr,
+      LtftFeatures ltft) {
+
+    /**
+     * A sub-set of LTFT features.
+     *
+     * @param enabled              Whether LTFT is enabled.
+     * @param qualifyingProgrammes A set of programmes which qualify for LTFT.
+     */
+    @Builder
+    public record LtftFeatures(
+        boolean enabled,
+        Set<String> qualifyingProgrammes) {
+
+    }
+  }
 }

@@ -22,6 +22,7 @@
 package uk.nhs.hee.trainee.details.service;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -68,13 +69,101 @@ class FeatureServiceTest {
   }
 
   @Test
+  void shouldDisableActionsWhenProfileNotFound() {
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(null);
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected feature flag.", features.actions().enabled(), is(false));
+  }
+
+  @Test
+  void shouldEnableActionsWhenProfileFound() {
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(
+        new TraineeProfile());
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected feature flag.", features.actions().enabled(), is(true));
+  }
+
+  @Test
+  void shouldDisableCctWhenProfileNotFound() {
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(null);
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected feature flag.", features.cct().enabled(), is(false));
+  }
+
+  @Test
+  void shouldEnableCctWhenProfileFound() {
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(
+        new TraineeProfile());
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected feature flag.", features.cct().enabled(), is(true));
+  }
+
+  @Test
+  void shouldDisableDetailsWhenProfileNotFound() {
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(null);
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected feature flag.", features.details().enabled(), is(false));
+    assertThat("Unexpected feature flag.", features.details().placements().enabled(), is(false));
+    assertThat("Unexpected feature flag.", features.details().profile().enabled(), is(false));
+    assertThat("Unexpected feature flag.", features.details().programmes().enabled(), is(false));
+  }
+
+  @Test
+  void shouldEnableDetailsWhenProfileFound() {
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(
+        new TraineeProfile());
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected feature flag.", features.details().enabled(), is(true));
+    assertThat("Unexpected feature flag.", features.details().placements().enabled(), is(true));
+    assertThat("Unexpected feature flag.", features.details().profile().enabled(), is(true));
+    assertThat("Unexpected feature flag.", features.details().programmes().enabled(), is(true));
+  }
+
+  @Test
+  void shouldDisableFormsWhenProfileNotFound() {
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(null);
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected feature flag.", features.forms().enabled(), is(false));
+    assertThat("Unexpected feature flag.", features.forms().formr().enabled(), is(false));
+    assertThat("Unexpected feature flag.", features.forms().ltft().enabled(), is(false));
+  }
+
+  @Test
+  void shouldEnableFormsWhenProfileFound() {
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(
+        new TraineeProfile());
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected feature flag.", features.forms().enabled(), is(true));
+    assertThat("Unexpected feature flag.", features.forms().formr().enabled(), is(true));
+  }
+
+  @Test
   void shouldDisableLtftAndEmptyLtftProgrammesWhenNoProfileFound() {
     when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(null);
 
     FeaturesDto features = service.getFeatures();
 
     assertThat("Unexpected LTFT flag.", features.ltft(), is(false));
+    assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(false));
     assertThat("Unexpected enabled programme count.", features.ltftProgrammes().size(), is(0));
+    assertThat("Unexpected enabled programme count.",
+        features.forms().ltft().qualifyingProgrammes().size(), is(0));
   }
 
   @Test
@@ -87,6 +176,7 @@ class FeatureServiceTest {
     FeaturesDto features = service.getFeatures();
 
     assertThat("Unexpected LTFT flag.", features.ltft(), is(false));
+    assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(false));
   }
 
   @Test
@@ -103,6 +193,7 @@ class FeatureServiceTest {
     FeaturesDto features = service.getFeatures();
 
     assertThat("Unexpected LTFT flag.", features.ltft(), is(false));
+    assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(false));
   }
 
   @ParameterizedTest
@@ -120,6 +211,7 @@ class FeatureServiceTest {
     FeaturesDto features = service.getFeatures();
 
     assertThat("Unexpected LTFT flag.", features.ltft(), is(false));
+    assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(false));
   }
 
   @ParameterizedTest
@@ -150,6 +242,7 @@ class FeatureServiceTest {
     FeaturesDto features = service.getFeatures();
 
     assertThat("Unexpected LTFT flag.", features.ltft(), is(false));
+    assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(false));
   }
 
   @ParameterizedTest
@@ -159,6 +252,7 @@ class FeatureServiceTest {
     profile.setTraineeTisId(TRAINEE_ID);
 
     ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setTisId(UUID.randomUUID().toString());
     pm.setManagingDeanery(deanery);
     pm.setEndDate(LocalDate.now().plusDays(1));
     profile.setProgrammeMemberships(List.of(pm));
@@ -167,6 +261,7 @@ class FeatureServiceTest {
     FeaturesDto features = service.getFeatures();
 
     assertThat("Unexpected LTFT flag.", features.ltft(), is(true));
+    assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(true));
   }
 
   @ParameterizedTest
@@ -176,6 +271,7 @@ class FeatureServiceTest {
     profile.setTraineeTisId(TRAINEE_ID);
 
     ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setTisId(UUID.randomUUID().toString());
     pm.setManagingDeanery(deanery);
     pm.setEndDate(LocalDate.now().plusDays(1));
     profile.setProgrammeMemberships(List.of(pm));
@@ -202,6 +298,7 @@ class FeatureServiceTest {
     FeaturesDto features = service.getFeatures();
 
     assertThat("Unexpected LTFT flag.", features.ltft(), is(true));
+    assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(true));
   }
 
   @ParameterizedTest
@@ -237,6 +334,7 @@ class FeatureServiceTest {
     FeaturesDto features = service.getFeatures();
 
     assertThat("Unexpected LTFT flag.", features.ltft(), is(false));
+    assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(false));
   }
 
   @ParameterizedTest
@@ -268,6 +366,7 @@ class FeatureServiceTest {
     FeaturesDto features = service.getFeatures();
 
     assertThat("Unexpected LTFT flag.", features.ltft(), is(true));
+    assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(true));
   }
 
   @Test
@@ -303,5 +402,28 @@ class FeatureServiceTest {
 
     assertThat("Unexpected enabled programme count.", features.ltftProgrammes().size(), is(1));
     assertThat("Unexpected enabled programme ID.", features.ltftProgrammes().get(0), is(pm1Id));
+
+    Set<String> qualifyingProgrammes = features.forms().ltft().qualifyingProgrammes();
+    assertThat("Unexpected enabled programme count.", qualifyingProgrammes.size(), is(1));
+    assertThat("Unexpected enabled programme ID.", qualifyingProgrammes, hasItem(pm1Id));
+  }
+
+  @Test
+  void shouldDisableNotificationsWhenProfileNotFound() {
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(null);
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected feature flag.", features.notifications().enabled(), is(false));
+  }
+
+  @Test
+  void shouldEnableNotificationsWhenProfileFound() {
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(
+        new TraineeProfile());
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected feature flag.", features.notifications().enabled(), is(true));
   }
 }
