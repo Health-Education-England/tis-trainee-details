@@ -135,6 +135,7 @@ class CctResourceIntegrationTest {
   @AfterEach
   void tearDown() {
     template.findAllAndRemove(new Query(), CctCalculation.class);
+    template.findAllAndRemove(new Query(), TraineeProfile.class);
   }
 
   @Test
