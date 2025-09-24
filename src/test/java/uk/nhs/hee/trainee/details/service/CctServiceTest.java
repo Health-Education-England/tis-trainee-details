@@ -844,4 +844,45 @@ class CctServiceTest {
     verify(calculationRepository).deleteById(id);
     verifyNoMoreInteractions(calculationRepository);
   }
+
+  @Test
+  void shouldMoveCctCalculationsWhenFound() {
+    String fromTraineeId = "40";
+    String toTraineeId = "50";
+    UUID id1 = UUID.randomUUID();
+    UUID id2 = UUID.randomUUID();
+
+    CctCalculation calc1 = CctCalculation.builder()
+        .id(id1)
+        .traineeId(fromTraineeId)
+        .name("Test Calculation 1")
+        .build();
+
+    CctCalculation calc2 = CctCalculation.builder()
+        .id(id2)
+        .traineeId(fromTraineeId)
+        .name("Test Calculation 2")
+        .build();
+
+    when(calculationRepository.findByTraineeIdOrderByLastModified(fromTraineeId))
+        .thenReturn(List.of(calc1, calc2));
+
+    service.moveCalculations(fromTraineeId, toTraineeId);
+
+    verify(calculationRepository).save(calc1.withTraineeId(toTraineeId));
+    verify(calculationRepository).save(calc2.withTraineeId(toTraineeId));
+  }
+
+  @Test
+  void shouldNotSaveCalculationsWhenNoneMoved() {
+    String fromTraineeId = "40";
+    String toTraineeId = "50";
+
+    when(calculationRepository.findByTraineeIdOrderByLastModified(fromTraineeId))
+        .thenReturn(List.of());
+
+    service.moveCalculations(fromTraineeId, toTraineeId);
+
+    verify(calculationRepository, never()).save(any());
+  }
 }

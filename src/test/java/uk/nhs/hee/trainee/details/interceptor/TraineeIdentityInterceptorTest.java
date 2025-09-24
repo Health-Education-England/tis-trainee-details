@@ -139,6 +139,41 @@ class TraineeIdentityInterceptorTest {
   }
 
   @Test
+  void shouldReturnTrueAndNotRequireAuthForCctMoveEndpoint() {
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    request.setRequestURI("/api/cct/move/40/41");
+
+    boolean result = interceptor.preHandle(request, new MockHttpServletResponse(), new Object());
+
+    assertThat("Unexpected result.", result, is(true));
+    assertThat("Unexpected trainee ID.", traineeIdentity.getTraineeId(), nullValue());
+  }
+
+  @Test
+  void shouldReturnTrueAndStillProcessAuthTokenForCctMoveEndpoint() {
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    request.setRequestURI("/api/cct/move/40/41");
+    request.addHeader(HttpHeaders.AUTHORIZATION, TestJwtUtil.generateTokenForTisId("40"));
+
+    boolean result = interceptor.preHandle(request, new MockHttpServletResponse(), new Object());
+
+    assertThat("Unexpected result.", result, is(true));
+    assertThat("Unexpected trainee ID.", traineeIdentity.getTraineeId(), is("40"));
+  }
+
+  @Test
+  void shouldNotMatchPartialCctMoveEndpoint() {
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    request.setRequestURI("/api/cct/move/40");  // Missing second ID
+
+    boolean result = interceptor.preHandle(request, new MockHttpServletResponse(), new Object());
+
+    assertThat("Unexpected result.", result, is(false));
+    assertThat("Unexpected trainee ID.", traineeIdentity.getTraineeId(), nullValue());
+  }
+
+
+  @Test
   void shouldNotSetGroupsWhenCognitoGroupsNotInAuthToken() {
     MockHttpServletRequest request = new MockHttpServletRequest();
     request.addHeader(HttpHeaders.AUTHORIZATION, TestJwtUtil.generateTokenForTisId("40"));

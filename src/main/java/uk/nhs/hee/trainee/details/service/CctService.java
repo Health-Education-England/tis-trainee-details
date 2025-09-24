@@ -294,4 +294,23 @@ public class CctService {
   public LocalDate calculateCctDate(CctCalculationDetailDto dto) {
     return calculateCctDate(mapper.toEntity(dto, null));
   }
+
+  /**
+   * Move all CCT calculations from one trainee to another. Assumes that toTraineeId is valid.
+   *
+   * @param fromTraineeId The trainee ID to move calculations from.
+   * @param toTraineeId   The trainee ID to move calculations to.
+   */
+  public void moveCalculations(String fromTraineeId, String toTraineeId) {
+    List<CctCalculation> calculations = calculationRepository
+        .findByTraineeIdOrderByLastModified(fromTraineeId);
+
+    calculations.forEach(c -> {
+      log.info("Moving CCT calculation [{}] from trainee [{}] to trainee [{}]",
+          c.id(), fromTraineeId, toTraineeId);
+      calculationRepository.save(c.withTraineeId(toTraineeId));
+    });
+    log.info("Moved {} CCT calculations from trainee [{}] to trainee [{}]",
+        calculations.size(), fromTraineeId, toTraineeId);
+  }
 }

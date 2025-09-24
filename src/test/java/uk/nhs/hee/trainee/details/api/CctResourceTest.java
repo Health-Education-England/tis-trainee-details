@@ -49,17 +49,21 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.server.ResponseStatusException;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
+import uk.nhs.hee.trainee.details.dto.UserDetails;
 import uk.nhs.hee.trainee.details.service.CctService;
+import uk.nhs.hee.trainee.details.service.TraineeProfileService;
 
 class CctResourceTest {
 
   private CctResource controller;
   private CctService service;
+  TraineeProfileService traineeProfileService;
 
   @BeforeEach
   void setUp() {
     service = mock(CctService.class);
-    controller = new CctResource(service);
+    traineeProfileService = mock(TraineeProfileService.class);
+    controller = new CctResource(service, traineeProfileService);
   }
 
   @Test
@@ -331,5 +335,34 @@ class CctResourceTest {
     ResponseStatusException exception = assertThrows(ResponseStatusException.class,
         () -> controller.deleteCalculation(id));
     assertThat("Unexpected status code.", exception.getStatusCode(), is(NOT_FOUND));
+  }
+
+  @Test
+  void shouldMoveCctCalculationsWhenToTraineeExists() {
+    String fromTraineeId = "40";
+    String toTraineeId = "50";
+    UserDetails toUserDetails = mock(UserDetails.class);
+
+    when(traineeProfileService.getTraineeDetailsByTisId(toTraineeId))
+        .thenReturn(Optional.of(toUserDetails));
+
+    ResponseEntity<Boolean> response = controller.moveCalculations(fromTraineeId, toTraineeId);
+
+    assertThat("Unexpected response code.", response.getStatusCode(), is(OK));
+    assertThat("Unexpected response body.", response.getBody(), is(true));
+  }
+
+  @Test
+  void shouldNotMoveCctCalculationsWhenToTraineeNotFound() {
+    String fromTraineeId = "40";
+    String toTraineeId = "50";
+
+    when(traineeProfileService.getTraineeDetailsByTisId(toTraineeId))
+        .thenReturn(Optional.empty());
+
+    ResponseEntity<Boolean> response = controller.moveCalculations(fromTraineeId, toTraineeId);
+
+    assertThat("Unexpected response code.", response.getStatusCode(), is(BAD_REQUEST));
+    assertThat("Unexpected response body.", response.getBody(), nullValue());
   }
 }
