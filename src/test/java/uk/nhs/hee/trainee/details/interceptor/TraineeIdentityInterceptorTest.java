@@ -141,7 +141,7 @@ class TraineeIdentityInterceptorTest {
   @Test
   void shouldReturnTrueAndNotRequireAuthForCctMoveEndpoint() {
     MockHttpServletRequest request = new MockHttpServletRequest();
-    request.setRequestURI("/api/cct/move/40/41");
+    request.setRequestURI("/api/cct/move/40/to/41");
 
     boolean result = interceptor.preHandle(request, new MockHttpServletResponse(), new Object());
 
@@ -152,7 +152,7 @@ class TraineeIdentityInterceptorTest {
   @Test
   void shouldReturnTrueAndStillProcessAuthTokenForCctMoveEndpoint() {
     MockHttpServletRequest request = new MockHttpServletRequest();
-    request.setRequestURI("/api/cct/move/40/41");
+    request.setRequestURI("/api/cct/move/40/to/41");
     request.addHeader(HttpHeaders.AUTHORIZATION, TestJwtUtil.generateTokenForTisId("40"));
 
     boolean result = interceptor.preHandle(request, new MockHttpServletResponse(), new Object());
@@ -161,10 +161,11 @@ class TraineeIdentityInterceptorTest {
     assertThat("Unexpected trainee ID.", traineeIdentity.getTraineeId(), is("40"));
   }
 
-  @Test
-  void shouldNotMatchPartialCctMoveEndpoint() {
+  @ParameterizedTest
+  @ValueSource(strings = {"/40", "/40/to", "/40/to/41/more"})
+  void shouldNotMatchPartialCctMoveEndpoint(String uriFragment) {
     MockHttpServletRequest request = new MockHttpServletRequest();
-    request.setRequestURI("/api/cct/move/40");  // Missing second ID
+    request.setRequestURI("/api/cct/move" + uriFragment);
 
     boolean result = interceptor.preHandle(request, new MockHttpServletResponse(), new Object());
 

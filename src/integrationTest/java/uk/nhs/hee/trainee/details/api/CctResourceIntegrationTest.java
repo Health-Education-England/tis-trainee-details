@@ -1058,7 +1058,8 @@ class CctResourceIntegrationTest {
     traineeProfile.setPersonalDetails(new PersonalDetails());
     template.insert(traineeProfile);
 
-    mockMvc.perform(patch("/api/cct/move/{fromTraineeId}/{toTraineeId}", TRAINEE_ID, toTraineeId))
+    mockMvc.perform(patch("/api/cct/move/{fromTraineeId}/to/{toTraineeId}",
+            TRAINEE_ID, toTraineeId))
         .andExpect(status().isOk())
         .andExpect(content().string("true"));
 
@@ -1095,7 +1096,8 @@ class CctResourceIntegrationTest {
         .build();
     template.insert(entity);
 
-    mockMvc.perform(patch("/api/cct/move/{fromTraineeId}/{toTraineeId}", TRAINEE_ID, toTraineeId))
+    mockMvc.perform(patch("/api/cct/move/{fromTraineeId}/to/{toTraineeId}",
+            TRAINEE_ID, toTraineeId))
         .andExpect(status().isBadRequest());
 
     CctCalculation cct = template.findById(id, CctCalculation.class);

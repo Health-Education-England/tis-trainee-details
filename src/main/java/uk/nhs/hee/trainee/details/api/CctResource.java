@@ -165,10 +165,10 @@ public class CctResource {
    * Move all CCT calculations from one trainee to another.
    *
    * @param fromTraineeId The TIS ID of the trainee to move calculations from.
-   * @param toTraineeId The TIS ID of the trainee to move calculations to.
+   * @param toTraineeId   The TIS ID of the trainee to move calculations to.
    * @return True if the calculations were moved, bad request if the target trainee does not exist.
    */
-  @PatchMapping("/move/{fromTraineeId}/{toTraineeId}")
+  @PatchMapping("/move/{fromTraineeId}/to/{toTraineeId}")
   public ResponseEntity<Boolean> moveCalculations(@PathVariable String fromTraineeId,
       @PathVariable String toTraineeId) {
     log.info("Request to move CCT calculations from trainee {} to trainee {}",

@@ -65,7 +65,7 @@ public class TraineeIdentityInterceptor implements HandlerInterceptor {
     }
 
     // Skip authentication check for the CCT move endpoint
-    if (request.getRequestURI().matches("^/api/cct/move/[^/]+/[^/]+$")) {
+    if (request.getRequestURI().matches("^/api/cct/move/[^/]+/to/[^/]+$")) {
       return true;
     }
 
