@@ -28,10 +28,17 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpStatus.OK;
 
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
 import uk.nhs.hee.trainee.details.dto.FeaturesDto;
+import uk.nhs.hee.trainee.details.dto.FeaturesDto.DetailsFeatures;
+import uk.nhs.hee.trainee.details.dto.FeaturesDto.DetailsFeatures.ProfileFeatures;
+import uk.nhs.hee.trainee.details.dto.FeaturesDto.DetailsFeatures.ProgrammeFeatures;
+import uk.nhs.hee.trainee.details.dto.FeaturesDto.Feature;
+import uk.nhs.hee.trainee.details.dto.FeaturesDto.FormFeatures;
+import uk.nhs.hee.trainee.details.dto.FeaturesDto.FormFeatures.LtftFeatures;
 import uk.nhs.hee.trainee.details.service.FeatureService;
 
 class FeatureResourceTest {
@@ -48,6 +55,30 @@ class FeatureResourceTest {
   @Test
   void shouldReturnFeatures() {
     FeaturesDto features = FeaturesDto.builder()
+        .actions(new Feature(true))
+        .cct(new Feature(true))
+        .details(DetailsFeatures.builder()
+            .enabled(true)
+            .placements(new Feature(true))
+            .profile(ProfileFeatures.builder()
+                .enabled(true)
+                .gmcUpdate(new Feature(true))
+                .build())
+            .programmes(ProgrammeFeatures.builder()
+                .enabled(true)
+                .conditionsOfJoining(new Feature(true))
+                .confirmation(new Feature(true))
+                .build())
+            .build())
+        .forms(FormFeatures.builder()
+            .enabled(true)
+            .formr(new Feature(true))
+            .ltft(LtftFeatures.builder()
+                .enabled(true)
+                .qualifyingProgrammes(Set.of("1", "2", "3"))
+                .build())
+            .build())
+        .notifications(new Feature(true))
         .ltft(true)
         .build();
 

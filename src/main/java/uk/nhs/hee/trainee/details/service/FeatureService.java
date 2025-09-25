@@ -31,6 +31,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.config.FeaturesProperties;
 import uk.nhs.hee.trainee.details.dto.FeaturesDto;
+import uk.nhs.hee.trainee.details.dto.FeaturesDto.DetailsFeatures;
+import uk.nhs.hee.trainee.details.dto.FeaturesDto.DetailsFeatures.ProfileFeatures;
+import uk.nhs.hee.trainee.details.dto.FeaturesDto.DetailsFeatures.ProgrammeFeatures;
+import uk.nhs.hee.trainee.details.dto.FeaturesDto.Feature;
+import uk.nhs.hee.trainee.details.dto.FeaturesDto.FormFeatures;
+import uk.nhs.hee.trainee.details.dto.FeaturesDto.FormFeatures.LtftFeatures;
 import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
@@ -76,7 +82,36 @@ public class FeatureService {
 
     List<String> ltftProgrammes = getLtftEnabledProgrammes(profile);
 
+    boolean featuresEnabled = profile != null;
+    if (!featuresEnabled) {
+      log.info("Features disabled due to missing profile.");
+    }
+
     return FeaturesDto.builder()
+        .actions(new Feature(featuresEnabled))
+        .cct(new Feature(featuresEnabled))
+        .details(DetailsFeatures.builder()
+            .enabled(featuresEnabled)
+            .placements(new Feature(featuresEnabled))
+            .profile(ProfileFeatures.builder()
+                .enabled(featuresEnabled)
+                .gmcUpdate(new Feature(featuresEnabled))
+                .build())
+            .programmes(ProgrammeFeatures.builder()
+                .enabled(featuresEnabled)
+                .conditionsOfJoining(new Feature(featuresEnabled))
+                .confirmation(new Feature(featuresEnabled))
+                .build())
+            .build())
+        .forms(FormFeatures.builder()
+            .enabled(featuresEnabled)
+            .formr(new Feature(featuresEnabled))
+            .ltft(LtftFeatures.builder()
+                .enabled(isLtftEnabled(profile, ltftProgrammes))
+                .qualifyingProgrammes(Set.copyOf(ltftProgrammes))
+                .build())
+            .build())
+        .notifications(new Feature(featuresEnabled))
         .ltft(isLtftEnabled(profile, ltftProgrammes))
         .ltftProgrammes(ltftProgrammes)
         .build();
