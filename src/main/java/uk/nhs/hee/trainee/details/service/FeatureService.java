@@ -31,12 +31,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.config.FeaturesProperties;
 import uk.nhs.hee.trainee.details.dto.FeaturesDto;
-import uk.nhs.hee.trainee.details.dto.FeaturesDto.DetailsFeatures;
-import uk.nhs.hee.trainee.details.dto.FeaturesDto.DetailsFeatures.ProfileFeatures;
-import uk.nhs.hee.trainee.details.dto.FeaturesDto.DetailsFeatures.ProgrammeFeatures;
-import uk.nhs.hee.trainee.details.dto.FeaturesDto.Feature;
-import uk.nhs.hee.trainee.details.dto.FeaturesDto.FormFeatures;
-import uk.nhs.hee.trainee.details.dto.FeaturesDto.FormFeatures.LtftFeatures;
 import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
@@ -47,6 +41,11 @@ import uk.nhs.hee.trainee.details.model.TraineeProfile;
 @Slf4j
 @Service
 public class FeatureService {
+
+  private static final Set<String> SPECIALTY_TRAINEE_CURRICULUM_SUB_TYPES = Set.of(
+      "MEDICAL_CURRICULUM", "MEDICAL_SPR");
+  private static final Set<String> NON_SPECIALTY_TRAINEE_CURRICULUM_SPECIALTIES = Set.of(
+      "PUBLIC HEALTH MEDICINE", "FOUNDATION");
 
   private final TraineeIdentity identity;
   private final TraineeProfileService profileService;
@@ -76,60 +75,60 @@ public class FeatureService {
    */
   public FeaturesDto getFeatures() {
     String traineeId = identity.getTraineeId();
-    log.info("Getting enabled features for trainee {}.", traineeId);
+    log.debug("Getting enabled features for trainee {}.", traineeId);
 
     TraineeProfile profile = profileService.getTraineeProfileByTraineeTisId(traineeId);
 
-    List<String> ltftProgrammes = getLtftEnabledProgrammes(profile);
-
-    boolean featuresEnabled = profile != null;
-    if (!featuresEnabled) {
-      log.info("Features disabled due to missing profile.");
+    if (profile == null) {
+      log.debug("Profile is missing, disabling all features.");
+      return FeaturesDto.disable();
     }
 
-    return FeaturesDto.builder()
-        .actions(new Feature(featuresEnabled))
-        .cct(new Feature(featuresEnabled))
-        .details(DetailsFeatures.builder()
-            .enabled(featuresEnabled)
-            .placements(new Feature(featuresEnabled))
-            .profile(ProfileFeatures.builder()
-                .enabled(featuresEnabled)
-                .gmcUpdate(new Feature(featuresEnabled))
-                .build())
-            .programmes(ProgrammeFeatures.builder()
-                .enabled(featuresEnabled)
-                .conditionsOfJoining(new Feature(featuresEnabled))
-                .confirmation(new Feature(featuresEnabled))
-                .build())
-            .build())
-        .forms(FormFeatures.builder()
-            .enabled(featuresEnabled)
-            .formr(new Feature(featuresEnabled))
-            .ltft(LtftFeatures.builder()
-                .enabled(isLtftEnabled(profile, ltftProgrammes))
-                .qualifyingProgrammes(Set.copyOf(ltftProgrammes))
-                .build())
-            .build())
-        .notifications(new Feature(featuresEnabled))
-        .ltft(isLtftEnabled(profile, ltftProgrammes))
-        .ltftProgrammes(ltftProgrammes)
-        .build();
+    if (!isSpecialtyTrainee(profile)) {
+      log.debug("Not a specialty trainee, setting read-only features.");
+      return FeaturesDto.readOnly();
+    }
+
+    // Check whether LTFT pilot participation should be enabled.
+    List<String> ltftProgrammes = getLtftEnabledProgrammes(profile);
+
+    if (isLtftEnabled(profile, ltftProgrammes)) {
+      log.debug("Trainee is in LTFT pilot, enabling all features including LTFT pilot access.");
+      return FeaturesDto.enableWithLtftPilot(ltftProgrammes);
+    }
+
+    log.debug("Enabling all released features.");
+    return FeaturesDto.enable();
+  }
+
+  /**
+   * Check whether the given profile contains a specialty programme. Indicating that the trainee is,
+   * or will be, a specialty trainee.
+   *
+   * @param profile The trainee profile to check.
+   * @return Whether the trainee has a specialty programme in their profile.
+   */
+  private boolean isSpecialtyTrainee(TraineeProfile profile) {
+    return profile.getProgrammeMemberships().stream()
+        .flatMap(pm -> pm.getCurricula().stream())
+        .anyMatch(curriculum -> {
+          String subType = curriculum.getCurriculumSubType();
+          String specialty = curriculum.getCurriculumSpecialty();
+
+          return subType != null && specialty != null
+              && SPECIALTY_TRAINEE_CURRICULUM_SUB_TYPES.contains(subType.toUpperCase())
+              && !NON_SPECIALTY_TRAINEE_CURRICULUM_SPECIALTIES.contains(specialty.toUpperCase());
+        });
   }
 
   /**
    * Whether the given profile is allowed access to Less Than Full Time functionality.
    *
-   * @param profile The trainee profile to check.
+   * @param profile        The trainee profile to check.
    * @param ltftProgrammes The LTFT-enabled programmes for the trainee.
    * @return Whether the trainee should have access to LTFT.
    */
   private boolean isLtftEnabled(TraineeProfile profile, List<String> ltftProgrammes) {
-    if (profile == null) {
-      log.info("LTFT disabled due to missing profile.");
-      return false;
-    }
-
     Set<String> groups = identity.getGroups();
     boolean isBetaUser = groups != null && groups.contains("beta-participant");
 

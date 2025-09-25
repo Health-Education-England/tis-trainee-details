@@ -36,11 +36,13 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import uk.nhs.hee.trainee.details.config.FeaturesProperties;
 import uk.nhs.hee.trainee.details.config.FeaturesProperties.Tranche;
 import uk.nhs.hee.trainee.details.dto.FeaturesDto;
 import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
+import uk.nhs.hee.trainee.details.model.Curriculum;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 
@@ -78,9 +80,61 @@ class FeatureServiceTest {
   }
 
   @Test
-  void shouldEnableActionsWhenProfileFound() {
+  void shouldDisableActionsWhenNoProgrammes() {
     when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(
         new TraineeProfile());
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected feature flag.", features.actions().enabled(), is(false));
+  }
+
+  @ParameterizedTest
+  @CsvSource(delimiter = '|', textBlock = """
+      MEDICAL_CURRICULUM | FOUNDATION
+      MEDICAL_CURRICULUM | PUBLIC HEALTH MEDICINE
+      MEDICAL_SPR        | FOUNDATION
+      MEDICAL_SPR        | PUBLIC HEALTH MEDICINE
+      UNKNOWN            | General Practice
+      medical_curriculum | foundation
+      ""                 | ""
+      MEDICAL_SPR        |
+                         |
+      """)
+  void shouldDisableActionsWhenNoSpecialtyProgrammes(String subType, String specialty) {
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSubType(subType);
+    curriculum.setCurriculumSpecialty(specialty);
+
+    ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setCurricula(List.of(curriculum));
+    pm.setEndDate(LocalDate.MAX);
+
+    TraineeProfile profile = new TraineeProfile();
+    profile.setProgrammeMemberships(List.of(pm));
+
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected feature flag.", features.actions().enabled(), is(false));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"MEDICAL_CURRICULUM", "medical_curriculum", "MEDICAL_SPR", "medical_spr"})
+  void shouldEnableActionsWhenSpecialtyProgrammeFound(String subType) {
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSubType(subType);
+    curriculum.setCurriculumSpecialty("General Practice");
+
+    ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setCurricula(List.of(curriculum));
+    pm.setEndDate(LocalDate.MAX);
+
+    TraineeProfile profile = new TraineeProfile();
+    profile.setProgrammeMemberships(List.of(pm));
+
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
 
     FeaturesDto features = service.getFeatures();
 
@@ -97,9 +151,61 @@ class FeatureServiceTest {
   }
 
   @Test
-  void shouldEnableCctWhenProfileFound() {
+  void shouldDisableCctWhenNoProgrammes() {
     when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(
         new TraineeProfile());
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected feature flag.", features.cct().enabled(), is(false));
+  }
+
+  @ParameterizedTest
+  @CsvSource(delimiter = '|', textBlock = """
+      MEDICAL_CURRICULUM | FOUNDATION
+      MEDICAL_CURRICULUM | PUBLIC HEALTH MEDICINE
+      MEDICAL_SPR        | FOUNDATION
+      MEDICAL_SPR        | PUBLIC HEALTH MEDICINE
+      UNKNOWN            | General Practice
+      medical_curriculum | foundation
+      ""                 | ""
+      MEDICAL_SPR        |
+                         |
+      """)
+  void shouldDisableCctWhenNoSpecialtyProgrammes(String subType, String specialty) {
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSubType(subType);
+    curriculum.setCurriculumSpecialty(specialty);
+
+    ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setCurricula(List.of(curriculum));
+    pm.setEndDate(LocalDate.MAX);
+
+    TraineeProfile profile = new TraineeProfile();
+    profile.setProgrammeMemberships(List.of(pm));
+
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected feature flag.", features.cct().enabled(), is(false));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"MEDICAL_CURRICULUM", "medical_curriculum", "MEDICAL_SPR", "medical_spr"})
+  void shouldEnableCctWhenSpecialtyProgrammeFound(String subType) {
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSubType(subType);
+    curriculum.setCurriculumSpecialty("General Practice");
+
+    ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setCurricula(List.of(curriculum));
+    pm.setEndDate(LocalDate.MAX);
+
+    TraineeProfile profile = new TraineeProfile();
+    profile.setProgrammeMemberships(List.of(pm));
+
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
 
     FeaturesDto features = service.getFeatures();
 
@@ -115,11 +221,17 @@ class FeatureServiceTest {
     assertThat("Unexpected feature flag.", features.details().enabled(), is(false));
     assertThat("Unexpected feature flag.", features.details().placements().enabled(), is(false));
     assertThat("Unexpected feature flag.", features.details().profile().enabled(), is(false));
+    assertThat("Unexpected feature flag.", features.details().profile().gmcUpdate().enabled(),
+        is(false));
     assertThat("Unexpected feature flag.", features.details().programmes().enabled(), is(false));
+    assertThat("Unexpected feature flag.",
+        features.details().programmes().conditionsOfJoining().enabled(), is(false));
+    assertThat("Unexpected feature flag.", features.details().programmes().confirmation().enabled(),
+        is(false));
   }
 
   @Test
-  void shouldEnableDetailsWhenProfileFound() {
+  void shouldEnableReadOnlyDetailsWhenNoProgrammes() {
     when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(
         new TraineeProfile());
 
@@ -128,7 +240,83 @@ class FeatureServiceTest {
     assertThat("Unexpected feature flag.", features.details().enabled(), is(true));
     assertThat("Unexpected feature flag.", features.details().placements().enabled(), is(true));
     assertThat("Unexpected feature flag.", features.details().profile().enabled(), is(true));
+    assertThat("Unexpected feature flag.", features.details().profile().gmcUpdate().enabled(),
+        is(false));
     assertThat("Unexpected feature flag.", features.details().programmes().enabled(), is(true));
+    assertThat("Unexpected feature flag.",
+        features.details().programmes().conditionsOfJoining().enabled(), is(false));
+    assertThat("Unexpected feature flag.", features.details().programmes().confirmation().enabled(),
+        is(false));
+  }
+
+  @ParameterizedTest
+  @CsvSource(delimiter = '|', textBlock = """
+      MEDICAL_CURRICULUM | FOUNDATION
+      MEDICAL_CURRICULUM | PUBLIC HEALTH MEDICINE
+      MEDICAL_SPR        | FOUNDATION
+      MEDICAL_SPR        | PUBLIC HEALTH MEDICINE
+      UNKNOWN            | General Practice
+      medical_curriculum | foundation
+      ""                 | ""
+      MEDICAL_SPR        |
+                         |
+      """)
+  void shouldEnableReadOnlyDetailsWhenNoSpecialtyProgrammes(String subType, String specialty) {
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSubType(subType);
+    curriculum.setCurriculumSpecialty(specialty);
+
+    ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setCurricula(List.of(curriculum));
+    pm.setEndDate(LocalDate.MAX);
+
+    TraineeProfile profile = new TraineeProfile();
+    profile.setProgrammeMemberships(List.of(pm));
+
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected feature flag.", features.details().enabled(), is(true));
+    assertThat("Unexpected feature flag.", features.details().placements().enabled(), is(true));
+    assertThat("Unexpected feature flag.", features.details().profile().enabled(), is(true));
+    assertThat("Unexpected feature flag.", features.details().profile().gmcUpdate().enabled(),
+        is(false));
+    assertThat("Unexpected feature flag.", features.details().programmes().enabled(), is(true));
+    assertThat("Unexpected feature flag.",
+        features.details().programmes().conditionsOfJoining().enabled(), is(false));
+    assertThat("Unexpected feature flag.", features.details().programmes().confirmation().enabled(),
+        is(false));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"MEDICAL_CURRICULUM", "medical_curriculum", "MEDICAL_SPR", "medical_spr"})
+  void shouldEnableDetailsWhenSpecialtyProgrammeFound(String subType) {
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSubType(subType);
+    curriculum.setCurriculumSpecialty("General Practice");
+
+    ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setCurricula(List.of(curriculum));
+    pm.setEndDate(LocalDate.MAX);
+
+    TraineeProfile profile = new TraineeProfile();
+    profile.setProgrammeMemberships(List.of(pm));
+
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected feature flag.", features.details().enabled(), is(true));
+    assertThat("Unexpected feature flag.", features.details().placements().enabled(), is(true));
+    assertThat("Unexpected feature flag.", features.details().profile().enabled(), is(true));
+    assertThat("Unexpected feature flag.", features.details().profile().gmcUpdate().enabled(),
+        is(true));
+    assertThat("Unexpected feature flag.", features.details().programmes().enabled(), is(true));
+    assertThat("Unexpected feature flag.",
+        features.details().programmes().conditionsOfJoining().enabled(), is(true));
+    assertThat("Unexpected feature flag.", features.details().programmes().confirmation().enabled(),
+        is(true));
   }
 
   @Test
@@ -143,14 +331,71 @@ class FeatureServiceTest {
   }
 
   @Test
-  void shouldEnableFormsWhenProfileFound() {
+  void shouldDisableFormsWhenNoProgrammes() {
     when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(
         new TraineeProfile());
 
     FeaturesDto features = service.getFeatures();
 
+    assertThat("Unexpected feature flag.", features.forms().enabled(), is(false));
+    assertThat("Unexpected feature flag.", features.forms().formr().enabled(), is(false));
+    assertThat("Unexpected feature flag.", features.forms().ltft().enabled(), is(false));
+  }
+
+  @ParameterizedTest
+  @CsvSource(delimiter = '|', textBlock = """
+      MEDICAL_CURRICULUM | FOUNDATION
+      MEDICAL_CURRICULUM | PUBLIC HEALTH MEDICINE
+      MEDICAL_SPR        | FOUNDATION
+      MEDICAL_SPR        | PUBLIC HEALTH MEDICINE
+      UNKNOWN            | General Practice
+      medical_curriculum | foundation
+      ""                 | ""
+      MEDICAL_SPR        |
+                         |
+      """)
+  void shouldDisableFormsWhenNoSpecialtyProgrammes(String subType, String specialty) {
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSubType(subType);
+    curriculum.setCurriculumSpecialty(specialty);
+
+    ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setCurricula(List.of(curriculum));
+    pm.setEndDate(LocalDate.MAX);
+
+    TraineeProfile profile = new TraineeProfile();
+    profile.setProgrammeMemberships(List.of(pm));
+
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected feature flag.", features.forms().enabled(), is(false));
+    assertThat("Unexpected feature flag.", features.forms().formr().enabled(), is(false));
+    assertThat("Unexpected feature flag.", features.forms().ltft().enabled(), is(false));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"MEDICAL_CURRICULUM", "medical_curriculum", "MEDICAL_SPR", "medical_spr"})
+  void shouldEnableFormsWhenSpecialtyProgrammeFound(String subType) {
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSubType(subType);
+    curriculum.setCurriculumSpecialty("General Practice");
+
+    ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setCurricula(List.of(curriculum));
+    pm.setEndDate(LocalDate.MAX);
+
+    TraineeProfile profile = new TraineeProfile();
+    profile.setProgrammeMemberships(List.of(pm));
+
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
+
+    FeaturesDto features = service.getFeatures();
+
     assertThat("Unexpected feature flag.", features.forms().enabled(), is(true));
     assertThat("Unexpected feature flag.", features.forms().formr().enabled(), is(true));
+    assertThat("Unexpected feature flag.", features.forms().ltft().enabled(), is(false));
   }
 
   @Test
@@ -179,12 +424,50 @@ class FeatureServiceTest {
     assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(false));
   }
 
+
+  @ParameterizedTest
+  @CsvSource(delimiter = '|', textBlock = """
+      MEDICAL_CURRICULUM | FOUNDATION
+      MEDICAL_CURRICULUM | PUBLIC HEALTH MEDICINE
+      MEDICAL_SPR        | FOUNDATION
+      MEDICAL_SPR        | PUBLIC HEALTH MEDICINE
+      UNKNOWN            | General Practice
+      medical_curriculum | foundation
+      ""                 | ""
+      MEDICAL_SPR        |
+                         |
+      """)
+  void shouldDisableLtftWhenNoSpecialtyProgrammes(String subType, String specialty) {
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSubType(subType);
+    curriculum.setCurriculumSpecialty(specialty);
+
+    ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setCurricula(List.of(curriculum));
+    pm.setEndDate(LocalDate.MAX);
+
+    TraineeProfile profile = new TraineeProfile();
+    profile.setProgrammeMemberships(List.of(pm));
+
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected LTFT flag.", features.ltft(), is(false));
+    assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(false));
+  }
+
   @Test
   void shouldDisableLtftWhenNoProgrammesInQualifyingDeanery() {
     TraineeProfile profile = new TraineeProfile();
     profile.setTraineeTisId(TRAINEE_ID);
 
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSubType("MEDICAL_SPR");
+    curriculum.setCurriculumSpecialty("General Practice");
+
     ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setCurricula(List.of(curriculum));
     pm.setManagingDeanery("None Qualifying");
     pm.setEndDate(LocalDate.now().plusDays(1));
     profile.setProgrammeMemberships(List.of(pm));
@@ -202,7 +485,12 @@ class FeatureServiceTest {
     TraineeProfile profile = new TraineeProfile();
     profile.setTraineeTisId(TRAINEE_ID);
 
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSubType("MEDICAL_SPR");
+    curriculum.setCurriculumSpecialty("General Practice");
+
     ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setCurricula(List.of(curriculum));
     pm.setManagingDeanery(deanery);
     pm.setEndDate(LocalDate.now());
     profile.setProgrammeMemberships(List.of(pm));
@@ -220,7 +508,12 @@ class FeatureServiceTest {
     TraineeProfile profile = new TraineeProfile();
     profile.setTraineeTisId(TRAINEE_ID);
 
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSubType("MEDICAL_SPR");
+    curriculum.setCurriculumSpecialty("General Practice");
+
     ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setCurricula(List.of(curriculum));
     pm.setManagingDeanery(deanery);
     pm.setEndDate(LocalDate.now().plusDays(1));
     profile.setProgrammeMemberships(List.of(pm));
@@ -251,7 +544,12 @@ class FeatureServiceTest {
     TraineeProfile profile = new TraineeProfile();
     profile.setTraineeTisId(TRAINEE_ID);
 
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSubType("MEDICAL_SPR");
+    curriculum.setCurriculumSpecialty("General Practice");
+
     ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setCurricula(List.of(curriculum));
     pm.setTisId(UUID.randomUUID().toString());
     pm.setManagingDeanery(deanery);
     pm.setEndDate(LocalDate.now().plusDays(1));
@@ -270,7 +568,12 @@ class FeatureServiceTest {
     TraineeProfile profile = new TraineeProfile();
     profile.setTraineeTisId(TRAINEE_ID);
 
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSubType("MEDICAL_SPR");
+    curriculum.setCurriculumSpecialty("General Practice");
+
     ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setCurricula(List.of(curriculum));
     pm.setTisId(UUID.randomUUID().toString());
     pm.setManagingDeanery(deanery);
     pm.setEndDate(LocalDate.now().plusDays(1));
@@ -307,7 +610,12 @@ class FeatureServiceTest {
     TraineeProfile profile = new TraineeProfile();
     profile.setTraineeTisId(TRAINEE_ID);
 
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSubType("MEDICAL_SPR");
+    curriculum.setCurriculumSpecialty("General Practice");
+
     ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setCurricula(List.of(curriculum));
     pm.setManagingDeanery(deanery);
     pm.setEndDate(LocalDate.now().plusDays(1));
     profile.setProgrammeMemberships(List.of(pm));
@@ -343,7 +651,12 @@ class FeatureServiceTest {
     TraineeProfile profile = new TraineeProfile();
     profile.setTraineeTisId(TRAINEE_ID);
 
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSubType("MEDICAL_SPR");
+    curriculum.setCurriculumSpecialty("General Practice");
+
     ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setCurricula(List.of(curriculum));
     pm.setManagingDeanery(deanery);
     pm.setEndDate(LocalDate.now().plusDays(1));
     profile.setProgrammeMemberships(List.of(pm));
@@ -374,9 +687,14 @@ class FeatureServiceTest {
     TraineeProfile profile = new TraineeProfile();
     profile.setTraineeTisId(TRAINEE_ID);
 
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSubType("MEDICAL_SPR");
+    curriculum.setCurriculumSpecialty("General Practice");
+
     //ltft compliant
     String pm1Id = UUID.randomUUID().toString();
     ProgrammeMembership pm1 = new ProgrammeMembership();
+    pm1.setCurricula(List.of(curriculum));
     pm1.setEndDate(LocalDate.now().plusDays(1));
     pm1.setManagingDeanery("test 1");
     pm1.setTisId(pm1Id);
@@ -384,6 +702,7 @@ class FeatureServiceTest {
     //finished
     String pm2Id = UUID.randomUUID().toString();
     ProgrammeMembership pm2 = new ProgrammeMembership();
+    pm2.setCurricula(List.of(curriculum));
     pm2.setEndDate(LocalDate.now().minusDays(1));
     pm2.setManagingDeanery("test 1");
     pm2.setTisId(pm2Id);
@@ -391,6 +710,7 @@ class FeatureServiceTest {
     //wrong deanery
     String pm3Id = UUID.randomUUID().toString();
     ProgrammeMembership pm3 = new ProgrammeMembership();
+    pm3.setCurricula(List.of(curriculum));
     pm3.setEndDate(LocalDate.now().plusDays(1));
     pm3.setManagingDeanery("not in list");
     pm3.setTisId(pm3Id);
@@ -418,9 +738,61 @@ class FeatureServiceTest {
   }
 
   @Test
-  void shouldEnableNotificationsWhenProfileFound() {
+  void shouldDisableNotificationsWhenNoProgrammes() {
     when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(
         new TraineeProfile());
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected feature flag.", features.notifications().enabled(), is(false));
+  }
+
+  @ParameterizedTest
+  @CsvSource(delimiter = '|', textBlock = """
+      MEDICAL_CURRICULUM | FOUNDATION
+      MEDICAL_CURRICULUM | PUBLIC HEALTH MEDICINE
+      MEDICAL_SPR        | FOUNDATION
+      MEDICAL_SPR        | PUBLIC HEALTH MEDICINE
+      UNKNOWN            | General Practice
+      medical_curriculum | foundation
+      ""                 | ""
+      MEDICAL_SPR        |
+                         |
+      """)
+  void shouldDisableNotificationsWhenNoSpecialtyProgrammes(String subType, String specialty) {
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSubType(subType);
+    curriculum.setCurriculumSpecialty(specialty);
+
+    ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setCurricula(List.of(curriculum));
+    pm.setEndDate(LocalDate.MAX);
+
+    TraineeProfile profile = new TraineeProfile();
+    profile.setProgrammeMemberships(List.of(pm));
+
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected feature flag.", features.notifications().enabled(), is(false));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"MEDICAL_CURRICULUM", "medical_curriculum", "MEDICAL_SPR", "medical_spr"})
+  void shouldEnableNotificationsWhenSpecialtyProgrammeFound(String subType) {
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSubType(subType);
+    curriculum.setCurriculumSpecialty("General Practice");
+
+    ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setCurricula(List.of(curriculum));
+    pm.setEndDate(LocalDate.MAX);
+
+    TraineeProfile profile = new TraineeProfile();
+    profile.setProgrammeMemberships(List.of(pm));
+
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
 
     FeaturesDto features = service.getFeatures();
 

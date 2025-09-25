@@ -50,6 +50,7 @@ import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import uk.nhs.hee.trainee.details.TestJwtUtil;
+import uk.nhs.hee.trainee.details.model.Curriculum;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 
@@ -83,6 +84,7 @@ class FeatureResourceIntegrationTest {
   void shouldDisableFeaturesWhenNoToken() throws Exception {
     mockMvc.perform(get("/api/features"))
         .andExpect(status().isOk())
+        .andExpect(jsonPath("$.*", hasSize(7)))
         .andExpect(jsonPath("$.actions.enabled", is(false)))
         .andExpect(jsonPath("$.cct.enabled", is(false)))
         .andExpect(jsonPath("$.details.enabled", is(false)))
@@ -151,8 +153,13 @@ class FeatureResourceIntegrationTest {
     TraineeProfile profile = new TraineeProfile();
     profile.setTraineeTisId(TRAINEE_ID);
 
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSubType("MEDICAL_SPR");
+    curriculum.setCurriculumSpecialty("General Practice");
+
     String pmId = UUID.randomUUID().toString();
     ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setCurricula(List.of(curriculum));
     pm.setTisId(pmId);
     pm.setManagingDeanery(deanery);
     pm.setEndDate(LocalDate.now().plusDays(1));
