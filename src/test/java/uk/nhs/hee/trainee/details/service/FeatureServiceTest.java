@@ -798,4 +798,76 @@ class FeatureServiceTest {
 
     assertThat("Unexpected feature flag.", features.notifications().enabled(), is(true));
   }
+
+  @Test
+  void shouldMatchReadOnlyWhenMultipleNonSpecialtyProgrammesAndCurricula() {
+    Curriculum curriculum1 = new Curriculum();
+    curriculum1.setCurriculumSubType("MEDICAL_CURRICULUM");
+    curriculum1.setCurriculumSpecialty("Foundation");
+
+    Curriculum curriculum2 = new Curriculum();
+    curriculum2.setCurriculumSubType("UNKNOWN");
+    curriculum2.setCurriculumSpecialty("General Practice");
+
+    ProgrammeMembership pm1 = new ProgrammeMembership();
+    pm1.setCurricula(List.of(curriculum1, curriculum2));
+    pm1.setEndDate(LocalDate.MAX);
+
+    Curriculum curriculum3 = new Curriculum();
+    curriculum3.setCurriculumSubType("MEDICAL_SPR");
+    curriculum3.setCurriculumSpecialty("Public Health Medicine");
+
+    Curriculum curriculum4 = new Curriculum();
+    curriculum4.setCurriculumSubType("ANOTHER_SUB_TYPE");
+    curriculum4.setCurriculumSpecialty("Another Specialty");
+
+    ProgrammeMembership pm2 = new ProgrammeMembership();
+    pm2.setCurricula(List.of(curriculum3, curriculum4));
+    pm2.setEndDate(LocalDate.MAX);
+
+    TraineeProfile profile = new TraineeProfile();
+    profile.setProgrammeMemberships(List.of(pm1, pm2));
+
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected features.", features, is(FeaturesDto.readOnly()));
+  }
+
+  @Test
+  void shouldMatchEnabledWhenSingleSpecialtyProgrammeCurricula() {
+    Curriculum curriculum1 = new Curriculum();
+    curriculum1.setCurriculumSubType("MEDICAL_CURRICULUM");
+    curriculum1.setCurriculumSpecialty("Foundation");
+
+    Curriculum curriculum2 = new Curriculum();
+    curriculum2.setCurriculumSubType("UNKNOWN");
+    curriculum2.setCurriculumSpecialty("General Practice");
+
+    ProgrammeMembership pm1 = new ProgrammeMembership();
+    pm1.setCurricula(List.of(curriculum1, curriculum2));
+    pm1.setEndDate(LocalDate.MAX);
+
+    Curriculum curriculum3 = new Curriculum();
+    curriculum3.setCurriculumSubType("MEDICAL_SPR");
+    curriculum3.setCurriculumSpecialty("Public Health Medicine");
+
+    Curriculum curriculum4 = new Curriculum();
+    curriculum4.setCurriculumSubType("MEDICAL_SPR");
+    curriculum4.setCurriculumSpecialty("Another Specialty");
+
+    ProgrammeMembership pm2 = new ProgrammeMembership();
+    pm2.setCurricula(List.of(curriculum3, curriculum4));
+    pm2.setEndDate(LocalDate.MAX);
+
+    TraineeProfile profile = new TraineeProfile();
+    profile.setProgrammeMemberships(List.of(pm1, pm2));
+
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected features.", features, is(FeaturesDto.enable()));
+  }
 }
