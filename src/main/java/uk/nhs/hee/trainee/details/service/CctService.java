@@ -302,6 +302,7 @@ public class CctService {
    *
    * @param fromTraineeId The trainee ID to move calculations from.
    * @param toTraineeId   The trainee ID to move calculations to.
+   * @return A map of the types of records moved and their counts.
    */
   public Map<String, Integer> moveCalculations(String fromTraineeId, String toTraineeId) {
     List<CctCalculation> calculations = calculationRepository
