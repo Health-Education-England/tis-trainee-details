@@ -53,6 +53,7 @@ public record CctCalculation(
     @With
     UUID id,
     @Indexed
+    @With
     String traineeId,
     String name,
     CctProgrammeMembership programmeMembership,

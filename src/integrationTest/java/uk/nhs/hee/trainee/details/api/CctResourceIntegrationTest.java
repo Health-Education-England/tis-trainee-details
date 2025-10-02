@@ -29,6 +29,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.IsNot.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -77,6 +78,8 @@ import uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType;
 import uk.nhs.hee.trainee.details.model.CctCalculation;
 import uk.nhs.hee.trainee.details.model.CctCalculation.CctChange;
 import uk.nhs.hee.trainee.details.model.CctCalculation.CctProgrammeMembership;
+import uk.nhs.hee.trainee.details.model.PersonalDetails;
+import uk.nhs.hee.trainee.details.model.TraineeProfile;
 
 @SpringBootTest
 @Testcontainers(disabledWithoutDocker = true)
@@ -132,6 +135,7 @@ class CctResourceIntegrationTest {
   @AfterEach
   void tearDown() {
     template.findAllAndRemove(new Query(), CctCalculation.class);
+    template.findAllAndRemove(new Query(), TraineeProfile.class);
   }
 
   @Test
@@ -1007,5 +1011,131 @@ class CctResourceIntegrationTest {
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isOk())
         .andExpect(content().string("true"));
+  }
+
+  @Test
+  void shouldMoveCctCalculationsWhenToTraineeExists() throws Exception {
+    String toTraineeId = "new Trainee Id";
+
+    UUID id = UUID.randomUUID();
+    CctCalculation entity = CctCalculation.builder()
+        .id(id)
+        .traineeId(TRAINEE_ID)
+        .programmeMembership(CctProgrammeMembership.builder()
+            .startDate(LocalDate.of(2024, 1, 1))
+            .endDate(LocalDate.of(2025, 1, 1))
+            .wte(0.5)
+            .designatedBodyCode("testDbc")
+            .managingDeanery("Test Deanery")
+            .build())
+        .changes(List.of(
+            CctChange.builder().type(LTFT).startDate(LocalDate.of(2024, 11, 1))
+                .wte(1.0)
+                .build()))
+        .build();
+    template.insert(entity);
+
+    UUID id2 = UUID.randomUUID();
+    CctCalculation entity2 = CctCalculation.builder()
+        .id(id2)
+        .traineeId(TRAINEE_ID)
+        .programmeMembership(CctProgrammeMembership.builder()
+            .startDate(LocalDate.of(2024, 2, 2))
+            .endDate(LocalDate.of(2025, 2, 2))
+            .wte(0.8)
+            .designatedBodyCode("testDbc")
+            .managingDeanery("Test Deanery")
+            .build())
+        .changes(List.of(
+            CctChange.builder().type(LTFT).startDate(LocalDate.of(2024, 12, 2))
+                .wte(0.9)
+                .build()))
+        .build();
+    template.insert(entity2);
+
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setTraineeTisId(toTraineeId);
+    traineeProfile.setPersonalDetails(new PersonalDetails());
+    template.insert(traineeProfile);
+
+    mockMvc.perform(patch("/api/cct/move/{fromTraineeId}/to/{toTraineeId}",
+            TRAINEE_ID, toTraineeId))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.cct").value(2));
+
+    CctCalculation movedEntity = template.findById(id, CctCalculation.class);
+    assertThat("Unexpected missing moved entity.", movedEntity, notNullValue());
+    assertThat("Unexpected trainee id on moved entity.", movedEntity.traineeId(),
+        is(toTraineeId));
+
+    CctCalculation movedEntity2 = template.findById(id2, CctCalculation.class);
+    assertThat("Unexpected missing moved entity.", movedEntity2, notNullValue());
+    assertThat("Unexpected trainee id on moved entity.", movedEntity2.traineeId(),
+        is(toTraineeId));
+  }
+
+  @Test
+  void shouldNotMoveCctCalculationsWhenToTraineeDoesNotExist() throws Exception {
+    String toTraineeId = "new Trainee Id";
+
+    UUID id = UUID.randomUUID();
+    CctCalculation entity = CctCalculation.builder()
+        .id(id)
+        .traineeId(TRAINEE_ID)
+        .programmeMembership(CctProgrammeMembership.builder()
+            .startDate(LocalDate.of(2024, 1, 1))
+            .endDate(LocalDate.of(2025, 1, 1))
+            .wte(0.5)
+            .designatedBodyCode("testDbc")
+            .managingDeanery("Test Deanery")
+            .build())
+        .changes(List.of(
+            CctChange.builder().type(LTFT).startDate(LocalDate.of(2024, 11, 1))
+                .wte(1.0)
+                .build()))
+        .build();
+    template.insert(entity);
+
+    mockMvc.perform(patch("/api/cct/move/{fromTraineeId}/to/{toTraineeId}",
+            TRAINEE_ID, toTraineeId))
+        .andExpect(status().isBadRequest());
+
+    CctCalculation cct = template.findById(id, CctCalculation.class);
+    assertThat("Unexpected missing CCT.", cct, notNullValue());
+    assertThat("Unexpected changed trainee id on CCT.", cct.traineeId(),
+        is(TRAINEE_ID));
+  }
+
+  @Test
+  void shouldNotMoveCctCalculationsWhenFromTraineeDoesNotExist() throws Exception {
+    String fromTraineeId = "non-existent-trainee";
+
+    UUID id = UUID.randomUUID();
+    CctCalculation entity = CctCalculation.builder()
+        .id(id)
+        .traineeId(TRAINEE_ID)
+        .programmeMembership(CctProgrammeMembership.builder()
+            .startDate(LocalDate.of(2024, 1, 1))
+            .endDate(LocalDate.of(2025, 1, 1))
+            .wte(0.5)
+            .designatedBodyCode("testDbc")
+            .managingDeanery("Test Deanery")
+            .build())
+        .changes(List.of(
+            CctChange.builder().type(LTFT).startDate(LocalDate.of(2024, 11, 1))
+                .wte(1.0)
+                .build()))
+        .build();
+    template.insert(entity);
+
+    mockMvc.perform(patch("/api/cct/move/{fromTraineeId}/to/{toTraineeId}",
+            fromTraineeId, TRAINEE_ID))
+        .andExpect(status().isBadRequest());
+
+    CctCalculation cct = template.findById(id, CctCalculation.class);
+    assertThat("Unexpected missing CCT.", cct, notNullValue());
+    assertThat("Unexpected changed trainee id on CCT.", cct.traineeId(),
+        is(TRAINEE_ID));
   }
 }
