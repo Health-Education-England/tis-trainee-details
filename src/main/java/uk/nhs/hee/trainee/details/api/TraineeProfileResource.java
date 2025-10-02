@@ -25,12 +25,14 @@ import com.amazonaws.xray.spring.aop.XRayEnabled;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -164,5 +166,32 @@ public class TraineeProfileResource {
   public ResponseEntity<Set<LocalOfficeContact>> getTraineeLocalOfficeContacts(
       @PathVariable String tisId, @PathVariable LocalOfficeContactType contactType) {
     return ResponseEntity.of(service.getTraineeLocalOfficeContacts(tisId, contactType));
+  }
+
+  /**
+   * Move data from one trainee to another: CCT calculations, LTFT, FormRs, actions and
+   * notifications. The intended use is to move data from a duplicate trainee record to the
+   * authoritative record.
+   *
+   * @param fromTisId The TIS ID of the trainee to move data from.
+   * @param toTisId   The TIS ID of the trainee to move data to.
+   * @return Map of moved data counts, or BadRequest if either trainee ID is not found.
+   */
+  @PatchMapping("/move/{fromTisId}/to/{toTisId}")
+  public ResponseEntity<Map<String, Integer>> moveNotifications(@PathVariable String fromTisId,
+      @PathVariable String toTisId) {
+    //TODO: add security to ensure only authorised users can call this method
+    log.info("Request to move data from trainee {} to trainee {}", fromTisId, toTisId);
+
+    TraineeProfile fromProfile = service.getTraineeProfileByTraineeTisId(fromTisId);
+    TraineeProfile toProfile = service.getTraineeProfileByTraineeTisId(toTisId);
+    if (fromProfile == null || toProfile == null) {
+      log.warn("No profile found for TIS ID {} (source) or {} (destination). No data moved.",
+          fromTisId, toTisId);
+      return ResponseEntity.badRequest().build();
+    }
+
+    Map<String, Integer> movedStats = service.moveData(fromTisId, toTisId);
+    return ResponseEntity.ok(movedStats);
   }
 }

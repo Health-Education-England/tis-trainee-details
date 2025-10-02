@@ -28,6 +28,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -39,6 +40,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
@@ -491,5 +493,54 @@ class TraineeProfileResourceTest {
         .andExpect(jsonPath("$", hasSize(1)))
         .andExpect(jsonPath("$[0].contact").value(LOCAL_OFFICE_EMAIL))
         .andExpect(jsonPath("$[0].localOffice").value(PERSON_PERSONOWNER));
+  }
+
+  @Test
+  void moveShouldReturnBadRequestWhenSourceProfileNotFound() throws Exception {
+    String fromTisId = "nonexistent";
+    String toTisId = DEFAULT_TIS_ID_1;
+    when(service.getTraineeProfileByTraineeTisId(fromTisId)).thenReturn(null);
+    when(service.getTraineeProfileByTraineeTisId(toTisId)).thenReturn(traineeProfile);
+
+    mockMvc.perform(patch("/api/trainee-profile/move/{fromTisId}/to/{toTisId}", fromTisId, toTisId)
+            .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$").doesNotExist());
+  }
+
+  @Test
+  void moveShouldReturnBadRequestWhenDestinationProfileNotFound() throws Exception {
+    String fromTisId = DEFAULT_TIS_ID_1;
+    String toTisId = "nonexistent";
+    when(service.getTraineeProfileByTraineeTisId(fromTisId)).thenReturn(traineeProfile);
+    when(service.getTraineeProfileByTraineeTisId(toTisId)).thenReturn(null);
+
+    mockMvc.perform(patch("/api/trainee-profile/move/{fromTisId}/to/{toTisId}", fromTisId, toTisId)
+            .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$").doesNotExist());
+  }
+
+  @Test
+  void moveShouldReturnMovedDataStatsWhenBothProfilesExist() throws Exception {
+    String fromTisId = "123";
+    String toTisId = "456";
+    Map<String, Integer> movedStats = Map.of(
+        "notification", 5,
+        "action", 3,
+        "formr-a", 2
+    );
+
+    when(service.getTraineeProfileByTraineeTisId(fromTisId)).thenReturn(traineeProfile);
+    when(service.getTraineeProfileByTraineeTisId(toTisId)).thenReturn(traineeProfile);
+    when(service.moveData(fromTisId, toTisId)).thenReturn(movedStats);
+
+    mockMvc.perform(patch("/api/trainee-profile/move/{fromTisId}/to/{toTisId}", fromTisId, toTisId)
+            .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.notification").value(5))
+        .andExpect(jsonPath("$.action").value(3))
+        .andExpect(jsonPath("$.formr-a").value(2));
   }
 }

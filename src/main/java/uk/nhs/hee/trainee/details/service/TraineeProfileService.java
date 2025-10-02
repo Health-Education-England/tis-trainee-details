@@ -24,13 +24,23 @@ package uk.nhs.hee.trainee.details.service;
 import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.time.LocalDate;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 import uk.nhs.hee.trainee.details.dto.LocalOfficeContact;
 import uk.nhs.hee.trainee.details.dto.UserDetails;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
@@ -47,13 +57,30 @@ import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 @XRayEnabled
 public class TraineeProfileService {
 
+  protected static final String API_MOVE_LTFT = "/api/ltft/move/{fromTraineeId}/to/{toTraineeId}";
+  protected static final String API_MOVE_FORMR = "/api/form-relocate/move/{fromTraineeId}/to/{toTraineeId}";
+  protected static final String API_MOVE_NOTIFICATIONS = "/api/history/move/{fromTraineeId}/to/{toTraineeId}";
+  protected static final String API_MOVE_ACTIONS = "/api/action/move/{fromTraineeId}/to/{toTraineeId}";
+
   private final TraineeProfileRepository repository;
   private final ProgrammeMembershipService programmeMembershipService;
+  private final RestTemplate restTemplate;
+  private final String actionsUrl;
+  private final String formsUrl;
+  private final String notificationsUrl;
 
   TraineeProfileService(TraineeProfileRepository repository,
-                        ProgrammeMembershipService programmeMembershipService) {
+      ProgrammeMembershipService programmeMembershipService,
+      RestTemplate restTemplate,
+      @Value("${service.actions.url}") String actionsUrl,
+      @Value("${service.forms.url}") String formsUrl,
+      @Value("${service.notifications.url}") String notificationsUrl) {
     this.repository = repository;
     this.programmeMembershipService = programmeMembershipService;
+    this.restTemplate = restTemplate;
+    this.actionsUrl = actionsUrl;
+    this.formsUrl = formsUrl;
+    this.notificationsUrl = notificationsUrl;
   }
 
   /**
@@ -213,6 +240,83 @@ public class TraineeProfileService {
    */
   public void deleteTraineeProfileByTraineeTisId(String traineeTisId) {
     repository.deleteByTraineeTisId(traineeTisId);
+  }
+
+  /**
+   * Move all data associated with one trainee to another trainee. The expected use case is when a
+   * trainee has two profiles (e.g. due to a data issue) and we need to consolidate them.
+   *
+   * @param fromTisId The TIS ID of the trainee to move data from.
+   * @param toTisId   The TIS ID of the trainee to move data to.
+   * @return A map indicating how many items were moved for each data type.
+   */
+  public Map<String, Integer> moveData(String fromTisId, String toTisId) {
+    TraineeProfile fromProfile = repository.findByTraineeTisId(fromTisId);
+    TraineeProfile toProfile = repository.findByTraineeTisId(toTisId);
+
+    if (fromProfile == null || toProfile == null) {
+      log.warn("Missing profile(s) for TIS IDs {}, {}. No data moved.", fromTisId, toTisId);
+      return Map.of();
+    }
+
+    ParameterizedTypeReference<Map<String, Integer>> movedResponseType
+        = new ParameterizedTypeReference<>() {};
+    Map<String, String> pathVariables = Map.of("fromTraineeId", fromTisId, "toTraineeId", toTisId);
+
+    CompletableFuture<Map<String, Integer>> ltftFuture = CompletableFuture.supplyAsync(() -> {
+      try {
+        return restTemplate.exchange(formsUrl + API_MOVE_LTFT,
+            HttpMethod.GET, null, movedResponseType, pathVariables).getBody();
+      } catch (RestClientException rce) {
+        log.warn("Exception occurred when moving LTFT forms: {}", String.valueOf(rce));
+        return new HashMap<>();
+      }
+    });
+
+    CompletableFuture<Map<String, Integer>> formRFuture = CompletableFuture.supplyAsync(() -> {
+      try {
+        return restTemplate.exchange(formsUrl + API_MOVE_FORMR,
+            HttpMethod.GET, null, movedResponseType, pathVariables).getBody();
+      } catch (RestClientException rce) {
+        log.warn("Exception occurred when moving FormR's: {}", String.valueOf(rce));
+        return new HashMap<>();
+      }
+    });
+
+    CompletableFuture<Map<String, Integer>> notificationsFuture = CompletableFuture.supplyAsync(() -> {
+      try {
+        return restTemplate.exchange(notificationsUrl + API_MOVE_NOTIFICATIONS,
+            HttpMethod.GET, null, movedResponseType, pathVariables).getBody();
+      } catch (RestClientException rce) {
+        log.warn("Exception occurred when moving Notifications: {}", String.valueOf(rce));
+        return new HashMap<>();
+      }
+    });
+
+    CompletableFuture<Map<String, Integer>> actionsFuture = CompletableFuture.supplyAsync(() -> {
+      try {
+        return restTemplate.exchange(actionsUrl + API_MOVE_ACTIONS,
+            HttpMethod.GET, null, movedResponseType, pathVariables).getBody();
+      } catch (RestClientException rce) {
+        log.warn("Exception occurred when moving Actions: {}", String.valueOf(rce));
+        return new HashMap<>();
+      }
+    });
+
+    // Wait for all futures to complete and combine results
+
+    return Stream.of(
+            ltftFuture.join(),
+            formRFuture.join(),
+            notificationsFuture.join(),
+            actionsFuture.join())
+        .filter(Objects::nonNull)
+        .flatMap(m -> m.entrySet().stream())
+        .collect(Collectors.toMap(
+            Map.Entry::getKey,
+            Map.Entry::getValue,
+            (v1, v2) -> v1 // Keep first value in case of duplicates
+        ));
   }
 
   /**
