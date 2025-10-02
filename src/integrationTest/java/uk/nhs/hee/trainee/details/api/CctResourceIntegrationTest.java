@@ -1061,7 +1061,8 @@ class CctResourceIntegrationTest {
     mockMvc.perform(patch("/api/cct/move/{fromTraineeId}/to/{toTraineeId}",
             TRAINEE_ID, toTraineeId))
         .andExpect(status().isOk())
-        .andExpect(content().string("true"));
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.cct").value(2));
 
     CctCalculation movedEntity = template.findById(id, CctCalculation.class);
     assertThat("Unexpected missing moved entity.", movedEntity, notNullValue());
@@ -1098,6 +1099,38 @@ class CctResourceIntegrationTest {
 
     mockMvc.perform(patch("/api/cct/move/{fromTraineeId}/to/{toTraineeId}",
             TRAINEE_ID, toTraineeId))
+        .andExpect(status().isBadRequest());
+
+    CctCalculation cct = template.findById(id, CctCalculation.class);
+    assertThat("Unexpected missing CCT.", cct, notNullValue());
+    assertThat("Unexpected changed trainee id on CCT.", cct.traineeId(),
+        is(TRAINEE_ID));
+  }
+
+  @Test
+  void shouldNotMoveCctCalculationsWhenFromTraineeDoesNotExist() throws Exception {
+    String fromTraineeId = "non-existent-trainee";
+
+    UUID id = UUID.randomUUID();
+    CctCalculation entity = CctCalculation.builder()
+        .id(id)
+        .traineeId(TRAINEE_ID)
+        .programmeMembership(CctProgrammeMembership.builder()
+            .startDate(LocalDate.of(2024, 1, 1))
+            .endDate(LocalDate.of(2025, 1, 1))
+            .wte(0.5)
+            .designatedBodyCode("testDbc")
+            .managingDeanery("Test Deanery")
+            .build())
+        .changes(List.of(
+            CctChange.builder().type(LTFT).startDate(LocalDate.of(2024, 11, 1))
+                .wte(1.0)
+                .build()))
+        .build();
+    template.insert(entity);
+
+    mockMvc.perform(patch("/api/cct/move/{fromTraineeId}/to/{toTraineeId}",
+            fromTraineeId, TRAINEE_ID))
         .andExpect(status().isBadRequest());
 
     CctCalculation cct = template.findById(id, CctCalculation.class);

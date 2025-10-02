@@ -39,8 +39,10 @@ import static org.springframework.http.HttpStatus.OK;
 import java.net.URI;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
@@ -345,11 +347,15 @@ class CctResourceTest {
 
     when(traineeProfileService.getTraineeDetailsByTisId(toTraineeId))
         .thenReturn(Optional.of(toUserDetails));
+    Map<String, Integer> serviceResponse = Map.of("dummy", 1);
+    when(service.moveCalculations(fromTraineeId, toTraineeId)).thenReturn(serviceResponse);
 
-    ResponseEntity<Boolean> response = controller.moveCalculations(fromTraineeId, toTraineeId);
+    ResponseEntity<Map<String, Integer>> response
+        = controller.moveCalculations(fromTraineeId, toTraineeId);
 
     assertThat("Unexpected response code.", response.getStatusCode(), is(OK));
-    assertThat("Unexpected response body.", response.getBody(), is(true));
+    Assertions.assertNotNull(response.getBody());
+    assertThat("Unexpected response body.", response.getBody().get("dummy"), is(1));
   }
 
   @Test
@@ -360,7 +366,8 @@ class CctResourceTest {
     when(traineeProfileService.getTraineeDetailsByTisId(toTraineeId))
         .thenReturn(Optional.empty());
 
-    ResponseEntity<Boolean> response = controller.moveCalculations(fromTraineeId, toTraineeId);
+    ResponseEntity<Map<String, Integer>> response
+        = controller.moveCalculations(fromTraineeId, toTraineeId);
 
     assertThat("Unexpected response code.", response.getStatusCode(), is(BAD_REQUEST));
     assertThat("Unexpected response body.", response.getBody(), nullValue());

@@ -28,10 +28,12 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -301,16 +303,19 @@ public class CctService {
    * @param fromTraineeId The trainee ID to move calculations from.
    * @param toTraineeId   The trainee ID to move calculations to.
    */
-  public void moveCalculations(String fromTraineeId, String toTraineeId) {
+  public Map<String, Integer> moveCalculations(String fromTraineeId, String toTraineeId) {
     List<CctCalculation> calculations = calculationRepository
         .findByTraineeIdOrderByLastModified(fromTraineeId);
 
+    AtomicReference<Integer> movedCount = new AtomicReference<>(0);
     calculations.forEach(c -> {
-      log.info("Moving CCT calculation [{}] from trainee [{}] to trainee [{}]",
+      log.debug("Moving CCT calculation [{}] from trainee [{}] to trainee [{}].",
           c.id(), fromTraineeId, toTraineeId);
       calculationRepository.save(c.withTraineeId(toTraineeId));
+      movedCount.getAndSet(movedCount.get() + 1);
     });
-    log.info("Moved {} CCT calculations from trainee [{}] to trainee [{}]",
-        calculations.size(), fromTraineeId, toTraineeId);
+    log.info("Moved {} of expected {} CCT calculations from trainee [{}] to trainee [{}].",
+        movedCount.get(), calculations.size(), fromTraineeId, toTraineeId);
+    return Map.of("cct", movedCount.get());
   }
 }

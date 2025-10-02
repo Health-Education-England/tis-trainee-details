@@ -24,6 +24,7 @@ package uk.nhs.hee.trainee.details.api;
 import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
@@ -166,10 +167,10 @@ public class CctResource {
    *
    * @param fromTraineeId The TIS ID of the trainee to move calculations from.
    * @param toTraineeId   The TIS ID of the trainee to move calculations to.
-   * @return True if the calculations were moved, bad request if the target trainee does not exist.
+   * @return Map of calculation counts moved, bad request if the target trainee does not exist.
    */
   @PatchMapping("/move/{fromTraineeId}/to/{toTraineeId}")
-  public ResponseEntity<Boolean> moveCalculations(@PathVariable String fromTraineeId,
+  public ResponseEntity<Map<String, Integer>> moveCalculations(@PathVariable String fromTraineeId,
       @PathVariable String toTraineeId) {
     log.info("Request to move CCT calculations from trainee {} to trainee {}",
         fromTraineeId, toTraineeId);
@@ -181,7 +182,7 @@ public class CctResource {
       return ResponseEntity.badRequest().build();
     }
 
-    service.moveCalculations(fromTraineeId, toTraineeId);
-    return ResponseEntity.ok(true);
+    Map<String, Integer> movedStats = service.moveCalculations(fromTraineeId, toTraineeId);
+    return ResponseEntity.ok(movedStats);
   }
 }
