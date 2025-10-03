@@ -904,30 +904,30 @@ class TraineeProfileServiceTest {
     when(restTemplate.exchange(eq(null + API_MOVE_LTFT), eq(HttpMethod.GET), isNull(),
             any(ParameterizedTypeReference.class), eq(expectedPathVars)))
         .thenAnswer(invocation -> {
-              Thread.sleep(100);
-              return ResponseEntity.ok(Map.of("ltft", 1));
-            });
+          Thread.sleep(100);
+          return ResponseEntity.ok(Map.of("ltft", 1));
+        });
 
     when(restTemplate.exchange(eq(null + API_MOVE_FORMR), eq(HttpMethod.GET), isNull(),
             any(ParameterizedTypeReference.class), eq(expectedPathVars)))
         .thenAnswer(invocation -> {
-              Thread.sleep(300); // Simulate longer delay
-              return ResponseEntity.ok(Map.of("formr", 2));
-            });
+          Thread.sleep(300); // Simulate longer delay
+          return ResponseEntity.ok(Map.of("formr", 2));
+        });
 
     when(restTemplate.exchange(eq(null + API_MOVE_NOTIFICATIONS), eq(HttpMethod.GET), isNull(),
             any(ParameterizedTypeReference.class), eq(expectedPathVars)))
         .thenAnswer(invocation -> {
-              Thread.sleep(150);
-              return ResponseEntity.ok(Map.of("notification", 3));
-            });
+          Thread.sleep(150);
+          return ResponseEntity.ok(Map.of("notification", 3));
+        });
 
     when(restTemplate.exchange(eq(null + API_MOVE_ACTIONS), eq(HttpMethod.GET), isNull(),
             any(ParameterizedTypeReference.class), eq(expectedPathVars)))
         .thenAnswer(invocation -> {
-              Thread.sleep(50);
-              return ResponseEntity.ok(Map.of("action", 4));
-            });
+          Thread.sleep(50);
+          return ResponseEntity.ok(Map.of("action", 4));
+        });
 
     long startTime = System.currentTimeMillis();
 
@@ -936,16 +936,15 @@ class TraineeProfileServiceTest {
     long endTime = System.currentTimeMillis();
     long duration = endTime - startTime;
 
+    // Verify execution took at least as long as the longest delay
+    assertThat("Operation completed too quickly.", duration, is(greaterThanOrEqualTo(300L)));
+    // Verify execution was much less than the sum of all delays (600ms)
+    assertThat("Operation took too long.", duration, is(lessThan(500L)));
+
     assertThat("Unexpected number of moved items", result.size(), is(4));
     assertThat("Missing LTFT result", result.get("ltft"), is(1));
     assertThat("Missing FormR result", result.get("formr"), is(2));
     assertThat("Missing notification result", result.get("notification"), is(3));
     assertThat("Missing action result", result.get("action"), is(4));
-
-    // Verify execution took at least as long as the longest delay
-    assertThat("Operation completed too quickly.", duration, is(greaterThanOrEqualTo(300L)));
-
-    // Verify execution was much less than the sum of all delays (600ms)
-    assertThat("Operation took too long.", duration, is(lessThan(500L)));
   }
 }
