@@ -180,7 +180,6 @@ public class TraineeProfileResource {
   @PatchMapping("/move/{fromTisId}/to/{toTisId}")
   public ResponseEntity<Map<String, Integer>> moveNotifications(@PathVariable String fromTisId,
       @PathVariable String toTisId) {
-    //TODO: add security to ensure only authorised users can call this method
     log.info("Request to move data from trainee {} to trainee {}", fromTisId, toTisId);
 
     TraineeProfile fromProfile = service.getTraineeProfileByTraineeTisId(fromTisId);

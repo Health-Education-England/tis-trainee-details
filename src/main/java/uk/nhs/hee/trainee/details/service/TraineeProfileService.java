@@ -57,10 +57,14 @@ import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 @XRayEnabled
 public class TraineeProfileService {
 
-  protected static final String API_MOVE_LTFT = "/api/ltft/move/{fromTraineeId}/to/{toTraineeId}";
-  protected static final String API_MOVE_FORMR = "/api/form-relocate/move/{fromTraineeId}/to/{toTraineeId}";
-  protected static final String API_MOVE_NOTIFICATIONS = "/api/history/move/{fromTraineeId}/to/{toTraineeId}";
-  protected static final String API_MOVE_ACTIONS = "/api/action/move/{fromTraineeId}/to/{toTraineeId}";
+  protected static final String API_MOVE_LTFT
+      = "/api/ltft/move/{fromTraineeId}/to/{toTraineeId}";
+  protected static final String API_MOVE_FORMR
+      = "/api/form-relocate/move/{fromTraineeId}/to/{toTraineeId}";
+  protected static final String API_MOVE_NOTIFICATIONS
+      = "/api/history/move/{fromTraineeId}/to/{toTraineeId}";
+  protected static final String API_MOVE_ACTIONS
+      = "/api/action/move/{fromTraineeId}/to/{toTraineeId}";
 
   private final TraineeProfileRepository repository;
   private final ProgrammeMembershipService programmeMembershipService;
@@ -273,7 +277,7 @@ public class TraineeProfileService {
       }
     });
 
-    CompletableFuture<Map<String, Integer>> formRFuture = CompletableFuture.supplyAsync(() -> {
+    CompletableFuture<Map<String, Integer>> formrFuture = CompletableFuture.supplyAsync(() -> {
       try {
         return restTemplate.exchange(formsUrl + API_MOVE_FORMR,
             HttpMethod.GET, null, movedResponseType, pathVariables).getBody();
@@ -283,7 +287,8 @@ public class TraineeProfileService {
       }
     });
 
-    CompletableFuture<Map<String, Integer>> notificationsFuture = CompletableFuture.supplyAsync(() -> {
+    CompletableFuture<Map<String, Integer>> notificationsFuture
+        = CompletableFuture.supplyAsync(() -> {
       try {
         return restTemplate.exchange(notificationsUrl + API_MOVE_NOTIFICATIONS,
             HttpMethod.GET, null, movedResponseType, pathVariables).getBody();
@@ -307,7 +312,7 @@ public class TraineeProfileService {
 
     return Stream.of(
             ltftFuture.join(),
-            formRFuture.join(),
+            formrFuture.join(),
             notificationsFuture.join(),
             actionsFuture.join())
         .filter(Objects::nonNull)

@@ -896,38 +896,38 @@ class TraineeProfileServiceTest {
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_2)).thenReturn(traineeProfile2);
 
-    Map<String, String> expectedPathVars = Map.of(
-        "fromTraineeId", DEFAULT_TIS_ID_1,
-        "toTraineeId", DEFAULT_TIS_ID_2
-    );
+    Map<String, String> expectedPathVars =
+        Map.of(
+            "fromTraineeId", DEFAULT_TIS_ID_1,
+            "toTraineeId", DEFAULT_TIS_ID_2);
 
-    when(restTemplate.exchange(eq(null + API_MOVE_LTFT),
-        eq(HttpMethod.GET), isNull(), any(ParameterizedTypeReference.class),
-        eq(expectedPathVars))).thenAnswer(invocation -> {
-      Thread.sleep(100);
-      return ResponseEntity.ok(Map.of("ltft", 1));
-    });
+    when(restTemplate.exchange(eq(null + API_MOVE_LTFT), eq(HttpMethod.GET), isNull(),
+            any(ParameterizedTypeReference.class), eq(expectedPathVars)))
+        .thenAnswer(invocation -> {
+              Thread.sleep(100);
+              return ResponseEntity.ok(Map.of("ltft", 1));
+            });
 
-    when(restTemplate.exchange(eq(null + API_MOVE_FORMR),
-        eq(HttpMethod.GET), isNull(), any(ParameterizedTypeReference.class),
-        eq(expectedPathVars))).thenAnswer(invocation -> {
-      Thread.sleep(300); // Simulate longer delay
-      return ResponseEntity.ok(Map.of("formr", 2));
-    });
+    when(restTemplate.exchange(eq(null + API_MOVE_FORMR), eq(HttpMethod.GET), isNull(),
+            any(ParameterizedTypeReference.class), eq(expectedPathVars)))
+        .thenAnswer(invocation -> {
+              Thread.sleep(300); // Simulate longer delay
+              return ResponseEntity.ok(Map.of("formr", 2));
+            });
 
-    when(restTemplate.exchange(eq(null + API_MOVE_NOTIFICATIONS),
-        eq(HttpMethod.GET), isNull(), any(ParameterizedTypeReference.class),
-        eq(expectedPathVars))).thenAnswer(invocation -> {
-      Thread.sleep(150);
-      return ResponseEntity.ok(Map.of("notification", 3));
-    });
+    when(restTemplate.exchange(eq(null + API_MOVE_NOTIFICATIONS), eq(HttpMethod.GET), isNull(),
+            any(ParameterizedTypeReference.class), eq(expectedPathVars)))
+        .thenAnswer(invocation -> {
+              Thread.sleep(150);
+              return ResponseEntity.ok(Map.of("notification", 3));
+            });
 
-    when(restTemplate.exchange(eq(null + API_MOVE_ACTIONS),
-        eq(HttpMethod.GET), isNull(), any(ParameterizedTypeReference.class),
-        eq(expectedPathVars))).thenAnswer(invocation -> {
-      Thread.sleep(50);
-      return ResponseEntity.ok(Map.of("action", 4));
-    });
+    when(restTemplate.exchange(eq(null + API_MOVE_ACTIONS), eq(HttpMethod.GET), isNull(),
+            any(ParameterizedTypeReference.class), eq(expectedPathVars)))
+        .thenAnswer(invocation -> {
+              Thread.sleep(50);
+              return ResponseEntity.ok(Map.of("action", 4));
+            });
 
     long startTime = System.currentTimeMillis();
 
