@@ -27,6 +27,8 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.lessThan;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -889,4 +891,61 @@ class TraineeProfileServiceTest {
     assertThat("Unexpected result map.", result.get("records"), is(2));
   }
 
+  @Test
+  void moveShouldTriggerFuturesInParallelAndWaitForAllToComplete() {
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_2)).thenReturn(traineeProfile2);
+
+    Map<String, String> expectedPathVars = Map.of(
+        "fromTraineeId", DEFAULT_TIS_ID_1,
+        "toTraineeId", DEFAULT_TIS_ID_2
+    );
+
+    when(restTemplate.exchange(eq(null + API_MOVE_LTFT),
+        eq(HttpMethod.GET), isNull(), any(ParameterizedTypeReference.class),
+        eq(expectedPathVars))).thenAnswer(invocation -> {
+      Thread.sleep(100);
+      return ResponseEntity.ok(Map.of("ltft", 1));
+    });
+
+    when(restTemplate.exchange(eq(null + API_MOVE_FORMR),
+        eq(HttpMethod.GET), isNull(), any(ParameterizedTypeReference.class),
+        eq(expectedPathVars))).thenAnswer(invocation -> {
+      Thread.sleep(300); // Simulate longer delay
+      return ResponseEntity.ok(Map.of("formr", 2));
+    });
+
+    when(restTemplate.exchange(eq(null + API_MOVE_NOTIFICATIONS),
+        eq(HttpMethod.GET), isNull(), any(ParameterizedTypeReference.class),
+        eq(expectedPathVars))).thenAnswer(invocation -> {
+      Thread.sleep(150);
+      return ResponseEntity.ok(Map.of("notification", 3));
+    });
+
+    when(restTemplate.exchange(eq(null + API_MOVE_ACTIONS),
+        eq(HttpMethod.GET), isNull(), any(ParameterizedTypeReference.class),
+        eq(expectedPathVars))).thenAnswer(invocation -> {
+      Thread.sleep(50);
+      return ResponseEntity.ok(Map.of("action", 4));
+    });
+
+    long startTime = System.currentTimeMillis();
+
+    Map<String, Integer> result = service.moveData(DEFAULT_TIS_ID_1, DEFAULT_TIS_ID_2);
+
+    long endTime = System.currentTimeMillis();
+    long duration = endTime - startTime;
+
+    assertThat("Unexpected number of moved items", result.size(), is(4));
+    assertThat("Missing LTFT result", result.get("ltft"), is(1));
+    assertThat("Missing FormR result", result.get("formr"), is(2));
+    assertThat("Missing notification result", result.get("notification"), is(3));
+    assertThat("Missing action result", result.get("action"), is(4));
+
+    // Verify execution took at least as long as the longest delay
+    assertThat("Operation completed too quickly.", duration, is(greaterThanOrEqualTo(300L)));
+
+    // Verify execution was much less than the sum of all delays (600ms)
+    assertThat("Operation took too long.", duration, is(lessThan(500L)));
+  }
 }
