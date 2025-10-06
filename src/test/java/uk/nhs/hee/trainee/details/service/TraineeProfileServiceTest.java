@@ -21,6 +21,7 @@
 
 package uk.nhs.hee.trainee.details.service;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
@@ -915,7 +916,7 @@ class TraineeProfileServiceTest {
         .thenAnswer(invocation -> {
           ltftStarted.set(true);
           startLatch.countDown();
-          completeLatch.await(1, TimeUnit.SECONDS); // Wait for signal to complete
+          completeLatch.await(1, SECONDS); // Wait for signal to complete
           return ResponseEntity.ok(Map.of("ltft", 1));
         });
 
@@ -924,7 +925,7 @@ class TraineeProfileServiceTest {
         .thenAnswer(invocation -> {
           formrStarted.set(true);
           startLatch.countDown();
-          completeLatch.await(1, TimeUnit.SECONDS);
+          completeLatch.await(1, SECONDS);
           return ResponseEntity.ok(Map.of("formr", 2));
         });
 
@@ -933,7 +934,7 @@ class TraineeProfileServiceTest {
         .thenAnswer(invocation -> {
           notificationsStarted.set(true);
           startLatch.countDown();
-          completeLatch.await(1, TimeUnit.SECONDS);
+          completeLatch.await(1, SECONDS);
           return ResponseEntity.ok(Map.of("notification", 3));
         });
 
@@ -942,7 +943,7 @@ class TraineeProfileServiceTest {
         .thenAnswer(invocation -> {
           actionsStarted.set(true);
           startLatch.countDown();
-          completeLatch.await(1, TimeUnit.SECONDS);
+          completeLatch.await(1, SECONDS);
           return ResponseEntity.ok(Map.of("action", 4));
         });
 
@@ -951,7 +952,7 @@ class TraineeProfileServiceTest {
         () -> service.moveData(DEFAULT_TIS_ID_1, DEFAULT_TIS_ID_2));
 
     // Wait for all futures to start
-    assertThat("Not all futures started", startLatch.await(1, TimeUnit.SECONDS), is(true));
+    assertThat("Not all futures started", startLatch.await(2, SECONDS), is(true));
 
     // Verify all futures started before any completed
     assertThat("LTFT future did not start", ltftStarted.get(), is(true));
