@@ -27,8 +27,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.lessThan;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -56,6 +54,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -892,54 +894,75 @@ class TraineeProfileServiceTest {
   }
 
   @Test
-  void moveShouldTriggerFuturesInParallelAndWaitForAllToComplete() {
+  void moveShouldTriggerFuturesInParallelAndWaitForAllToComplete() throws InterruptedException {
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_2)).thenReturn(traineeProfile2);
 
-    Map<String, String> expectedPathVars =
-        Map.of(
-            "fromTraineeId", DEFAULT_TIS_ID_1,
-            "toTraineeId", DEFAULT_TIS_ID_2);
+    CountDownLatch startLatch = new CountDownLatch(4); // Track when futures start
+    CountDownLatch completeLatch = new CountDownLatch(1); // Signal futures to complete
+
+    AtomicBoolean ltftStarted = new AtomicBoolean(false);
+    AtomicBoolean formrStarted = new AtomicBoolean(false);
+    AtomicBoolean notificationsStarted = new AtomicBoolean(false);
+    AtomicBoolean actionsStarted = new AtomicBoolean(false);
+
+    Map<String, String> expectedPathVars = Map.of(
+        "fromTraineeId", DEFAULT_TIS_ID_1,
+        "toTraineeId", DEFAULT_TIS_ID_2);
 
     when(restTemplate.exchange(eq(null + API_MOVE_LTFT), eq(HttpMethod.GET), isNull(),
-            any(ParameterizedTypeReference.class), eq(expectedPathVars)))
+        any(ParameterizedTypeReference.class), eq(expectedPathVars)))
         .thenAnswer(invocation -> {
-          Thread.sleep(100);
+          ltftStarted.set(true);
+          startLatch.countDown();
+          completeLatch.await(1, TimeUnit.SECONDS); // Wait for signal to complete
           return ResponseEntity.ok(Map.of("ltft", 1));
         });
 
     when(restTemplate.exchange(eq(null + API_MOVE_FORMR), eq(HttpMethod.GET), isNull(),
-            any(ParameterizedTypeReference.class), eq(expectedPathVars)))
+        any(ParameterizedTypeReference.class), eq(expectedPathVars)))
         .thenAnswer(invocation -> {
-          Thread.sleep(300); // Simulate longer delay
+          formrStarted.set(true);
+          startLatch.countDown();
+          completeLatch.await(1, TimeUnit.SECONDS);
           return ResponseEntity.ok(Map.of("formr", 2));
         });
 
     when(restTemplate.exchange(eq(null + API_MOVE_NOTIFICATIONS), eq(HttpMethod.GET), isNull(),
-            any(ParameterizedTypeReference.class), eq(expectedPathVars)))
+        any(ParameterizedTypeReference.class), eq(expectedPathVars)))
         .thenAnswer(invocation -> {
-          Thread.sleep(150);
+          notificationsStarted.set(true);
+          startLatch.countDown();
+          completeLatch.await(1, TimeUnit.SECONDS);
           return ResponseEntity.ok(Map.of("notification", 3));
         });
 
     when(restTemplate.exchange(eq(null + API_MOVE_ACTIONS), eq(HttpMethod.GET), isNull(),
-            any(ParameterizedTypeReference.class), eq(expectedPathVars)))
+        any(ParameterizedTypeReference.class), eq(expectedPathVars)))
         .thenAnswer(invocation -> {
-          Thread.sleep(50);
+          actionsStarted.set(true);
+          startLatch.countDown();
+          completeLatch.await(1, TimeUnit.SECONDS);
           return ResponseEntity.ok(Map.of("action", 4));
         });
 
-    long startTime = System.currentTimeMillis();
+    // Start the move operation in a separate thread
+    CompletableFuture<Map<String, Integer>> future = CompletableFuture.supplyAsync(
+        () -> service.moveData(DEFAULT_TIS_ID_1, DEFAULT_TIS_ID_2));
 
-    Map<String, Integer> result = service.moveData(DEFAULT_TIS_ID_1, DEFAULT_TIS_ID_2);
+    // Wait for all futures to start
+    assertThat("Not all futures started", startLatch.await(1, TimeUnit.SECONDS), is(true));
 
-    long endTime = System.currentTimeMillis();
-    long duration = endTime - startTime;
+    // Verify all futures started before any completed
+    assertThat("LTFT future did not start", ltftStarted.get(), is(true));
+    assertThat("FormR future did not start", formrStarted.get(), is(true));
+    assertThat("Notifications future did not start", notificationsStarted.get(), is(true));
+    assertThat("Actions future did not start", actionsStarted.get(), is(true));
 
-    // Verify execution took at least as long as the longest delay
-    assertThat("Operation completed too quickly.", duration, is(greaterThanOrEqualTo(300L)));
-    // Verify execution was much less than the sum of all delays (600ms)
-    assertThat("Operation took too long.", duration, is(lessThan(500L)));
+    // Allow futures to complete
+    completeLatch.countDown();
+
+    Map<String, Integer> result = future.join();
 
     assertThat("Unexpected number of moved items", result.size(), is(4));
     assertThat("Missing LTFT result", result.get("ltft"), is(1));

@@ -299,14 +299,14 @@ public class TraineeProfileService {
         });
 
     CompletableFuture<Map<String, Integer>> actionsFuture = CompletableFuture.supplyAsync(() -> {
-          try {
-            return restTemplate.exchange(actionsUrl + API_MOVE_ACTIONS,
-                HttpMethod.GET, null, movedResponseType, pathVariables).getBody();
-          } catch (RestClientException rce) {
-            log.warn("Exception occurred when moving Actions: {}", String.valueOf(rce));
-            return new HashMap<>();
-          }
-        });
+      try {
+        return restTemplate.exchange(actionsUrl + API_MOVE_ACTIONS,
+            HttpMethod.GET, null, movedResponseType, pathVariables).getBody();
+      } catch (RestClientException rce) {
+        log.warn("Exception occurred when moving Actions: {}", String.valueOf(rce));
+        return new HashMap<>();
+      }
+    });
 
     // Wait for all futures to complete and combine results
 
