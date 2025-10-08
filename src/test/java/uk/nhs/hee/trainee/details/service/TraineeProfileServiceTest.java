@@ -21,6 +21,7 @@
 
 package uk.nhs.hee.trainee.details.service;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
@@ -28,12 +29,19 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion.GG10;
 import static uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion.GG9;
+import static uk.nhs.hee.trainee.details.service.TraineeProfileService.API_MOVE_ACTIONS;
+import static uk.nhs.hee.trainee.details.service.TraineeProfileService.API_MOVE_FORMR;
+import static uk.nhs.hee.trainee.details.service.TraineeProfileService.API_MOVE_LTFT;
+import static uk.nhs.hee.trainee.details.service.TraineeProfileService.API_MOVE_NOTIFICATIONS;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -43,9 +51,14 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -56,6 +69,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 import uk.nhs.hee.trainee.details.dto.LocalOfficeContact;
 import uk.nhs.hee.trainee.details.dto.UserDetails;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
@@ -134,6 +152,9 @@ class TraineeProfileServiceTest {
 
   @Mock
   private TrainingNumberGenerator trainingNumberGenerator;
+
+  @Mock
+  private RestTemplate restTemplate;
 
   private TraineeProfile traineeProfile = new TraineeProfile();
   private TraineeProfile traineeProfile2 = new TraineeProfile();
@@ -739,5 +760,215 @@ class TraineeProfileServiceTest {
         is(LO_CONTACT1));
     assertThat("Unexpected local office contact LO.", firstLo.localOffice(),
         is(MANAGING_DEANERY));
+  }
+
+  @Test
+  void moveShouldReturnEmptyMapWhenFromProfileNotFound() {
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(null);
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_2)).thenReturn(traineeProfile2);
+
+    Map<String, Integer> result = service.moveData(DEFAULT_TIS_ID_1, DEFAULT_TIS_ID_2);
+
+    assertThat("Unexpected number of moved items.", result.size(), is(0));
+  }
+
+  @Test
+  void moveShouldReturnEmptyMapWhenToProfileNotFound() {
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_2)).thenReturn(null);
+
+    Map<String, Integer> result = service.moveData(DEFAULT_TIS_ID_1, DEFAULT_TIS_ID_2);
+
+    assertThat("Unexpected number of moved items.", result.size(), is(0));
+  }
+
+  @Test
+  void moveShouldCombineResultsFromAllServices() {
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_2)).thenReturn(traineeProfile2);
+
+    Map<String, String> expectedPathVars = Map.of(
+        "fromTraineeId", DEFAULT_TIS_ID_1,
+        "toTraineeId", DEFAULT_TIS_ID_2
+    );
+
+    when(restTemplate.exchange(eq(null + API_MOVE_LTFT),
+        eq(HttpMethod.GET), isNull(), any(ParameterizedTypeReference.class),
+        eq(expectedPathVars))).thenReturn(ResponseEntity.ok(Map.of("ltft", 1)));
+
+    when(restTemplate.exchange(eq(null + API_MOVE_FORMR),
+        eq(HttpMethod.GET), isNull(), any(ParameterizedTypeReference.class),
+        eq(expectedPathVars))).thenReturn(ResponseEntity.ok(Map.of("formr-a", 2, "formr-b", 3)));
+
+    when(restTemplate.exchange(eq(null + API_MOVE_NOTIFICATIONS),
+        eq(HttpMethod.GET), isNull(), any(ParameterizedTypeReference.class),
+        eq(expectedPathVars))).thenReturn(ResponseEntity.ok(Map.of("notification", 4)));
+
+    when(restTemplate.exchange(eq(null + API_MOVE_ACTIONS),
+        eq(HttpMethod.GET), isNull(), any(ParameterizedTypeReference.class),
+        eq(expectedPathVars))).thenReturn(ResponseEntity.ok(Map.of("action", 5)));
+
+    Map<String, Integer> result = service.moveData(DEFAULT_TIS_ID_1, DEFAULT_TIS_ID_2);
+
+    assertThat("Unexpected number of moved items.", result.size(), is(5));
+    assertThat("Unexpected LTFT items moved.", result.get("ltft"), is(1));
+    assertThat("Unexpected FormR items moved.", result.get("formr-a"), is(2));
+    assertThat("Unexpected FormR items moved.", result.get("formr-b"), is(3));
+    assertThat("Unexpected notification items moved.", result.get("notification"), is(4));
+    assertThat("Unexpected action items moved.", result.get("action"), is(5));
+  }
+
+  @Test
+  void moveShouldHandleIndividualServiceErrors() {
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_2)).thenReturn(traineeProfile2);
+
+    when(restTemplate.exchange(eq(null + API_MOVE_LTFT),
+        eq(HttpMethod.GET), isNull(), any(ParameterizedTypeReference.class),
+        anyMap())).thenThrow(new RestClientException("LTFT service error"));
+
+    when(restTemplate.exchange(eq(null + API_MOVE_FORMR),
+        eq(HttpMethod.GET), isNull(), any(ParameterizedTypeReference.class),
+        anyMap())).thenReturn(ResponseEntity.ok(Map.of("formr-a", 1)));
+
+    when(restTemplate.exchange(eq(null + API_MOVE_NOTIFICATIONS),
+        eq(HttpMethod.GET), isNull(), any(ParameterizedTypeReference.class),
+        anyMap())).thenReturn(ResponseEntity.ok(Map.of("notification", 2)));
+
+    when(restTemplate.exchange(eq(null + API_MOVE_ACTIONS),
+        eq(HttpMethod.GET), isNull(), any(ParameterizedTypeReference.class),
+        anyMap())).thenReturn(ResponseEntity.ok(Map.of("action", 3)));
+
+    Map<String, Integer> result = service.moveData(DEFAULT_TIS_ID_1, DEFAULT_TIS_ID_2);
+
+    assertThat("Unexpected number of moved items.", result.size(), is(3));
+    assertThat("Unexpected FormR items moved.", result.get("formr-a"), is(1));
+    assertThat("Unexpected notification items moved.", result.get("notification"), is(2));
+    assertThat("Unexpected action items moved.", result.get("action"), is(3));
+  }
+
+  @Test
+  void moveShouldHandleAllServiceErrors() {
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_2)).thenReturn(traineeProfile2);
+
+    when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), isNull(),
+        any(ParameterizedTypeReference.class), anyMap()))
+        .thenThrow(new RestClientException("Service error"));
+
+    Map<String, Integer> result = service.moveData(DEFAULT_TIS_ID_1, DEFAULT_TIS_ID_2);
+
+    assertThat("Unexpected number of moved items.", result.size(), is(0));
+  }
+
+  @Test
+  void moveShouldKeepFirstValueIfDuplicateKeysFromDifferentServices() {
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_2)).thenReturn(traineeProfile2);
+
+    Map<String, String> expectedPathVars = Map.of(
+        "fromTraineeId", DEFAULT_TIS_ID_1,
+        "toTraineeId", DEFAULT_TIS_ID_2
+    );
+
+    // Multiple services return results with the same key
+    when(restTemplate.exchange(eq(null + API_MOVE_LTFT),
+        eq(HttpMethod.GET), isNull(), any(ParameterizedTypeReference.class),
+        eq(expectedPathVars))).thenReturn(ResponseEntity.ok(Map.of("records", 2)));
+
+    when(restTemplate.exchange(eq(null + API_MOVE_FORMR),
+        eq(HttpMethod.GET), isNull(), any(ParameterizedTypeReference.class),
+        eq(expectedPathVars))).thenReturn(ResponseEntity.ok(Map.of("records", 99)));
+
+    when(restTemplate.exchange(eq(null + API_MOVE_NOTIFICATIONS),
+        eq(HttpMethod.GET), isNull(), any(ParameterizedTypeReference.class),
+        eq(expectedPathVars))).thenReturn(ResponseEntity.ok(Map.of("records", -1)));
+
+    when(restTemplate.exchange(eq(null + API_MOVE_ACTIONS),
+        eq(HttpMethod.GET), isNull(), any(ParameterizedTypeReference.class),
+        eq(expectedPathVars))).thenReturn(ResponseEntity.ok(Map.of("records", 111)));
+
+    Map<String, Integer> result = service.moveData(DEFAULT_TIS_ID_1, DEFAULT_TIS_ID_2);
+
+    assertThat("Unexpected number of result types.", result.size(), is(1));
+    assertThat("Unexpected result map.", result.get("records"), is(2));
+  }
+
+  @Test
+  void moveShouldTriggerFuturesInParallelAndWaitForAllToComplete() throws InterruptedException {
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_2)).thenReturn(traineeProfile2);
+
+    CountDownLatch startLatch = new CountDownLatch(4); // Track when futures start
+    CountDownLatch completeLatch = new CountDownLatch(1); // Signal futures to complete
+
+    AtomicBoolean ltftStarted = new AtomicBoolean(false);
+    AtomicBoolean formrStarted = new AtomicBoolean(false);
+    AtomicBoolean notificationsStarted = new AtomicBoolean(false);
+    AtomicBoolean actionsStarted = new AtomicBoolean(false);
+
+    Map<String, String> expectedPathVars = Map.of(
+        "fromTraineeId", DEFAULT_TIS_ID_1,
+        "toTraineeId", DEFAULT_TIS_ID_2);
+
+    when(restTemplate.exchange(eq(null + API_MOVE_LTFT), eq(HttpMethod.GET), isNull(),
+        any(ParameterizedTypeReference.class), eq(expectedPathVars)))
+        .thenAnswer(invocation -> {
+          ltftStarted.set(true);
+          startLatch.countDown();
+          completeLatch.await(1, SECONDS); // Wait for signal to complete
+          return ResponseEntity.ok(Map.of("ltft", 1));
+        });
+
+    when(restTemplate.exchange(eq(null + API_MOVE_FORMR), eq(HttpMethod.GET), isNull(),
+        any(ParameterizedTypeReference.class), eq(expectedPathVars)))
+        .thenAnswer(invocation -> {
+          formrStarted.set(true);
+          startLatch.countDown();
+          completeLatch.await(1, SECONDS);
+          return ResponseEntity.ok(Map.of("formr", 2));
+        });
+
+    when(restTemplate.exchange(eq(null + API_MOVE_NOTIFICATIONS), eq(HttpMethod.GET), isNull(),
+        any(ParameterizedTypeReference.class), eq(expectedPathVars)))
+        .thenAnswer(invocation -> {
+          notificationsStarted.set(true);
+          startLatch.countDown();
+          completeLatch.await(1, SECONDS);
+          return ResponseEntity.ok(Map.of("notification", 3));
+        });
+
+    when(restTemplate.exchange(eq(null + API_MOVE_ACTIONS), eq(HttpMethod.GET), isNull(),
+        any(ParameterizedTypeReference.class), eq(expectedPathVars)))
+        .thenAnswer(invocation -> {
+          actionsStarted.set(true);
+          startLatch.countDown();
+          completeLatch.await(1, SECONDS);
+          return ResponseEntity.ok(Map.of("action", 4));
+        });
+
+    // Start the move operation in a separate thread
+    CompletableFuture<Map<String, Integer>> future = CompletableFuture.supplyAsync(
+        () -> service.moveData(DEFAULT_TIS_ID_1, DEFAULT_TIS_ID_2));
+
+    // Wait for all futures to start
+    assertThat("Not all futures started", startLatch.await(2, SECONDS), is(true));
+
+    // Verify all futures started before any completed
+    assertThat("LTFT future did not start", ltftStarted.get(), is(true));
+    assertThat("FormR future did not start", formrStarted.get(), is(true));
+    assertThat("Notifications future did not start", notificationsStarted.get(), is(true));
+    assertThat("Actions future did not start", actionsStarted.get(), is(true));
+
+    // Allow futures to complete
+    completeLatch.countDown();
+
+    Map<String, Integer> result = future.join();
+
+    assertThat("Unexpected number of moved items", result.size(), is(4));
+    assertThat("Missing LTFT result", result.get("ltft"), is(1));
+    assertThat("Missing FormR result", result.get("formr"), is(2));
+    assertThat("Missing notification result", result.get("notification"), is(3));
+    assertThat("Missing action result", result.get("action"), is(4));
   }
 }

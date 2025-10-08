@@ -71,6 +71,18 @@ mongock:
   migration-scan-package: uk.nhs.hee.trainee.details.migration
 
 service:
+  actions:
+    host: ${TRAINEE_ACTIONS_HOST:localhost}
+    port: ${TRAINEE_ACTIONS_PORT:8212}
+    url: http://${service.actions.host}:${service.actions.port}/actions
+  forms:
+    host: ${TRAINEE_FORMS_HOST:localhost}
+    port: ${TRAINEE_FORMS_PORT:8207}
+    url: http://${service.forms.host}:${service.forms.port}/forms
+  notifications:
+    host: ${TRAINEE_NOTIFICATIONS_HOST:localhost}
+    port: ${TRAINEE_NOTIFICATIONS_PORT:8211}
+    url: http://${service.notifications.host}:${service.notifications.port}/notifications
   reference:
     host: ${TRAINEE_REFERENCE_HOST:localhost}
     port: ${TRAINEE_REFERENCE_PORT:8205}
