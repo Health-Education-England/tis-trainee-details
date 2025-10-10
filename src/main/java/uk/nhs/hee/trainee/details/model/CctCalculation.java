@@ -63,6 +63,7 @@ public record CctCalculation(
     @CreatedDate
     Instant created,
 
+    @With
     @LastModifiedDate
     Instant lastModified) implements UuidIdentifiedRecord<CctCalculation> {
 

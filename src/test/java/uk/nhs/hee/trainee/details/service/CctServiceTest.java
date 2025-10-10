@@ -40,7 +40,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -868,10 +867,7 @@ class CctServiceTest {
     when(calculationRepository.findByTraineeIdOrderByLastModified(fromTraineeId))
         .thenReturn(List.of(calc1, calc2));
 
-    Map<String, Integer> movedStats = service.moveCalculations(fromTraineeId, toTraineeId);
-
-    Map<String, Integer> expectedMap = Map.of("cct", 2);
-    assertThat("Unexpected moved CCT count.", movedStats, is(expectedMap));
+    service.moveCalculations(fromTraineeId, toTraineeId);
 
     verify(calculationRepository).save(calc1.withTraineeId(toTraineeId));
     verify(calculationRepository).save(calc2.withTraineeId(toTraineeId));
@@ -885,10 +881,7 @@ class CctServiceTest {
     when(calculationRepository.findByTraineeIdOrderByLastModified(fromTraineeId))
         .thenReturn(List.of());
 
-    Map<String, Integer> movedStats = service.moveCalculations(fromTraineeId, toTraineeId);
-
-    Map<String, Integer> expectedMap = Map.of("cct", 0);
-    assertThat("Unexpected moved CCT count.", movedStats, is(expectedMap));
+    service.moveCalculations(fromTraineeId, toTraineeId);
 
     verify(calculationRepository, never()).save(any());
   }

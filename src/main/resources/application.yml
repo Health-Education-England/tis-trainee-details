@@ -41,6 +41,7 @@ application:
       gmc-details-update: ${GMC_DETAILS_UPDATE_QUEUE_URL:}
       personal-info-update: ${PERSONAL_INFO_UPDATE_QUEUE_URL:}
       person-owner-update: ${PERSON_OWNER_UPDATE_QUEUE_URL:}
+      profile-move: ${PROFILE_MOVE_QUEUE_URL:}
   environment: ${ENVIRONMENT:local}
   features:
     ltft:
