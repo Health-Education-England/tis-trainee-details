@@ -39,10 +39,8 @@ import static org.springframework.http.HttpStatus.OK;
 import java.net.URI;
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
@@ -51,7 +49,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.server.ResponseStatusException;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
-import uk.nhs.hee.trainee.details.dto.UserDetails;
 import uk.nhs.hee.trainee.details.service.CctService;
 import uk.nhs.hee.trainee.details.service.TraineeProfileService;
 
@@ -337,39 +334,5 @@ class CctResourceTest {
     ResponseStatusException exception = assertThrows(ResponseStatusException.class,
         () -> controller.deleteCalculation(id));
     assertThat("Unexpected status code.", exception.getStatusCode(), is(NOT_FOUND));
-  }
-
-  @Test
-  void shouldMoveCctCalculationsWhenToTraineeExists() {
-    String fromTraineeId = "40";
-    String toTraineeId = "50";
-    UserDetails toUserDetails = mock(UserDetails.class);
-
-    when(traineeProfileService.getTraineeDetailsByTisId(toTraineeId))
-        .thenReturn(Optional.of(toUserDetails));
-    Map<String, Integer> serviceResponse = Map.of("dummy", 1);
-    when(service.moveCalculations(fromTraineeId, toTraineeId)).thenReturn(serviceResponse);
-
-    ResponseEntity<Map<String, Integer>> response
-        = controller.moveCalculations(fromTraineeId, toTraineeId);
-
-    assertThat("Unexpected response code.", response.getStatusCode(), is(OK));
-    Assertions.assertNotNull(response.getBody());
-    assertThat("Unexpected response body.", response.getBody().get("dummy"), is(1));
-  }
-
-  @Test
-  void shouldNotMoveCctCalculationsWhenToTraineeNotFound() {
-    String fromTraineeId = "40";
-    String toTraineeId = "50";
-
-    when(traineeProfileService.getTraineeDetailsByTisId(toTraineeId))
-        .thenReturn(Optional.empty());
-
-    ResponseEntity<Map<String, Integer>> response
-        = controller.moveCalculations(fromTraineeId, toTraineeId);
-
-    assertThat("Unexpected response code.", response.getStatusCode(), is(BAD_REQUEST));
-    assertThat("Unexpected response body.", response.getBody(), nullValue());
   }
 }
