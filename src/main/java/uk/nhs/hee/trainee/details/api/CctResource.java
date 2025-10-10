@@ -44,7 +44,6 @@ import org.springframework.web.server.ResponseStatusException;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
 import uk.nhs.hee.trainee.details.dto.validation.Create;
 import uk.nhs.hee.trainee.details.service.CctService;
-import uk.nhs.hee.trainee.details.service.TraineeProfileService;
 
 /**
  * A REST controller for CCT related endpoints.
@@ -56,16 +55,13 @@ import uk.nhs.hee.trainee.details.service.TraineeProfileService;
 public class CctResource {
 
   private final CctService service;
-  private final TraineeProfileService traineeProfileService;
 
   /**
    * Construct a REST controller for CCT related endpoints.
    *
    * @param service               A service providing CCT functionality.
-   * @param traineeProfileService A service providing trainee profile functionality.
    */
-  public CctResource(CctService service, TraineeProfileService traineeProfileService) {
-    this.traineeProfileService = traineeProfileService;
+  public CctResource(CctService service) {
     this.service = service;
   }
 

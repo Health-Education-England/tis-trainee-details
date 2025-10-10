@@ -50,19 +50,16 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.server.ResponseStatusException;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
 import uk.nhs.hee.trainee.details.service.CctService;
-import uk.nhs.hee.trainee.details.service.TraineeProfileService;
 
 class CctResourceTest {
 
   private CctResource controller;
   private CctService service;
-  TraineeProfileService traineeProfileService;
 
   @BeforeEach
   void setUp() {
     service = mock(CctService.class);
-    traineeProfileService = mock(TraineeProfileService.class);
-    controller = new CctResource(service, traineeProfileService);
+    controller = new CctResource(service);
   }
 
   @Test
