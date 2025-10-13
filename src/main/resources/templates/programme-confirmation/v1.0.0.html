@@ -12,9 +12,7 @@
   <div class="logo">
     <img src="/static/nhs-england_logo_blue_right.svg" alt="NHS England logo">
   </div>
-  <!-- TODO: confirm FROM address and re-add
     <address class="from" th:replace="~{fragments/address :: from}">[From Address]</address>
-  -->
   <div class="sent">
     <time th:replace="~{fragments/date :: date(${#temporals.createTodayForTimeZone(timezone)})}">[Sent Date]</time>
   </div>
