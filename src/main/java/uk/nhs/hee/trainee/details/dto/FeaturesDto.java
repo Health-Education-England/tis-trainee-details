@@ -35,11 +35,7 @@ public record FeaturesDto(
     Feature cct,
     DetailsFeatures details,
     FormFeatures forms,
-    Feature notifications,
-
-    // TODO: The API is unversioned, so these are needed until the client is updated.
-    boolean ltft,
-    List<String> ltftProgrammes) {
+    Feature notifications) {
 
   /**
    * Create a set of feature flags with all features enabled, excluding any pilot features.
@@ -52,9 +48,7 @@ public record FeaturesDto(
         Feature.enable(),
         DetailsFeatures.enable(),
         FormFeatures.enable(),
-        Feature.enable(),
-        false,
-        List.of()
+        Feature.enable()
     );
   }
 
@@ -66,8 +60,6 @@ public record FeaturesDto(
    */
   public static FeaturesDto enableWithLtftPilot(List<String> ltftProgrammeIds) {
     return enable()
-        .withLtft(true)
-        .withLtftProgrammes(List.copyOf(ltftProgrammeIds))
         .withForms(FormFeatures.enableWithLtftPilot(ltftProgrammeIds));
   }
 
@@ -83,9 +75,7 @@ public record FeaturesDto(
         Feature.disable(),
         DetailsFeatures.readOnly(),
         FormFeatures.disable(),
-        Feature.disable(),
-        false,
-        List.of()
+        Feature.disable()
     );
   }
 
@@ -100,9 +90,7 @@ public record FeaturesDto(
         Feature.disable(),
         DetailsFeatures.disable(),
         FormFeatures.disable(),
-        Feature.disable(),
-        false,
-        List.of()
+        Feature.disable()
     );
   }
 

@@ -404,9 +404,7 @@ class FeatureServiceTest {
 
     FeaturesDto features = service.getFeatures();
 
-    assertThat("Unexpected LTFT flag.", features.ltft(), is(false));
     assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(false));
-    assertThat("Unexpected enabled programme count.", features.ltftProgrammes().size(), is(0));
     assertThat("Unexpected enabled programme count.",
         features.forms().ltft().qualifyingProgrammes().size(), is(0));
   }
@@ -420,7 +418,6 @@ class FeatureServiceTest {
 
     FeaturesDto features = service.getFeatures();
 
-    assertThat("Unexpected LTFT flag.", features.ltft(), is(false));
     assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(false));
   }
 
@@ -453,7 +450,6 @@ class FeatureServiceTest {
 
     FeaturesDto features = service.getFeatures();
 
-    assertThat("Unexpected LTFT flag.", features.ltft(), is(false));
     assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(false));
   }
 
@@ -475,7 +471,6 @@ class FeatureServiceTest {
 
     FeaturesDto features = service.getFeatures();
 
-    assertThat("Unexpected LTFT flag.", features.ltft(), is(false));
     assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(false));
   }
 
@@ -498,7 +493,6 @@ class FeatureServiceTest {
 
     FeaturesDto features = service.getFeatures();
 
-    assertThat("Unexpected LTFT flag.", features.ltft(), is(false));
     assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(false));
   }
 
@@ -534,7 +528,6 @@ class FeatureServiceTest {
 
     FeaturesDto features = service.getFeatures();
 
-    assertThat("Unexpected LTFT flag.", features.ltft(), is(false));
     assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(false));
   }
 
@@ -558,7 +551,6 @@ class FeatureServiceTest {
 
     FeaturesDto features = service.getFeatures();
 
-    assertThat("Unexpected LTFT flag.", features.ltft(), is(true));
     assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(true));
   }
 
@@ -600,7 +592,6 @@ class FeatureServiceTest {
 
     FeaturesDto features = service.getFeatures();
 
-    assertThat("Unexpected LTFT flag.", features.ltft(), is(true));
     assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(true));
   }
 
@@ -641,7 +632,6 @@ class FeatureServiceTest {
 
     FeaturesDto features = service.getFeatures();
 
-    assertThat("Unexpected LTFT flag.", features.ltft(), is(false));
     assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(false));
   }
 
@@ -678,7 +668,6 @@ class FeatureServiceTest {
 
     FeaturesDto features = service.getFeatures();
 
-    assertThat("Unexpected LTFT flag.", features.ltft(), is(true));
     assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(true));
   }
 
@@ -719,9 +708,6 @@ class FeatureServiceTest {
     when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
 
     FeaturesDto features = service.getFeatures();
-
-    assertThat("Unexpected enabled programme count.", features.ltftProgrammes().size(), is(1));
-    assertThat("Unexpected enabled programme ID.", features.ltftProgrammes().get(0), is(pm1Id));
 
     Set<String> qualifyingProgrammes = features.forms().ltft().qualifyingProgrammes();
     assertThat("Unexpected enabled programme count.", qualifyingProgrammes.size(), is(1));

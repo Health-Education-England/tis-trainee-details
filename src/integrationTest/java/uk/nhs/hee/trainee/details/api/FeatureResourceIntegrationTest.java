@@ -84,7 +84,7 @@ class FeatureResourceIntegrationTest {
   void shouldDisableFeaturesWhenNoToken() throws Exception {
     mockMvc.perform(get("/api/features"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.*", hasSize(7)))
+        .andExpect(jsonPath("$.*", hasSize(5)))
         .andExpect(jsonPath("$.actions.enabled", is(false)))
         .andExpect(jsonPath("$.cct.enabled", is(false)))
         .andExpect(jsonPath("$.details.enabled", is(false)))
@@ -97,8 +97,7 @@ class FeatureResourceIntegrationTest {
         .andExpect(jsonPath("$.forms.enabled", is(false)))
         .andExpect(jsonPath("$.forms.formr.enabled", is(false)))
         .andExpect(jsonPath("$.forms.ltft.enabled", is(false)))
-        .andExpect(jsonPath("$.notifications.enabled", is(false)))
-        .andExpect(jsonPath("$.ltft", is(false)));
+        .andExpect(jsonPath("$.notifications.enabled", is(false)));
   }
 
   @Test
@@ -106,9 +105,7 @@ class FeatureResourceIntegrationTest {
     mockMvc.perform(get("/api/features"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.forms.ltft.qualifyingProgrammes").isArray())
-        .andExpect(jsonPath("$.forms.ltft.qualifyingProgrammes", hasSize(0)))
-        .andExpect(jsonPath("$.ltftProgrammes").isArray())
-        .andExpect(jsonPath("$.ltftProgrammes", hasSize(0)));
+        .andExpect(jsonPath("$.forms.ltft.qualifyingProgrammes", hasSize(0)));
   }
 
   @Test
@@ -129,8 +126,7 @@ class FeatureResourceIntegrationTest {
         .andExpect(jsonPath("$.forms.enabled", is(false)))
         .andExpect(jsonPath("$.forms.formr.enabled", is(false)))
         .andExpect(jsonPath("$.forms.ltft.enabled", is(false)))
-        .andExpect(jsonPath("$.notifications.enabled", is(false)))
-        .andExpect(jsonPath("$.ltft", is(false)));
+        .andExpect(jsonPath("$.notifications.enabled", is(false)));
   }
 
   @Test
@@ -140,9 +136,7 @@ class FeatureResourceIntegrationTest {
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.forms.ltft.qualifyingProgrammes").isArray())
-        .andExpect(jsonPath("$.forms.ltft.qualifyingProgrammes", hasSize(0)))
-        .andExpect(jsonPath("$.ltftProgrammes").isArray())
-        .andExpect(jsonPath("$.ltftProgrammes", hasSize(0)));
+        .andExpect(jsonPath("$.forms.ltft.qualifyingProgrammes", hasSize(0)));
   }
 
   @ParameterizedTest
@@ -171,10 +165,6 @@ class FeatureResourceIntegrationTest {
     mockMvc.perform(get("/api/features")
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.ltft", is(true)))
-        .andExpect(jsonPath("$.ltftProgrammes").isArray())
-        .andExpect(jsonPath("$.ltftProgrammes", hasSize(1)))
-        .andExpect(jsonPath("$.ltftProgrammes[0]", is(pmId)))
         .andExpect(jsonPath("$.forms.ltft.enabled", is(true)))
         .andExpect(jsonPath("$.forms.ltft.qualifyingProgrammes").isArray())
         .andExpect(jsonPath("$.forms.ltft.qualifyingProgrammes", hasSize(1)))
