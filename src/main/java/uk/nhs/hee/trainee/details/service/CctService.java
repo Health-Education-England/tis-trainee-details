@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -302,9 +301,8 @@ public class CctService {
    *
    * @param fromTraineeId The trainee ID to move calculations from.
    * @param toTraineeId   The trainee ID to move calculations to.
-   * @return A map of the types of records moved and their counts.
    */
-  public Map<String, Integer> moveCalculations(String fromTraineeId, String toTraineeId) {
+  public void moveCalculations(String fromTraineeId, String toTraineeId) {
     List<CctCalculation> calculations = calculationRepository
         .findByTraineeIdOrderByLastModified(fromTraineeId);
 
@@ -317,6 +315,5 @@ public class CctService {
     });
     log.info("Moved {} of expected {} CCT calculations from trainee [{}] to trainee [{}].",
         movedCount.get(), calculations.size(), fromTraineeId, toTraineeId);
-    return Map.of("cct", movedCount.get());
   }
 }

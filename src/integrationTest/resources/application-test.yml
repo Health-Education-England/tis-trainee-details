@@ -11,6 +11,7 @@ application:
       gmc-details-update: dummy
       personal-info-update: dummy
       person-owner-update: dummy
+      profile-move: dummy
 
 mongock:
   enabled: false
