@@ -31,6 +31,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.config.FeaturesProperties;
 import uk.nhs.hee.trainee.details.dto.FeaturesDto;
+import uk.nhs.hee.trainee.details.dto.FeaturesDto.Feature;
+import uk.nhs.hee.trainee.details.dto.FeaturesDto.FormFeatures;
 import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
@@ -42,10 +44,13 @@ import uk.nhs.hee.trainee.details.model.TraineeProfile;
 @Service
 public class FeatureService {
 
-  private static final Set<String> SPECIALTY_TRAINEE_CURRICULUM_SUB_TYPES = Set.of(
+  private static final Set<String> NON_FOUNDATION_TRAINEE_CURRICULUM_SUB_TYPES = Set.of(
       "MEDICAL_CURRICULUM", "MEDICAL_SPR");
+
+  private static final String FOUNDATION_SPECIALTY = "FOUNDATION";
+  private static final String PUBLIC_HEALTH_MEDICINE_SPECIALTY = "PUBLIC HEALTH MEDICINE";
   private static final Set<String> NON_SPECIALTY_TRAINEE_CURRICULUM_SPECIALTIES = Set.of(
-      "PUBLIC HEALTH MEDICINE", "FOUNDATION");
+      PUBLIC_HEALTH_MEDICINE_SPECIALTY, FOUNDATION_SPECIALTY);
 
   private final TraineeIdentity identity;
   private final TraineeProfileService profileService;
@@ -84,21 +89,29 @@ public class FeatureService {
       return FeaturesDto.disable();
     }
 
-    if (!isSpecialtyTrainee(profile)) {
-      log.debug("Not a specialty trainee, setting read-only features.");
-      return FeaturesDto.readOnly();
+    if (isSpecialtyTrainee(profile)) {
+      log.debug("{} is a specialty trainee.", profile.getTraineeTisId());
+      // Check whether LTFT pilot participation should be enabled.
+      List<String> ltftProgrammes = getLtftEnabledProgrammes(profile);
+
+      if (isLtftEnabled(profile, ltftProgrammes)) {
+        log.debug("Trainee is in LTFT pilot, enabling all features including LTFT pilot access.");
+        return FeaturesDto.enableWithLtftPilot(ltftProgrammes);
+      }
+
+      log.debug("Enabling all released features.");
+      return FeaturesDto.enable();
     }
 
-    // Check whether LTFT pilot participation should be enabled.
-    List<String> ltftProgrammes = getLtftEnabledProgrammes(profile);
-
-    if (isLtftEnabled(profile, ltftProgrammes)) {
-      log.debug("Trainee is in LTFT pilot, enabling all features including LTFT pilot access.");
-      return FeaturesDto.enableWithLtftPilot(ltftProgrammes);
+    if (isPublicHealthTrainee(profile)) {
+      log.debug("{} is a Public Health trainee, enabling read-only features plus Form-R.",
+          profile.getTraineeTisId());
+      FeaturesDto readOnly = FeaturesDto.readOnly();
+      return readOnly.withForms(new FormFeatures(true, new Feature(true), readOnly.forms().ltft()));
     }
 
-    log.debug("Enabling all released features.");
-    return FeaturesDto.enable();
+    log.debug("Not a specialty or public health trainee, setting read-only features.");
+    return FeaturesDto.readOnly();
   }
 
   /**
@@ -116,8 +129,28 @@ public class FeatureService {
           String specialty = curriculum.getCurriculumSpecialty();
 
           return subType != null && specialty != null
-              && SPECIALTY_TRAINEE_CURRICULUM_SUB_TYPES.contains(subType.toUpperCase())
+              && NON_FOUNDATION_TRAINEE_CURRICULUM_SUB_TYPES.contains(subType.toUpperCase())
               && !NON_SPECIALTY_TRAINEE_CURRICULUM_SPECIALTIES.contains(specialty.toUpperCase());
+        });
+  }
+
+  /**
+   * Check whether the given profile contains a public health programme. Indicating that the trainee
+   * is,or will be, a Public Health trainee.
+   *
+   * @param profile The trainee profile to check.
+   * @return Whether the trainee has a public health programme in their profile.
+   */
+  private boolean isPublicHealthTrainee(TraineeProfile profile) {
+    return profile.getProgrammeMemberships().stream()
+        .flatMap(pm -> pm.getCurricula().stream())
+        .anyMatch(curriculum -> {
+          String subType = curriculum.getCurriculumSubType();
+          String specialty = curriculum.getCurriculumSpecialty();
+
+          return subType != null && specialty != null
+              && NON_FOUNDATION_TRAINEE_CURRICULUM_SUB_TYPES.contains(subType.toUpperCase())
+              && specialty.equalsIgnoreCase(PUBLIC_HEALTH_MEDICINE_SPECIALTY);
         });
   }
 
