@@ -36,7 +36,7 @@ dependencies {
 
   testImplementation("org.springframework.boot:spring-boot-starter-test")
   testImplementation("org.springframework.cloud:spring-cloud-starter-bootstrap")
-  testImplementation("com.playtika.testcontainers:embedded-redis:3.1.16")
+  testImplementation("com.playtika.testcontainers:embedded-redis:3.1.17")
   testImplementation("org.testcontainers:junit-jupiter")
 
   // Lombok
