@@ -38,6 +38,8 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.mockito.ArgumentCaptor;
 import uk.nhs.hee.trainee.details.dto.GmcDetailsDto;
 import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapperImpl;
@@ -285,6 +287,35 @@ class PersonalDetailsServiceTest {
   void shouldUpdateGmcDetailsWhenTraineeIdFound() {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setPersonalDetails(createPersonalDetails(ORIGINAL_SUFFIX, 0));
+
+    when(repository.findByTraineeTisId("40")).thenReturn(traineeProfile);
+    when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
+
+    PersonalDetailsUpdated personalDetails = service.updateGmcDetailsByTisId("40",
+        createPersonalDetails(MODIFIED_SUFFIX, 100));
+
+    assertThat("Unexpected isUpdated flag.", personalDetails.isUpdated(), is(true));
+    assertThat("Unexpected optional isEmpty flag.",
+        personalDetails.getPersonalDetails().isEmpty(), is(false));
+
+    PersonalDetails expectedPersonalDetails = createPersonalDetails(ORIGINAL_SUFFIX, 0);
+    expectedPersonalDetails.setGmcNumber(GMC_NUMBER + MODIFIED_SUFFIX);
+    // GMC number updated, so GMC status changes to DEFAULT_GMC_STATUS
+    expectedPersonalDetails.setGmcStatus(DEFAULT_GMC_STATUS);
+
+    assertThat("Unexpected personal details.", personalDetails.getPersonalDetails().get(),
+        is(expectedPersonalDetails));
+  }
+
+  @ParameterizedTest
+  @NullAndEmptySource
+  void shouldUpdateGmcDetailsWhenTraineeIdFoundWithNoExistingGmc(String existingGmc) {
+    TraineeProfile traineeProfile = new TraineeProfile();
+
+    PersonalDetails existingPersonalDetails = createPersonalDetails(ORIGINAL_SUFFIX, 0);
+    existingPersonalDetails.setGmcNumber(existingGmc);
+    existingPersonalDetails.setGmcStatus(existingGmc);
+    traineeProfile.setPersonalDetails(existingPersonalDetails);
 
     when(repository.findByTraineeTisId("40")).thenReturn(traineeProfile);
     when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
