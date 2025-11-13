@@ -35,7 +35,8 @@ public record FeaturesDto(
     Feature cct,
     DetailsFeatures details,
     FormFeatures forms,
-    Feature notifications) {
+    Feature notifications,
+    Feature news) {
 
   /**
    * Create a set of feature flags with all features enabled, excluding any pilot features.
@@ -48,6 +49,7 @@ public record FeaturesDto(
         Feature.enable(),
         DetailsFeatures.enable(),
         FormFeatures.enable(),
+        Feature.enable(),
         Feature.enable()
     );
   }
@@ -75,6 +77,7 @@ public record FeaturesDto(
         Feature.disable(),
         DetailsFeatures.readOnly(),
         FormFeatures.disable(),
+        Feature.disable(),
         Feature.disable()
     );
   }
@@ -90,6 +93,7 @@ public record FeaturesDto(
         Feature.disable(),
         DetailsFeatures.disable(),
         FormFeatures.disable(),
+        Feature.disable(),
         Feature.disable()
     );
   }

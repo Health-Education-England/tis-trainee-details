@@ -84,7 +84,7 @@ class FeatureResourceIntegrationTest {
   void shouldDisableFeaturesWhenNoToken() throws Exception {
     mockMvc.perform(get("/api/features"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.*", hasSize(5)))
+        .andExpect(jsonPath("$.*", hasSize(6)))
         .andExpect(jsonPath("$.actions.enabled", is(false)))
         .andExpect(jsonPath("$.cct.enabled", is(false)))
         .andExpect(jsonPath("$.details.enabled", is(false)))
@@ -97,7 +97,8 @@ class FeatureResourceIntegrationTest {
         .andExpect(jsonPath("$.forms.enabled", is(false)))
         .andExpect(jsonPath("$.forms.formr.enabled", is(false)))
         .andExpect(jsonPath("$.forms.ltft.enabled", is(false)))
-        .andExpect(jsonPath("$.notifications.enabled", is(false)));
+        .andExpect(jsonPath("$.notifications.enabled", is(false)))
+        .andExpect(jsonPath("$.news.enabled", is(false)));
   }
 
   @Test

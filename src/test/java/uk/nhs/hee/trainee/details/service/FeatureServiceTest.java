@@ -817,6 +817,77 @@ class FeatureServiceTest {
   }
 
   @Test
+  void shouldDisableNewsWhenProfileNotFound() {
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(null);
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected feature flag.", features.news().enabled(), is(false));
+  }
+
+  @Test
+  void shouldDisableNewsWhenNoProgrammes() {
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(
+        new TraineeProfile());
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected feature flag.", features.news().enabled(), is(false));
+  }
+
+  @ParameterizedTest
+  @CsvSource(delimiter = '|', textBlock = """
+      MEDICAL_CURRICULUM | FOUNDATION
+      MEDICAL_CURRICULUM | PUBLIC HEALTH MEDICINE
+      MEDICAL_SPR        | FOUNDATION
+      MEDICAL_SPR        | PUBLIC HEALTH MEDICINE
+      UNKNOWN            | General Practice
+      medical_curriculum | foundation
+      ""                 | ""
+      MEDICAL_SPR        |
+                         |
+      """)
+  void shouldDisableNewsWhenNoSpecialtyProgrammes(String subType, String specialty) {
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSubType(subType);
+    curriculum.setCurriculumSpecialty(specialty);
+
+    ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setCurricula(List.of(curriculum));
+    pm.setEndDate(LocalDate.MAX);
+
+    TraineeProfile profile = new TraineeProfile();
+    profile.setProgrammeMemberships(List.of(pm));
+
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected feature flag.", features.news().enabled(), is(false));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"MEDICAL_CURRICULUM", "medical_curriculum", "MEDICAL_SPR", "medical_spr"})
+  void shouldEnableNewsWhenSpecialtyProgrammeFound(String subType) {
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSubType(subType);
+    curriculum.setCurriculumSpecialty("General Practice");
+
+    ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setCurricula(List.of(curriculum));
+    pm.setEndDate(LocalDate.MAX);
+
+    TraineeProfile profile = new TraineeProfile();
+    profile.setProgrammeMemberships(List.of(pm));
+
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected feature flag.", features.news().enabled(), is(true));
+  }
+
+  @Test
   void shouldMatchReadOnlyWhenMultipleNonPublicHealthOrSpecialtyProgrammesAndCurricula() {
     Curriculum curriculum1 = new Curriculum();
     curriculum1.setCurriculumSubType("MEDICAL_CURRICULUM");
