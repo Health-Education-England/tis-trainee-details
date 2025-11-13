@@ -22,6 +22,7 @@
 package uk.nhs.hee.trainee.details.mapper;
 
 import java.util.List;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.mapstruct.AfterMapping;
 import org.mapstruct.BeanMapping;
@@ -114,8 +115,8 @@ public abstract class TraineeProfileMapper {
       PersonalDetails source) {
     if (target.getPersonalDetails() != null) {
       // If the gmcNumber is updated
-      if (!target.getPersonalDetails().getGmcNumber().equals(source.getGmcNumber())) {
-        // Default all GMCs to registered until we can properly prompt/determine the correct status.
+      if (!Objects.equals(target.getPersonalDetails().getGmcNumber(), source.getGmcNumber())) {
+        // TODO: Default all GMCs to registered until we can properly prompt/determine the correct status.
         target.getPersonalDetails().setGmcStatus("Registered with Licence");
       }
     } else if (source.getGmcNumber() != null) {
