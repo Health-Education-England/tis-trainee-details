@@ -40,4 +40,6 @@ public class CurriculumDto {
   private String curriculumSpecialtyCode;
   private LocalDate curriculumStartDate;
   private LocalDate curriculumEndDate;
+  private Boolean curriculumEligibleForPeriodOfGrace;
+  private Integer curriculumPeriodOfGrace;
 }
