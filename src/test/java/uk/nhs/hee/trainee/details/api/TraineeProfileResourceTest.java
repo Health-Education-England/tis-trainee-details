@@ -121,6 +121,8 @@ class TraineeProfileResourceTest {
   private static final String CURRICULUM_TISID = "1";
   private static final String CURRICULUM_NAME = "ST3";
   private static final String CURRICULUM_SUBTYPE = "MEDICAL_CURRICULUM";
+  private static final Boolean CURRICULUM_POG_ELIGIBILITY = true;
+  private static final Integer CURRICULUM_PERIOD_OF_GRACE = 6;
 
   private static final String PLACEMENT_TISID = "1";
   private static final String PLACEMENT_SITE = "Addenbrookes Hospital";
@@ -219,6 +221,8 @@ class TraineeProfileResourceTest {
     curriculum.setCurriculumTisId(CURRICULUM_TISID);
     curriculum.setCurriculumName(CURRICULUM_NAME);
     curriculum.setCurriculumSubType(CURRICULUM_SUBTYPE);
+    curriculum.setCurriculumEligibleForPeriodOfGrace(CURRICULUM_POG_ELIGIBILITY);
+    curriculum.setCurriculumPeriodOfGrace(CURRICULUM_PERIOD_OF_GRACE);
   }
 
   /**
@@ -325,6 +329,11 @@ class TraineeProfileResourceTest {
             .value(CURRICULUM_NAME))
         .andExpect(jsonPath("$.programmeMemberships[*].curricula[*].curriculumSubType")
             .value(CURRICULUM_SUBTYPE))
+        .andExpect(
+            jsonPath("$.programmeMemberships[*].curricula[*].curriculumEligibleForPeriodOfGrace")
+                .value(CURRICULUM_POG_ELIGIBILITY))
+        .andExpect(jsonPath("$.programmeMemberships[*].curricula[*].curriculumPeriodOfGrace")
+            .value(CURRICULUM_PERIOD_OF_GRACE))
         .andExpect(jsonPath("$.programmeMemberships[*].conditionsOfJoining.signedAt").value(
             NOW.toString()))
         .andExpect(jsonPath("$.programmeMemberships[*].conditionsOfJoining.version").value(
@@ -461,8 +470,8 @@ class TraineeProfileResourceTest {
   void getLocalOfficeContactsShouldReturnNotFoundWhenProfileNotFoundByTisId(
       LocalOfficeContactType contactType) throws Exception {
     mockMvc.perform(
-        get("/api/trainee-profile/local-office-contacts/non-existent-tisid/{contactType}",
-            contactType))
+            get("/api/trainee-profile/local-office-contacts/non-existent-tisid/{contactType}",
+                contactType))
         .andExpect(status().isNotFound());
   }
 
@@ -483,9 +492,9 @@ class TraineeProfileResourceTest {
         .thenReturn(Optional.of(localOfficeContacts));
 
     mockMvc.perform(
-        get("/api/trainee-profile/local-office-contacts/{tisId}/{contactType}",
-            DEFAULT_TIS_ID_1, contactType)
-            .contentType(MediaType.APPLICATION_JSON))
+            get("/api/trainee-profile/local-office-contacts/{tisId}/{contactType}",
+                DEFAULT_TIS_ID_1, contactType)
+                .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$", hasSize(1)))

@@ -23,6 +23,7 @@ package uk.nhs.hee.trainee.details.api;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -32,6 +33,7 @@ import static org.mockito.Mockito.withSettings;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -56,6 +58,10 @@ import org.apache.pdfbox.io.IOUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.MockedStatic;
 import org.mockito.invocation.InvocationOnMock;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -168,6 +174,71 @@ class ProgrammeMembershipResourceIntegrationTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(mapper.writeValueAsBytes(new ProgrammeMembershipDto())))
         .andExpect(status().isBadRequest());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = "\"\"")
+  @NullSource
+  void shouldPatchPeriodOfGraceFieldsFromNullAndEmpty(String value) throws Exception {
+    TraineeProfile profile = new TraineeProfile();
+    profile.setTraineeTisId(TRAINEE_ID);
+    mongoTemplate.save(profile);
+
+    String json = """
+        {
+          "tisId": "%s",
+          "curricula": [
+            {
+              "curriculumEligibleForPeriodOfGrace": %s,
+              "curriculumPeriodOfGrace": %s
+            }
+          ]
+        }
+        """.formatted(TRAINEE_ID, value, value);
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(patch("/api/programme-membership/{traineeTisId}", TRAINEE_ID)
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(json))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.curricula[0].curriculumEligibleForPeriodOfGrace", nullValue()))
+        .andExpect(jsonPath("$.curricula[0].curriculumPeriodOfGrace", nullValue()));
+  }
+
+  @ParameterizedTest
+  @CsvSource(delimiter = '|', textBlock = """
+      true  | 6
+      true  | 0
+      false | 6
+      false | 0
+      """)
+  void shouldPatchPeriodOfGraceFieldsFromStringInputs(boolean eligibility, int period)
+      throws Exception {
+    TraineeProfile profile = new TraineeProfile();
+    profile.setTraineeTisId(TRAINEE_ID);
+    mongoTemplate.save(profile);
+
+    String json = """
+        {
+          "tisId": "%s",
+          "curricula": [
+            {
+              "curriculumEligibleForPeriodOfGrace": "%s",
+              "curriculumPeriodOfGrace": "%s"
+            }
+          ]
+        }
+        """.formatted(TRAINEE_ID, eligibility, period);
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(patch("/api/programme-membership/{traineeTisId}", TRAINEE_ID)
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(json))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.curricula[0].curriculumEligibleForPeriodOfGrace", is(eligibility)))
+        .andExpect(jsonPath("$.curricula[0].curriculumPeriodOfGrace", is(period)));
   }
 
   @Test
