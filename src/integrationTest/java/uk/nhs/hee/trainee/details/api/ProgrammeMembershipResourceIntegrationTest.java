@@ -208,12 +208,12 @@ class ProgrammeMembershipResourceIntegrationTest {
 
   @ParameterizedTest
   @CsvSource(delimiter = '|', textBlock = """
-      true  | 6
-      true  | 0
-      false | 6
-      false | 0
+      1 | 6
+      1 | 0
+      0 | 6
+      0 | 0
       """)
-  void shouldPatchPeriodOfGraceFieldsFromStringInputs(boolean eligibility, int period)
+  void shouldPatchPeriodOfGraceFieldsFromStringInputs(int eligibility, int period)
       throws Exception {
     TraineeProfile profile = new TraineeProfile();
     profile.setTraineeTisId(TRAINEE_ID);
@@ -224,7 +224,7 @@ class ProgrammeMembershipResourceIntegrationTest {
           "tisId": "%s",
           "curricula": [
             {
-              "curriculumEligibleForPeriodOfGrace": "%s",
+              "curriculumEligibleForPeriodOfGrace": %s,
               "curriculumPeriodOfGrace": "%s"
             }
           ]
@@ -237,7 +237,8 @@ class ProgrammeMembershipResourceIntegrationTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(json))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.curricula[0].curriculumEligibleForPeriodOfGrace", is(eligibility)))
+        .andExpect(
+            jsonPath("$.curricula[0].curriculumEligibleForPeriodOfGrace", is(eligibility == 1)))
         .andExpect(jsonPath("$.curricula[0].curriculumPeriodOfGrace", is(period)));
   }
 
