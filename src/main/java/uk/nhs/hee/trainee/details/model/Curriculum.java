@@ -36,5 +36,4 @@ public class Curriculum {
   private LocalDate curriculumStartDate;
   private LocalDate curriculumEndDate;
   private Boolean curriculumEligibleForPeriodOfGrace;
-  private Integer curriculumPeriodOfGrace;
 }

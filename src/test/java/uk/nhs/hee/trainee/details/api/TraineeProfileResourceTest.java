@@ -122,7 +122,6 @@ class TraineeProfileResourceTest {
   private static final String CURRICULUM_NAME = "ST3";
   private static final String CURRICULUM_SUBTYPE = "MEDICAL_CURRICULUM";
   private static final Boolean CURRICULUM_POG_ELIGIBILITY = true;
-  private static final Integer CURRICULUM_PERIOD_OF_GRACE = 6;
 
   private static final String PLACEMENT_TISID = "1";
   private static final String PLACEMENT_SITE = "Addenbrookes Hospital";
@@ -222,7 +221,6 @@ class TraineeProfileResourceTest {
     curriculum.setCurriculumName(CURRICULUM_NAME);
     curriculum.setCurriculumSubType(CURRICULUM_SUBTYPE);
     curriculum.setCurriculumEligibleForPeriodOfGrace(CURRICULUM_POG_ELIGIBILITY);
-    curriculum.setCurriculumPeriodOfGrace(CURRICULUM_PERIOD_OF_GRACE);
   }
 
   /**
@@ -332,8 +330,6 @@ class TraineeProfileResourceTest {
         .andExpect(
             jsonPath("$.programmeMemberships[*].curricula[*].curriculumEligibleForPeriodOfGrace")
                 .value(CURRICULUM_POG_ELIGIBILITY))
-        .andExpect(jsonPath("$.programmeMemberships[*].curricula[*].curriculumPeriodOfGrace")
-            .value(CURRICULUM_PERIOD_OF_GRACE))
         .andExpect(jsonPath("$.programmeMemberships[*].conditionsOfJoining.signedAt").value(
             NOW.toString()))
         .andExpect(jsonPath("$.programmeMemberships[*].conditionsOfJoining.version").value(
