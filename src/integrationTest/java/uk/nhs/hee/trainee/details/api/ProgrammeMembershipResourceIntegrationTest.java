@@ -179,7 +179,7 @@ class ProgrammeMembershipResourceIntegrationTest {
   @ParameterizedTest
   @ValueSource(strings = "\"\"")
   @NullSource
-  void shouldPatchPeriodOfGraceFieldsFromNullAndEmpty(String value) throws Exception {
+  void shouldPatchPeriodOfGraceFromNullAndEmpty(String value) throws Exception {
     TraineeProfile profile = new TraineeProfile();
     profile.setTraineeTisId(TRAINEE_ID);
     mongoTemplate.save(profile);
@@ -189,12 +189,11 @@ class ProgrammeMembershipResourceIntegrationTest {
           "tisId": "%s",
           "curricula": [
             {
-              "curriculumEligibleForPeriodOfGrace": %s,
-              "curriculumPeriodOfGrace": %s
+              "curriculumEligibleForPeriodOfGrace": %s
             }
           ]
         }
-        """.formatted(TRAINEE_ID, value, value);
+        """.formatted(TRAINEE_ID, value);
 
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
     mockMvc.perform(patch("/api/programme-membership/{traineeTisId}", TRAINEE_ID)
@@ -202,18 +201,17 @@ class ProgrammeMembershipResourceIntegrationTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(json))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.curricula[0].curriculumEligibleForPeriodOfGrace", nullValue()))
-        .andExpect(jsonPath("$.curricula[0].curriculumPeriodOfGrace", nullValue()));
+        .andExpect(jsonPath("$.curricula[0].curriculumEligibleForPeriodOfGrace", nullValue()));
   }
 
   @ParameterizedTest
   @CsvSource(delimiter = '|', textBlock = """
-      true  | 6
-      true  | 0
-      false | 6
-      false | 0
+      1       | true
+      0       | false
+      "true"  | true
+      "false" | false
       """)
-  void shouldPatchPeriodOfGraceFieldsFromStringInputs(boolean eligibility, int period)
+  void shouldPatchPeriodOfGraceFromBitOrStringInputs(String eligibility, boolean expected)
       throws Exception {
     TraineeProfile profile = new TraineeProfile();
     profile.setTraineeTisId(TRAINEE_ID);
@@ -224,12 +222,11 @@ class ProgrammeMembershipResourceIntegrationTest {
           "tisId": "%s",
           "curricula": [
             {
-              "curriculumEligibleForPeriodOfGrace": "%s",
-              "curriculumPeriodOfGrace": "%s"
+              "curriculumEligibleForPeriodOfGrace": %s
             }
           ]
         }
-        """.formatted(TRAINEE_ID, eligibility, period);
+        """.formatted(TRAINEE_ID, eligibility);
 
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
     mockMvc.perform(patch("/api/programme-membership/{traineeTisId}", TRAINEE_ID)
@@ -237,8 +234,7 @@ class ProgrammeMembershipResourceIntegrationTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(json))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.curricula[0].curriculumEligibleForPeriodOfGrace", is(eligibility)))
-        .andExpect(jsonPath("$.curricula[0].curriculumPeriodOfGrace", is(period)));
+        .andExpect(jsonPath("$.curricula[0].curriculumEligibleForPeriodOfGrace", is(expected)));
   }
 
   @Test
