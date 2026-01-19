@@ -24,6 +24,7 @@ package uk.nhs.hee.trainee.details.dto;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
+import uk.nhs.hee.trainee.details.dto.validation.UserUpdate;
 
 /**
  * DTO for updating email address with validation.
@@ -31,8 +32,8 @@ import lombok.Data;
 @Data
 public class EmailUpdateDto {
 
-  @NotBlank(message = "Email address must not be blank.")
-  @Email(message = "Email address must be valid.")
+  @NotBlank(groups = {UserUpdate.class}, message = "Email address must not be blank.")
+  @Email(groups = {UserUpdate.class}, message = "Email address must be valid.")
   private String email;
 }
 
