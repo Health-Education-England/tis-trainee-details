@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import uk.nhs.hee.trainee.details.dto.EmailUpdateDto;
 import uk.nhs.hee.trainee.details.dto.GmcDetailsDto;
 import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
 import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
@@ -98,6 +99,35 @@ public class BasicDetailsResource {
 
     Optional<PersonalDetails> entity = service.updateGmcDetailsWithTraineeProvidedDetails(tisId,
         updatedGmcDetails);
+    Optional<PersonalDetailsDto> dto = entity.map(mapper::toDto);
+    return ResponseEntity.of(dto);
+  }
+
+  /**
+   * Submit an update to the email address for the authenticated trainee to TIS.
+   *
+   * @param emailUpdateDto The new email address.
+   * @return The (provisionally) updated PersonaDetails if the email update request could be made,
+   *         400 otherwise.
+   */
+  @PutMapping("/email-address")
+  public ResponseEntity<PersonalDetailsDto> updateEmailAddress(
+      @Validated(UserUpdate.class) @RequestBody EmailUpdateDto emailUpdateDto) {
+    String tisId = traineeIdentity.getTraineeId();
+
+    if (tisId == null) {
+      log.warn("No trainee ID provided.");
+      return ResponseEntity.badRequest().build();
+    }
+    boolean isUnique = service.isEmailUnique(tisId, emailUpdateDto.getEmail());
+    if (!isUnique) {
+      log.info("Email address {} is already in use.", emailUpdateDto.getEmail());
+      return ResponseEntity.badRequest().build();
+    }
+    log.info("Submitting email address update request for trainee {} to {}.", tisId,
+        emailUpdateDto.getEmail());
+    Optional<PersonalDetails> entity = service
+        .updateEmailWithTraineeProvidedDetails(tisId, emailUpdateDto);
     Optional<PersonalDetailsDto> dto = entity.map(mapper::toDto);
     return ResponseEntity.of(dto);
   }

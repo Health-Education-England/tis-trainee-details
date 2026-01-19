@@ -22,10 +22,12 @@
 package uk.nhs.hee.trainee.details.service;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import uk.nhs.hee.trainee.details.dto.EmailUpdateDto;
 import uk.nhs.hee.trainee.details.dto.GmcDetailsDto;
 import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapper;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
@@ -202,5 +204,67 @@ public class PersonalDetailsService {
     }
     return new PersonalDetailsUpdated(true,
         Optional.of(repository.save(traineeProfile).getPersonalDetails()));
+  }
+
+  /**
+   * Check if an email address is used by any other trainee profiles.
+   *
+   * @param tisId The TIS id of the current trainee (which is excluded).
+   * @param email The email address to check.
+   * @return true if unique, false if not unique.
+   */
+  public boolean isEmailUnique(String tisId, String email) {
+    List<TraineeProfile> profilesWithEmail = repository.findAllByTraineeEmail(email);
+    boolean isUnique = profilesWithEmail.stream()
+        .allMatch(profile -> profile.getTraineeTisId().equals(tisId));
+    if (!isUnique) {
+      log.warn("Email address {} for trainee {} is already in use by at least one other trainee.",
+          tisId, email);
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Update the email details for the trainee with the given TIS ID.
+   *
+   * @param tisId           The TIS id of the trainee.
+   * @param personalDetails The personal details to add to the trainee.
+   * @return The updated personal details or empty if a trainee with the ID was not found.
+   */
+  public PersonalDetailsUpdated updateEmailByTisId(String tisId,
+      PersonalDetails personalDetails) {
+    return updatePersonalDetailsByTisId(tisId, personalDetails, mapper::updateEmail);
+  }
+
+  /**
+   * Update the email address of a trainee using the details.
+   *
+   * @param tisId        The TIS id of the trainee.
+   * @param emailDetails The email address to update the personal detail with.
+   * @return The updated personal details or empty if a trainee with the ID was not found.
+   */
+  public Optional<PersonalDetails> updateEmailWithTraineeProvidedDetails(String tisId,
+      EmailUpdateDto emailDetails) {
+    PersonalDetails personalDetails = new PersonalDetails();
+    personalDetails.setEmail(emailDetails.getEmail());
+
+    PersonalDetailsUpdated updatedDetails = updateEmailByTisId(tisId, personalDetails);
+
+    updatedDetails.getPersonalDetails().ifPresent(details -> {
+      // if email is updated
+      if (updatedDetails.isUpdated()) {
+        // don't publish to TIS if it is a test user
+        if (tisId.startsWith("-")) {
+          log.warn("Tester trainee ID {} provided. Ignore email update.", tisId);
+        }
+        else {
+          log.info("Trainee {} updated their email to {}.", tisId, details.getEmail());
+          eventService.publishEmailDetailsProvidedEvent(tisId, emailDetails);
+        }
+      }
+    });
+
+    return updatedDetails.getPersonalDetails();
   }
 }
