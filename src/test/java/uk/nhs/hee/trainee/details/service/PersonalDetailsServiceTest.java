@@ -36,11 +36,15 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.mockito.ArgumentCaptor;
+import uk.nhs.hee.trainee.details.dto.EmailUpdateDto;
 import uk.nhs.hee.trainee.details.dto.GmcDetailsDto;
 import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapperImpl;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
@@ -724,6 +728,139 @@ class PersonalDetailsServiceTest {
 
     assertThat("Unexpected personal details.",
         personalDetails.getPersonalDetails().get(), is(expectedPersonalDetails));
+  }
+
+  @Test
+  void shouldReturnTrueWhenNoOtherProfilesWithEmail() {
+    String tisId = "123";
+    String email = "unique@example.com";
+    when(repository.findAllByTraineeEmail(email)).thenReturn(Collections.emptyList());
+
+    boolean result = service.isEmailUnique(tisId, email);
+
+    assertThat("Expected email to be unique.", result, is(true));
+  }
+
+  @Test
+  void shouldReturnTrueWhenOnlyCurrentProfileHasEmail() {
+    String tisId = "123";
+    String email = "unique@example.com";
+    TraineeProfile profile = new TraineeProfile();
+    profile.setTraineeTisId(tisId);
+    when(repository.findAllByTraineeEmail(email)).thenReturn(List.of(profile));
+
+    boolean result = service.isEmailUnique(tisId, email);
+
+    assertThat("Expected email to be unique for current profile.", result, is(true));
+  }
+
+  @Test
+  void shouldReturnFalseWhenAnotherProfileHasEmail() {
+    String tisId = "123";
+    String email = "duplicate@example.com";
+    TraineeProfile profile1 = new TraineeProfile();
+    profile1.setTraineeTisId(tisId);
+    TraineeProfile profile2 = new TraineeProfile();
+    profile2.setTraineeTisId("456");
+    when(repository.findAllByTraineeEmail(email)).thenReturn(List.of(profile1, profile2));
+
+    boolean result = service.isEmailUnique(tisId, email);
+
+    assertThat("Expected email to not be unique.", result, is(false));
+  }
+
+  @Test
+  void shouldReturnFalseWhenMultipleOtherProfilesHaveEmail() {
+    String tisId = "123";
+    String email = "duplicate@example.com";
+    TraineeProfile profile1 = new TraineeProfile();
+    profile1.setTraineeTisId("456");
+    TraineeProfile profile2 = new TraineeProfile();
+    profile2.setTraineeTisId("789");
+    when(repository.findAllByTraineeEmail(email)).thenReturn(List.of(profile1, profile2));
+
+    boolean result = service.isEmailUnique(tisId, email);
+
+    assertThat("Expected email to not be unique when used by multiple others.", result, is(false));
+  }
+
+  @Test
+  void shouldUpdateEmailWithTraineeProvidedDetails() {
+    String tisId = "123";
+    String newEmail = "new@example.com";
+    TraineeProfile traineeProfile = new TraineeProfile();
+    PersonalDetails existingDetails = new PersonalDetails();
+    existingDetails.setEmail("old@example.com");
+    traineeProfile.setPersonalDetails(existingDetails);
+
+    when(repository.findByTraineeTisId(tisId)).thenReturn(traineeProfile);
+    when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
+
+    EmailUpdateDto emailUpdateDto = new EmailUpdateDto();
+    emailUpdateDto.setEmail(newEmail);
+
+    Optional<PersonalDetails> result = service.updateEmailWithTraineeProvidedDetails(tisId, emailUpdateDto);
+    assertThat("Expected PersonalDetails result.", result.isPresent(), is(true));
+    assertThat("Expected updated email.", result.get().getEmail(), is(newEmail));
+    verify(eventService).publishEmailDetailsProvidedEvent(eq(tisId), eq(emailUpdateDto));
+  }
+
+  @Test
+  void shouldNotUpdateEmailWhenUnchanged() {
+    String tisId = "123";
+    String email = "same@example.com";
+    TraineeProfile traineeProfile = new TraineeProfile();
+    PersonalDetails existingDetails = new PersonalDetails();
+    existingDetails.setEmail(email);
+    traineeProfile.setPersonalDetails(existingDetails);
+
+    when(repository.findByTraineeTisId(tisId)).thenReturn(traineeProfile);
+    when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
+
+    EmailUpdateDto emailUpdateDto = new EmailUpdateDto();
+    emailUpdateDto.setEmail(email);
+
+    Optional<PersonalDetails> result = service.updateEmailWithTraineeProvidedDetails(tisId, emailUpdateDto);
+
+    assertThat("Expected PersonalDetails result.", result.isPresent(), is(true));
+    assertThat("Expected email to remain unchanged.", result.get().getEmail(), is(email));
+    verifyNoInteractions(eventService);
+  }
+
+  @Test
+  void shouldNotPublishEmailEventWhenTraineeIsTester() {
+    String tisId = "-123";
+    String newEmail = "tester@example.com";
+    TraineeProfile traineeProfile = new TraineeProfile();
+    PersonalDetails existingDetails = new PersonalDetails();
+    existingDetails.setEmail("old@example.com");
+    traineeProfile.setPersonalDetails(existingDetails);
+
+    when(repository.findByTraineeTisId(tisId)).thenReturn(traineeProfile);
+    when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
+
+    EmailUpdateDto emailUpdateDto = new EmailUpdateDto();
+    emailUpdateDto.setEmail(newEmail);
+
+    Optional<PersonalDetails> result = service.updateEmailWithTraineeProvidedDetails(tisId, emailUpdateDto);
+
+    assertThat("Expected PersonalDetails result.", result.isPresent(), is(true));
+    assertThat("Expected updated email for tester.", result.get().getEmail(), is(newEmail));
+    verifyNoInteractions(eventService);
+  }
+
+  @Test
+  void shouldReturnEmptyWhenTraineeNotFoundForEmailUpdate() {
+    String tisId = "notFound";
+    EmailUpdateDto emailUpdateDto = new EmailUpdateDto();
+    emailUpdateDto.setEmail("new@example.com");
+
+    when(repository.findByTraineeTisId(tisId)).thenReturn(null);
+
+    Optional<PersonalDetails> result = service.updateEmailWithTraineeProvidedDetails(tisId, emailUpdateDto);
+
+    assertThat("Expected empty result when trainee not found.", result.isEmpty(), is(true));
+    verifyNoInteractions(eventService);
   }
 
   /**
