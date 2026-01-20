@@ -19,19 +19,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package uk.nhs.hee.trainee.details.event;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
-import uk.nhs.hee.trainee.details.dto.EmailUpdateDto;
+package uk.nhs.hee.trainee.details.exception;
 
 /**
- * Event representing the provision of email details for a trainee.
- *
- * @param traineeId    The ID of the trainee.
- * @param emailDetails The email details provided.
+ * Exception thrown when an email address is already in use.
  */
-public record EmailDetailsProvidedEvent(
-    @JsonProperty("personId") String traineeId,
-    EmailUpdateDto emailDetails) {
-
+public class EmailAlreadyInUseException extends RuntimeException {
+  public EmailAlreadyInUseException(String message) {
+    super(message);
+  }
 }

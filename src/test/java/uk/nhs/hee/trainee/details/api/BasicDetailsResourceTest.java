@@ -362,7 +362,7 @@ class BasicDetailsResourceTest {
 
     String token = TestJwtUtil.generateTokenForTisId("40");
 
-    when(service.isEmailUnique(eq("40"), eq("duplicate@example.com"))).thenReturn(false);
+    when(service.isEmailUnique("40", "duplicate@example.com")).thenReturn(false);
 
     this.mockMvc.perform(put("/api/basic-details/email-address")
             .contentType(MediaType.APPLICATION_JSON)
@@ -376,14 +376,14 @@ class BasicDetailsResourceTest {
     EmailUpdateDto emailUpdateDto = new EmailUpdateDto();
     emailUpdateDto.setEmail("unique@example.com");
 
-    String token = TestJwtUtil.generateTokenForTisId("40");
-
-    when(service.isEmailUnique(eq("40"), eq("unique@example.com"))).thenReturn(true);
-
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setEmail("unique@example.com");
     when(service.updateEmailWithTraineeProvidedDetails(eq("40"), any(EmailUpdateDto.class)))
         .thenReturn(Optional.of(personalDetails));
+
+    String token = TestJwtUtil.generateTokenForTisId("40");
+
+    when(service.isEmailUnique("40", "unique@example.com")).thenReturn(true);
 
     this.mockMvc.perform(put("/api/basic-details/email-address")
             .contentType(MediaType.APPLICATION_JSON)
@@ -400,7 +400,7 @@ class BasicDetailsResourceTest {
 
     String token = TestJwtUtil.generateTokenForTisId("40");
 
-    when(service.isEmailUnique(eq("40"), eq("notfound@example.com"))).thenReturn(true);
+    when(service.isEmailUnique("40", "notfound@example.com")).thenReturn(true);
     when(service.updateEmailWithTraineeProvidedDetails(eq("40"), any(EmailUpdateDto.class)))
         .thenReturn(Optional.empty());
 
@@ -416,8 +416,6 @@ class BasicDetailsResourceTest {
   void shouldNotUpdateEmailWhenEmailInvalid(String email) throws Exception {
     EmailUpdateDto emailUpdateDto = new EmailUpdateDto();
     emailUpdateDto.setEmail(email);
-
-    //when(service.isEmailUnique(eq("40"), eq(email))).thenReturn(true);
 
     String token = TestJwtUtil.generateTokenForTisId("40");
 

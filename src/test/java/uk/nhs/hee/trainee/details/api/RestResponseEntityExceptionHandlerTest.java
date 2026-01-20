@@ -54,6 +54,7 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import uk.nhs.hee.trainee.details.api.RestResponseEntityExceptionHandler.BodyValidationError;
 import uk.nhs.hee.trainee.details.api.RestResponseEntityExceptionHandler.ParameterValidationError;
+import uk.nhs.hee.trainee.details.exception.EmailAlreadyInUseException;
 
 class RestResponseEntityExceptionHandlerTest {
 
@@ -174,6 +175,38 @@ class RestResponseEntityExceptionHandlerTest {
     error = errorsList.get(2);
     assertThat("Unexpected error parameter.", error.parameter(), is("parameter2"));
     assertThat("Unexpected error detail.", error.detail(), is("detail3"));
+  }
+
+  @Test
+  void shouldHandleEmailAlreadyInUseException() {
+    String errorMsg = "Email is already in use.";
+    EmailAlreadyInUseException exception = new EmailAlreadyInUseException(errorMsg);
+
+    ResponseEntity<Object> response = handler.handleEmailAlreadyInUse(exception);
+
+    assertThat("Unexpected response.", response, notNullValue());
+    assertThat("Unexpected response code.", response.getStatusCode().value(), is(400));
+    assertThat("Unexpected response type.", response.getBody(), instanceOf(ProblemDetail.class));
+
+    ProblemDetail problem = (ProblemDetail) response.getBody();
+    assertThat("Unexpected problem.", problem, notNullValue());
+    assertThat("Unexpected problem title.", problem.getTitle(), is("Email already in use"));
+    assertThat("Unexpected problem status.", problem.getStatus(), is(400));
+    assertThat("Unexpected problem type.", problem.getType(), is(URI.create("about:blank")));
+
+    Map<String, Object> problemProperties = problem.getProperties();
+    assertThat("Unexpected problem properties.", problemProperties, notNullValue());
+    assertThat("Unexpected property count.", problemProperties.size(), is(1));
+
+    Object errors = problem.getProperties().get("errors");
+    assertThat("Unexpected errors type.", errors, instanceOf(List.class));
+
+    List<ParameterValidationError> errorsList = (List<ParameterValidationError>) errors;
+    assertThat("Unexpected errors count.", errorsList.size(), is(1));
+
+    ParameterValidationError error = errorsList.get(0);
+    assertThat("Unexpected error parameter.", error.parameter(), is("email"));
+    assertThat("Unexpected error detail.", error.detail(), is(errorMsg));
   }
 
   /**

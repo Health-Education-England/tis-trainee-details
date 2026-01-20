@@ -771,12 +771,13 @@ class PersonalDetailsServiceTest {
 
   @Test
   void shouldReturnFalseWhenMultipleOtherProfilesHaveEmail() {
-    String tisId = "123";
-    String email = "duplicate@example.com";
     TraineeProfile profile1 = new TraineeProfile();
     profile1.setTraineeTisId("456");
     TraineeProfile profile2 = new TraineeProfile();
     profile2.setTraineeTisId("789");
+
+    String tisId = "123";
+    String email = "duplicate@example.com";
     when(repository.findAllByTraineeEmail(email)).thenReturn(List.of(profile1, profile2));
 
     boolean result = service.isEmailUnique(tisId, email);
@@ -786,20 +787,22 @@ class PersonalDetailsServiceTest {
 
   @Test
   void shouldUpdateEmailWithTraineeProvidedDetails() {
-    String tisId = "123";
-    String newEmail = "new@example.com";
     TraineeProfile traineeProfile = new TraineeProfile();
     PersonalDetails existingDetails = new PersonalDetails();
     existingDetails.setEmail("old@example.com");
     traineeProfile.setPersonalDetails(existingDetails);
 
+    String tisId = "123";
     when(repository.findByTraineeTisId(tisId)).thenReturn(traineeProfile);
     when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
 
+    String newEmail = "new@example.com";
     EmailUpdateDto emailUpdateDto = new EmailUpdateDto();
     emailUpdateDto.setEmail(newEmail);
 
-    Optional<PersonalDetails> result = service.updateEmailWithTraineeProvidedDetails(tisId, emailUpdateDto);
+    Optional<PersonalDetails> result
+        = service.updateEmailWithTraineeProvidedDetails(tisId, emailUpdateDto);
+
     assertThat("Expected PersonalDetails result.", result.isPresent(), is(true));
     assertThat("Expected updated email.", result.get().getEmail(), is(newEmail));
     verify(eventService).publishEmailDetailsProvidedEvent(eq(tisId), eq(emailUpdateDto));
@@ -820,7 +823,8 @@ class PersonalDetailsServiceTest {
     EmailUpdateDto emailUpdateDto = new EmailUpdateDto();
     emailUpdateDto.setEmail(email);
 
-    Optional<PersonalDetails> result = service.updateEmailWithTraineeProvidedDetails(tisId, emailUpdateDto);
+    Optional<PersonalDetails> result
+        = service.updateEmailWithTraineeProvidedDetails(tisId, emailUpdateDto);
 
     assertThat("Expected PersonalDetails result.", result.isPresent(), is(true));
     assertThat("Expected email to remain unchanged.", result.get().getEmail(), is(email));
@@ -829,20 +833,21 @@ class PersonalDetailsServiceTest {
 
   @Test
   void shouldNotPublishEmailEventWhenTraineeIsTester() {
-    String tisId = "-123";
-    String newEmail = "tester@example.com";
     TraineeProfile traineeProfile = new TraineeProfile();
     PersonalDetails existingDetails = new PersonalDetails();
     existingDetails.setEmail("old@example.com");
     traineeProfile.setPersonalDetails(existingDetails);
 
+    String tisId = "-123";
     when(repository.findByTraineeTisId(tisId)).thenReturn(traineeProfile);
     when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
 
+    String newEmail = "tester@example.com";
     EmailUpdateDto emailUpdateDto = new EmailUpdateDto();
     emailUpdateDto.setEmail(newEmail);
 
-    Optional<PersonalDetails> result = service.updateEmailWithTraineeProvidedDetails(tisId, emailUpdateDto);
+    Optional<PersonalDetails> result
+        = service.updateEmailWithTraineeProvidedDetails(tisId, emailUpdateDto);
 
     assertThat("Expected PersonalDetails result.", result.isPresent(), is(true));
     assertThat("Expected updated email for tester.", result.get().getEmail(), is(newEmail));
@@ -857,11 +862,13 @@ class PersonalDetailsServiceTest {
 
     when(repository.findByTraineeTisId(tisId)).thenReturn(null);
 
-    Optional<PersonalDetails> result = service.updateEmailWithTraineeProvidedDetails(tisId, emailUpdateDto);
+    Optional<PersonalDetails> result
+        = service.updateEmailWithTraineeProvidedDetails(tisId, emailUpdateDto);
 
     assertThat("Expected empty result when trainee not found.", result.isEmpty(), is(true));
     verifyNoInteractions(eventService);
   }
+  
 
   /**
    * Create an instance of PersonalDetails with default dummy values.

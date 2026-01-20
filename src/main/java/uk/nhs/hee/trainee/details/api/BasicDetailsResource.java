@@ -37,6 +37,7 @@ import uk.nhs.hee.trainee.details.dto.GmcDetailsDto;
 import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
 import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
 import uk.nhs.hee.trainee.details.dto.validation.UserUpdate;
+import uk.nhs.hee.trainee.details.exception.EmailAlreadyInUseException;
 import uk.nhs.hee.trainee.details.mapper.PersonalDetailsMapper;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.service.PersonalDetailsService;
@@ -122,7 +123,7 @@ public class BasicDetailsResource {
     boolean isUnique = service.isEmailUnique(tisId, emailUpdateDto.getEmail());
     if (!isUnique) {
       log.info("Email address {} is already in use.", emailUpdateDto.getEmail());
-      return ResponseEntity.badRequest().build();
+      throw new EmailAlreadyInUseException("Email address is already in use.");
     }
     log.info("Submitting email address update request for trainee {} to {}.", tisId,
         emailUpdateDto.getEmail());
