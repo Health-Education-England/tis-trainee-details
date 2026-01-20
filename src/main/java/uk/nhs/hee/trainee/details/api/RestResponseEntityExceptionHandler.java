@@ -45,6 +45,7 @@ import uk.nhs.hee.trainee.details.exception.EmailAlreadyInUseException;
 public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionHandler {
 
   private static final String TITLE_VALIDATION_FAILURE = "Validation failure";
+  private static final String ERRORS_PROPERTY = "errors";
 
   @Override
   protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
@@ -64,7 +65,7 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
 
     ProblemDetail problemDetail = ProblemDetail.forStatus(status);
     problemDetail.setTitle(TITLE_VALIDATION_FAILURE);
-    problemDetail.setProperty("errors", errors);
+    problemDetail.setProperty(ERRORS_PROPERTY, errors);
     return handleExceptionInternal(ex, problemDetail, headers, status, request);
   }
 
@@ -88,7 +89,7 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
 
     ProblemDetail problemDetail = ProblemDetail.forStatus(status);
     problemDetail.setTitle(ex.getReason());
-    problemDetail.setProperty("errors", errors);
+    problemDetail.setProperty(ERRORS_PROPERTY, errors);
     return handleExceptionInternal(ex, problemDetail, headers, status, request);
   }
 
@@ -105,7 +106,7 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
     );
     ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
     problemDetail.setTitle("Email already in use");
-    problemDetail.setProperty("errors", errors);
+    problemDetail.setProperty(ERRORS_PROPERTY, errors);
     return ResponseEntity.badRequest().body(problemDetail);
   }
 

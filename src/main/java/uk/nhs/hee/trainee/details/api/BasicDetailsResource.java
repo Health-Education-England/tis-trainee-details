@@ -120,9 +120,7 @@ public class BasicDetailsResource {
       log.warn("No trainee ID provided.");
       return ResponseEntity.badRequest().build();
     }
-    boolean isUnique = service.isEmailUnique(tisId, emailUpdateDto.getEmail());
-    if (!isUnique) {
-      log.info("Email address {} is already in use.", emailUpdateDto.getEmail());
+    if (!service.isEmailUnique(tisId, emailUpdateDto.getEmail())) {
       throw new EmailAlreadyInUseException("Email address is already in use.");
     }
     log.info("Submitting email address update request for trainee {} to {}.", tisId,

@@ -2,6 +2,7 @@ application:
   aws:
     sns:
       coj-signed: ${local.sns-prefix}:tis-trainee-details-coj-signed
+      email-details-provided: ${local.sns-prefix}:tis-trainee-details-email-provided
       gmc-details-provided: ${local.sns-prefix}:tis-trainee-details-gmc-provided
     sqs:
       event: ${local.sqs-prefix}/

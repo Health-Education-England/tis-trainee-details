@@ -805,7 +805,7 @@ class PersonalDetailsServiceTest {
 
     assertThat("Expected PersonalDetails result.", result.isPresent(), is(true));
     assertThat("Expected updated email.", result.get().getEmail(), is(newEmail));
-    verify(eventService).publishEmailDetailsProvidedEvent(eq(tisId), eq(emailUpdateDto));
+    verify(eventService).publishEmailDetailsProvidedEvent(tisId, emailUpdateDto);
   }
 
   @Test
@@ -868,7 +868,6 @@ class PersonalDetailsServiceTest {
     assertThat("Expected empty result when trainee not found.", result.isEmpty(), is(true));
     verifyNoInteractions(eventService);
   }
-  
 
   /**
    * Create an instance of PersonalDetails with default dummy values.
