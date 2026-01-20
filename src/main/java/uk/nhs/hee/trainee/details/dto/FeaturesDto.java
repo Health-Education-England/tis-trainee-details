@@ -185,11 +185,13 @@ public record FeaturesDto(
     /**
      * A sub-set of profile features.
      *
-     * @param enabled   Whether the profile is enabled.
-     * @param gmcUpdate GMC Update feature flag.
+     * @param enabled     Whether the profile is enabled.
+     * @param emailUpdate Email Update feature flag.
+     * @param gmcUpdate   GMC Update feature flag.
      */
     public record ProfileFeatures(
         boolean enabled,
+        Feature emailUpdate,
         Feature gmcUpdate) {
 
       /**
@@ -201,6 +203,7 @@ public record FeaturesDto(
       private static ProfileFeatures enable() {
         return new ProfileFeatures(
             true,
+            Feature.enable(),
             Feature.enable()
         );
       }
@@ -214,6 +217,7 @@ public record FeaturesDto(
       private static ProfileFeatures readOnly() {
         return new ProfileFeatures(
             true,
+            Feature.disable(),
             Feature.disable()
         );
       }
@@ -226,6 +230,7 @@ public record FeaturesDto(
       private static ProfileFeatures disable() {
         return new ProfileFeatures(
             false,
+            Feature.disable(),
             Feature.disable()
         );
       }
