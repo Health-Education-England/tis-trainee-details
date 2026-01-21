@@ -216,9 +216,8 @@ public class PersonalDetailsService {
   public boolean isEmailChangeUnique(String tisId, String email) {
     List<TraineeProfile> profilesWithEmail = repository.findAllByTraineeEmail(email);
     if (!profilesWithEmail.isEmpty()) {
-      log.warn("Email address {} for trainee {} is already in use (by at least one other trainee, " +
-              "or is unchanged from their current email).",
-          tisId, email);
+      log.warn("Email address {} for trainee {} is already in use (by at least one other trainee, "
+              + "or is unchanged from their current email).", tisId, email);
       return false;
     }
     return true;
