@@ -126,11 +126,6 @@ public abstract class TraineeProfileMapper {
     }
   }
 
-  @BeanMapping(ignoreByDefault = true)
-  @Mapping(target = "personalDetails.email", source = "email")
-  public abstract void updateEmail(@MappingTarget TraineeProfile target,
-      PersonalDetails source);
-
   @BeanMapping(ignoreByDefault = true, qualifiedByName = "updateGmc")
   @Mapping(target = "personalDetails.gmcNumber", source = "gmcNumber")
   public abstract void updateGmcDetails(@MappingTarget TraineeProfile target,

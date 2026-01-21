@@ -207,18 +207,17 @@ public class PersonalDetailsService {
   }
 
   /**
-   * Check if an email address is used by any other trainee profiles.
+   * Check if a changed email address is used by any other trainee profiles.
    *
    * @param tisId The TIS id of the current trainee (which is excluded).
    * @param email The email address to check.
    * @return true if unique, false if not unique.
    */
-  public boolean isEmailUnique(String tisId, String email) {
+  public boolean isEmailChangeUnique(String tisId, String email) {
     List<TraineeProfile> profilesWithEmail = repository.findAllByTraineeEmail(email);
-    boolean isUnique = profilesWithEmail.stream()
-        .allMatch(profile -> profile.getTraineeTisId().equals(tisId));
-    if (!isUnique) {
-      log.warn("Email address {} for trainee {} is already in use by at least one other trainee.",
+    if (!profilesWithEmail.isEmpty()) {
+      log.warn("Email address {} for trainee {} is already in use (by at least one other trainee, " +
+              "or is unchanged from their current email).",
           tisId, email);
       return false;
     }
@@ -226,45 +225,27 @@ public class PersonalDetailsService {
   }
 
   /**
-   * Update the email details for the trainee with the given TIS ID.
-   *
-   * @param tisId           The TIS id of the trainee.
-   * @param personalDetails The personal details to add to the trainee.
-   * @return The updated personal details or empty if a trainee with the ID was not found.
-   */
-  public PersonalDetailsUpdated updateEmailByTisId(String tisId,
-      PersonalDetails personalDetails) {
-    return updatePersonalDetailsByTisId(tisId, personalDetails, mapper::updateEmail);
-  }
-
-  /**
-   * Update the email address of a trainee using the details.
+   * Request update of the email address of a trainee using the details.
    *
    * @param tisId        The TIS id of the trainee.
    * @param emailDetails The email address to update the personal detail with.
-   * @return The updated personal details or empty if a trainee with the ID was not found.
+   * @return true if request was made, otherwise false.
    */
-  public Optional<PersonalDetails> updateEmailWithTraineeProvidedDetails(String tisId,
+  public boolean requestUpdateEmailWithTraineeProvidedDetails(String tisId,
       EmailUpdateDto emailDetails) {
-    PersonalDetails personalDetails = new PersonalDetails();
-    personalDetails.setEmail(emailDetails.getEmail());
 
-    PersonalDetailsUpdated updatedDetails = updateEmailByTisId(tisId, personalDetails);
-
-    updatedDetails.getPersonalDetails().ifPresent(details -> {
-      // if email is updated
-      if (updatedDetails.isUpdated()) {
-        // don't publish to TIS if it is a test user
-        if (tisId.startsWith("-")) {
-          log.warn("Tester trainee ID {} provided. Ignore email update.", tisId);
-        }
-        else {
-          log.info("Trainee {} updated their email to {}.", tisId, details.getEmail());
-          eventService.publishEmailDetailsProvidedEvent(tisId, emailDetails);
-        }
-      }
-    });
-
-    return updatedDetails.getPersonalDetails();
+    TraineeProfile traineeProfile = repository.findByTraineeTisId(tisId);
+    if (traineeProfile == null) {
+      log.warn("Trainee profile not found for TIS ID {}. Cannot request email update.", tisId);
+      return false;
+    }
+    // don't publish to TIS if it is a test user
+    if (tisId.startsWith("-")) {
+      log.warn("Tester trainee ID {} provided. Ignore email update.", tisId);
+      return false;
+    }
+    log.info("Requesting update email to {} for trainee {}.", emailDetails.getEmail(), tisId);
+    eventService.publishEmailDetailsProvidedEvent(tisId, emailDetails);
+    return true;
   }
 }

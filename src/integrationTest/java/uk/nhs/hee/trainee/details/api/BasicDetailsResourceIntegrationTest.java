@@ -27,6 +27,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -161,7 +162,25 @@ class BasicDetailsResourceIntegrationTest {
   }
 
   @Test
-  void shouldUpdateEmailSuccessfully() throws Exception {
+  void shouldReturnBadRequestWhenUpdatingEmailIsUnchanged() throws Exception {
+    PersonalDetails details = new PersonalDetails();
+    details.setEmail("test@test.com");
+    TraineeProfile profile = new TraineeProfile();
+    profile.setTraineeTisId(TRAINEE_ID);
+    profile.setPersonalDetails(details);
+    mongoTemplate.save(profile);
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(put("/api/basic-details/email-address")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(emailJson))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errors[0].detail", is("Email address is already in use.")));
+  }
+
+  @Test
+  void shouldSendEmailUpdateRequestSuccessfully() throws Exception {
     TraineeProfile profile = new TraineeProfile();
     profile.setTraineeTisId(TRAINEE_ID);
     mongoTemplate.save(profile);
@@ -174,7 +193,7 @@ class BasicDetailsResourceIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(emailJson))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.email", is("test@test.com")));
+        .andExpect(content().string(""));
 
     ArgumentCaptor<SnsNotification<EmailDetailsProvidedEvent>> notificationCaptor
         = ArgumentCaptor.forClass(SnsNotification.class);

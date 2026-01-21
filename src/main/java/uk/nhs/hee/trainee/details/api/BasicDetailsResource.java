@@ -108,11 +108,11 @@ public class BasicDetailsResource {
    * Submit an update to the email address for the authenticated trainee to TIS.
    *
    * @param emailUpdateDto The new email address.
-   * @return The (provisionally) updated PersonaDetails if the email update request could be made,
+   * @return 200  if the email update request could be made, 404 if the trainee could not be found,
    *         400 otherwise.
    */
   @PutMapping("/email-address")
-  public ResponseEntity<PersonalDetailsDto> updateEmailAddress(
+  public ResponseEntity<Void> updateEmailAddress(
       @Validated(UserUpdate.class) @RequestBody EmailUpdateDto emailUpdateDto) {
     String tisId = traineeIdentity.getTraineeId();
 
@@ -120,14 +120,15 @@ public class BasicDetailsResource {
       log.warn("No trainee ID provided.");
       return ResponseEntity.badRequest().build();
     }
-    if (!service.isEmailUnique(tisId, emailUpdateDto.getEmail())) {
+    if (!service.isEmailChangeUnique(tisId, emailUpdateDto.getEmail())) {
       throw new EmailAlreadyInUseException("Email address is already in use.");
     }
     log.info("Submitting email address update request for trainee {} to {}.", tisId,
         emailUpdateDto.getEmail());
-    Optional<PersonalDetails> entity = service
-        .updateEmailWithTraineeProvidedDetails(tisId, emailUpdateDto);
-    Optional<PersonalDetailsDto> dto = entity.map(mapper::toDto);
-    return ResponseEntity.of(dto);
+    boolean requested = service.requestUpdateEmailWithTraineeProvidedDetails(tisId, emailUpdateDto);
+    if (!requested) {
+      return ResponseEntity.notFound().build();
+    }
+    return ResponseEntity.ok().build();
   }
 }

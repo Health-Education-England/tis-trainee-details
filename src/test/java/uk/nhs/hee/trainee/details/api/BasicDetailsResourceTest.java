@@ -362,7 +362,7 @@ class BasicDetailsResourceTest {
 
     String token = TestJwtUtil.generateTokenForTisId("40");
 
-    when(service.isEmailUnique("40", "duplicate@example.com")).thenReturn(false);
+    when(service.isEmailChangeUnique("40", "duplicate@example.com")).thenReturn(false);
 
     this.mockMvc.perform(put("/api/basic-details/email-address")
             .contentType(MediaType.APPLICATION_JSON)
@@ -376,21 +376,17 @@ class BasicDetailsResourceTest {
     EmailUpdateDto emailUpdateDto = new EmailUpdateDto();
     emailUpdateDto.setEmail("unique@example.com");
 
-    PersonalDetails personalDetails = new PersonalDetails();
-    personalDetails.setEmail("unique@example.com");
-    when(service.updateEmailWithTraineeProvidedDetails(eq("40"), any(EmailUpdateDto.class)))
-        .thenReturn(Optional.of(personalDetails));
-
     String token = TestJwtUtil.generateTokenForTisId("40");
 
-    when(service.isEmailUnique("40", "unique@example.com")).thenReturn(true);
+    when(service.isEmailChangeUnique("40", "unique@example.com")).thenReturn(true);
+    when(service.requestUpdateEmailWithTraineeProvidedDetails(eq("40"), any(EmailUpdateDto.class)))
+        .thenReturn(true);
 
     this.mockMvc.perform(put("/api/basic-details/email-address")
             .contentType(MediaType.APPLICATION_JSON)
             .content(mapper.writeValueAsBytes(emailUpdateDto))
             .header(HttpHeaders.AUTHORIZATION, token))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.email", is("unique@example.com")));
+        .andExpect(status().isOk());
   }
 
   @Test
@@ -400,9 +396,9 @@ class BasicDetailsResourceTest {
 
     String token = TestJwtUtil.generateTokenForTisId("40");
 
-    when(service.isEmailUnique("40", "notfound@example.com")).thenReturn(true);
-    when(service.updateEmailWithTraineeProvidedDetails(eq("40"), any(EmailUpdateDto.class)))
-        .thenReturn(Optional.empty());
+    when(service.isEmailChangeUnique("40", "notfound@example.com")).thenReturn(true);
+    when(service.requestUpdateEmailWithTraineeProvidedDetails(eq("40"), any(EmailUpdateDto.class)))
+        .thenReturn(false);
 
     this.mockMvc.perform(put("/api/basic-details/email-address")
             .contentType(MediaType.APPLICATION_JSON)
