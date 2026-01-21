@@ -129,6 +129,6 @@ public class BasicDetailsResource {
     if (!requested) {
       return ResponseEntity.notFound().build();
     }
-    return ResponseEntity.ok().build();
+    return ResponseEntity.noContent().build();
   }
 }

@@ -386,7 +386,7 @@ class BasicDetailsResourceTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(mapper.writeValueAsBytes(emailUpdateDto))
             .header(HttpHeaders.AUTHORIZATION, token))
-        .andExpect(status().isOk());
+        .andExpect(status().isNoContent());
   }
 
   @Test
