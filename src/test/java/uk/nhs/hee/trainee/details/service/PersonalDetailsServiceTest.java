@@ -36,11 +36,14 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
+import java.util.Collections;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.mockito.ArgumentCaptor;
+import uk.nhs.hee.trainee.details.dto.EmailUpdateDto;
 import uk.nhs.hee.trainee.details.dto.GmcDetailsDto;
 import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapperImpl;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
@@ -724,6 +727,110 @@ class PersonalDetailsServiceTest {
 
     assertThat("Unexpected personal details.",
         personalDetails.getPersonalDetails().get(), is(expectedPersonalDetails));
+  }
+
+  @Test
+  void shouldReturnTrueWhenNoProfilesWithEmail() {
+    String tisId = "123";
+    String email = "unique@example.com";
+    when(repository.findAllByTraineeEmail(email)).thenReturn(Collections.emptyList());
+
+    boolean result = service.isEmailChangeUnique(tisId, email);
+
+    assertThat("Expected email to be unique.", result, is(true));
+  }
+
+  @Test
+  void shouldReturnFalseWhenCurrentProfileHasEmail() {
+    String tisId = "123";
+    String email = "unchanged@example.com";
+    TraineeProfile profile = new TraineeProfile();
+    profile.setTraineeTisId(tisId);
+    when(repository.findAllByTraineeEmail(email)).thenReturn(List.of(profile));
+
+    boolean result = service.isEmailChangeUnique(tisId, email);
+
+    assertThat("Expected email to not be unique for current profile.", result, is(false));
+  }
+
+  @Test
+  void shouldReturnFalseWhenAnotherProfileHasEmail() {
+    String tisId = "123";
+    String email = "duplicate@example.com";
+    TraineeProfile profile1 = new TraineeProfile();
+    profile1.setTraineeTisId(tisId);
+    TraineeProfile profile2 = new TraineeProfile();
+    profile2.setTraineeTisId("456");
+    when(repository.findAllByTraineeEmail(email)).thenReturn(List.of(profile1, profile2));
+
+    boolean result = service.isEmailChangeUnique(tisId, email);
+
+    assertThat("Expected email to not be unique.", result, is(false));
+  }
+
+  @Test
+  void shouldReturnFalseWhenMultipleProfilesHaveEmail() {
+    TraineeProfile profile1 = new TraineeProfile();
+    profile1.setTraineeTisId("456");
+    TraineeProfile profile2 = new TraineeProfile();
+    profile2.setTraineeTisId("789");
+
+    String tisId = "123";
+    String email = "duplicate@example.com";
+    when(repository.findAllByTraineeEmail(email)).thenReturn(List.of(profile1, profile2));
+
+    boolean result = service.isEmailChangeUnique(tisId, email);
+
+    assertThat("Expected email to not be unique when used by multiple profiles.",
+        result, is(false));
+  }
+
+  @Test
+  void shouldRequestUpdateEmailWithTraineeProvidedDetails() {
+    String newEmail = "new@example.com";
+    EmailUpdateDto emailUpdateDto = new EmailUpdateDto();
+    emailUpdateDto.setEmail(newEmail);
+
+    String tisId = "123";
+    TraineeProfile profile = new TraineeProfile();
+    profile.setTraineeTisId(tisId);
+    when(repository.findByTraineeTisId(tisId)).thenReturn(profile);
+
+    boolean result = service.requestUpdateEmailWithTraineeProvidedDetails(tisId, emailUpdateDto);
+
+    verify(eventService).publishEmailDetailsProvidedEvent(tisId, emailUpdateDto);
+    assertThat("Expected email update to be requested.", result, is(true));
+  }
+
+  @Test
+  void shouldNotPublishEmailEventWhenTraineeIsTester() {
+    String newEmail = "tester@example.com";
+    EmailUpdateDto emailUpdateDto = new EmailUpdateDto();
+    emailUpdateDto.setEmail(newEmail);
+
+    String tisId = "-123";
+    TraineeProfile profile = new TraineeProfile();
+    profile.setTraineeTisId(tisId);
+    when(repository.findByTraineeTisId(tisId)).thenReturn(profile);
+
+    boolean result = service.requestUpdateEmailWithTraineeProvidedDetails(tisId, emailUpdateDto);
+
+    verifyNoInteractions(eventService);
+    assertThat("Expected email update to not be requested.", result, is(false));
+  }
+
+  @Test
+  void shouldNotPublishEmailEventWhenTraineeNotFound() {
+    String tisId = "notFound";
+    EmailUpdateDto emailUpdateDto = new EmailUpdateDto();
+    emailUpdateDto.setEmail("new@example.com");
+
+    when(repository.findByTraineeTisId(tisId)).thenReturn(null);
+
+    boolean result = service.requestUpdateEmailWithTraineeProvidedDetails(tisId, emailUpdateDto);
+
+    verifyNoInteractions(eventService);
+    assertThat("Expected email update to not be requested.", result, is(false));
   }
 
   /**

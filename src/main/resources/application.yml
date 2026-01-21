@@ -32,6 +32,7 @@ application:
   aws:
     sns:
       coj-signed: ${TOPIC_ARN_COJ_SIGNED}
+      email-details-provided: ${TOPIC_ARN_EMAIL_DETAILS_PROVIDED}
       gmc-details-provided: ${TOPIC_ARN_GMC_DETAILS_PROVIDED}
     sqs:
       event: ${EVENT_QUEUE_URL:}

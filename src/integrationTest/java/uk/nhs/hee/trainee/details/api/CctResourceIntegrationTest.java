@@ -21,6 +21,7 @@
 
 package uk.nhs.hee.trainee.details.api;
 
+import static java.lang.Thread.sleep;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
@@ -251,6 +252,7 @@ class CctResourceIntegrationTest {
                 .build()))
         .build();
     template.insert(past);
+    sleep(10); //ensure different last updated timestamps for ordering
 
     CctCalculation present = CctCalculation.builder()
         .traineeId(TRAINEE_ID)
@@ -270,6 +272,7 @@ class CctResourceIntegrationTest {
                 .build()))
         .build();
     template.insert(present);
+    sleep(10); //ensure different last updated timestamps for ordering
 
     template.save(future);
 

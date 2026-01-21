@@ -38,9 +38,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
+import uk.nhs.hee.trainee.details.dto.EmailUpdateDto;
 import uk.nhs.hee.trainee.details.dto.GmcDetailsDto;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.event.CojSignedEvent;
+import uk.nhs.hee.trainee.details.event.EmailDetailsProvidedEvent;
 import uk.nhs.hee.trainee.details.event.GmcDetailsProvidedEvent;
 import uk.nhs.hee.trainee.details.event.ProfileCreateEvent;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
@@ -50,6 +52,7 @@ import uk.nhs.hee.trainee.details.model.TraineeProfile;
 class EventPublishServiceTest {
 
   private static final String COJ_SIGNED_TOPIC = "coj-signed.topic.arn";
+  private static final String EMAIL_DETAILS_PROVIDED_TOPIC = "email-details-provided.topic.arn";
   private static final String GMC_DETAILS_PROVIDED_TOPIC = "gmc-details-provided.topic.arn";
   private static final String QUEUE_URL = "queue.url";
 
@@ -62,7 +65,7 @@ class EventPublishServiceTest {
     snsTemplate = mock(SnsTemplate.class);
     sqsTemplate = mock(SqsTemplate.class);
     eventPublishService = new EventPublishService(snsTemplate, sqsTemplate, COJ_SIGNED_TOPIC,
-        GMC_DETAILS_PROVIDED_TOPIC, QUEUE_URL);
+        EMAIL_DETAILS_PROVIDED_TOPIC, GMC_DETAILS_PROVIDED_TOPIC, QUEUE_URL);
   }
 
   @ParameterizedTest
@@ -119,6 +122,30 @@ class EventPublishServiceTest {
     assertThat("Unexpected GMC number.", eventGmcDetails.gmcNumber(), is("1234567"));
     assertThat("Unexpected GMC status.", eventGmcDetails.gmcStatus(),
         is("Registered with Licence"));
+  }
+
+  @Test
+  void shouldPublishEmailDetailsProvidedEvent() {
+    String traineeId = "40";
+    String newEmail = "email@test.tis.nhs.net";
+    EmailUpdateDto emailDetails = new EmailUpdateDto();
+    emailDetails.setEmail(newEmail);
+    eventPublishService.publishEmailDetailsProvidedEvent(traineeId, emailDetails);
+
+    ArgumentCaptor<SnsNotification<EmailDetailsProvidedEvent>> notificationCaptor = ArgumentCaptor
+        .captor();
+    verify(snsTemplate).sendNotification(eq(EMAIL_DETAILS_PROVIDED_TOPIC),
+        notificationCaptor.capture());
+
+    SnsNotification<EmailDetailsProvidedEvent> notification = notificationCaptor.getValue();
+    assertThat("Unexpected group ID.", notification.getGroupId(), is(traineeId));
+    assertThat("Unexpected dedupe ID.", notification.getDeduplicationId(), nullValue());
+
+    EmailDetailsProvidedEvent event = notification.getPayload();
+    assertThat("Unexpected trainee ID.", event.traineeId(), is(traineeId));
+
+    EmailUpdateDto eventEmailDetails = event.emailDetails();
+    assertThat("Unexpected email address.", eventEmailDetails.getEmail(), is(newEmail));
   }
 
   @Test

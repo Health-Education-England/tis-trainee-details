@@ -32,10 +32,12 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import uk.nhs.hee.trainee.details.dto.EmailUpdateDto;
 import uk.nhs.hee.trainee.details.dto.GmcDetailsDto;
 import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
 import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
 import uk.nhs.hee.trainee.details.dto.validation.UserUpdate;
+import uk.nhs.hee.trainee.details.exception.EmailAlreadyInUseException;
 import uk.nhs.hee.trainee.details.mapper.PersonalDetailsMapper;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.service.PersonalDetailsService;
@@ -100,5 +102,33 @@ public class BasicDetailsResource {
         updatedGmcDetails);
     Optional<PersonalDetailsDto> dto = entity.map(mapper::toDto);
     return ResponseEntity.of(dto);
+  }
+
+  /**
+   * Submit an update to the email address for the authenticated trainee to TIS.
+   *
+   * @param emailUpdateDto The new email address.
+   * @return 200  if the email update request could be made, 404 if the trainee could not be found,
+   *         400 otherwise.
+   */
+  @PutMapping("/email-address")
+  public ResponseEntity<Void> updateEmailAddress(
+      @Validated(UserUpdate.class) @RequestBody EmailUpdateDto emailUpdateDto) {
+    String tisId = traineeIdentity.getTraineeId();
+
+    if (tisId == null) {
+      log.warn("No trainee ID provided.");
+      return ResponseEntity.badRequest().build();
+    }
+    if (!service.isEmailChangeUnique(tisId, emailUpdateDto.getEmail())) {
+      throw new EmailAlreadyInUseException("Email address is already in use.");
+    }
+    log.info("Submitting email address update request for trainee {} to {}.", tisId,
+        emailUpdateDto.getEmail());
+    boolean requested = service.requestUpdateEmailWithTraineeProvidedDetails(tisId, emailUpdateDto);
+    if (!requested) {
+      return ResponseEntity.notFound().build();
+    }
+    return ResponseEntity.noContent().build();
   }
 }
