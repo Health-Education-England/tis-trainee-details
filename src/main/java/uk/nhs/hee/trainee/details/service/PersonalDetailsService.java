@@ -22,10 +22,12 @@
 package uk.nhs.hee.trainee.details.service;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import uk.nhs.hee.trainee.details.dto.EmailUpdateDto;
 import uk.nhs.hee.trainee.details.dto.GmcDetailsDto;
 import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapper;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
@@ -202,5 +204,47 @@ public class PersonalDetailsService {
     }
     return new PersonalDetailsUpdated(true,
         Optional.of(repository.save(traineeProfile).getPersonalDetails()));
+  }
+
+  /**
+   * Check if a changed email address is used by any other trainee profiles.
+   *
+   * @param tisId The TIS id of the current trainee (which is excluded).
+   * @param email The email address to check.
+   * @return true if unique, false if not unique.
+   */
+  public boolean isEmailChangeUnique(String tisId, String email) {
+    List<TraineeProfile> profilesWithEmail = repository.findAllByTraineeEmail(email);
+    if (!profilesWithEmail.isEmpty()) {
+      log.warn("Email address {} for trainee {} is already in use (by at least one other trainee, "
+              + "or is unchanged from their current email).", tisId, email);
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Request update of the email address of a trainee using the details.
+   *
+   * @param tisId        The TIS id of the trainee.
+   * @param emailDetails The email address to update the personal detail with.
+   * @return true if request was made, otherwise false.
+   */
+  public boolean requestUpdateEmailWithTraineeProvidedDetails(String tisId,
+      EmailUpdateDto emailDetails) {
+
+    TraineeProfile traineeProfile = repository.findByTraineeTisId(tisId);
+    if (traineeProfile == null) {
+      log.warn("Trainee profile not found for TIS ID {}. Cannot request email update.", tisId);
+      return false;
+    }
+    // don't publish to TIS if it is a test user
+    if (tisId.startsWith("-")) {
+      log.warn("Tester trainee ID {} provided. Ignore email update.", tisId);
+      return false;
+    }
+    log.info("Requesting update email to {} for trainee {}.", emailDetails.getEmail(), tisId);
+    eventService.publishEmailDetailsProvidedEvent(tisId, emailDetails);
+    return true;
   }
 }

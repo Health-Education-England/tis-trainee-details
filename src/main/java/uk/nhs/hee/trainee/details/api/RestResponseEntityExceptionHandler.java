@@ -25,15 +25,18 @@ import com.fasterxml.jackson.core.JsonPointer;
 import java.util.Comparator;
 import java.util.List;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import uk.nhs.hee.trainee.details.exception.EmailAlreadyInUseException;
 
 /**
  * Exception handler for REST requests.
@@ -42,6 +45,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionHandler {
 
   private static final String TITLE_VALIDATION_FAILURE = "Validation failure";
+  private static final String ERRORS_PROPERTY = "errors";
 
   @Override
   protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
@@ -61,7 +65,7 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
 
     ProblemDetail problemDetail = ProblemDetail.forStatus(status);
     problemDetail.setTitle(TITLE_VALIDATION_FAILURE);
-    problemDetail.setProperty("errors", errors);
+    problemDetail.setProperty(ERRORS_PROPERTY, errors);
     return handleExceptionInternal(ex, problemDetail, headers, status, request);
   }
 
@@ -85,8 +89,25 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
 
     ProblemDetail problemDetail = ProblemDetail.forStatus(status);
     problemDetail.setTitle(ex.getReason());
-    problemDetail.setProperty("errors", errors);
+    problemDetail.setProperty(ERRORS_PROPERTY, errors);
     return handleExceptionInternal(ex, problemDetail, headers, status, request);
+  }
+
+  /**
+   * Handle email already in use exceptions.
+   *
+   * @param ex The exception.
+   * @return A response entity with problem details.
+   */
+  @ExceptionHandler(EmailAlreadyInUseException.class)
+  public ResponseEntity<Object> handleEmailAlreadyInUse(EmailAlreadyInUseException ex) {
+    List<ParameterValidationError> errors = List.of(
+        new ParameterValidationError("email", ex.getMessage())
+    );
+    ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+    problemDetail.setTitle("Email already in use");
+    problemDetail.setProperty(ERRORS_PROPERTY, errors);
+    return ResponseEntity.badRequest().body(problemDetail);
   }
 
   /**
