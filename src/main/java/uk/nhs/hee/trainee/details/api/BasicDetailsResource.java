@@ -32,7 +32,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import uk.nhs.hee.trainee.details.dto.EmailUpdateDto;
+import uk.nhs.hee.trainee.details.dto.ContactDetailsUpdateDto;
 import uk.nhs.hee.trainee.details.dto.GmcDetailsDto;
 import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
 import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
@@ -107,25 +107,26 @@ public class BasicDetailsResource {
   /**
    * Submit an update to the email address for the authenticated trainee to TIS.
    *
-   * @param emailUpdateDto The new email address.
+   * @param contactDetailsUpdateDto The new email address.
    * @return 200  if the email update request could be made, 404 if the trainee could not be found,
    *         400 otherwise.
    */
   @PutMapping("/email-address")
   public ResponseEntity<Void> updateEmailAddress(
-      @Validated(UserUpdate.class) @RequestBody EmailUpdateDto emailUpdateDto) {
+      @Validated(UserUpdate.class) @RequestBody ContactDetailsUpdateDto contactDetailsUpdateDto) {
     String tisId = traineeIdentity.getTraineeId();
 
     if (tisId == null) {
       log.warn("No trainee ID provided.");
       return ResponseEntity.badRequest().build();
     }
-    if (!service.isEmailChangeUnique(tisId, emailUpdateDto.getEmail())) {
+    if (!service.isEmailChangeUnique(tisId, contactDetailsUpdateDto.getEmail())) {
       throw new EmailAlreadyInUseException("Email address is already in use.");
     }
     log.info("Submitting email address update request for trainee {} to {}.", tisId,
-        emailUpdateDto.getEmail());
-    boolean requested = service.requestUpdateEmailWithTraineeProvidedDetails(tisId, emailUpdateDto);
+        contactDetailsUpdateDto.getEmail());
+    boolean requested
+        = service.requestUpdateEmailWithTraineeProvidedDetails(tisId, contactDetailsUpdateDto);
     if (!requested) {
       return ResponseEntity.notFound().build();
     }

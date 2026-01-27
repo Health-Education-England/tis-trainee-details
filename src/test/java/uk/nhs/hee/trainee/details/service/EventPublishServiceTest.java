@@ -38,7 +38,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
-import uk.nhs.hee.trainee.details.dto.EmailUpdateDto;
+import uk.nhs.hee.trainee.details.dto.ContactDetailsUpdateDto;
 import uk.nhs.hee.trainee.details.dto.GmcDetailsDto;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.event.CojSignedEvent;
@@ -128,7 +128,7 @@ class EventPublishServiceTest {
   void shouldPublishEmailDetailsProvidedEvent() {
     String traineeId = "40";
     String newEmail = "email@test.tis.nhs.net";
-    EmailUpdateDto emailDetails = new EmailUpdateDto();
+    ContactDetailsUpdateDto emailDetails = new ContactDetailsUpdateDto();
     emailDetails.setEmail(newEmail);
     eventPublishService.publishEmailDetailsProvidedEvent(traineeId, emailDetails);
 
@@ -144,7 +144,7 @@ class EventPublishServiceTest {
     EmailDetailsProvidedEvent event = notification.getPayload();
     assertThat("Unexpected trainee ID.", event.traineeId(), is(traineeId));
 
-    EmailUpdateDto eventEmailDetails = event.emailDetails();
+    ContactDetailsUpdateDto eventEmailDetails = event.contactDetails();
     assertThat("Unexpected email address.", eventEmailDetails.getEmail(), is(newEmail));
   }
 

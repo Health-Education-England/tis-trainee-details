@@ -27,7 +27,7 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import uk.nhs.hee.trainee.details.dto.EmailUpdateDto;
+import uk.nhs.hee.trainee.details.dto.ContactDetailsUpdateDto;
 import uk.nhs.hee.trainee.details.dto.GmcDetailsDto;
 import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapper;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
@@ -231,7 +231,7 @@ public class PersonalDetailsService {
    * @return true if request was made, otherwise false.
    */
   public boolean requestUpdateEmailWithTraineeProvidedDetails(String tisId,
-      EmailUpdateDto emailDetails) {
+      ContactDetailsUpdateDto emailDetails) {
 
     TraineeProfile traineeProfile = repository.findByTraineeTisId(tisId);
     if (traineeProfile == null) {

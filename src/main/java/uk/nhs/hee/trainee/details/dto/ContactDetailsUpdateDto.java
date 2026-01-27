@@ -27,10 +27,10 @@ import lombok.Data;
 import uk.nhs.hee.trainee.details.dto.validation.UserUpdate;
 
 /**
- * DTO for updating email address with validation.
+ * DTO for updating contact details with validation.
  */
 @Data
-public class EmailUpdateDto {
+public class ContactDetailsUpdateDto {
 
   @NotBlank(groups = {UserUpdate.class}, message = "Email address must not be blank.")
   @Email(groups = {UserUpdate.class}, message = "Email address must be valid.")

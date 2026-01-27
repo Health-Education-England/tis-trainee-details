@@ -22,16 +22,16 @@
 package uk.nhs.hee.trainee.details.event;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import uk.nhs.hee.trainee.details.dto.EmailUpdateDto;
+import uk.nhs.hee.trainee.details.dto.ContactDetailsUpdateDto;
 
 /**
  * Event representing the provision of email details for a trainee.
  *
- * @param traineeId    The ID of the trainee.
- * @param emailDetails The email details provided.
+ * @param traineeId      The ID of the trainee.
+ * @param contactDetails The contact details with email address provided.
  */
 public record EmailDetailsProvidedEvent(
     @JsonProperty("personId") String traineeId,
-    EmailUpdateDto emailDetails) {
+    ContactDetailsUpdateDto contactDetails) {
 
 }

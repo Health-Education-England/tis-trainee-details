@@ -43,7 +43,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.mockito.ArgumentCaptor;
-import uk.nhs.hee.trainee.details.dto.EmailUpdateDto;
+import uk.nhs.hee.trainee.details.dto.ContactDetailsUpdateDto;
 import uk.nhs.hee.trainee.details.dto.GmcDetailsDto;
 import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapperImpl;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
@@ -788,32 +788,34 @@ class PersonalDetailsServiceTest {
   @Test
   void shouldRequestUpdateEmailWithTraineeProvidedDetails() {
     String newEmail = "new@example.com";
-    EmailUpdateDto emailUpdateDto = new EmailUpdateDto();
-    emailUpdateDto.setEmail(newEmail);
+    ContactDetailsUpdateDto contactDetailsUpdateDto = new ContactDetailsUpdateDto();
+    contactDetailsUpdateDto.setEmail(newEmail);
 
     String tisId = "123";
     TraineeProfile profile = new TraineeProfile();
     profile.setTraineeTisId(tisId);
     when(repository.findByTraineeTisId(tisId)).thenReturn(profile);
 
-    boolean result = service.requestUpdateEmailWithTraineeProvidedDetails(tisId, emailUpdateDto);
+    boolean result
+        = service.requestUpdateEmailWithTraineeProvidedDetails(tisId, contactDetailsUpdateDto);
 
-    verify(eventService).publishEmailDetailsProvidedEvent(tisId, emailUpdateDto);
+    verify(eventService).publishEmailDetailsProvidedEvent(tisId, contactDetailsUpdateDto);
     assertThat("Expected email update to be requested.", result, is(true));
   }
 
   @Test
   void shouldNotPublishEmailEventWhenTraineeIsTester() {
     String newEmail = "tester@example.com";
-    EmailUpdateDto emailUpdateDto = new EmailUpdateDto();
-    emailUpdateDto.setEmail(newEmail);
+    ContactDetailsUpdateDto contactDetailsUpdateDto = new ContactDetailsUpdateDto();
+    contactDetailsUpdateDto.setEmail(newEmail);
 
     String tisId = "-123";
     TraineeProfile profile = new TraineeProfile();
     profile.setTraineeTisId(tisId);
     when(repository.findByTraineeTisId(tisId)).thenReturn(profile);
 
-    boolean result = service.requestUpdateEmailWithTraineeProvidedDetails(tisId, emailUpdateDto);
+    boolean result
+        = service.requestUpdateEmailWithTraineeProvidedDetails(tisId, contactDetailsUpdateDto);
 
     verifyNoInteractions(eventService);
     assertThat("Expected email update to not be requested.", result, is(false));
@@ -822,12 +824,13 @@ class PersonalDetailsServiceTest {
   @Test
   void shouldNotPublishEmailEventWhenTraineeNotFound() {
     String tisId = "notFound";
-    EmailUpdateDto emailUpdateDto = new EmailUpdateDto();
-    emailUpdateDto.setEmail("new@example.com");
+    ContactDetailsUpdateDto contactDetailsUpdateDto = new ContactDetailsUpdateDto();
+    contactDetailsUpdateDto.setEmail("new@example.com");
 
     when(repository.findByTraineeTisId(tisId)).thenReturn(null);
 
-    boolean result = service.requestUpdateEmailWithTraineeProvidedDetails(tisId, emailUpdateDto);
+    boolean result
+        = service.requestUpdateEmailWithTraineeProvidedDetails(tisId, contactDetailsUpdateDto);
 
     verifyNoInteractions(eventService);
     assertThat("Expected email update to not be requested.", result, is(false));
