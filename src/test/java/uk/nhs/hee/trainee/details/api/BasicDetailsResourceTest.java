@@ -54,7 +54,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import uk.nhs.hee.trainee.details.TestJwtUtil;
 import uk.nhs.hee.trainee.details.config.InterceptorConfiguration;
-import uk.nhs.hee.trainee.details.dto.EmailUpdateDto;
+import uk.nhs.hee.trainee.details.dto.ContactDetailsUpdateDto;
 import uk.nhs.hee.trainee.details.dto.GmcDetailsDto;
 import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
 import uk.nhs.hee.trainee.details.mapper.PersonalDetailsMapperImpl;
@@ -342,23 +342,23 @@ class BasicDetailsResourceTest {
 
   @Test
   void shouldNotUpdateEmailWhenTraineeIdNotInToken() throws Exception {
-    EmailUpdateDto emailUpdateDto = new EmailUpdateDto();
-    emailUpdateDto.setEmail("test@example.com");
+    ContactDetailsUpdateDto contactDetailsUpdateDto = new ContactDetailsUpdateDto();
+    contactDetailsUpdateDto.setEmail("test@example.com");
 
     // Simulate no trainee ID in token
     String token = TestJwtUtil.generateToken("{}");
 
     this.mockMvc.perform(put("/api/basic-details/email-address")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(mapper.writeValueAsBytes(emailUpdateDto))
+            .content(mapper.writeValueAsBytes(contactDetailsUpdateDto))
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isBadRequest());
   }
 
   @Test
   void shouldNotUpdateEmailWhenEmailNotUnique() throws Exception {
-    EmailUpdateDto emailUpdateDto = new EmailUpdateDto();
-    emailUpdateDto.setEmail("duplicate@example.com");
+    ContactDetailsUpdateDto contactDetailsUpdateDto = new ContactDetailsUpdateDto();
+    contactDetailsUpdateDto.setEmail("duplicate@example.com");
 
     String token = TestJwtUtil.generateTokenForTisId("40");
 
@@ -366,43 +366,43 @@ class BasicDetailsResourceTest {
 
     this.mockMvc.perform(put("/api/basic-details/email-address")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(mapper.writeValueAsBytes(emailUpdateDto))
+            .content(mapper.writeValueAsBytes(contactDetailsUpdateDto))
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isBadRequest());
   }
 
   @Test
   void shouldUpdateEmailWhenAuthorizedAndUnique() throws Exception {
-    EmailUpdateDto emailUpdateDto = new EmailUpdateDto();
-    emailUpdateDto.setEmail("unique@example.com");
+    ContactDetailsUpdateDto contactDetailsUpdateDto = new ContactDetailsUpdateDto();
+    contactDetailsUpdateDto.setEmail("unique@example.com");
 
     String token = TestJwtUtil.generateTokenForTisId("40");
 
     when(service.isEmailChangeUnique("40", "unique@example.com")).thenReturn(true);
-    when(service.requestUpdateEmailWithTraineeProvidedDetails(eq("40"), any(EmailUpdateDto.class)))
+    when(service.requestUpdateEmailWithTraineeProvidedDetails(eq("40"), any(ContactDetailsUpdateDto.class)))
         .thenReturn(true);
 
     this.mockMvc.perform(put("/api/basic-details/email-address")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(mapper.writeValueAsBytes(emailUpdateDto))
+            .content(mapper.writeValueAsBytes(contactDetailsUpdateDto))
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isNoContent());
   }
 
   @Test
   void shouldReturnNotFoundWhenTraineeNotFoundForEmailUpdate() throws Exception {
-    EmailUpdateDto emailUpdateDto = new EmailUpdateDto();
-    emailUpdateDto.setEmail("notfound@example.com");
+    ContactDetailsUpdateDto contactDetailsUpdateDto = new ContactDetailsUpdateDto();
+    contactDetailsUpdateDto.setEmail("notfound@example.com");
 
     String token = TestJwtUtil.generateTokenForTisId("40");
 
     when(service.isEmailChangeUnique("40", "notfound@example.com")).thenReturn(true);
-    when(service.requestUpdateEmailWithTraineeProvidedDetails(eq("40"), any(EmailUpdateDto.class)))
+    when(service.requestUpdateEmailWithTraineeProvidedDetails(eq("40"), any(ContactDetailsUpdateDto.class)))
         .thenReturn(false);
 
     this.mockMvc.perform(put("/api/basic-details/email-address")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(mapper.writeValueAsBytes(emailUpdateDto))
+            .content(mapper.writeValueAsBytes(contactDetailsUpdateDto))
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isNotFound());
   }
@@ -410,14 +410,14 @@ class BasicDetailsResourceTest {
   @ParameterizedTest
   @ValueSource(strings = {"invalid-email", "user@@com.com", "user.com", "user@.com"})
   void shouldNotUpdateEmailWhenEmailInvalid(String email) throws Exception {
-    EmailUpdateDto emailUpdateDto = new EmailUpdateDto();
-    emailUpdateDto.setEmail(email);
+    ContactDetailsUpdateDto contactDetailsUpdateDto = new ContactDetailsUpdateDto();
+    contactDetailsUpdateDto.setEmail(email);
 
     String token = TestJwtUtil.generateTokenForTisId("40");
 
     this.mockMvc.perform(put("/api/basic-details/email-address")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(mapper.writeValueAsBytes(emailUpdateDto))
+            .content(mapper.writeValueAsBytes(contactDetailsUpdateDto))
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isBadRequest())
         .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE))
@@ -434,14 +434,14 @@ class BasicDetailsResourceTest {
   @ParameterizedTest
   @NullAndEmptySource
   void shouldNotUpdateEmailWhenEmailBlank(String email) throws Exception {
-    EmailUpdateDto emailUpdateDto = new EmailUpdateDto();
-    emailUpdateDto.setEmail(email);
+    ContactDetailsUpdateDto contactDetailsUpdateDto = new ContactDetailsUpdateDto();
+    contactDetailsUpdateDto.setEmail(email);
 
     String token = TestJwtUtil.generateTokenForTisId("40");
 
     this.mockMvc.perform(put("/api/basic-details/email-address")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(mapper.writeValueAsBytes(emailUpdateDto))
+            .content(mapper.writeValueAsBytes(contactDetailsUpdateDto))
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isBadRequest())
         .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE))
