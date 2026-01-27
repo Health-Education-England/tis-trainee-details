@@ -108,7 +108,8 @@ public class EventPublishService {
    * @param traineeId    The ID of the trainee being updated.
    * @param emailDetails The provided updated email details.
    */
-  public void publishEmailDetailsProvidedEvent(String traineeId, ContactDetailsUpdateDto emailDetails) {
+  public void publishEmailDetailsProvidedEvent(String traineeId,
+      ContactDetailsUpdateDto emailDetails) {
     log.info("Sending email update event for trainee id '{}'", traineeId);
 
     EmailDetailsProvidedEvent event = new EmailDetailsProvidedEvent(traineeId, emailDetails);

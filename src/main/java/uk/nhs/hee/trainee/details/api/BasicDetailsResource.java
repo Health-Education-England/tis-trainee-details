@@ -125,7 +125,8 @@ public class BasicDetailsResource {
     }
     log.info("Submitting email address update request for trainee {} to {}.", tisId,
         contactDetailsUpdateDto.getEmail());
-    boolean requested = service.requestUpdateEmailWithTraineeProvidedDetails(tisId, contactDetailsUpdateDto);
+    boolean requested
+        = service.requestUpdateEmailWithTraineeProvidedDetails(tisId, contactDetailsUpdateDto);
     if (!requested) {
       return ResponseEntity.notFound().build();
     }

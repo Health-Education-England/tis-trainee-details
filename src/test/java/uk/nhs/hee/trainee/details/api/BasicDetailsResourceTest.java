@@ -379,8 +379,8 @@ class BasicDetailsResourceTest {
     String token = TestJwtUtil.generateTokenForTisId("40");
 
     when(service.isEmailChangeUnique("40", "unique@example.com")).thenReturn(true);
-    when(service.requestUpdateEmailWithTraineeProvidedDetails(eq("40"), any(ContactDetailsUpdateDto.class)))
-        .thenReturn(true);
+    when(service.requestUpdateEmailWithTraineeProvidedDetails(eq("40"),
+        any(ContactDetailsUpdateDto.class))).thenReturn(true);
 
     this.mockMvc.perform(put("/api/basic-details/email-address")
             .contentType(MediaType.APPLICATION_JSON)
@@ -397,8 +397,8 @@ class BasicDetailsResourceTest {
     String token = TestJwtUtil.generateTokenForTisId("40");
 
     when(service.isEmailChangeUnique("40", "notfound@example.com")).thenReturn(true);
-    when(service.requestUpdateEmailWithTraineeProvidedDetails(eq("40"), any(ContactDetailsUpdateDto.class)))
-        .thenReturn(false);
+    when(service.requestUpdateEmailWithTraineeProvidedDetails(eq("40"),
+        any(ContactDetailsUpdateDto.class))).thenReturn(false);
 
     this.mockMvc.perform(put("/api/basic-details/email-address")
             .contentType(MediaType.APPLICATION_JSON)

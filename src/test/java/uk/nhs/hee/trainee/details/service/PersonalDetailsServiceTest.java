@@ -796,7 +796,8 @@ class PersonalDetailsServiceTest {
     profile.setTraineeTisId(tisId);
     when(repository.findByTraineeTisId(tisId)).thenReturn(profile);
 
-    boolean result = service.requestUpdateEmailWithTraineeProvidedDetails(tisId, contactDetailsUpdateDto);
+    boolean result
+        = service.requestUpdateEmailWithTraineeProvidedDetails(tisId, contactDetailsUpdateDto);
 
     verify(eventService).publishEmailDetailsProvidedEvent(tisId, contactDetailsUpdateDto);
     assertThat("Expected email update to be requested.", result, is(true));
@@ -813,7 +814,8 @@ class PersonalDetailsServiceTest {
     profile.setTraineeTisId(tisId);
     when(repository.findByTraineeTisId(tisId)).thenReturn(profile);
 
-    boolean result = service.requestUpdateEmailWithTraineeProvidedDetails(tisId, contactDetailsUpdateDto);
+    boolean result
+        = service.requestUpdateEmailWithTraineeProvidedDetails(tisId, contactDetailsUpdateDto);
 
     verifyNoInteractions(eventService);
     assertThat("Expected email update to not be requested.", result, is(false));
@@ -827,7 +829,8 @@ class PersonalDetailsServiceTest {
 
     when(repository.findByTraineeTisId(tisId)).thenReturn(null);
 
-    boolean result = service.requestUpdateEmailWithTraineeProvidedDetails(tisId, contactDetailsUpdateDto);
+    boolean result
+        = service.requestUpdateEmailWithTraineeProvidedDetails(tisId, contactDetailsUpdateDto);
 
     verifyNoInteractions(eventService);
     assertThat("Expected email update to not be requested.", result, is(false));
