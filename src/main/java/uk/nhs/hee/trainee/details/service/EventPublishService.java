@@ -28,7 +28,7 @@ import io.awspring.cloud.sqs.operations.SqsTemplate;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import uk.nhs.hee.trainee.details.dto.EmailUpdateDto;
+import uk.nhs.hee.trainee.details.dto.ContactDetailsUpdateDto;
 import uk.nhs.hee.trainee.details.dto.GmcDetailsDto;
 import uk.nhs.hee.trainee.details.event.CojSignedEvent;
 import uk.nhs.hee.trainee.details.event.EmailDetailsProvidedEvent;
@@ -48,7 +48,7 @@ public class EventPublishService {
 
   private final SnsTemplate snsTemplate;
   private final String cojSignedTopic;
-  private final String emailDetailsProvidedTopic;
+  private final String contactDetailsProvidedTopic;
   private final String gmcDetailsProvidedTopic;
 
   private final SqsTemplate sqsTemplate;
@@ -56,13 +56,13 @@ public class EventPublishService {
 
   EventPublishService(SnsTemplate snsTemplate, SqsTemplate sqsTemplate,
       @Value("${application.aws.sns.coj-signed}") String cojSignedTopic,
-      @Value("${application.aws.sns.email-details-provided}") String emailDetailsProvidedTopic,
+      @Value("${application.aws.sns.contact-details-provided}") String contactDetailsProvidedTopic,
       @Value("${application.aws.sns.gmc-details-provided}") String gmcDetailsProvidedTopic,
       @Value("${application.aws.sqs.event}") String eventQueueUrl) {
     this.snsTemplate = snsTemplate;
     this.sqsTemplate = sqsTemplate;
     this.cojSignedTopic = cojSignedTopic;
-    this.emailDetailsProvidedTopic = emailDetailsProvidedTopic;
+    this.contactDetailsProvidedTopic = contactDetailsProvidedTopic;
     this.gmcDetailsProvidedTopic = gmcDetailsProvidedTopic;
     this.eventQueueUrl = eventQueueUrl;
   }
@@ -108,7 +108,8 @@ public class EventPublishService {
    * @param traineeId    The ID of the trainee being updated.
    * @param emailDetails The provided updated email details.
    */
-  public void publishEmailDetailsProvidedEvent(String traineeId, EmailUpdateDto emailDetails) {
+  public void publishEmailDetailsProvidedEvent(String traineeId,
+      ContactDetailsUpdateDto emailDetails) {
     log.info("Sending email update event for trainee id '{}'", traineeId);
 
     EmailDetailsProvidedEvent event = new EmailDetailsProvidedEvent(traineeId, emailDetails);
@@ -116,7 +117,7 @@ public class EventPublishService {
         .groupId(traineeId)
         .build();
 
-    snsTemplate.sendNotification(emailDetailsProvidedTopic, notification);
+    snsTemplate.sendNotification(contactDetailsProvidedTopic, notification);
   }
 
   /**

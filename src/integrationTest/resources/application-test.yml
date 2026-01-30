@@ -2,7 +2,7 @@ application:
   aws:
     sns:
       coj-signed: dummy
-      email-details-provided: dummy
+      contact-details-provided: dummy
       gmc-details-provided: dummy
     sqs:
       event: dummy

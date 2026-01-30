@@ -199,6 +199,6 @@ class BasicDetailsResourceIntegrationTest {
         .sendNotification(eq("dummy"), notificationCaptor.capture());
     EmailDetailsProvidedEvent event = notificationCaptor.getValue().getPayload();
     assertThat("Unexpected trainee ID in event.", event.traineeId(), is(TRAINEE_ID));
-    assertThat("Unexpected email in event.", event.emailDetails().getEmail(), is("test@test.com"));
+    assertThat("Unexpected email in event.", event.contactDetails().getEmail(), is("test@test.com"));
   }
 }
