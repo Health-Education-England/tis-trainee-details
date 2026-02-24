@@ -38,9 +38,9 @@ import org.springframework.aop.scope.ScopedProxyUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -64,7 +64,7 @@ class TraineeIdentityInterceptorIntegrationTest {
   @Autowired
   private MockMvc mockMvc;
 
-  @SpyBean
+  @MockitoSpyBean
   private TraineeIdentityInterceptor interceptor;
 
   @Test

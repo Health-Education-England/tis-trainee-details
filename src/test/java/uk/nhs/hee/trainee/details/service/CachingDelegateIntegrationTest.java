@@ -31,8 +31,8 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import uk.nhs.hee.trainee.details.config.MongoConfiguration;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
@@ -45,7 +45,7 @@ import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
 @Testcontainers(disabledWithoutDocker = true)
 class CachingDelegateIntegrationTest {
 
-  @MockBean
+  @MockitoBean
   private MongoConfiguration mongoConfiguration;
 
   @Autowired
