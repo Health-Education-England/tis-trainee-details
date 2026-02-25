@@ -845,6 +845,7 @@ class CctResourceIntegrationTest {
 
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
 
+    System.out.println("/api/cct/calculation/" + id);
     mockMvc.perform(put("/api/cct/calculation/" + id)
             .header(HttpHeaders.AUTHORIZATION, token)
             .contentType(MediaType.APPLICATION_JSON)

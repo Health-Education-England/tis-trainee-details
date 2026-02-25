@@ -21,7 +21,6 @@
 
 package uk.nhs.hee.trainee.details.service;
 
-
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -36,6 +35,7 @@ import static org.mockito.Mockito.when;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.LTFT;
 import static uk.nhs.hee.trainee.details.service.CctService.WTE_EPSILON;
 
+import java.lang.reflect.Method;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -46,6 +46,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.core.MethodParameter;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
@@ -481,7 +482,8 @@ class CctServiceTest {
           .build();
     });
 
-    Optional<CctCalculationDetailDto> updatedDtoOptional = service.updateCalculation(id, dto);
+    Optional<CctCalculationDetailDto> updatedDtoOptional
+        = service.updateCalculation(id, dto, null);
     assertThat("Unexpected saved calculation.", updatedDtoOptional.isPresent(), is(true));
 
     CctCalculationDetailDto updatedDto = updatedDtoOptional.get();
@@ -548,7 +550,8 @@ class CctServiceTest {
 
     when(calculationRepository.findById(any())).thenReturn(Optional.empty());
 
-    Optional<CctCalculationDetailDto> updatedDtoOptional = service.updateCalculation(id, dto);
+    Optional<CctCalculationDetailDto> updatedDtoOptional
+        = service.updateCalculation(id, dto, null);
 
     assertThat("Unexpected saved calculation.", updatedDtoOptional.isPresent(), is(false));
     verify(calculationRepository).findById(id);
@@ -607,8 +610,11 @@ class CctServiceTest {
         .build();
     when(calculationRepository.findById(any())).thenReturn(Optional.of(existingCalc));
 
+    MethodParameter methodParameter = new MethodParameter(mock(Method.class), -1);
     MethodArgumentNotValidException exception = assertThrows(MethodArgumentNotValidException.class,
-        () -> service.updateCalculation(id, dto));
+        () -> service.updateCalculation(id, dto, methodParameter));
+
+    assertThat("Unexpected exception parameter.", exception.getParameter(), is(methodParameter));
 
     List<FieldError> fieldErrors = exception.getFieldErrors();
     assertThat("Unexpected error count.", fieldErrors, hasSize(4));

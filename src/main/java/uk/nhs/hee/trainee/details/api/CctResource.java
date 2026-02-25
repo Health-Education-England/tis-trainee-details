@@ -22,11 +22,13 @@
 package uk.nhs.hee.trainee.details.api;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.MethodParameter;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -111,7 +113,15 @@ public class CctResource {
           calculation.id());
       return ResponseEntity.badRequest().build();
     } else {
-      savedCalculation = service.updateCalculation(id, calculation);
+      // Obtain MethodParameter for the calculation argument
+      Method method;
+      try {
+        method = this.getClass().getMethod("updateCalculationDetails", UUID.class, CctCalculationDetailDto.class);
+      } catch (NoSuchMethodException e) {
+        throw new IllegalStateException("Could not find method for updateCalculationDetails", e);
+      }
+      MethodParameter methodParameter = new MethodParameter(method, 1); // 1 = calculation param
+      savedCalculation = service.updateCalculation(id, calculation, methodParameter);
     }
 
     return ResponseEntity.of(savedCalculation);

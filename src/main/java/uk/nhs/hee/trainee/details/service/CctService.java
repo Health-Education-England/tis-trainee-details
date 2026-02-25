@@ -35,6 +35,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.MethodParameter;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
@@ -138,12 +139,14 @@ public class CctService {
   /**
    * Update a CCT calculation.
    *
-   * @param id  The ID of the CCT calculation to update
-   * @param dto The detail of the CCT calculation.
+   * @param id              The ID of the CCT calculation to update
+   * @param dto             The detail of the CCT calculation.
+   * @param methodParameter The method parameter for the DTO, used for validation error reporting.
+   *
    * @return The updated CCT calculation, or optional empty if error.
    */
   public Optional<CctCalculationDetailDto> updateCalculation(UUID id,
-      CctCalculationDetailDto dto) throws MethodArgumentNotValidException {
+      CctCalculationDetailDto dto, MethodParameter methodParameter) throws MethodArgumentNotValidException {
     log.info("Updating CCT calculation [{}] with id [{}]", dto.name(), id);
 
     Optional<CctCalculationDetailDto> existingCalc = getCalculation(id);
@@ -153,7 +156,7 @@ public class CctService {
           existingCalc.get().changes());
       if (validationResult.hasErrors()) {
         log.warn("CCT calculation [{}] cannot be updated: invalid changes.", id);
-        throw new MethodArgumentNotValidException(null, validationResult);
+        throw new MethodArgumentNotValidException(methodParameter, validationResult);
       }
 
       CctCalculation entity = mapper.toEntity(dto, traineeIdentity.getTraineeId());

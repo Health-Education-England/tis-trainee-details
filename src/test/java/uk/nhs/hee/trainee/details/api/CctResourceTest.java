@@ -190,7 +190,7 @@ class CctResourceTest {
         .build();
 
     Instant modified = created.plusSeconds(1);
-    when(service.updateCalculation(any(), any())).thenAnswer(inv -> {
+    when(service.updateCalculation(any(), any(), any())).thenAnswer(inv -> {
       CctCalculationDetailDto arg = inv.getArgument(1);
       return Optional.of(CctCalculationDetailDto.builder()
           .id(arg.id())
@@ -257,7 +257,7 @@ class CctResourceTest {
         .build();
 
     //e.g. because not owned by the user, or non-existent
-    when(service.updateCalculation(any(), any())).thenReturn(Optional.empty());
+    when(service.updateCalculation(any(), any(), any())).thenReturn(Optional.empty());
 
     ResponseEntity<CctCalculationDetailDto> response = controller.updateCalculationDetails(id, dto);
 
@@ -279,7 +279,8 @@ class CctResourceTest {
         .lastModified(created)
         .build();
 
-    when(service.updateCalculation(any(), any())).thenThrow(MethodArgumentNotValidException.class);
+    when(service.updateCalculation(any(), any(), any()))
+        .thenThrow(MethodArgumentNotValidException.class);
 
     assertThrows(MethodArgumentNotValidException.class,
         () -> controller.updateCalculationDetails(id, dto));

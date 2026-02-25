@@ -22,8 +22,11 @@
 package uk.nhs.hee.trainee.details.api;
 
 import com.fasterxml.jackson.core.JsonPointer;
+import java.lang.reflect.Method;
 import java.util.Comparator;
 import java.util.List;
+import org.jsoup.Connection;
+import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
