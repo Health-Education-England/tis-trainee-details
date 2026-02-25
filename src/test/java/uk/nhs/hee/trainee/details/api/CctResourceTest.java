@@ -194,14 +194,14 @@ class CctResourceTest {
     Instant modified = created.plusSeconds(1);
     when(service.updateCalculation(any(), any(), any(BeanPropertyBindingResult[].class)))
         .thenAnswer(inv -> {
-      CctCalculationDetailDto arg = inv.getArgument(1);
-      return Optional.of(CctCalculationDetailDto.builder()
-          .id(arg.id())
-          .name(arg.name())
-          .created(arg.created())
-          .lastModified(modified)
-          .build());
-    });
+          CctCalculationDetailDto arg = inv.getArgument(1);
+          return Optional.of(CctCalculationDetailDto.builder()
+              .id(arg.id())
+              .name(arg.name())
+              .created(arg.created())
+              .lastModified(modified)
+              .build());
+        });
 
     ResponseEntity<CctCalculationDetailDto> response = controller.updateCalculationDetails(id, dto);
 
@@ -283,7 +283,8 @@ class CctResourceTest {
         .build();
 
     // Create a BeanPropertyBindingResult with an error
-    BeanPropertyBindingResult bindingResult = new BeanPropertyBindingResult(dto, "cctCalculationDetailDto");
+    BeanPropertyBindingResult bindingResult
+        = new BeanPropertyBindingResult(dto, "cctCalculationDetailDto");
     bindingResult.addError(new FieldError("cctCalculationDetailDto", "id", "must not be null"));
 
     when(service.updateCalculation(any(), any(), any(BeanPropertyBindingResult[].class)))

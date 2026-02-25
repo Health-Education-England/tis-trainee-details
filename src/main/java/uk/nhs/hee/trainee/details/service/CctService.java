@@ -150,8 +150,8 @@ public class CctService {
   public Optional<CctCalculationDetailDto> updateCalculation(UUID id,
       CctCalculationDetailDto dto, @NotNull BeanPropertyBindingResult[] validationResultOut) {
     if (validationResultOut == null || validationResultOut.length < 1) {
-      throw new IllegalArgumentException("validationResultOut must be a non-null array with at " +
-          "least one element");
+      throw new IllegalArgumentException("validationResultOut must be a non-null array with at "
+          + "least one element");
     }
     log.info("Updating CCT calculation [{}] with id [{}]", dto.name(), id);
 
