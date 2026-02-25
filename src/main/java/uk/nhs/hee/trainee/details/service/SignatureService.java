@@ -24,6 +24,8 @@ package uk.nhs.hee.trainee.details.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -68,13 +70,14 @@ public class SignatureService {
     byte[] dtoBytes = mapper.writeValueAsBytes(dto);
     try {
       Mac mac = Mac.getInstance("HmacSHA256");
-      SecretKeySpec keySpec = new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+      SecretKeySpec keySpec =
+          new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
       mac.init(keySpec);
       byte[] hmacBytes = mac.doFinal(dtoBytes);
       String hmac = java.util.HexFormat.of().formatHex(hmacBytes);
       signature.setHmac(hmac);
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to compute HMAC", e);
+    } catch (InvalidKeyException | NoSuchAlgorithmException e) {
+      throw new IllegalStateException("Failed to compute HMAC", e);
     }
   }
 }

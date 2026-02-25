@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.function.BiFunction;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.MessageSourceResolvable;
@@ -237,7 +236,7 @@ class RestResponseEntityExceptionHandlerTest {
     }
 
     @Override
-    public @NotNull List<ParameterValidationResult> getParameterValidationResults() {
+    public List<ParameterValidationResult> getParameterValidationResults() {
       return parametersToMessages.entrySet().stream()
           .map(entry -> {
             String parameterName = entry.getKey();
@@ -250,8 +249,8 @@ class RestResponseEntityExceptionHandlerTest {
 
             BiFunction<MessageSourceResolvable, Class<?>, Object> sourceLookup =
                 (error, sourceType) -> {
-              throw new IllegalArgumentException("No source object of the given type");
-            };
+                  throw new IllegalArgumentException("No source object of the given type");
+                };
             return new ParameterValidationResult(parameter, null, messages, null, null, null,
                 sourceLookup);
           })
@@ -259,7 +258,7 @@ class RestResponseEntityExceptionHandlerTest {
     }
 
     @Override
-    public @NotNull List<MessageSourceResolvable> getCrossParameterValidationResults() {
+    public List<MessageSourceResolvable> getCrossParameterValidationResults() {
       return List.of();
     }
   }
