@@ -23,12 +23,15 @@ package uk.nhs.hee.trainee.details.api;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
@@ -43,6 +46,8 @@ import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.core.MethodParameter;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -332,5 +337,53 @@ class CctResourceTest {
     ResponseStatusException exception = assertThrows(ResponseStatusException.class,
         () -> controller.deleteCalculation(id));
     assertThat("Unexpected status code.", exception.getStatusCode(), is(NOT_FOUND));
+  }
+
+  // Static class used to simulate a failure in the updateCalculationDetails method for testing
+  // exception handling.
+  static class CctResourceMethodException extends CctResource {
+    public CctResourceMethodException(CctService service) {
+      super(service);
+    }
+    @Override
+    public ResponseEntity<CctCalculationDetailDto> updateCalculationDetails(UUID id,
+        CctCalculationDetailDto calculation) {
+      throw new IllegalStateException("Could not find method for updateCalculationDetails",
+          new NoSuchMethodException("test"));
+    }
+  }
+
+  @Test
+  void updateCalculationDetailsShouldThrowIllegalStateExceptionIfGetMethodFails() {
+    UUID id = UUID.randomUUID();
+    CctCalculationDetailDto dto = CctCalculationDetailDto.builder().id(id).name("Test").build();
+    CctResource controller = new CctResourceMethodException(service);
+    try {
+      controller.updateCalculationDetails(id, dto);
+    } catch (IllegalStateException e) {
+      assertThat(e.getMessage(), is("Could not find method for updateCalculationDetails"));
+      assertThat(e.getCause(), instanceOf(NoSuchMethodException.class));
+    } catch (Exception e) {
+      fail("Expected IllegalStateException, got: " + e);
+    }
+  }
+
+  @Test
+  void updateCalculationDetailsShouldPassCorrectMethodParameterToService() throws Exception {
+    UUID id = UUID.randomUUID();
+    CctCalculationDetailDto dto = CctCalculationDetailDto.builder().id(id).name("Test").build();
+
+    ArgumentCaptor<MethodParameter> captor = ArgumentCaptor.forClass(MethodParameter.class);
+    when(service.updateCalculation(eq(id), eq(dto), captor.capture())).thenReturn(Optional.of(dto));
+
+    controller.updateCalculationDetails(id, dto);
+
+    MethodParameter param = captor.getValue();
+    assertThat("Unexpected null methodParameter.", param, is(notNullValue()));
+    assertThat("Unexpected methodParameter name.", param.getMethod().getName(),
+        is("updateCalculationDetails"));
+    assertThat("Unexpected methodParameter index.", param.getParameterIndex(), is(1));
+    assertThat("Unexpected methodParameter type.", param.getParameterType(),
+        is(CctCalculationDetailDto.class));
   }
 }
