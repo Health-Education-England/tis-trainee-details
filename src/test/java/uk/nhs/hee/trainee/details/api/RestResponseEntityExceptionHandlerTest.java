@@ -35,8 +35,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.function.BiFunction;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.MessageSourceResolvable;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpHeaders;
@@ -234,7 +237,7 @@ class RestResponseEntityExceptionHandlerTest {
     }
 
     @Override
-    public List<ParameterValidationResult> getAllValidationResults() {
+    public @NotNull List<ParameterValidationResult> getParameterValidationResults() {
       return parametersToMessages.entrySet().stream()
           .map(entry -> {
             String parameterName = entry.getKey();
@@ -245,9 +248,19 @@ class RestResponseEntityExceptionHandlerTest {
                 .map(msg -> new DefaultMessageSourceResolvable(null, null, msg))
                 .toList();
 
-            return new ParameterValidationResult(parameter, null, messages, null, null, null);
+            BiFunction<MessageSourceResolvable, Class<?>, Object> sourceLookup =
+                (error, sourceType) -> {
+              throw new IllegalArgumentException("No source object of the given type");
+            };
+            return new ParameterValidationResult(parameter, null, messages, null, null, null,
+                sourceLookup);
           })
           .toList();
+    }
+
+    @Override
+    public @NotNull List<MessageSourceResolvable> getCrossParameterValidationResults() {
+      return List.of();
     }
   }
 }

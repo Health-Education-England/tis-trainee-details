@@ -37,8 +37,10 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
-import org.apache.commons.codec.digest.HmacAlgorithms;
-import org.apache.commons.codec.digest.HmacUtils;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.util.HexFormat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import uk.nhs.hee.trainee.details.config.SignatureConfigurationProperties;
@@ -71,7 +73,7 @@ class SignatureServiceTest {
   }
 
   @Test
-  void shouldSignDto() throws JsonProcessingException, InterruptedException {
+  void shouldSignDto() throws JsonProcessingException {
     PlacementDto dto = new PlacementDto();
 
     final Instant start = Instant.now().minus(Duration.ofNanos(1));
@@ -103,7 +105,7 @@ class SignatureServiceTest {
     String serviceHmac = dto.getSignature().getHmac();
 
     byte[] dtoBytes = objectMapper.writeValueAsBytes(dto);
-    String testHmac = new HmacUtils(HmacAlgorithms.HMAC_SHA_256, SECRET_KEY).hmacHex(dtoBytes);
+    String testHmac = computeHmacSha256Hex(SECRET_KEY, dtoBytes);
 
     assertThat("Unexpected hmac.", serviceHmac, not(is(testHmac)));
   }
@@ -120,8 +122,20 @@ class SignatureServiceTest {
 
     signature.setHmac(null);
     byte[] dtoBytes = objectMapper.writeValueAsBytes(dto);
-    String testHmac = new HmacUtils(HmacAlgorithms.HMAC_SHA_256, SECRET_KEY).hmacHex(dtoBytes);
+    String testHmac = computeHmacSha256Hex(SECRET_KEY, dtoBytes);
 
     assertThat("Unexpected hmac.", serviceHmac, is(testHmac));
+  }
+
+  private static String computeHmacSha256Hex(String key, byte[] data) {
+    try {
+      Mac mac = Mac.getInstance("HmacSHA256");
+      SecretKeySpec keySpec = new SecretKeySpec(key.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+      mac.init(keySpec);
+      byte[] hmacBytes = mac.doFinal(data);
+      return HexFormat.of().formatHex(hmacBytes);
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to compute HMAC", e);
+    }
   }
 }

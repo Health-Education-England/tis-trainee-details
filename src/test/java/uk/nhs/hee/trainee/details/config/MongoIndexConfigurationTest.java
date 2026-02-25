@@ -70,7 +70,7 @@ class MongoIndexConfigurationTest {
     configuration.initIndexes();
 
     ArgumentCaptor<IndexDefinition> indexCaptor = ArgumentCaptor.forClass(IndexDefinition.class);
-    verify(indexOperations, atLeastOnce()).ensureIndex(indexCaptor.capture());
+    verify(indexOperations, atLeastOnce()).createIndex(indexCaptor.capture());
 
     List<IndexDefinition> indexes = indexCaptor.getAllValues();
     assertThat("Unexpected number of indexes.", indexes.size(), is(2));
@@ -94,7 +94,7 @@ class MongoIndexConfigurationTest {
     configuration.initIndexes();
 
     ArgumentCaptor<IndexDefinition> indexCaptor = ArgumentCaptor.forClass(IndexDefinition.class);
-    verify(indexOperations, atLeastOnce()).ensureIndex(indexCaptor.capture());
+    verify(indexOperations, atLeastOnce()).createIndex(indexCaptor.capture());
     ArgumentCaptor<String> indexCaptorDel = ArgumentCaptor.forClass(String.class);
     verify(indexOperations, atLeastOnce()).dropIndex(indexCaptorDel.capture());
 
