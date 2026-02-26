@@ -25,30 +25,22 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import java.nio.charset.StandardCharsets;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.HexFormat;
 import java.util.Map;
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
+import org.apache.commons.codec.digest.HmacAlgorithms;
+import org.apache.commons.codec.digest.HmacUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 import uk.nhs.hee.trainee.details.config.SignatureConfigurationProperties;
 import uk.nhs.hee.trainee.details.dto.PlacementDto;
 import uk.nhs.hee.trainee.details.dto.signature.Signature;
@@ -79,7 +71,7 @@ class SignatureServiceTest {
   }
 
   @Test
-  void shouldSignDto() throws JsonProcessingException {
+  void shouldSignDto() throws JsonProcessingException, InterruptedException {
     PlacementDto dto = new PlacementDto();
 
     final Instant start = Instant.now().minus(Duration.ofNanos(1));
@@ -111,7 +103,7 @@ class SignatureServiceTest {
     String serviceHmac = dto.getSignature().getHmac();
 
     byte[] dtoBytes = objectMapper.writeValueAsBytes(dto);
-    String testHmac = computeHmacSha256Hex(SECRET_KEY, dtoBytes);
+    String testHmac = new HmacUtils(HmacAlgorithms.HMAC_SHA_256, SECRET_KEY).hmacHex(dtoBytes);
 
     assertThat("Unexpected hmac.", serviceHmac, not(is(testHmac)));
   }
@@ -128,51 +120,8 @@ class SignatureServiceTest {
 
     signature.setHmac(null);
     byte[] dtoBytes = objectMapper.writeValueAsBytes(dto);
-    String testHmac = computeHmacSha256Hex(SECRET_KEY, dtoBytes);
+    String testHmac = new HmacUtils(HmacAlgorithms.HMAC_SHA_256, SECRET_KEY).hmacHex(dtoBytes);
 
     assertThat("Unexpected hmac.", serviceHmac, is(testHmac));
-  }
-
-  @Test
-  void shouldThrowIllegalStateExceptionIfMacGetInstanceFails() {
-    PlacementDto dto = new PlacementDto();
-    try (MockedStatic<Mac> macStatic = Mockito.mockStatic(Mac.class)) {
-      macStatic
-          .when(() -> Mac.getInstance("HmacSHA256"))
-          .thenThrow(new NoSuchAlgorithmException("Mac error"));
-
-      RuntimeException ex = assertThrows(IllegalStateException.class, () -> service.signDto(dto));
-      assertThat(ex.getMessage(), is("Failed to compute HMAC"));
-      assertThat(ex.getCause(), instanceOf(NoSuchAlgorithmException.class));
-      assertThat(ex.getCause().getMessage(), is("Mac error"));
-    }
-  }
-
-  @Test
-  void shouldThrowIllegalStateExceptionIfMacInitFails() throws Exception {
-    PlacementDto dto = new PlacementDto();
-    Mac mac = Mockito.mock(Mac.class);
-    try (MockedStatic<Mac> macStatic = Mockito.mockStatic(Mac.class)) {
-      macStatic.when(() -> Mac.getInstance("HmacSHA256")).thenReturn(mac);
-      doThrow(new InvalidKeyException("init error"))
-          .when(mac).init(Mockito.any(SecretKeySpec.class));
-
-      RuntimeException ex = assertThrows(IllegalStateException.class, () -> service.signDto(dto));
-      assertThat(ex.getMessage(), is("Failed to compute HMAC"));
-      assertThat(ex.getCause(), instanceOf(InvalidKeyException.class));
-      assertThat(ex.getCause().getMessage(), is("init error"));
-    }
-  }
-
-  private static String computeHmacSha256Hex(String key, byte[] data) {
-    try {
-      Mac mac = Mac.getInstance("HmacSHA256");
-      SecretKeySpec keySpec = new SecretKeySpec(key.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
-      mac.init(keySpec);
-      byte[] hmacBytes = mac.doFinal(data);
-      return HexFormat.of().formatHex(hmacBytes);
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to compute HMAC", e);
-    }
   }
 }

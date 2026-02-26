@@ -57,6 +57,9 @@ dependencies {
   implementation("io.awspring.cloud:spring-cloud-aws-starter-sns")
   implementation(libs.aws.xray.spring)
 
+  // TODO: added to avoid refactoring after transitive dependency removed.
+  implementation("commons-codec:commons-codec:1.21.0")
+
   // PDF
   implementation(libs.bundles.pdf.publishing)
   // TODO: add to lib bundle
