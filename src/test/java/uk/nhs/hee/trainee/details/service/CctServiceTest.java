@@ -21,10 +21,10 @@
 
 package uk.nhs.hee.trainee.details.service;
 
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -45,10 +45,9 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto.CctChangeDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto.CctProgrammeMembershipDto;
@@ -402,7 +401,8 @@ class CctServiceTest {
   }
 
   @Test
-  void shouldUpdateExistingCalculationIfExistsAndOwnedByUser() {
+  void shouldUpdateExistingCalculationIfExistsAndOwnedByUser()
+      throws MethodArgumentNotValidException {
     UUID pmId = UUID.randomUUID();
     UUID id = UUID.randomUUID();
     UUID changeId1 = UUID.randomUUID();
@@ -481,9 +481,7 @@ class CctServiceTest {
           .build();
     });
 
-    BeanPropertyBindingResult[] validationResultOut = new BeanPropertyBindingResult[1];
-    Optional<CctCalculationDetailDto> updatedDtoOptional
-        = service.updateCalculation(id, dto, validationResultOut);
+    Optional<CctCalculationDetailDto> updatedDtoOptional = service.updateCalculation(id, dto);
     assertThat("Unexpected saved calculation.", updatedDtoOptional.isPresent(), is(true));
 
     CctCalculationDetailDto updatedDto = updatedDtoOptional.get();
@@ -523,7 +521,7 @@ class CctServiceTest {
   }
 
   @Test
-  void shouldNotUpdateExistingCalculationIfNotExists() {
+  void shouldNotUpdateExistingCalculationIfNotExists() throws MethodArgumentNotValidException {
     UUID pmId = UUID.randomUUID();
     UUID id = UUID.randomUUID();
     Instant created = Instant.now();
@@ -550,9 +548,7 @@ class CctServiceTest {
 
     when(calculationRepository.findById(any())).thenReturn(Optional.empty());
 
-    BeanPropertyBindingResult[] validationResultOut = new BeanPropertyBindingResult[1];
-    Optional<CctCalculationDetailDto> updatedDtoOptional
-        = service.updateCalculation(id, dto, validationResultOut);
+    Optional<CctCalculationDetailDto> updatedDtoOptional = service.updateCalculation(id, dto);
 
     assertThat("Unexpected saved calculation.", updatedDtoOptional.isPresent(), is(false));
     verify(calculationRepository).findById(id);
@@ -611,29 +607,28 @@ class CctServiceTest {
         .build();
     when(calculationRepository.findById(any())).thenReturn(Optional.of(existingCalc));
 
-    BeanPropertyBindingResult[] validationResultOut = new BeanPropertyBindingResult[1];
-    Optional<CctCalculationDetailDto> result
-        = service.updateCalculation(id, dto, validationResultOut);
-    assertThat("Expected update to fail due to validation errors.", result.isEmpty(), is(true));
-    assertThat("Expected validation errors.", validationResultOut[0], is(notNullValue()));
-    assertThat("Unexpected error count.", validationResultOut[0].getFieldErrors(), hasSize(4));
+    MethodArgumentNotValidException exception = assertThrows(MethodArgumentNotValidException.class,
+        () -> service.updateCalculation(id, dto));
 
-    FieldError fieldError = validationResultOut[0].getFieldErrors().get(0);
+    List<FieldError> fieldErrors = exception.getFieldErrors();
+    assertThat("Unexpected error count.", fieldErrors, hasSize(4));
+
+    FieldError fieldError = fieldErrors.get(0);
     assertThat("Unexpected error field.", fieldError.getField(), is("changes[1].id"));
     assertThat("Unexpected error message.", fieldError.getDefaultMessage(),
         is("must be null or match existing value"));
 
-    fieldError = validationResultOut[0].getFieldErrors().get(1);
+    fieldError = fieldErrors.get(1);
     assertThat("Unexpected error field.", fieldError.getField(), is("changes[2].id"));
     assertThat("Unexpected error message.", fieldError.getDefaultMessage(),
         is("must be null or match existing value"));
 
-    fieldError = validationResultOut[0].getFieldErrors().get(2);
+    fieldError = fieldErrors.get(2);
     assertThat("Unexpected error field.", fieldError.getField(), is("changes[3].id"));
     assertThat("Unexpected error message.", fieldError.getDefaultMessage(),
         is("must be null or match existing value"));
 
-    fieldError = validationResultOut[0].getFieldErrors().get(3);
+    fieldError = fieldErrors.get(3);
     assertThat("Unexpected error field.", fieldError.getField(), is("changes[3].id"));
     assertThat("Unexpected error message.", fieldError.getDefaultMessage(), is("must be unique"));
 
@@ -889,19 +884,5 @@ class CctServiceTest {
     service.moveCalculations(fromTraineeId, toTraineeId);
 
     verify(calculationRepository, never()).save(any());
-  }
-
-  @ParameterizedTest
-  @NullAndEmptySource
-  void updateCalculationShouldThrowIllegalArgumentIfValidationResultOutIsNull(
-      BeanPropertyBindingResult[] validationResultOut) {
-    UUID id = UUID.randomUUID();
-    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
-        .id(id)
-        .name("Test Calculation")
-        .changes(List.of())
-        .build();
-    assertThrows(IllegalArgumentException.class,
-        () -> service.updateCalculation(id, dto, validationResultOut));
   }
 }

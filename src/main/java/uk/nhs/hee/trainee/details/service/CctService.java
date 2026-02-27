@@ -22,7 +22,7 @@
 package uk.nhs.hee.trainee.details.service;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
-import jakarta.validation.constraints.NotNull;
+import java.lang.reflect.Method;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -36,9 +36,11 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.MethodParameter;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto.CctChangeDto;
 import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
@@ -61,6 +63,20 @@ public class CctService {
 
   private final CctCalculationRepository calculationRepository;
   private final CctMapper mapper;
+
+  private static final Method UPDATE_CALCULATION_METHOD;
+  private static final MethodParameter UPDATE_CALCULATION_METHOD_PARAMETER;
+
+  static {
+    try {
+      UPDATE_CALCULATION_METHOD = CctService.class.getDeclaredMethod(
+          "updateCalculation", UUID.class, CctCalculationDetailDto.class);
+      UPDATE_CALCULATION_METHOD_PARAMETER = new MethodParameter(
+          UPDATE_CALCULATION_METHOD, 1); // 1 = calculation parameter
+    } catch (NoSuchMethodException e) {
+      throw new IllegalStateException("Unabled to reflect updateCalculation method.", e);
+    }
+  }
 
   /**
    * Create a service for CCT functionality.
@@ -140,29 +156,21 @@ public class CctService {
    *
    * @param id                  The ID of the CCT calculation to update
    * @param dto                 The detail of the CCT calculation.
-   * @param validationResultOut The output parameter for validation results: must be a non-null
-   *                            array with at least one element; if validation fails it allows the
-   *                            caller to handle them as needed.
    *
    * @return The updated CCT calculation, or optional empty if error.
-   * @throws IllegalArgumentException if validationResultOut is null or has length < 1
    */
-  public Optional<CctCalculationDetailDto> updateCalculation(UUID id,
-      CctCalculationDetailDto dto, @NotNull BeanPropertyBindingResult[] validationResultOut) {
-    if (validationResultOut == null || validationResultOut.length < 1) {
-      throw new IllegalArgumentException("validationResultOut must be a non-null array with at "
-          + "least one element");
-    }
+  public Optional<CctCalculationDetailDto> updateCalculation(UUID id, CctCalculationDetailDto dto)
+      throws MethodArgumentNotValidException {
     log.info("Updating CCT calculation [{}] with id [{}]", dto.name(), id);
 
     Optional<CctCalculationDetailDto> existingCalc = getCalculation(id);
     if (existingCalc.isPresent()) {
-      BeanPropertyBindingResult validationResult = validateChangeIds(dto.changes(),
-          existingCalc.get().changes());
+      BeanPropertyBindingResult validationResult =
+          validateChangeIds(dto.changes(), existingCalc.get().changes());
       if (validationResult.hasErrors()) {
         log.warn("CCT calculation [{}] cannot be updated: invalid changes.", id);
-        validationResultOut[0] = validationResult;
-        return Optional.empty();
+        throw new MethodArgumentNotValidException(UPDATE_CALCULATION_METHOD_PARAMETER,
+            validationResult);
       }
 
       CctCalculation entity = mapper.toEntity(dto, traineeIdentity.getTraineeId());

@@ -22,17 +22,14 @@
 package uk.nhs.hee.trainee.details.api;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
-import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.MethodParameter;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -56,20 +53,6 @@ import uk.nhs.hee.trainee.details.service.CctService;
 @RequestMapping("/api/cct")
 @XRayEnabled
 public class CctResource {
-
-  private static final Method UPDATE_CALCULATION_DETAILS_METHOD;
-  private static final MethodParameter UPDATE_CALCULATION_DETAILS_METHOD_PARAMETER;
-
-  static {
-    try {
-      UPDATE_CALCULATION_DETAILS_METHOD = CctResource.class.getMethod(
-        "updateCalculationDetails", UUID.class, CctCalculationDetailDto.class);
-      UPDATE_CALCULATION_DETAILS_METHOD_PARAMETER = new MethodParameter(
-              UPDATE_CALCULATION_DETAILS_METHOD, 1); // 1 = calculation parameter
-    } catch (NoSuchMethodException e) {
-      throw new ExceptionInInitializerError("Could not find method for updateCalculationDetails");
-    }
-  }
 
   private final CctService service;
 
@@ -128,13 +111,7 @@ public class CctResource {
           calculation.id());
       return ResponseEntity.badRequest().build();
     } else {
-      BeanPropertyBindingResult[] validationResultOut = new BeanPropertyBindingResult[1];
-      savedCalculation = service.updateCalculation(id, calculation, validationResultOut);
-      if (savedCalculation.isEmpty() && validationResultOut[0] != null
-          && validationResultOut[0].hasErrors()) {
-        throw new MethodArgumentNotValidException(UPDATE_CALCULATION_DETAILS_METHOD_PARAMETER,
-            validationResultOut[0]);
-      }
+      savedCalculation = service.updateCalculation(id, calculation);
     }
 
     return ResponseEntity.of(savedCalculation);

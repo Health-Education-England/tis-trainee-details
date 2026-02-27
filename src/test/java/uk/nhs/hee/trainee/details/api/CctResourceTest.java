@@ -46,8 +46,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BeanPropertyBindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.server.ResponseStatusException;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
@@ -192,16 +190,15 @@ class CctResourceTest {
         .build();
 
     Instant modified = created.plusSeconds(1);
-    when(service.updateCalculation(any(), any(), any(BeanPropertyBindingResult[].class)))
-        .thenAnswer(inv -> {
-          CctCalculationDetailDto arg = inv.getArgument(1);
-          return Optional.of(CctCalculationDetailDto.builder()
-              .id(arg.id())
-              .name(arg.name())
-              .created(arg.created())
-              .lastModified(modified)
-              .build());
-        });
+    when(service.updateCalculation(any(), any())).thenAnswer(inv -> {
+      CctCalculationDetailDto arg = inv.getArgument(1);
+      return Optional.of(CctCalculationDetailDto.builder()
+          .id(arg.id())
+          .name(arg.name())
+          .created(arg.created())
+          .lastModified(modified)
+          .build());
+    });
 
     ResponseEntity<CctCalculationDetailDto> response = controller.updateCalculationDetails(id, dto);
 
@@ -260,8 +257,7 @@ class CctResourceTest {
         .build();
 
     //e.g. because not owned by the user, or non-existent
-    when(service.updateCalculation(any(), any(), any(BeanPropertyBindingResult[].class)))
-        .thenReturn(Optional.empty());
+    when(service.updateCalculation(any(), any())).thenReturn(Optional.empty());
 
     ResponseEntity<CctCalculationDetailDto> response = controller.updateCalculationDetails(id, dto);
 
@@ -272,7 +268,8 @@ class CctResourceTest {
   }
 
   @Test
-  void shouldThrowExceptionWhenUpdateCalculationValidationFails() {
+  void shouldNotCatchValidationErrorWhenUpdateCalculationValidationFails()
+      throws MethodArgumentNotValidException {
     UUID id = UUID.randomUUID();
     Instant created = Instant.now();
     CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
@@ -282,62 +279,10 @@ class CctResourceTest {
         .lastModified(created)
         .build();
 
-    // Create a BeanPropertyBindingResult with an error
-    BeanPropertyBindingResult bindingResult
-        = new BeanPropertyBindingResult(dto, "cctCalculationDetailDto");
-    bindingResult.addError(new FieldError("cctCalculationDetailDto", "id", "must not be null"));
-
-    when(service.updateCalculation(any(), any(), any(BeanPropertyBindingResult[].class)))
-        .thenAnswer(invocation -> {
-          BeanPropertyBindingResult[] validationResultOut = invocation.getArgument(2);
-          validationResultOut[0] = bindingResult;
-          return Optional.empty();
-        });
+    when(service.updateCalculation(any(), any())).thenThrow(MethodArgumentNotValidException.class);
 
     assertThrows(MethodArgumentNotValidException.class,
         () -> controller.updateCalculationDetails(id, dto));
-  }
-
-  @Test
-  void shouldReturnNotFoundWhenNoCalculationUpdatedAndValidationResultIsNull()
-      throws MethodArgumentNotValidException {
-    UUID id = UUID.randomUUID();
-    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
-        .id(id)
-        .name("Test Calculation")
-        .build();
-
-    when(service.updateCalculation(any(), any(), any(BeanPropertyBindingResult[].class)))
-        .thenAnswer(invocation -> Optional.empty());
-
-    ResponseEntity<CctCalculationDetailDto> response = controller.updateCalculationDetails(id, dto);
-    assertThat("Unexpected response code.", response.getStatusCode(), is(NOT_FOUND));
-    assertThat("Unexpected response body.", response.getBody(), nullValue());
-  }
-
-  @Test
-  void shouldReturnNotFoundWhenNoCalculationUpdatedButValidationResultHasNoErrors()
-      throws MethodArgumentNotValidException {
-    UUID id = UUID.randomUUID();
-    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
-        .id(id)
-        .name("Test Calculation")
-        .build();
-
-    // Prepare a BeanPropertyBindingResult with no errors
-    BeanPropertyBindingResult bindingResult
-        = new BeanPropertyBindingResult(dto, "cctCalculationDetailDto");
-
-    when(service.updateCalculation(any(), any(), any(BeanPropertyBindingResult[].class)))
-        .thenAnswer(invocation -> {
-          BeanPropertyBindingResult[] validationResultOut = invocation.getArgument(2);
-          validationResultOut[0] = bindingResult;
-          return Optional.empty();
-        });
-
-    ResponseEntity<CctCalculationDetailDto> response = controller.updateCalculationDetails(id, dto);
-    assertThat("Unexpected response code.", response.getStatusCode(), is(NOT_FOUND));
-    assertThat("Unexpected response body.", response.getBody(), nullValue());
   }
 
   @Test
