@@ -74,10 +74,9 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
       HandlerMethodValidationException ex, HttpHeaders headers, HttpStatusCode status,
       WebRequest request) {
 
-    List<ParameterValidationError> errors = ex.getAllValidationResults().stream()
+    List<ParameterValidationError> errors = ex.getParameterValidationResults().stream()
         .flatMap(result -> {
           String parameterName = result.getMethodParameter().getParameterName();
-
           return result.getResolvableErrors().stream()
               .map(err -> new ParameterValidationError(parameterName, err.getDefaultMessage()));
         })

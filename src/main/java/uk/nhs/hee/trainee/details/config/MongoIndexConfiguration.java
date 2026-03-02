@@ -48,7 +48,7 @@ public class MongoIndexConfiguration {
   @PostConstruct
   public void initIndexes() {
     IndexOperations traineeProfileIndexOps = template.indexOps(TraineeProfile.class);
-    traineeProfileIndexOps.ensureIndex(new Index().on("personalDetails.email", Direction.ASC));
+    traineeProfileIndexOps.createIndex(new Index().on("personalDetails.email", Direction.ASC));
 
     //ensure unique index on traineeTisId
     for (IndexInfo idx : traineeProfileIndexOps.getIndexInfo()) {
@@ -57,6 +57,6 @@ public class MongoIndexConfiguration {
         traineeProfileIndexOps.dropIndex(idx.getName());
       }
     }
-    traineeProfileIndexOps.ensureIndex(new Index().on("traineeTisId", Direction.ASC).unique());
+    traineeProfileIndexOps.createIndex(new Index().on("traineeTisId", Direction.ASC).unique());
   }
 }
