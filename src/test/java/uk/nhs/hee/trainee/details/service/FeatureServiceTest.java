@@ -313,7 +313,8 @@ class FeatureServiceTest {
       MEDICAL_SPR        | PUBLIC HEALTH MEDICINE
       medical_spr        | public health medicine
       """)
-  void shouldEnableDetailsWhenPublicHealthOrSpecialtyProgrammeFound(String subType, String specialty) {
+  void shouldEnableDetailsWhenPublicHealthOrSpecialtyProgrammeFound(String subType,
+      String specialty) {
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSubType(subType);
     curriculum.setCurriculumSpecialty(specialty);
