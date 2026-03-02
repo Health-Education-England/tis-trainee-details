@@ -92,9 +92,7 @@ class FeatureServiceTest {
   @ParameterizedTest
   @CsvSource(delimiter = '|', textBlock = """
       MEDICAL_CURRICULUM | FOUNDATION
-      MEDICAL_CURRICULUM | PUBLIC HEALTH MEDICINE
       MEDICAL_SPR        | FOUNDATION
-      MEDICAL_SPR        | PUBLIC HEALTH MEDICINE
       UNKNOWN            | General Practice
       medical_curriculum | foundation
       ""                 | ""
@@ -121,11 +119,21 @@ class FeatureServiceTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"MEDICAL_CURRICULUM", "medical_curriculum", "MEDICAL_SPR", "medical_spr"})
-  void shouldEnableActionsWhenSpecialtyProgrammeFound(String subType) {
+  @CsvSource(delimiter = '|', textBlock = """
+      MEDICAL_CURRICULUM | GENERAL PRACTICE
+      medical_curriculum | general practice
+      MEDICAL_SPR        | GENERAL PRACTICE
+      medical_spr        | general practice
+      MEDICAL_CURRICULUM | PUBLIC HEALTH MEDICINE
+      medical_curriculum | public health medicine
+      MEDICAL_SPR        | PUBLIC HEALTH MEDICINE
+      medical_spr        | public health medicine
+      """)
+  void shouldEnableActionsWhenPublicHealthOrSpecialtyProgrammeFound(String subType,
+      String specialty) {
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSubType(subType);
-    curriculum.setCurriculumSpecialty("General Practice");
+    curriculum.setCurriculumSpecialty(specialty);
 
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setCurricula(List.of(curriculum));
@@ -163,9 +171,7 @@ class FeatureServiceTest {
   @ParameterizedTest
   @CsvSource(delimiter = '|', textBlock = """
       MEDICAL_CURRICULUM | FOUNDATION
-      MEDICAL_CURRICULUM | PUBLIC HEALTH MEDICINE
       MEDICAL_SPR        | FOUNDATION
-      MEDICAL_SPR        | PUBLIC HEALTH MEDICINE
       UNKNOWN            | General Practice
       medical_curriculum | foundation
       ""                 | ""
@@ -192,11 +198,20 @@ class FeatureServiceTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"MEDICAL_CURRICULUM", "medical_curriculum", "MEDICAL_SPR", "medical_spr"})
-  void shouldEnableCctWhenSpecialtyProgrammeFound(String subType) {
+  @CsvSource(delimiter = '|', textBlock = """
+      MEDICAL_CURRICULUM | GENERAL PRACTICE
+      medical_curriculum | general practice
+      MEDICAL_SPR        | GENERAL PRACTICE
+      medical_spr        | general practice
+      MEDICAL_CURRICULUM | PUBLIC HEALTH MEDICINE
+      medical_curriculum | public health medicine
+      MEDICAL_SPR        | PUBLIC HEALTH MEDICINE
+      medical_spr        | public health medicine
+      """)
+  void shouldEnableCctWhenPublicHealthOrSpecialtyProgrammeFound(String subType, String specialty) {
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSubType(subType);
-    curriculum.setCurriculumSpecialty("General Practice");
+    curriculum.setCurriculumSpecialty(specialty);
 
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setCurricula(List.of(curriculum));
@@ -252,9 +267,7 @@ class FeatureServiceTest {
   @ParameterizedTest
   @CsvSource(delimiter = '|', textBlock = """
       MEDICAL_CURRICULUM | FOUNDATION
-      MEDICAL_CURRICULUM | PUBLIC HEALTH MEDICINE
       MEDICAL_SPR        | FOUNDATION
-      MEDICAL_SPR        | PUBLIC HEALTH MEDICINE
       UNKNOWN            | General Practice
       medical_curriculum | foundation
       ""                 | ""
@@ -290,11 +303,20 @@ class FeatureServiceTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"MEDICAL_CURRICULUM", "medical_curriculum", "MEDICAL_SPR", "medical_spr"})
-  void shouldEnableDetailsWhenSpecialtyProgrammeFound(String subType) {
+  @CsvSource(delimiter = '|', textBlock = """
+      MEDICAL_CURRICULUM | GENERAL PRACTICE
+      medical_curriculum | general practice
+      MEDICAL_SPR        | GENERAL PRACTICE
+      medical_spr        | general practice
+      MEDICAL_CURRICULUM | PUBLIC HEALTH MEDICINE
+      medical_curriculum | public health medicine
+      MEDICAL_SPR        | PUBLIC HEALTH MEDICINE
+      medical_spr        | public health medicine
+      """)
+  void shouldEnableDetailsWhenPublicHealthOrSpecialtyProgrammeFound(String subType, String specialty) {
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSubType(subType);
-    curriculum.setCurriculumSpecialty("General Practice");
+    curriculum.setCurriculumSpecialty(specialty);
 
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setCurricula(List.of(curriculum));
@@ -767,9 +789,7 @@ class FeatureServiceTest {
   @ParameterizedTest
   @CsvSource(delimiter = '|', textBlock = """
       MEDICAL_CURRICULUM | FOUNDATION
-      MEDICAL_CURRICULUM | PUBLIC HEALTH MEDICINE
       MEDICAL_SPR        | FOUNDATION
-      MEDICAL_SPR        | PUBLIC HEALTH MEDICINE
       UNKNOWN            | General Practice
       medical_curriculum | foundation
       ""                 | ""
@@ -796,11 +816,21 @@ class FeatureServiceTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"MEDICAL_CURRICULUM", "medical_curriculum", "MEDICAL_SPR", "medical_spr"})
-  void shouldEnableNotificationsWhenSpecialtyProgrammeFound(String subType) {
+  @CsvSource(delimiter = '|', textBlock = """
+      MEDICAL_CURRICULUM | GENERAL PRACTICE
+      medical_curriculum | general practice
+      MEDICAL_SPR        | GENERAL PRACTICE
+      medical_spr        | general practice
+      MEDICAL_CURRICULUM | PUBLIC HEALTH MEDICINE
+      medical_curriculum | public health medicine
+      MEDICAL_SPR        | PUBLIC HEALTH MEDICINE
+      medical_spr        | public health medicine
+      """)
+  void shouldEnableNotificationsWhenPublicHealthOrSpecialtyProgrammeFound(String subType,
+      String specialty) {
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSubType(subType);
-    curriculum.setCurriculumSpecialty("General Practice");
+    curriculum.setCurriculumSpecialty(specialty);
 
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setCurricula(List.of(curriculum));
@@ -838,9 +868,7 @@ class FeatureServiceTest {
   @ParameterizedTest
   @CsvSource(delimiter = '|', textBlock = """
       MEDICAL_CURRICULUM | FOUNDATION
-      MEDICAL_CURRICULUM | PUBLIC HEALTH MEDICINE
       MEDICAL_SPR        | FOUNDATION
-      MEDICAL_SPR        | PUBLIC HEALTH MEDICINE
       UNKNOWN            | General Practice
       medical_curriculum | foundation
       ""                 | ""
@@ -867,11 +895,20 @@ class FeatureServiceTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"MEDICAL_CURRICULUM", "medical_curriculum", "MEDICAL_SPR", "medical_spr"})
-  void shouldEnableNewsWhenSpecialtyProgrammeFound(String subType) {
+  @CsvSource(delimiter = '|', textBlock = """
+      MEDICAL_CURRICULUM | GENERAL PRACTICE
+      medical_curriculum | general practice
+      MEDICAL_SPR        | GENERAL PRACTICE
+      medical_spr        | general practice
+      MEDICAL_CURRICULUM | PUBLIC HEALTH MEDICINE
+      medical_curriculum | public health medicine
+      MEDICAL_SPR        | PUBLIC HEALTH MEDICINE
+      medical_spr        | public health medicine
+      """)
+  void shouldEnableNewsWhenPublicHealthOrSpecialtyProgrammeFound(String subType, String specialty) {
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSubType(subType);
-    curriculum.setCurriculumSpecialty("General Practice");
+    curriculum.setCurriculumSpecialty(specialty);
 
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setCurricula(List.of(curriculum));

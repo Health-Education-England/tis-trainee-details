@@ -104,10 +104,9 @@ public class FeatureService {
     }
 
     if (isPublicHealthTrainee(profile)) {
-      log.debug("{} is a Public Health trainee, enabling read-only features plus Form-R.",
+      log.debug("{} is a Public Health trainee, enabling all features except LTFT.",
           profile.getTraineeTisId());
-      FeaturesDto readOnly = FeaturesDto.readOnly();
-      return readOnly.withForms(new FormFeatures(true, new Feature(true), readOnly.forms().ltft()));
+      return FeaturesDto.enable();
     }
 
     log.debug("Not a specialty or public health trainee, setting read-only features.");
