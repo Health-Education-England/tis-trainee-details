@@ -627,7 +627,8 @@ class ProgrammeMembershipServiceTest {
     ProgrammeMembership pm = createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_UUID,
         ORIGINAL_SUFFIX, 0);
 
-    Curriculum curr1 = createCurriculum(CURRICULUM_SPECIALTY, null, "Public Health Medicine");
+    Curriculum curr1 = createCurriculum(CURRICULUM_SPECIALTY, null,
+        PUBLIC_HEALTH_MEDICINE_SPECIALTY);
     pm.setCurricula(List.of(curr1));
 
     boolean isPublicHealth = service.isPublicHealth(pm);
@@ -1513,7 +1514,7 @@ class ProgrammeMembershipServiceTest {
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
             PROGRAMME_MEMBERSHIP_TYPE, LocalDate.of(2026, 3, 10), END_DATE, deanery,
-            TSS_CURRICULA.get(0), CURRICULUM_SPECIALTY_CODE, "Public Health Medicine")));
+            TSS_CURRICULA.get(0), CURRICULUM_SPECIALTY_CODE, PUBLIC_HEALTH_MEDICINE_SPECIALTY)));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
 
