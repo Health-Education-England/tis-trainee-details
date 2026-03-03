@@ -74,7 +74,7 @@ public class ProgrammeMembershipService {
   protected static final List<String> TSS_CURRICULA
       = List.of("MEDICAL_CURRICULUM", "MEDICAL_SPR");
   protected static final List<String> NOT_TSS_SPECIALTIES
-      = List.of("Public Health Medicine", "Foundation");
+      = List.of("Foundation");
   protected static final List<String> NON_RELEVANT_PROGRAMME_MEMBERSHIP_TYPES
       = List.of("VISITOR", "LAT");
   protected static final Long PROGRAMME_BREAK_DAYS = 355L;
@@ -82,6 +82,8 @@ public class ProgrammeMembershipService {
   protected static final String CONTACT_TYPE_FIELD = "contactTypeName";
   protected static final String CONTACT_FIELD = "contact";
   protected static final int PM_CONFIRM_WEEKS = 12;
+
+  protected static final String PUBLIC_HEALTH_MEDICINE_SPECIALTY = "Public Health Medicine";
 
   protected static final List<String> PILOT_2024_LOCAL_OFFICES_ALL_PROGRAMMES
       = List.of("London LETBs",
@@ -447,17 +449,40 @@ public class ProgrammeMembershipService {
       log.info("2024 pilot rollout: [false] start date is null for {}", programmeMembershipId);
       return false;
     }
-
-    LocalDate notificationEpoch = LocalDate.of(2024, 10, 31);
-    if (managingDeanery.equalsIgnoreCase("Thames Valley")) {
-      notificationEpoch = LocalDate.of(2025, 1, 31);
-    }
-    if (managingDeanery.equalsIgnoreCase("North East")) {
-      notificationEpoch = LocalDate.of(2025, 4, 13);
+    boolean isPublicHealth = isPublicHealth(programmeMembership);
+    log.debug("2024 pilot rollout: programme membership {} is for Public Health Medicine: {}",
+        programmeMembershipId, isPublicHealth);
+    LocalDate notificationEpoch;
+    if (!isPublicHealth) {
+      notificationEpoch = LocalDate.of(2024, 10, 31);
+      if (managingDeanery.equalsIgnoreCase("Thames Valley")) {
+        notificationEpoch = LocalDate.of(2025, 1, 31);
+      }
+      if (managingDeanery.equalsIgnoreCase("North East")) {
+        notificationEpoch = LocalDate.of(2025, 4, 13);
+      }
+    } else {
+      notificationEpoch = LocalDate.of(2026, 3, 10);
     }
     return ((PILOT_2024_ROLLOUT_LOCAL_OFFICES.stream()
         .anyMatch(lo -> lo.equalsIgnoreCase(managingDeanery)))
         && startDate.isAfter(notificationEpoch));
+  }
+
+  /**
+   * Assess if the programme membership is for Public Health Medicine.
+   *
+   * @param programmeMembership The programme membership to assess.
+   * @return true, or false if the programme membership is not for Public Health Medicine.
+   */
+  public boolean isPublicHealth(ProgrammeMembership programmeMembership) {
+    if (programmeMembership == null || programmeMembership.getCurricula() == null) {
+      return false;
+    }
+    return programmeMembership.getCurricula().stream()
+        .anyMatch(curriculum -> curriculum.getCurriculumSpecialty() != null
+            && curriculum.getCurriculumSpecialty()
+            .equalsIgnoreCase(PUBLIC_HEALTH_MEDICINE_SPECIALTY));
   }
 
   /**
