@@ -1511,7 +1511,7 @@ class ProgrammeMembershipServiceTest {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, LocalDate.of(2026,3,10), END_DATE, deanery,
+            PROGRAMME_MEMBERSHIP_TYPE, LocalDate.of(2026, 3, 10), END_DATE, deanery,
             TSS_CURRICULA.get(0), CURRICULUM_SPECIALTY_CODE, "Public Health Medicine")));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
@@ -1527,7 +1527,7 @@ class ProgrammeMembershipServiceTest {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setProgrammeMemberships(
         List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, LocalDate.of(2026,3,11), END_DATE, deanery,
+            PROGRAMME_MEMBERSHIP_TYPE, LocalDate.of(2026, 3, 11), END_DATE, deanery,
             TSS_CURRICULA.get(0), CURRICULUM_SPECIALTY_CODE, "Public Health Medicine")));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
