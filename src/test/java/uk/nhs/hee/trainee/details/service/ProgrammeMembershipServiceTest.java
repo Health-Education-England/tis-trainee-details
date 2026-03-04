@@ -50,6 +50,7 @@ import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PILO
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PILOT_2024_ROLLOUT_LOCAL_OFFICES;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PM_CONFIRM_WEEKS;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PROGRAMME_BREAK_DAYS;
+import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PUBLIC_HEALTH_MEDICINE_SPECIALTY;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.TSS_CURRICULA;
 
 import java.io.IOException;
@@ -592,7 +593,7 @@ class ProgrammeMembershipServiceTest {
 
   @ParameterizedTest
   @NullSource
-  @ValueSource(strings = {"Public Health Medicine", "Foundation"})
+  @ValueSource(strings = {"Foundation"})
   void shouldNotBeOnboardableWhenNoOnboardableSpecialty(String specialty) {
     ProgrammeMembership pm = createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_UUID,
         ORIGINAL_SUFFIX, 0);
@@ -619,6 +620,51 @@ class ProgrammeMembershipServiceTest {
     boolean canBeOnboarded = service.canBeOnboarded(pm);
 
     assertThat("Unexpected canBeOnboarded result.", canBeOnboarded, is(true));
+  }
+
+  @Test
+  void isPublicHealthShouldBeTrueIfPmHasPublicHealthCurriculum() {
+    ProgrammeMembership pm = createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_UUID,
+        ORIGINAL_SUFFIX, 0);
+
+    Curriculum curr1 = createCurriculum(CURRICULUM_SPECIALTY, null,
+        PUBLIC_HEALTH_MEDICINE_SPECIALTY);
+    pm.setCurricula(List.of(curr1));
+
+    boolean isPublicHealth = service.isPublicHealth(pm);
+
+    assertThat("Unexpected isPublicHealth result.", isPublicHealth, is(true));
+  }
+
+  @Test
+  void isPublicHealthShouldBeFalseIfPmIsNull() {
+    boolean isPublicHealth = service.isPublicHealth(null);
+
+    assertThat("Unexpected isPublicHealth result.", isPublicHealth, is(false));
+  }
+
+  @Test
+  void isPublicHealthShouldBeFalseIfPmHasNoCurricula() {
+    ProgrammeMembership pm = createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_UUID,
+        ORIGINAL_SUFFIX, 0);
+    pm.setCurricula(null);
+
+    boolean isPublicHealth = service.isPublicHealth(pm);
+
+    assertThat("Unexpected isPublicHealth result.", isPublicHealth, is(false));
+  }
+
+  @Test
+  void isPublicHealthShouldBeFalseIfPmCurriculaHasNoSpecialty() {
+    ProgrammeMembership pm = createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_UUID,
+        ORIGINAL_SUFFIX, 0);
+
+    Curriculum curr1 = createCurriculum(CURRICULUM_SPECIALTY, null, null);
+    pm.setCurricula(List.of(curr1));
+
+    boolean isPublicHealth = service.isPublicHealth(pm);
+
+    assertThat("Unexpected isPublicHealth result.", isPublicHealth, is(false));
   }
 
   @Test
@@ -1459,6 +1505,38 @@ class ProgrammeMembershipServiceTest {
     boolean isPilotRollout2024 = service.isPilotRollout2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
 
     assertThat("Unexpected isPilotRollout2024 value.", isPilotRollout2024, is(false));
+  }
+
+  @ParameterizedTest
+  @MethodSource("listLoRollout2024")
+  void rollout2024ShouldBeFalseIfPublicHealthSpecialtyOnOrBeforeEpoch(String deanery) {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, LocalDate.of(2026, 3, 10), END_DATE, deanery,
+            TSS_CURRICULA.get(0), CURRICULUM_SPECIALTY_CODE, PUBLIC_HEALTH_MEDICINE_SPECIALTY)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilotRollout2024 = service.isPilotRollout2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilotRollout2024 value.", isPilotRollout2024, is(false));
+  }
+
+  @ParameterizedTest
+  @MethodSource("listLoRollout2024")
+  void rollout2024ShouldBeTrueIfPublicHealthSpecialtyAfterEpoch(String deanery) {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, LocalDate.of(2026, 3, 11), END_DATE, deanery,
+            TSS_CURRICULA.get(0), CURRICULUM_SPECIALTY_CODE, PUBLIC_HEALTH_MEDICINE_SPECIALTY)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilotRollout2024 = service.isPilotRollout2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    assertThat("Unexpected isPilotRollout2024 value.", isPilotRollout2024, is(true));
   }
 
   @ParameterizedTest
