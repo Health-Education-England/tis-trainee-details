@@ -66,6 +66,24 @@ public record FeaturesDto(
   }
 
   /**
+   * Create a set of feature flags with all features enabled, except Form Rs, LTFT, CoJ.
+   *
+   * @return The created set of feature flags.
+   */
+  public static FeaturesDto enableForFoundation() {
+    return new FeaturesDto(
+        Feature.enable(),
+        Feature.enable(),
+        DetailsFeatures.enable()
+            .withProgrammes(DetailsFeatures.ProgrammeFeatures.enable()
+                .withConditionsOfJoining(Feature.disable())),
+        FormFeatures.disable(),
+        Feature.enable(),
+        Feature.enable()
+    );
+  }
+
+  /**
    * Create a set of feature flags with only read-only features enabled. Any functionality with
    * persistence or side effects are disabled.
    *
@@ -132,6 +150,7 @@ public record FeaturesDto(
    * @param profile    A sub-set of profile features.
    * @param programmes A sub-set of programme features.
    */
+  @With
   public record DetailsFeatures(
       boolean enabled,
       Feature placements,
@@ -243,6 +262,7 @@ public record FeaturesDto(
      * @param conditionsOfJoining Conditions of Joining feature flag.
      * @param confirmation        Programme confirmation feature flag.
      */
+    @With
     public record ProgrammeFeatures(
         boolean enabled,
         Feature conditionsOfJoining,
