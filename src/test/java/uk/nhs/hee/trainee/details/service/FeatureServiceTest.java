@@ -413,6 +413,8 @@ class FeatureServiceTest {
       UNKNOWN            | General Practice | DUMMY
       ""                 | ""               | ""
       MEDICAL_SPR        |                  |
+                         | FOUNDATION       |
+                         |                  | ACADEMIC FOUNDATION TRAINING
                          |                  |
       """)
   void shouldDisableFormsWhenFoundationOrNoPublicHealthOrSpecialtyProgrammes(
@@ -529,6 +531,8 @@ class FeatureServiceTest {
       UNKNOWN            | General Practice       | DUMMY
       ""                 | ""                     | ""
       MEDICAL_SPR        |                        |
+                         | FOUNDATION             |
+                         |                        | ACADEMIC FOUNDATION TRAINING
                          |                        |
       """)
   void shouldDisableLtftWhenFoundationOrNoSpecialtyProgrammes(
@@ -874,7 +878,7 @@ class FeatureServiceTest {
       medical_curriculum | foundation             | DUMMY
       """)
   void shouldEnableNotificationsWhenPublicHealthOrSpecialtyOrFoundationProgrammeFound(
-      String subType, String specialty,String curriculumName) {
+      String subType, String specialty, String curriculumName) {
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumName(curriculumName);
     curriculum.setCurriculumSubType(subType);
