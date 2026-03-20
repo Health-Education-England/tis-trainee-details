@@ -210,7 +210,8 @@ class FeatureServiceTest {
       MEDICAL_CURRICULUM | FOUNDATION
       medical_curriculum | foundation
       """)
-  void shouldEnableCctWhenPublicHealthOrSpecialtyOrFoundationProgrammeFound(String subType, String specialty) {
+  void shouldEnableCctWhenPublicHealthOrSpecialtyOrFoundationProgrammeFound(
+      String subType, String specialty) {
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSubType(subType);
     curriculum.setCurriculumSpecialty(specialty);
@@ -411,7 +412,8 @@ class FeatureServiceTest {
       MEDICAL_SPR        |
                          |
       """)
-  void shouldDisableFormsWhenFoundationOrNoPublicHealthOrSpecialtyProgrammes(String subType, String specialty) {
+  void shouldDisableFormsWhenFoundationOrNoPublicHealthOrSpecialtyProgrammes(
+      String subType, String specialty) {
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSubType(subType);
     curriculum.setCurriculumSpecialty(specialty);
@@ -865,8 +867,8 @@ class FeatureServiceTest {
       MEDICAL_CURRICULUM | FOUNDATION
       medical_curriculum | foundation
       """)
-  void shouldEnableNotificationsWhenPublicHealthOrSpecialtyOrFoundationProgrammeFound(String subType,
-      String specialty) {
+  void shouldEnableNotificationsWhenPublicHealthOrSpecialtyOrFoundationProgrammeFound(
+      String subType, String specialty) {
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSubType(subType);
     curriculum.setCurriculumSpecialty(specialty);
@@ -945,7 +947,8 @@ class FeatureServiceTest {
       MEDICAL_CURRICULUM | FOUNDATION
       medical_curriculum | foundation
       """)
-  void shouldEnableNewsWhenPublicHealthOrSpecialtyOrFoundationProgrammeFound(String subType, String specialty) {
+  void shouldEnableNewsWhenPublicHealthOrSpecialtyOrFoundationProgrammeFound(
+      String subType, String specialty) {
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSubType(subType);
     curriculum.setCurriculumSpecialty(specialty);
