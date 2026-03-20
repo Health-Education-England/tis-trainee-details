@@ -44,7 +44,8 @@ import uk.nhs.hee.trainee.details.model.TraineeProfile;
 @Service
 public class FeatureService {
 
-  private static final String ACADEMIC_FOUNDATION_SUBTYPE = "AFT";
+  private static final String ACADEMIC_FOUNDATION_CURRICULUM_NAME = "ACADEMIC FOUNDATION TRAINING";
+
   private static final Set<String> NON_FOUNDATION_TRAINEE_CURRICULUM_SUB_TYPES = Set.of(
       "MEDICAL_CURRICULUM", "MEDICAL_SPR");
 
@@ -171,11 +172,11 @@ public class FeatureService {
     return profile.getProgrammeMemberships().stream()
         .flatMap(pm -> pm.getCurricula().stream())
         .anyMatch(curriculum -> {
-          String subType = curriculum.getCurriculumSubType();
+          String name = curriculum.getCurriculumName();
           String specialty = curriculum.getCurriculumSpecialty();
 
-          return subType != null && specialty != null
-              && (subType.equalsIgnoreCase(ACADEMIC_FOUNDATION_SUBTYPE)
+          return name != null && specialty != null
+              && (name.equalsIgnoreCase(ACADEMIC_FOUNDATION_CURRICULUM_NAME)
               || specialty.equalsIgnoreCase(FOUNDATION_SPECIALTY));
         });
   }
