@@ -91,10 +91,7 @@ class FeatureServiceTest {
 
   @ParameterizedTest
   @CsvSource(delimiter = '|', textBlock = """
-      MEDICAL_CURRICULUM | FOUNDATION
-      MEDICAL_SPR        | FOUNDATION
       UNKNOWN            | General Practice
-      medical_curriculum | foundation
       ""                 | ""
       MEDICAL_SPR        |
                          |
@@ -120,18 +117,23 @@ class FeatureServiceTest {
 
   @ParameterizedTest
   @CsvSource(delimiter = '|', textBlock = """
-      MEDICAL_CURRICULUM | GENERAL PRACTICE
-      medical_curriculum | general practice
-      MEDICAL_SPR        | GENERAL PRACTICE
-      medical_spr        | general practice
-      MEDICAL_CURRICULUM | PUBLIC HEALTH MEDICINE
-      medical_curriculum | public health medicine
-      MEDICAL_SPR        | PUBLIC HEALTH MEDICINE
-      medical_spr        | public health medicine
+      MEDICAL_CURRICULUM | GENERAL PRACTICE       | DUMMY
+      medical_curriculum | general practice       | DUMMY
+      MEDICAL_SPR        | GENERAL PRACTICE       | DUMMY
+      medical_spr        | general practice       | DUMMY
+      MEDICAL_CURRICULUM | PUBLIC HEALTH MEDICINE | DUMMY
+      medical_curriculum | public health medicine | DUMMY
+      MEDICAL_SPR        | PUBLIC HEALTH MEDICINE | DUMMY
+      medical_spr        | public health medicine | DUMMY
+      AFT                | ACADEMIC               | ACADEMIC FOUNDATION TRAINING
+      aft                | ACADEMIC               | academic foundation training
+      MEDICAL_CURRICULUM | FOUNDATION             | DUMMY
+      medical_curriculum | foundation             | DUMMY
       """)
-  void shouldEnableActionsWhenPublicHealthOrSpecialtyProgrammeFound(String subType,
-      String specialty) {
+  void shouldEnableActionsWhenPublicHealthOrSpecialtyOrFoundationProgrammeFound(String subType,
+      String specialty, String curriculumName) {
     Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumName(curriculumName);
     curriculum.setCurriculumSubType(subType);
     curriculum.setCurriculumSpecialty(specialty);
 
@@ -170,10 +172,7 @@ class FeatureServiceTest {
 
   @ParameterizedTest
   @CsvSource(delimiter = '|', textBlock = """
-      MEDICAL_CURRICULUM | FOUNDATION
-      MEDICAL_SPR        | FOUNDATION
       UNKNOWN            | General Practice
-      medical_curriculum | foundation
       ""                 | ""
       MEDICAL_SPR        |
                          |
@@ -199,17 +198,23 @@ class FeatureServiceTest {
 
   @ParameterizedTest
   @CsvSource(delimiter = '|', textBlock = """
-      MEDICAL_CURRICULUM | GENERAL PRACTICE
-      medical_curriculum | general practice
-      MEDICAL_SPR        | GENERAL PRACTICE
-      medical_spr        | general practice
-      MEDICAL_CURRICULUM | PUBLIC HEALTH MEDICINE
-      medical_curriculum | public health medicine
-      MEDICAL_SPR        | PUBLIC HEALTH MEDICINE
-      medical_spr        | public health medicine
+      MEDICAL_CURRICULUM | GENERAL PRACTICE       | DUMMY
+      medical_curriculum | general practice       | DUMMY
+      MEDICAL_SPR        | GENERAL PRACTICE       | DUMMY
+      medical_spr        | general practice       | DUMMY
+      MEDICAL_CURRICULUM | PUBLIC HEALTH MEDICINE | DUMMY
+      medical_curriculum | public health medicine | DUMMY
+      MEDICAL_SPR        | PUBLIC HEALTH MEDICINE | DUMMY
+      medical_spr        | public health medicine | DUMMY
+      AFT                | ACADEMIC               | ACADEMIC FOUNDATION TRAINING
+      aft                | ACADEMIC               | academic foundation training
+      MEDICAL_CURRICULUM | FOUNDATION             | DUMMY
+      medical_curriculum | foundation             | DUMMY
       """)
-  void shouldEnableCctWhenPublicHealthOrSpecialtyProgrammeFound(String subType, String specialty) {
+  void shouldEnableCctWhenPublicHealthOrSpecialtyOrFoundationProgrammeFound(
+      String subType, String specialty, String curriculumName) {
     Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumName(curriculumName);
     curriculum.setCurriculumSubType(subType);
     curriculum.setCurriculumSpecialty(specialty);
 
@@ -266,10 +271,7 @@ class FeatureServiceTest {
 
   @ParameterizedTest
   @CsvSource(delimiter = '|', textBlock = """
-      MEDICAL_CURRICULUM | FOUNDATION
-      MEDICAL_SPR        | FOUNDATION
       UNKNOWN            | General Practice
-      medical_curriculum | foundation
       ""                 | ""
       MEDICAL_SPR        |
                          |
@@ -342,6 +344,43 @@ class FeatureServiceTest {
         is(true));
   }
 
+  @ParameterizedTest
+  @CsvSource(delimiter = '|', textBlock = """
+      AFT                | ACADEMIC   | ACADEMIC FOUNDATION TRAINING
+      aft                | ACADEMIC   | academic foundation training
+      MEDICAL_CURRICULUM | FOUNDATION | DUMMY
+      medical_curriculum | foundation | DUMMY
+      """)
+  void shouldEnableDetailsButDisableCojWhenFoundationProgrammeFound(String subType,
+      String specialty, String curriculumName) {
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumName(curriculumName);
+    curriculum.setCurriculumSubType(subType);
+    curriculum.setCurriculumSpecialty(specialty);
+
+    ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setCurricula(List.of(curriculum));
+    pm.setEndDate(LocalDate.MAX);
+
+    TraineeProfile profile = new TraineeProfile();
+    profile.setProgrammeMemberships(List.of(pm));
+
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected feature flag.", features.details().enabled(), is(true));
+    assertThat("Unexpected feature flag.", features.details().placements().enabled(), is(true));
+    assertThat("Unexpected feature flag.", features.details().profile().enabled(), is(true));
+    assertThat("Unexpected feature flag.", features.details().profile().gmcUpdate().enabled(),
+        is(true));
+    assertThat("Unexpected feature flag.", features.details().programmes().enabled(), is(true));
+    assertThat("Unexpected feature flag.",
+        features.details().programmes().conditionsOfJoining().enabled(), is(false));
+    assertThat("Unexpected feature flag.", features.details().programmes().confirmation().enabled(),
+        is(true));
+  }
+
   @Test
   void shouldDisableFormsWhenProfileNotFound() {
     when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(null);
@@ -367,16 +406,21 @@ class FeatureServiceTest {
 
   @ParameterizedTest
   @CsvSource(delimiter = '|', textBlock = """
-      MEDICAL_CURRICULUM | FOUNDATION
-      MEDICAL_SPR        | FOUNDATION
-      UNKNOWN            | General Practice
-      medical_curriculum | foundation
-      ""                 | ""
-      MEDICAL_SPR        |
-                         |
+      AFT                | ACADEMIC         | ACADEMIC FOUNDATION TRAINING
+      aft                | ACADEMIC         | academic foundation training
+      MEDICAL_CURRICULUM | FOUNDATION       | DUMMY
+      medical_curriculum | foundation       | DUMMY
+      UNKNOWN            | General Practice | DUMMY
+      ""                 | ""               | ""
+      MEDICAL_SPR        |                  |
+                         | FOUNDATION       |
+                         |                  | ACADEMIC FOUNDATION TRAINING
+                         |                  |
       """)
-  void shouldDisableFormsWhenNoPublicHealthOrSpecialtyProgrammes(String subType, String specialty) {
+  void shouldDisableFormsWhenFoundationOrNoPublicHealthOrSpecialtyProgrammes(
+      String subType, String specialty, String curriculumName)  {
     Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumName(curriculumName);
     curriculum.setCurriculumSubType(subType);
     curriculum.setCurriculumSpecialty(specialty);
 
@@ -478,18 +522,23 @@ class FeatureServiceTest {
 
   @ParameterizedTest
   @CsvSource(delimiter = '|', textBlock = """
-      MEDICAL_CURRICULUM | FOUNDATION
-      MEDICAL_CURRICULUM | PUBLIC HEALTH MEDICINE
-      MEDICAL_SPR        | FOUNDATION
-      MEDICAL_SPR        | PUBLIC HEALTH MEDICINE
-      UNKNOWN            | General Practice
-      medical_curriculum | foundation
-      ""                 | ""
-      MEDICAL_SPR        |
-                         |
+      AFT                | ACADEMIC               | ACADEMIC FOUNDATION TRAINING
+      aft                | ACADEMIC               | academic foundation training
+      MEDICAL_CURRICULUM | FOUNDATION             | DUMMY
+      medical_curriculum | foundation             | DUMMY
+      MEDICAL_CURRICULUM | PUBLIC HEALTH MEDICINE | DUMMY
+      MEDICAL_SPR        | PUBLIC HEALTH MEDICINE | DUMMY
+      UNKNOWN            | General Practice       | DUMMY
+      ""                 | ""                     | ""
+      MEDICAL_SPR        |                        |
+                         | FOUNDATION             |
+                         |                        | ACADEMIC FOUNDATION TRAINING
+                         |                        |
       """)
-  void shouldDisableLtftWhenNoSpecialtyProgrammes(String subType, String specialty) {
+  void shouldDisableLtftWhenFoundationOrNoSpecialtyProgrammes(
+      String subType, String specialty, String curriculumName) {
     Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumName(curriculumName);
     curriculum.setCurriculumSubType(subType);
     curriculum.setCurriculumSpecialty(specialty);
 
@@ -789,10 +838,7 @@ class FeatureServiceTest {
 
   @ParameterizedTest
   @CsvSource(delimiter = '|', textBlock = """
-      MEDICAL_CURRICULUM | FOUNDATION
-      MEDICAL_SPR        | FOUNDATION
       UNKNOWN            | General Practice
-      medical_curriculum | foundation
       ""                 | ""
       MEDICAL_SPR        |
                          |
@@ -818,18 +864,23 @@ class FeatureServiceTest {
 
   @ParameterizedTest
   @CsvSource(delimiter = '|', textBlock = """
-      MEDICAL_CURRICULUM | GENERAL PRACTICE
-      medical_curriculum | general practice
-      MEDICAL_SPR        | GENERAL PRACTICE
-      medical_spr        | general practice
-      MEDICAL_CURRICULUM | PUBLIC HEALTH MEDICINE
-      medical_curriculum | public health medicine
-      MEDICAL_SPR        | PUBLIC HEALTH MEDICINE
-      medical_spr        | public health medicine
+      MEDICAL_CURRICULUM | GENERAL PRACTICE       | DUMMY
+      medical_curriculum | general practice       | DUMMY
+      MEDICAL_SPR        | GENERAL PRACTICE       | DUMMY
+      medical_spr        | general practice       | DUMMY
+      MEDICAL_CURRICULUM | PUBLIC HEALTH MEDICINE | DUMMY
+      medical_curriculum | public health medicine | DUMMY
+      MEDICAL_SPR        | PUBLIC HEALTH MEDICINE | DUMMY
+      medical_spr        | public health medicine | DUMMY
+      AFT                | ACADEMIC               | ACADEMIC FOUNDATION TRAINING
+      aft                | ACADEMIC               | academic foundation training
+      MEDICAL_CURRICULUM | FOUNDATION             | DUMMY
+      medical_curriculum | foundation             | DUMMY
       """)
-  void shouldEnableNotificationsWhenPublicHealthOrSpecialtyProgrammeFound(String subType,
-      String specialty) {
+  void shouldEnableNotificationsWhenPublicHealthOrSpecialtyOrFoundationProgrammeFound(
+      String subType, String specialty, String curriculumName) {
     Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumName(curriculumName);
     curriculum.setCurriculumSubType(subType);
     curriculum.setCurriculumSpecialty(specialty);
 
@@ -868,10 +919,7 @@ class FeatureServiceTest {
 
   @ParameterizedTest
   @CsvSource(delimiter = '|', textBlock = """
-      MEDICAL_CURRICULUM | FOUNDATION
-      MEDICAL_SPR        | FOUNDATION
       UNKNOWN            | General Practice
-      medical_curriculum | foundation
       ""                 | ""
       MEDICAL_SPR        |
                          |
@@ -897,17 +945,23 @@ class FeatureServiceTest {
 
   @ParameterizedTest
   @CsvSource(delimiter = '|', textBlock = """
-      MEDICAL_CURRICULUM | GENERAL PRACTICE
-      medical_curriculum | general practice
-      MEDICAL_SPR        | GENERAL PRACTICE
-      medical_spr        | general practice
-      MEDICAL_CURRICULUM | PUBLIC HEALTH MEDICINE
-      medical_curriculum | public health medicine
-      MEDICAL_SPR        | PUBLIC HEALTH MEDICINE
-      medical_spr        | public health medicine
+      MEDICAL_CURRICULUM | GENERAL PRACTICE       | DUMMY
+      medical_curriculum | general practice       | DUMMY
+      MEDICAL_SPR        | GENERAL PRACTICE       | DUMMY
+      medical_spr        | general practice       | DUMMY
+      MEDICAL_CURRICULUM | PUBLIC HEALTH MEDICINE | DUMMY
+      medical_curriculum | public health medicine | DUMMY
+      MEDICAL_SPR        | PUBLIC HEALTH MEDICINE | DUMMY
+      medical_spr        | public health medicine | DUMMY
+      AFT                | ACADEMIC               | ACADEMIC FOUNDATION TRAINING
+      aft                | ACADEMIC               | academic foundation training
+      MEDICAL_CURRICULUM | FOUNDATION             | DUMMY
+      medical_curriculum | foundation             | DUMMY
       """)
-  void shouldEnableNewsWhenPublicHealthOrSpecialtyProgrammeFound(String subType, String specialty) {
+  void shouldEnableNewsWhenPublicHealthOrSpecialtyOrFoundationProgrammeFound(
+      String subType, String specialty, String curriculumName) {
     Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumName(curriculumName);
     curriculum.setCurriculumSubType(subType);
     curriculum.setCurriculumSpecialty(specialty);
 
@@ -927,16 +981,12 @@ class FeatureServiceTest {
 
   @Test
   void shouldMatchReadOnlyWhenMultipleNonPublicHealthOrSpecialtyProgrammesAndCurricula() {
-    Curriculum curriculum1 = new Curriculum();
-    curriculum1.setCurriculumSubType("MEDICAL_CURRICULUM");
-    curriculum1.setCurriculumSpecialty("Foundation");
-
-    Curriculum curriculum2 = new Curriculum();
-    curriculum2.setCurriculumSubType("UNKNOWN");
-    curriculum2.setCurriculumSpecialty("General Practice");
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSubType("UNKNOWN");
+    curriculum.setCurriculumSpecialty("General Practice");
 
     ProgrammeMembership pm1 = new ProgrammeMembership();
-    pm1.setCurricula(List.of(curriculum1, curriculum2));
+    pm1.setCurricula(List.of(curriculum));
     pm1.setEndDate(LocalDate.MAX);
 
     Curriculum curriculum3 = new Curriculum();

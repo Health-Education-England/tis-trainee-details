@@ -44,6 +44,8 @@ import uk.nhs.hee.trainee.details.model.TraineeProfile;
 @Service
 public class FeatureService {
 
+  private static final String ACADEMIC_FOUNDATION_CURRICULUM_NAME = "ACADEMIC FOUNDATION TRAINING";
+
   private static final Set<String> NON_FOUNDATION_TRAINEE_CURRICULUM_SUB_TYPES = Set.of(
       "MEDICAL_CURRICULUM", "MEDICAL_SPR");
 
@@ -109,6 +111,12 @@ public class FeatureService {
       return FeaturesDto.enable();
     }
 
+    if (isFoundationTrainee(profile)) {
+      log.debug("{} is a Foundation trainee, enabling all features except Form Rs, LTFT, CoJ.",
+          profile.getTraineeTisId());
+      return FeaturesDto.enableForFoundation();
+    }
+
     log.debug("Not a specialty or public health trainee, setting read-only features.");
     return FeaturesDto.readOnly();
   }
@@ -150,6 +158,26 @@ public class FeatureService {
           return subType != null && specialty != null
               && NON_FOUNDATION_TRAINEE_CURRICULUM_SUB_TYPES.contains(subType.toUpperCase())
               && specialty.equalsIgnoreCase(PUBLIC_HEALTH_MEDICINE_SPECIALTY);
+        });
+  }
+
+  /**
+   * Check whether the given profile contains a foundation programme. Indicating that the trainee
+   * is,or will be, a Foundation trainee.
+   *
+   * @param profile The trainee profile to check.
+   * @return Whether the trainee has a foundation programme in their profile.
+   */
+  private boolean isFoundationTrainee(TraineeProfile profile) {
+    return profile.getProgrammeMemberships().stream()
+        .flatMap(pm -> pm.getCurricula().stream())
+        .anyMatch(curriculum -> {
+          String name = curriculum.getCurriculumName();
+          String specialty = curriculum.getCurriculumSpecialty();
+
+          return name != null && specialty != null
+              && (name.equalsIgnoreCase(ACADEMIC_FOUNDATION_CURRICULUM_NAME)
+              || specialty.equalsIgnoreCase(FOUNDATION_SPECIALTY));
         });
   }
 
