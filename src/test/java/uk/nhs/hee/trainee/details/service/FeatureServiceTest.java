@@ -126,7 +126,6 @@ class FeatureServiceTest {
       MEDICAL_SPR        | PUBLIC HEALTH MEDICINE
       medical_spr        | public health medicine
       AFT                | ACADEMIC
-      DENTAL_CURRICULUM  | DENTAL FOUNDATION TRAINING
       MEDICAL_CURRICULUM | FOUNDATION
       medical_curriculum | foundation
       """)
@@ -206,7 +205,6 @@ class FeatureServiceTest {
       MEDICAL_SPR        | PUBLIC HEALTH MEDICINE
       medical_spr        | public health medicine
       AFT                | ACADEMIC
-      DENTAL_CURRICULUM  | DENTAL FOUNDATION TRAINING
       MEDICAL_CURRICULUM | FOUNDATION
       medical_curriculum | foundation
       """)
@@ -345,7 +343,6 @@ class FeatureServiceTest {
   @ParameterizedTest
   @CsvSource(delimiter = '|', textBlock = """
       AFT                | ACADEMIC
-      DENTAL_CURRICULUM  | DENTAL FOUNDATION TRAINING
       MEDICAL_CURRICULUM | FOUNDATION
       medical_curriculum | foundation
       """)
@@ -404,7 +401,6 @@ class FeatureServiceTest {
   @ParameterizedTest
   @CsvSource(delimiter = '|', textBlock = """
       AFT                | ACADEMIC
-      DENTAL_CURRICULUM  | DENTAL FOUNDATION TRAINING
       MEDICAL_CURRICULUM | FOUNDATION
       medical_curriculum | foundation
       UNKNOWN            | General Practice
@@ -517,7 +513,6 @@ class FeatureServiceTest {
   @ParameterizedTest
   @CsvSource(delimiter = '|', textBlock = """
       AFT                | ACADEMIC
-      DENTAL_CURRICULUM  | DENTAL FOUNDATION TRAINING
       MEDICAL_CURRICULUM | FOUNDATION
       medical_curriculum | foundation
       MEDICAL_CURRICULUM | PUBLIC HEALTH MEDICINE
@@ -863,7 +858,6 @@ class FeatureServiceTest {
       MEDICAL_SPR        | PUBLIC HEALTH MEDICINE
       medical_spr        | public health medicine
       AFT                | ACADEMIC
-      DENTAL_CURRICULUM  | DENTAL FOUNDATION TRAINING
       MEDICAL_CURRICULUM | FOUNDATION
       medical_curriculum | foundation
       """)
@@ -943,7 +937,6 @@ class FeatureServiceTest {
       MEDICAL_SPR        | PUBLIC HEALTH MEDICINE
       medical_spr        | public health medicine
       AFT                | ACADEMIC
-      DENTAL_CURRICULUM  | DENTAL FOUNDATION TRAINING
       MEDICAL_CURRICULUM | FOUNDATION
       medical_curriculum | foundation
       """)

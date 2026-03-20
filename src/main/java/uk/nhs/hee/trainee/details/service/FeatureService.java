@@ -49,13 +49,9 @@ public class FeatureService {
       "MEDICAL_CURRICULUM", "MEDICAL_SPR");
 
   private static final String FOUNDATION_SPECIALTY = "FOUNDATION";
-  private static final String DENTAL_FOUNDATION_SPECIALTY = "DENTAL FOUNDATION TRAINING";
   private static final String PUBLIC_HEALTH_MEDICINE_SPECIALTY = "PUBLIC HEALTH MEDICINE";
   private static final Set<String> NON_SPECIALTY_TRAINEE_CURRICULUM_SPECIALTIES = Set.of(
       PUBLIC_HEALTH_MEDICINE_SPECIALTY, FOUNDATION_SPECIALTY);
-  private static final Set<String> FOUNDATION_TRAINEE_CURRICULUM_SPECIALTIES = Set.of(
-      FOUNDATION_SPECIALTY, DENTAL_FOUNDATION_SPECIALTY);
-
 
   private final TraineeIdentity identity;
   private final TraineeProfileService profileService;
@@ -180,7 +176,7 @@ public class FeatureService {
 
           return subType != null && specialty != null
               && (subType.equalsIgnoreCase(ACADEMIC_FOUNDATION_SUBTYPE)
-              || FOUNDATION_TRAINEE_CURRICULUM_SPECIALTIES.contains(specialty.toUpperCase()));
+              || specialty.equalsIgnoreCase(FOUNDATION_SPECIALTY));
         });
   }
 
