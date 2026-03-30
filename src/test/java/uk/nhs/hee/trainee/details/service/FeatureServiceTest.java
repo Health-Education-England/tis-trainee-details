@@ -126,9 +126,9 @@ class FeatureServiceTest {
       MEDICAL_SPR        | PUBLIC HEALTH MEDICINE | DUMMY
       medical_spr        | public health medicine | DUMMY
       AFT                | ACADEMIC               | ACADEMIC FOUNDATION TRAINING
-      aft                | ACADEMIC               | academic foundation training
+      aft                |                        | academic foundation training
       MEDICAL_CURRICULUM | FOUNDATION             | DUMMY
-      medical_curriculum | foundation             | DUMMY
+      medical_curriculum | foundation             |
       """)
   void shouldEnableActionsWhenPublicHealthOrSpecialtyOrFoundationProgrammeFound(String subType,
       String specialty, String curriculumName) {
@@ -207,9 +207,9 @@ class FeatureServiceTest {
       MEDICAL_SPR        | PUBLIC HEALTH MEDICINE | DUMMY
       medical_spr        | public health medicine | DUMMY
       AFT                | ACADEMIC               | ACADEMIC FOUNDATION TRAINING
-      aft                | ACADEMIC               | academic foundation training
+      aft                |                        | academic foundation training
       MEDICAL_CURRICULUM | FOUNDATION             | DUMMY
-      medical_curriculum | foundation             | DUMMY
+      medical_curriculum | foundation             |
       """)
   void shouldEnableCctWhenPublicHealthOrSpecialtyOrFoundationProgrammeFound(
       String subType, String specialty, String curriculumName) {
@@ -347,9 +347,9 @@ class FeatureServiceTest {
   @ParameterizedTest
   @CsvSource(delimiter = '|', textBlock = """
       AFT                | ACADEMIC   | ACADEMIC FOUNDATION TRAINING
-      aft                | ACADEMIC   | academic foundation training
+      aft                |            | academic foundation training
       MEDICAL_CURRICULUM | FOUNDATION | DUMMY
-      medical_curriculum | foundation | DUMMY
+      medical_curriculum | foundation |
       """)
   void shouldEnableDetailsButDisableCojWhenFoundationProgrammeFound(String subType,
       String specialty, String curriculumName) {
@@ -407,9 +407,9 @@ class FeatureServiceTest {
   @ParameterizedTest
   @CsvSource(delimiter = '|', textBlock = """
       AFT                | ACADEMIC         | ACADEMIC FOUNDATION TRAINING
-      aft                | ACADEMIC         | academic foundation training
+      aft                |                  | academic foundation training
       MEDICAL_CURRICULUM | FOUNDATION       | DUMMY
-      medical_curriculum | foundation       | DUMMY
+      medical_curriculum | foundation       |
       UNKNOWN            | General Practice | DUMMY
       ""                 | ""               | ""
       MEDICAL_SPR        |                  |
@@ -523,9 +523,9 @@ class FeatureServiceTest {
   @ParameterizedTest
   @CsvSource(delimiter = '|', textBlock = """
       AFT                | ACADEMIC               | ACADEMIC FOUNDATION TRAINING
-      aft                | ACADEMIC               | academic foundation training
+      aft                |                        | academic foundation training
       MEDICAL_CURRICULUM | FOUNDATION             | DUMMY
-      medical_curriculum | foundation             | DUMMY
+      medical_curriculum | foundation             |
       MEDICAL_CURRICULUM | PUBLIC HEALTH MEDICINE | DUMMY
       MEDICAL_SPR        | PUBLIC HEALTH MEDICINE | DUMMY
       UNKNOWN            | General Practice       | DUMMY
@@ -873,9 +873,9 @@ class FeatureServiceTest {
       MEDICAL_SPR        | PUBLIC HEALTH MEDICINE | DUMMY
       medical_spr        | public health medicine | DUMMY
       AFT                | ACADEMIC               | ACADEMIC FOUNDATION TRAINING
-      aft                | ACADEMIC               | academic foundation training
+      aft                |                        | academic foundation training
       MEDICAL_CURRICULUM | FOUNDATION             | DUMMY
-      medical_curriculum | foundation             | DUMMY
+      medical_curriculum | foundation             |
       """)
   void shouldEnableNotificationsWhenPublicHealthOrSpecialtyOrFoundationProgrammeFound(
       String subType, String specialty, String curriculumName) {
@@ -954,9 +954,9 @@ class FeatureServiceTest {
       MEDICAL_SPR        | PUBLIC HEALTH MEDICINE | DUMMY
       medical_spr        | public health medicine | DUMMY
       AFT                | ACADEMIC               | ACADEMIC FOUNDATION TRAINING
-      aft                | ACADEMIC               | academic foundation training
+      aft                |                        | academic foundation training
       MEDICAL_CURRICULUM | FOUNDATION             | DUMMY
-      medical_curriculum | foundation             | DUMMY
+      medical_curriculum | foundation             |
       """)
   void shouldEnableNewsWhenPublicHealthOrSpecialtyOrFoundationProgrammeFound(
       String subType, String specialty, String curriculumName) {
