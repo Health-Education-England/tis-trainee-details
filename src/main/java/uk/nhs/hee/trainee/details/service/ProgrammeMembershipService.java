@@ -73,8 +73,6 @@ public class ProgrammeMembershipService {
       = List.of("DENTAL_CURRICULUM", "DENTAL_POST_CCST", "MEDICAL_CURRICULUM");
   protected static final List<String> TSS_CURRICULA
       = List.of("MEDICAL_CURRICULUM", "MEDICAL_SPR");
-  protected static final List<String> NOT_TSS_SPECIALTIES
-      = List.of("Foundation");
   protected static final List<String> NON_RELEVANT_PROGRAMME_MEMBERSHIP_TYPES
       = List.of("VISITOR", "LAT");
   protected static final Long PROGRAMME_BREAK_DAYS = 355L;
@@ -664,14 +662,6 @@ public class ProgrammeMembershipService {
               return false;
             } else {
               return TSS_CURRICULA.stream().anyMatch(subtype::equalsIgnoreCase);
-            }
-          })
-          .filter(c -> {
-            String specialty = c.getCurriculumSpecialty();
-            if (specialty == null) {
-              return false; //should not really happen
-            } else {
-              return NOT_TSS_SPECIALTIES.stream().noneMatch(specialty::equalsIgnoreCase);
             }
           })
           .toList();
