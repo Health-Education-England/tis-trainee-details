@@ -35,6 +35,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -170,5 +171,48 @@ class FeatureResourceIntegrationTest {
         .andExpect(jsonPath("$.forms.ltft.qualifyingProgrammes").isArray())
         .andExpect(jsonPath("$.forms.ltft.qualifyingProgrammes", hasSize(1)))
         .andExpect(jsonPath("$.forms.ltft.qualifyingProgrammes[0]", is(pmId)));
+  }
+
+  @ParameterizedTest
+  @CsvSource(delimiter = '|', textBlock = """
+      ACADEMIC   | ACADEMIC FOUNDATION TRAINING
+                 | academic foundation training
+      FOUNDATION | DUMMY
+      foundation |
+      """)
+  void shouldDisableFormsAndCojForFoundation(String specialty, String curriculumName)
+      throws Exception {
+    TraineeProfile profile = new TraineeProfile();
+    profile.setTraineeTisId(TRAINEE_ID);
+
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSpecialty(specialty);
+    curriculum.setCurriculumName(curriculumName);
+
+    String pmId = UUID.randomUUID().toString();
+    ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setCurricula(List.of(curriculum));
+    pm.setTisId(pmId);
+    profile.setProgrammeMemberships(List.of(pm));
+
+    template.save(profile);
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(get("/api/features")
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.actions.enabled", is(true)))
+        .andExpect(jsonPath("$.cct.enabled", is(true)))
+        .andExpect(jsonPath("$.details.enabled", is(true)))
+        .andExpect(jsonPath("$.details.placements.enabled", is(true)))
+        .andExpect(jsonPath("$.details.profile.enabled", is(true)))
+        .andExpect(jsonPath("$.details.profile.gmcUpdate.enabled", is(true)))
+        .andExpect(jsonPath("$.details.programmes.enabled", is(true)))
+        .andExpect(jsonPath("$.details.programmes.conditionsOfJoining.enabled", is(false)))
+        .andExpect(jsonPath("$.details.programmes.confirmation.enabled", is(true)))
+        .andExpect(jsonPath("$.forms.enabled", is(false)))
+        .andExpect(jsonPath("$.forms.formr.enabled", is(false)))
+        .andExpect(jsonPath("$.forms.ltft.enabled", is(false)))
+        .andExpect(jsonPath("$.notifications.enabled", is(true)));
   }
 }
