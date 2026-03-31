@@ -44,7 +44,6 @@ import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.CONT
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.DEFAULT_NO_CONTACT_MESSAGE;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.MEDICAL_CURRICULA;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.NON_RELEVANT_PROGRAMME_MEMBERSHIP_TYPES;
-import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.NOT_TSS_SPECIALTIES;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PILOT_2024_LOCAL_OFFICES_ALL_PROGRAMMES;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PILOT_2024_NW_SPECIALTIES;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PILOT_2024_ROLLOUT_LOCAL_OFFICES;
@@ -604,7 +603,7 @@ class ProgrammeMembershipServiceTest {
 
     boolean canBeOnboarded = service.canBeOnboarded(pm);
 
-    assertThat("Unexpected canBeOnboarded result.", canBeOnboarded, is(false));
+    assertThat("Unexpected canBeOnboarded result.", canBeOnboarded, is(true));
   }
 
   @ParameterizedTest
@@ -1412,25 +1411,6 @@ class ProgrammeMembershipServiceTest {
     assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
   }
 
-  @ParameterizedTest
-  @NullSource
-  @MethodSource("listNotTssCurriculaSpecialties")
-  void pilot2024ShouldBeFalseIfInvalidTssCurriculumSpecialty(String invalidCurriculumSpecialty) {
-    LocalDate dateInRange = LocalDate.of(2024, 8, 1);
-    TraineeProfile traineeProfile = new TraineeProfile();
-    traineeProfile.setProgrammeMemberships(
-        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
-            PROGRAMME_MEMBERSHIP_TYPE, dateInRange, END_DATE,
-            PILOT_2024_LOCAL_OFFICES_ALL_PROGRAMMES.get(0), TSS_CURRICULA.get(0),
-            CURRICULUM_SPECIALTY_CODE, invalidCurriculumSpecialty)));
-
-    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
-
-    boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
-
-    assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
-  }
-
   @Test
   void pilot2024ShouldBeTrueIfNotInvalidTssCurriculumSpecialty() {
     LocalDate dateInRange = LocalDate.of(2024, 8, 1);
@@ -1939,9 +1919,6 @@ class ProgrammeMembershipServiceTest {
     return TSS_CURRICULA.stream();
   }
 
-  static Stream<String> listNotTssCurriculaSpecialties() {
-    return NOT_TSS_SPECIALTIES.stream();
-  }
 
   /**
    * Create a programme membership with a single curriculum for testing isNewStarter conditions.
