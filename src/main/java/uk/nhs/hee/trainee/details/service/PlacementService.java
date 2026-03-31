@@ -43,9 +43,7 @@ public class PlacementService {
       "DCT1", // Dental Core Training Year 1
       "DCT2", // Dental Core Training Year 2
       "DCT3", // Dental Core Training Year 3
-      "DFT", // Dental Foundation Training
-      "F1", // Foundation Year 1
-      "F2" // Foundation Year 2
+      "DFT" // Dental Foundation Training
   );
 
   private final TraineeProfileRepository repository;

@@ -257,9 +257,7 @@ class PlacementServiceTest {
       "DCT1", // Dental Core Training Year 1
       "dct2", // Dental Core Training Year 2
       "DCT3", // Dental Core Training Year 3
-      "DFT", // Dental Foundation Training
-      "F1", // Foundation Year 1
-      "f2" // Foundation Year 2
+      "DFT" // Dental Foundation Training
   })
   void shouldNotBeOnboardableWhenNonOnBoardedGrade(String grade) {
     Placement placement = createPlacement(EXISTING_PLACEMENT_ID, ORIGINAL_SUFFIX, 0);
@@ -326,7 +324,7 @@ class PlacementServiceTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"ST1", "ST2", "ABC123", "XYZ789"})
+  @ValueSource(strings = {"ST1", "ST2", "ABC123", "XYZ789", "F1", "F2"})
   void shouldBeOnboardableWhenOnboardedGradeAndProgrammeMembershipOnboardable(String grade) {
     Placement placement = createPlacement(EXISTING_PLACEMENT_ID, ORIGINAL_SUFFIX, 0);
     placement.setGrade(grade);
