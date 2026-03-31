@@ -143,7 +143,7 @@ public class FeatureService {
 
   /**
    * Check whether the given profile contains a public health programme. Indicating that the trainee
-   * is,or will be, a Public Health trainee.
+   * is, or will be, a Public Health trainee.
    *
    * @param profile The trainee profile to check.
    * @return Whether the trainee has a public health programme in their profile.
@@ -163,7 +163,7 @@ public class FeatureService {
 
   /**
    * Check whether the given profile contains a foundation programme. Indicating that the trainee
-   * is,or will be, a Foundation trainee.
+   * is, or will be, a Foundation trainee.
    *
    * @param profile The trainee profile to check.
    * @return Whether the trainee has a foundation programme in their profile.
