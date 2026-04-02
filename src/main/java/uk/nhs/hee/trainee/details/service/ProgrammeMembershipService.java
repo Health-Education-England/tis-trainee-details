@@ -69,7 +69,7 @@ import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 public class ProgrammeMembershipService {
 
   protected static final String API_GET_OWNER_CONTACT
-      = "/api/local-office-contact-by-lo-name/{localOfficeName}";
+      = "/api/local-office-contact-by-lo-name/{localOfficeName}?traineeType={traineeType}";
   protected static final String DEFAULT_NO_CONTACT_MESSAGE
       = "your local office";
   protected static final List<String> MEDICAL_CURRICULA
@@ -495,6 +495,9 @@ public class ProgrammeMembershipService {
    * @return true if the programme membership is a foundation programme, otherwise false.
    */
   public static boolean isFoundationProgramme(ProgrammeMembership programmeMembership) {
+    if (programmeMembership == null || programmeMembership.getCurricula() == null) {
+      return false;
+    }
     return programmeMembership.getCurricula().stream()
         .anyMatch(curriculum -> {
           String name = curriculum.getCurriculumName();

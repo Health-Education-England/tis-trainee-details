@@ -23,6 +23,7 @@ package uk.nhs.hee.trainee.details.dto;
 
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.isFoundationProgramme;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.isPublicHealth;
+
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 
 /**

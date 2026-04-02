@@ -44,16 +44,16 @@ import static uk.nhs.hee.trainee.details.service.FeatureService.FOUNDATION_SPECI
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.CONTACT_FIELD;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.CONTACT_TYPE_FIELD;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.DEFAULT_NO_CONTACT_MESSAGE;
-import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.OWNER_FIELD;
-import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.TRAINEE_TYPE_FIELD;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.MEDICAL_CURRICULA;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.NON_RELEVANT_PROGRAMME_MEMBERSHIP_TYPES;
+import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.OWNER_FIELD;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PILOT_2024_LOCAL_OFFICES_ALL_PROGRAMMES;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PILOT_2024_NW_SPECIALTIES;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PILOT_2024_ROLLOUT_LOCAL_OFFICES;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PM_CONFIRM_WEEKS;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PROGRAMME_BREAK_DAYS;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PUBLIC_HEALTH_MEDICINE_SPECIALTY;
+import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.TRAINEE_TYPE_FIELD;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.TSS_CURRICULA;
 
 import java.io.IOException;
@@ -635,14 +635,14 @@ class ProgrammeMembershipServiceTest {
         PUBLIC_HEALTH_MEDICINE_SPECIALTY);
     pm.setCurricula(List.of(curr1));
 
-    boolean isPublicHealth = service.isPublicHealth(pm);
+    boolean isPublicHealth = ProgrammeMembershipService.isPublicHealth(pm);
 
     assertThat("Unexpected isPublicHealth result.", isPublicHealth, is(true));
   }
 
   @Test
   void isPublicHealthShouldBeFalseIfPmIsNull() {
-    boolean isPublicHealth = service.isPublicHealth(null);
+    boolean isPublicHealth = ProgrammeMembershipService.isPublicHealth(null);
 
     assertThat("Unexpected isPublicHealth result.", isPublicHealth, is(false));
   }
@@ -653,7 +653,7 @@ class ProgrammeMembershipServiceTest {
         ORIGINAL_SUFFIX, 0);
     pm.setCurricula(null);
 
-    boolean isPublicHealth = service.isPublicHealth(pm);
+    boolean isPublicHealth = ProgrammeMembershipService.isPublicHealth(pm);
 
     assertThat("Unexpected isPublicHealth result.", isPublicHealth, is(false));
   }
@@ -666,9 +666,68 @@ class ProgrammeMembershipServiceTest {
     Curriculum curr1 = createCurriculum(CURRICULUM_SPECIALTY, null, null);
     pm.setCurricula(List.of(curr1));
 
-    boolean isPublicHealth = service.isPublicHealth(pm);
+    boolean isPublicHealth = ProgrammeMembershipService.isPublicHealth(pm);
 
     assertThat("Unexpected isPublicHealth result.", isPublicHealth, is(false));
+  }
+
+  @Test
+  void isFoundationProgrammeShouldBeFalseIfPmIsNull() {
+    boolean isFoundation = ProgrammeMembershipService.isFoundationProgramme(null);
+
+    assertThat("Unexpected isFoundationProgramme result.", isFoundation, is(false));
+  }
+
+  @ParameterizedTest
+  @NullAndEmptySource
+  void isFoundationProgrammeShouldBeFalseIfPmHasNoCurricula(List<Curriculum> curricula) {
+    ProgrammeMembership pm = createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_UUID,
+        ORIGINAL_SUFFIX, 0);
+    pm.setCurricula(curricula);
+
+    boolean isFoundation = ProgrammeMembershipService.isFoundationProgramme(pm);
+
+    assertThat("Unexpected isFoundationProgramme result.", isFoundation, is(false));
+  }
+
+  @Test
+  void isFoundationProgrammeShouldBeFalseIfPmCurriculaHasNoNameOrSpecialty() {
+    ProgrammeMembership pm = createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_UUID,
+        ORIGINAL_SUFFIX, 0);
+
+    Curriculum curr1 = createCurriculum(CURRICULUM_SPECIALTY, null, null);
+    pm.setCurricula(List.of(curr1));
+
+    boolean isFoundation = ProgrammeMembershipService.isFoundationProgramme(pm);
+
+    assertThat("Unexpected isFoundationProgramme result.", isFoundation, is(false));
+  }
+
+  @Test
+  void isFoundationProgrammeShouldBeTrueIfPmHasFoundationCurriculumSpecialty() {
+    ProgrammeMembership pm = createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_UUID,
+        ORIGINAL_SUFFIX, 0);
+
+    Curriculum curr1 = createCurriculum(CURRICULUM_SPECIALTY, null, FOUNDATION_SPECIALTY);
+    pm.setCurricula(List.of(curr1));
+
+    boolean isFoundation = ProgrammeMembershipService.isFoundationProgramme(pm);
+
+    assertThat("Unexpected isFoundationProgramme result.", isFoundation, is(true));
+  }
+
+  @Test
+  void isFoundationProgrammeShouldBeTrueIfPmHasAcademicFoundationCurriculumName() {
+    ProgrammeMembership pm = createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_UUID,
+        ORIGINAL_SUFFIX, 0);
+
+    Curriculum curr1 = createCurriculum(CURRICULUM_SPECIALTY, null, null);
+    curr1.setCurriculumName(ACADEMIC_FOUNDATION_CURRICULUM_NAME);
+    pm.setCurricula(List.of(curr1));
+
+    boolean isFoundation = ProgrammeMembershipService.isFoundationProgramme(pm);
+
+    assertThat("Unexpected isFoundationProgramme result.", isFoundation, is(true));
   }
 
   @Test
@@ -1690,7 +1749,7 @@ class ProgrammeMembershipServiceTest {
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
     when(restTemplate.getForObject(
             "http://localhost/8205/reference/api/local-office-contact-by-lo-name"
-                + "/{localOfficeName}",
+                + "/{localOfficeName}?traineeType={traineeType}",
             List.class,
             Map.of("localOfficeName", MANAGING_DEANERY, "traineeType", TraineeType.SPECIALTY)))
         .thenReturn(contacts);
@@ -1725,7 +1784,8 @@ class ProgrammeMembershipServiceTest {
     service.generateProgrammeMembershipPdf(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
 
     verify(restTemplate).getForObject(
-        "http://localhost/8205/reference/api/local-office-contact-by-lo-name/{localOfficeName}",
+        "http://localhost/8205/reference/api/local-office-contact-by-lo-name/" +
+            "{localOfficeName}?traineeType={traineeType}",
         List.class,
         Map.of("localOfficeName", MANAGING_DEANERY, "traineeType", TraineeType.FOUNDATION));
   }
@@ -1745,10 +1805,12 @@ class ProgrammeMembershipServiceTest {
 
     service.generateProgrammeMembershipPdf(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
 
-    verify(restTemplate).getForObject(
-        "http://localhost/8205/reference/api/local-office-contact-by-lo-name/{localOfficeName}",
-        List.class,
-        Map.of("localOfficeName", MANAGING_DEANERY, "traineeType", TraineeType.FOUNDATION));
+    verify(restTemplate)
+        .getForObject(
+            "http://localhost/8205/reference/api/local-office-contact-by-lo-name/" +
+                "{localOfficeName}?traineeType={traineeType}",
+            List.class,
+            Map.of("localOfficeName", MANAGING_DEANERY, "traineeType", TraineeType.FOUNDATION));
   }
 
   @Test
@@ -1765,10 +1827,12 @@ class ProgrammeMembershipServiceTest {
 
     service.generateProgrammeMembershipPdf(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
 
-    verify(restTemplate).getForObject(
-        "http://localhost/8205/reference/api/local-office-contact-by-lo-name/{localOfficeName}",
-        List.class,
-        Map.of("localOfficeName", MANAGING_DEANERY, "traineeType", TraineeType.PUBLIC_HEALTH));
+    verify(restTemplate)
+        .getForObject(
+            "http://localhost/8205/reference/api/local-office-contact-by-lo-name/" +
+                "{localOfficeName}?traineeType={traineeType}",
+            List.class,
+            Map.of("localOfficeName", MANAGING_DEANERY, "traineeType", TraineeType.PUBLIC_HEALTH));
   }
 
   @Test
@@ -1912,18 +1976,6 @@ class ProgrammeMembershipServiceTest {
         TraineeType.SPECIALTY);
 
     assertThat("Unexpected owner contact.", contactList.size(), is(0));
-  }
-
-  @Test
-  void shouldUseSpecialtyTraineeTypeWhenGettingContactListWithNoTraineeType() {
-    ArgumentCaptor<Map<String, Object>> uriVarsCaptor = ArgumentCaptor.forClass(Map.class);
-    when(restTemplate.getForObject(any(), any(), anyMap())).thenReturn(new ArrayList<>());
-
-    service.getOwnerContactList("a local office", TraineeType.SPECIALTY);
-
-    verify(restTemplate).getForObject(any(), any(), uriVarsCaptor.capture());
-    assertThat("Unexpected trainee type.", uriVarsCaptor.getValue().get(TRAINEE_TYPE_FIELD),
-        is(TraineeType.SPECIALTY));
   }
 
   @Test
