@@ -82,6 +82,7 @@ class TraineeTypeTest {
     ProgrammeMembership pm = new ProgrammeMembership();
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSpecialty(specialty);
+    curriculum.setCurriculumSubType("MEDICAL_CURRICULUM");
     pm.setCurricula(List.of(curriculum));
 
     TraineeType result = TraineeType.from(pm);

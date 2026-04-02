@@ -148,15 +148,7 @@ public class FeatureService {
    */
   private boolean isPublicHealthTrainee(TraineeProfile profile) {
     return profile.getProgrammeMemberships().stream()
-        .flatMap(pm -> pm.getCurricula().stream())
-        .anyMatch(curriculum -> {
-          String subType = curriculum.getCurriculumSubType();
-          String specialty = curriculum.getCurriculumSpecialty();
-
-          return subType != null && specialty != null
-              && NON_FOUNDATION_TRAINEE_CURRICULUM_SUB_TYPES.contains(subType.toUpperCase())
-              && specialty.equalsIgnoreCase(PUBLIC_HEALTH_MEDICINE_SPECIALTY);
-        });
+        .anyMatch(ProgrammeMembershipService::isPublicHealthProgramme);
   }
 
   /**
@@ -168,14 +160,7 @@ public class FeatureService {
    */
   private boolean isFoundationTrainee(TraineeProfile profile) {
     return profile.getProgrammeMemberships().stream()
-        .flatMap(pm -> pm.getCurricula().stream())
-        .anyMatch(curriculum -> {
-          String name = curriculum.getCurriculumName();
-          String specialty = curriculum.getCurriculumSpecialty();
-
-          return (name != null && (name.equalsIgnoreCase(ACADEMIC_FOUNDATION_CURRICULUM_NAME))
-              || (specialty != null && specialty.equalsIgnoreCase(FOUNDATION_SPECIALTY)));
-        });
+        .anyMatch(ProgrammeMembershipService::isFoundationProgramme);
   }
 
   /**

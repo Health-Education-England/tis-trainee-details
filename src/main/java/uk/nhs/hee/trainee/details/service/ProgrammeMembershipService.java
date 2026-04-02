@@ -451,7 +451,7 @@ public class ProgrammeMembershipService {
       log.info("2024 pilot rollout: [false] start date is null for {}", programmeMembershipId);
       return false;
     }
-    boolean isPublicHealth = isPublicHealth(programmeMembership);
+    boolean isPublicHealth = isPublicHealthProgramme(programmeMembership);
     log.debug("2024 pilot rollout: programme membership {} is for Public Health Medicine: {}",
         programmeMembershipId, isPublicHealth);
     LocalDate notificationEpoch;
@@ -472,19 +472,25 @@ public class ProgrammeMembershipService {
   }
 
   /**
-   * Assess if the programme membership is for Public Health Medicine.
+   * Identify if a programme membership is a Public Health Medicine programme, by checking if any
+   * of the curricula have a TSS-relevant sub-type and a Public Health Medicine specialty.
    *
-   * @param programmeMembership The programme membership to assess.
-   * @return true, or false if the programme membership is not for Public Health Medicine.
+   * @param programmeMembership The programme membership to check.
+   * @return true if the programme membership is a Public Health Medicine programme, otherwise
+   *     false.
    */
-  public static boolean isPublicHealth(ProgrammeMembership programmeMembership) {
+  public static boolean isPublicHealthProgramme(ProgrammeMembership programmeMembership) {
     if (programmeMembership == null || programmeMembership.getCurricula() == null) {
       return false;
     }
     return programmeMembership.getCurricula().stream()
-        .anyMatch(curriculum -> curriculum.getCurriculumSpecialty() != null
-            && curriculum.getCurriculumSpecialty()
-            .equalsIgnoreCase(PUBLIC_HEALTH_MEDICINE_SPECIALTY));
+        .anyMatch(curriculum -> {
+          String subType = curriculum.getCurriculumSubType();
+          String specialty = curriculum.getCurriculumSpecialty();
+          return subType != null && specialty != null
+              && TSS_CURRICULA.stream().anyMatch(subType::equalsIgnoreCase)
+              && specialty.equalsIgnoreCase(PUBLIC_HEALTH_MEDICINE_SPECIALTY);
+        });
   }
 
   /**

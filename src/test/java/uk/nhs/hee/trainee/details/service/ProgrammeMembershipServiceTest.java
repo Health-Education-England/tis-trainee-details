@@ -113,7 +113,7 @@ class ProgrammeMembershipServiceTest {
   private static final GoldGuideVersion GOLD_GUIDE_VERSION = GoldGuideVersion.GG9;
   private static final Instant COJ_SYNCED_AT = Instant.now();
   private static final String CURRICULUM_SPECIALTY_CODE = "X75";
-  private static final String CURRICULUM_SPECIALTY = "some valid specialty";
+  private static final String CURRICULUM_SPECIALTY = "MEDICAL_CURRICULUM";
   private static final String RO_FIRSTNAME = "first name-";
   private static final String RO_LASTNAME = "last name-";
   private static final String RO_EMAIL = "email-";
@@ -635,14 +635,14 @@ class ProgrammeMembershipServiceTest {
         PUBLIC_HEALTH_MEDICINE_SPECIALTY);
     pm.setCurricula(List.of(curr1));
 
-    boolean isPublicHealth = ProgrammeMembershipService.isPublicHealth(pm);
+    boolean isPublicHealth = ProgrammeMembershipService.isPublicHealthProgramme(pm);
 
     assertThat("Unexpected isPublicHealth result.", isPublicHealth, is(true));
   }
 
   @Test
   void isPublicHealthShouldBeFalseIfPmIsNull() {
-    boolean isPublicHealth = ProgrammeMembershipService.isPublicHealth(null);
+    boolean isPublicHealth = ProgrammeMembershipService.isPublicHealthProgramme(null);
 
     assertThat("Unexpected isPublicHealth result.", isPublicHealth, is(false));
   }
@@ -653,7 +653,7 @@ class ProgrammeMembershipServiceTest {
         ORIGINAL_SUFFIX, 0);
     pm.setCurricula(null);
 
-    boolean isPublicHealth = ProgrammeMembershipService.isPublicHealth(pm);
+    boolean isPublicHealth = ProgrammeMembershipService.isPublicHealthProgramme(pm);
 
     assertThat("Unexpected isPublicHealth result.", isPublicHealth, is(false));
   }
@@ -666,7 +666,7 @@ class ProgrammeMembershipServiceTest {
     Curriculum curr1 = createCurriculum(CURRICULUM_SPECIALTY, null, null);
     pm.setCurricula(List.of(curr1));
 
-    boolean isPublicHealth = ProgrammeMembershipService.isPublicHealth(pm);
+    boolean isPublicHealth = ProgrammeMembershipService.isPublicHealthProgramme(pm);
 
     assertThat("Unexpected isPublicHealth result.", isPublicHealth, is(false));
   }
@@ -1784,8 +1784,8 @@ class ProgrammeMembershipServiceTest {
     service.generateProgrammeMembershipPdf(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
 
     verify(restTemplate).getForObject(
-        "http://localhost/8205/reference/api/local-office-contact-by-lo-name/" +
-            "{localOfficeName}?traineeType={traineeType}",
+        "http://localhost/8205/reference/api/local-office-contact-by-lo-name/"
+            + "{localOfficeName}?traineeType={traineeType}",
         List.class,
         Map.of("localOfficeName", MANAGING_DEANERY, "traineeType", TraineeType.FOUNDATION));
   }
@@ -1807,8 +1807,8 @@ class ProgrammeMembershipServiceTest {
 
     verify(restTemplate)
         .getForObject(
-            "http://localhost/8205/reference/api/local-office-contact-by-lo-name/" +
-                "{localOfficeName}?traineeType={traineeType}",
+            "http://localhost/8205/reference/api/local-office-contact-by-lo-name/"
+                + "{localOfficeName}?traineeType={traineeType}",
             List.class,
             Map.of("localOfficeName", MANAGING_DEANERY, "traineeType", TraineeType.FOUNDATION));
   }
@@ -1829,8 +1829,8 @@ class ProgrammeMembershipServiceTest {
 
     verify(restTemplate)
         .getForObject(
-            "http://localhost/8205/reference/api/local-office-contact-by-lo-name/" +
-                "{localOfficeName}?traineeType={traineeType}",
+            "http://localhost/8205/reference/api/local-office-contact-by-lo-name/"
+                + "{localOfficeName}?traineeType={traineeType}",
             List.class,
             Map.of("localOfficeName", MANAGING_DEANERY, "traineeType", TraineeType.PUBLIC_HEALTH));
   }
