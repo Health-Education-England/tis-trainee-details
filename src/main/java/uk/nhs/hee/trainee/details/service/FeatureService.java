@@ -31,8 +31,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.config.FeaturesProperties;
 import uk.nhs.hee.trainee.details.dto.FeaturesDto;
-import uk.nhs.hee.trainee.details.dto.FeaturesDto.Feature;
-import uk.nhs.hee.trainee.details.dto.FeaturesDto.FormFeatures;
 import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
@@ -44,12 +42,12 @@ import uk.nhs.hee.trainee.details.model.TraineeProfile;
 @Service
 public class FeatureService {
 
-  private static final String ACADEMIC_FOUNDATION_CURRICULUM_NAME = "ACADEMIC FOUNDATION TRAINING";
+  public static final String ACADEMIC_FOUNDATION_CURRICULUM_NAME = "ACADEMIC FOUNDATION TRAINING";
 
   private static final Set<String> NON_FOUNDATION_TRAINEE_CURRICULUM_SUB_TYPES = Set.of(
       "MEDICAL_CURRICULUM", "MEDICAL_SPR");
 
-  private static final String FOUNDATION_SPECIALTY = "FOUNDATION";
+  public static final String FOUNDATION_SPECIALTY = "FOUNDATION";
   private static final String PUBLIC_HEALTH_MEDICINE_SPECIALTY = "PUBLIC HEALTH MEDICINE";
   private static final Set<String> NON_SPECIALTY_TRAINEE_CURRICULUM_SPECIALTIES = Set.of(
       PUBLIC_HEALTH_MEDICINE_SPECIALTY, FOUNDATION_SPECIALTY);

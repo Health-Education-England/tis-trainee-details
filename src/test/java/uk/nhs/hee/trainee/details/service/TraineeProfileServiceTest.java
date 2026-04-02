@@ -34,6 +34,8 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion.GG10;
 import static uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion.GG9;
+import static uk.nhs.hee.trainee.details.service.FeatureService.ACADEMIC_FOUNDATION_CURRICULUM_NAME;
+import static uk.nhs.hee.trainee.details.service.FeatureService.FOUNDATION_SPECIALTY;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -57,6 +59,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.nhs.hee.trainee.details.dto.LocalOfficeContact;
+import uk.nhs.hee.trainee.details.dto.TraineeType;
 import uk.nhs.hee.trainee.details.dto.UserDetails;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
@@ -122,6 +125,7 @@ class TraineeProfileServiceTest {
 
   private static final String LO_CONTACT1 = "gmc@local.office";
   private static final String LO_CONTACT2 = "ltft@local.office";
+  private static final String PUBLIC_HEALTH_MEDICINE_SPECIALTY = "Public Health Medicine";
 
   @InjectMocks
   private TraineeProfileService service;
@@ -615,8 +619,8 @@ class TraineeProfileServiceTest {
     programmeMembership.setStartDate(LocalDate.MIN);
     programmeMembership.setEndDate(LocalDate.MAX);
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
-    when(programmeMembershipService.getOwnerContact(
-        MANAGING_DEANERY, contactType, null, null))
+    when(programmeMembershipService.getOwnerContact(MANAGING_DEANERY, contactType, null, null,
+        TraineeType.SPECIALTY))
         .thenReturn(LO_CONTACT1);
 
     Optional<Set<LocalOfficeContact>> loContacts
@@ -639,13 +643,13 @@ class TraineeProfileServiceTest {
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
 
     when(programmeMembershipService.getOwnerContact(
-        MANAGING_DEANERY, contactType, null, null))
+        MANAGING_DEANERY, contactType, null, null, TraineeType.SPECIALTY))
         .thenReturn(LO_CONTACT1);
 
     service.getTraineeLocalOfficeContacts(DEFAULT_TIS_ID_1, contactType);
 
     verify(programmeMembershipService)
-        .getOwnerContact(MANAGING_DEANERY, contactType, null, null);
+        .getOwnerContact(MANAGING_DEANERY, contactType, null, null, TraineeType.SPECIALTY);
     verifyNoMoreInteractions(programmeMembershipService);
   }
 
@@ -676,10 +680,10 @@ class TraineeProfileServiceTest {
         programmeMembership4, programmeMembership5)));
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
     when(programmeMembershipService.getOwnerContact(
-        MANAGING_DEANERY, contactType, null, null))
+        MANAGING_DEANERY, contactType, null, null, TraineeType.SPECIALTY))
         .thenReturn(LO_CONTACT1);
     when(programmeMembershipService.getOwnerContact(
-        MANAGING_DEANERY2, contactType, null, null))
+        MANAGING_DEANERY2, contactType, null, null, TraineeType.SPECIALTY))
         .thenReturn(LO_CONTACT2);
 
     Optional<Set<LocalOfficeContact>> loContacts
@@ -722,13 +726,14 @@ class TraineeProfileServiceTest {
         programmeMembership, programmeMembership2, programmeMembership3)));
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
     when(programmeMembershipService.getOwnerContact(
-        MANAGING_DEANERY, contactType, null, null))
+        MANAGING_DEANERY, contactType, null, null, TraineeType.SPECIALTY))
         .thenReturn(LO_CONTACT1);
 
     Optional<Set<LocalOfficeContact>> loContacts
         = service.getTraineeLocalOfficeContacts(DEFAULT_TIS_ID_1, contactType);
 
-    verify(programmeMembershipService).getOwnerContact(eq(MANAGING_DEANERY), any(), any(), any());
+    verify(programmeMembershipService).getOwnerContact(eq(MANAGING_DEANERY), any(), any(), any(),
+        eq(TraineeType.SPECIALTY));
     verifyNoMoreInteractions(programmeMembershipService); //only one filtered programme membership
 
     assertThat("Unexpected missing LO contacts.", loContacts.isPresent(), is(true));
@@ -740,4 +745,74 @@ class TraineeProfileServiceTest {
     assertThat("Unexpected local office contact LO.", firstLo.localOffice(),
         is(MANAGING_DEANERY));
   }
+
+  @ParameterizedTest
+  @EnumSource(LocalOfficeContactType.class)
+  void shouldPassPublicHealthTraineeTypeToGetOwnerContactWhenCurriculumSpecialtyIsPublicHealth(
+      LocalOfficeContactType contactType) {
+    programmeMembership.setStartDate(LocalDate.MIN);
+    programmeMembership.setEndDate(LocalDate.MAX);
+    curriculum.setCurriculumSpecialty(PUBLIC_HEALTH_MEDICINE_SPECIALTY);
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+    when(programmeMembershipService.getOwnerContact(MANAGING_DEANERY, contactType, null, null,
+        TraineeType.PUBLIC_HEALTH))
+        .thenReturn(LO_CONTACT1);
+
+    Optional<Set<LocalOfficeContact>> loContacts =
+        service.getTraineeLocalOfficeContacts(DEFAULT_TIS_ID_1, contactType);
+
+    verify(programmeMembershipService)
+        .getOwnerContact(MANAGING_DEANERY, contactType, null, null, TraineeType.PUBLIC_HEALTH);
+    assertThat("Unexpected missing LO contacts.", loContacts.isPresent(), is(true));
+    assertThat("Unexpected local office contacts.", loContacts.get().size(), is(1));
+    assertThat("Unexpected local office contact.",
+        loContacts.get().stream().toList().get(0).contact(), is(LO_CONTACT1));
+  }
+
+  @ParameterizedTest
+  @EnumSource(LocalOfficeContactType.class)
+  void shouldPassFoundationTraineeTypeToGetOwnerContactWhenCurriculumSpecialtyIsFoundation(
+      LocalOfficeContactType contactType) {
+    programmeMembership.setStartDate(LocalDate.MIN);
+    programmeMembership.setEndDate(LocalDate.MAX);
+    curriculum.setCurriculumSpecialty(FOUNDATION_SPECIALTY);
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+    when(programmeMembershipService.getOwnerContact(MANAGING_DEANERY, contactType, null, null,
+        TraineeType.FOUNDATION))
+        .thenReturn(LO_CONTACT1);
+
+    Optional<Set<LocalOfficeContact>> loContacts =
+        service.getTraineeLocalOfficeContacts(DEFAULT_TIS_ID_1, contactType);
+
+    verify(programmeMembershipService)
+        .getOwnerContact(MANAGING_DEANERY, contactType, null, null, TraineeType.FOUNDATION);
+    assertThat("Unexpected missing LO contacts.", loContacts.isPresent(), is(true));
+    assertThat("Unexpected local office contacts.", loContacts.get().size(), is(1));
+    assertThat("Unexpected local office contact.",
+        loContacts.get().stream().toList().get(0).contact(), is(LO_CONTACT1));
+  }
+
+  @ParameterizedTest
+  @EnumSource(LocalOfficeContactType.class)
+  void shouldPassFoundationTraineeTypeToGetOwnerContactWhenCurriculumNameIsAcademicFoundation(
+      LocalOfficeContactType contactType) {
+    programmeMembership.setStartDate(LocalDate.MIN);
+    programmeMembership.setEndDate(LocalDate.MAX);
+    curriculum.setCurriculumName(ACADEMIC_FOUNDATION_CURRICULUM_NAME);
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+    when(programmeMembershipService.getOwnerContact(MANAGING_DEANERY, contactType, null, null,
+        TraineeType.FOUNDATION))
+        .thenReturn(LO_CONTACT1);
+
+    Optional<Set<LocalOfficeContact>> loContacts =
+        service.getTraineeLocalOfficeContacts(DEFAULT_TIS_ID_1, contactType);
+
+    verify(programmeMembershipService)
+        .getOwnerContact(MANAGING_DEANERY, contactType, null, null, TraineeType.FOUNDATION);
+    assertThat("Unexpected missing LO contacts.", loContacts.isPresent(), is(true));
+    assertThat("Unexpected local office contacts.", loContacts.get().size(), is(1));
+    assertThat("Unexpected local office contact.",
+        loContacts.get().stream().toList().get(0).contact(), is(LO_CONTACT1));
+  }
 }
+
