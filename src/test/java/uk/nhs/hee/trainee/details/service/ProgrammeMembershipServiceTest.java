@@ -36,20 +36,25 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static uk.nhs.hee.trainee.details.dto.TraineeType.FOUNDATION;
 import static uk.nhs.hee.trainee.details.model.HrefType.ABSOLUTE_URL;
 import static uk.nhs.hee.trainee.details.model.HrefType.NON_HREF;
 import static uk.nhs.hee.trainee.details.model.HrefType.PROTOCOL_EMAIL;
+import static uk.nhs.hee.trainee.details.service.FeatureService.ACADEMIC_FOUNDATION_CURRICULUM_NAME;
+import static uk.nhs.hee.trainee.details.service.FeatureService.FOUNDATION_SPECIALTY;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.CONTACT_FIELD;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.CONTACT_TYPE_FIELD;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.DEFAULT_NO_CONTACT_MESSAGE;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.MEDICAL_CURRICULA;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.NON_RELEVANT_PROGRAMME_MEMBERSHIP_TYPES;
+import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.OWNER_FIELD;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PILOT_2024_LOCAL_OFFICES_ALL_PROGRAMMES;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PILOT_2024_NW_SPECIALTIES;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PILOT_2024_ROLLOUT_LOCAL_OFFICES;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PM_CONFIRM_WEEKS;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PROGRAMME_BREAK_DAYS;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.PUBLIC_HEALTH_MEDICINE_SPECIALTY;
+import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.TRAINEE_TYPE_FIELD;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.TSS_CURRICULA;
 
 import java.io.IOException;
@@ -73,6 +78,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import uk.nhs.hee.trainee.details.dto.TraineeType;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapperImpl;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
@@ -108,7 +114,7 @@ class ProgrammeMembershipServiceTest {
   private static final GoldGuideVersion GOLD_GUIDE_VERSION = GoldGuideVersion.GG9;
   private static final Instant COJ_SYNCED_AT = Instant.now();
   private static final String CURRICULUM_SPECIALTY_CODE = "X75";
-  private static final String CURRICULUM_SPECIALTY = "some valid specialty";
+  private static final String CURRICULUM_SPECIALTY = "MEDICAL_CURRICULUM";
   private static final String RO_FIRSTNAME = "first name-";
   private static final String RO_LASTNAME = "last name-";
   private static final String RO_EMAIL = "email-";
@@ -630,14 +636,14 @@ class ProgrammeMembershipServiceTest {
         PUBLIC_HEALTH_MEDICINE_SPECIALTY);
     pm.setCurricula(List.of(curr1));
 
-    boolean isPublicHealth = service.isPublicHealth(pm);
+    boolean isPublicHealth = ProgrammeMembershipService.isPublicHealthProgramme(pm);
 
     assertThat("Unexpected isPublicHealth result.", isPublicHealth, is(true));
   }
 
   @Test
   void isPublicHealthShouldBeFalseIfPmIsNull() {
-    boolean isPublicHealth = service.isPublicHealth(null);
+    boolean isPublicHealth = ProgrammeMembershipService.isPublicHealthProgramme(null);
 
     assertThat("Unexpected isPublicHealth result.", isPublicHealth, is(false));
   }
@@ -648,7 +654,7 @@ class ProgrammeMembershipServiceTest {
         ORIGINAL_SUFFIX, 0);
     pm.setCurricula(null);
 
-    boolean isPublicHealth = service.isPublicHealth(pm);
+    boolean isPublicHealth = ProgrammeMembershipService.isPublicHealthProgramme(pm);
 
     assertThat("Unexpected isPublicHealth result.", isPublicHealth, is(false));
   }
@@ -661,9 +667,68 @@ class ProgrammeMembershipServiceTest {
     Curriculum curr1 = createCurriculum(CURRICULUM_SPECIALTY, null, null);
     pm.setCurricula(List.of(curr1));
 
-    boolean isPublicHealth = service.isPublicHealth(pm);
+    boolean isPublicHealth = ProgrammeMembershipService.isPublicHealthProgramme(pm);
 
     assertThat("Unexpected isPublicHealth result.", isPublicHealth, is(false));
+  }
+
+  @Test
+  void isFoundationProgrammeShouldBeFalseIfPmIsNull() {
+    boolean isFoundation = ProgrammeMembershipService.isFoundationProgramme(null);
+
+    assertThat("Unexpected isFoundationProgramme result.", isFoundation, is(false));
+  }
+
+  @ParameterizedTest
+  @NullAndEmptySource
+  void isFoundationProgrammeShouldBeFalseIfPmHasNoCurricula(List<Curriculum> curricula) {
+    ProgrammeMembership pm = createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_UUID,
+        ORIGINAL_SUFFIX, 0);
+    pm.setCurricula(curricula);
+
+    boolean isFoundation = ProgrammeMembershipService.isFoundationProgramme(pm);
+
+    assertThat("Unexpected isFoundationProgramme result.", isFoundation, is(false));
+  }
+
+  @Test
+  void isFoundationProgrammeShouldBeFalseIfPmCurriculaHasNoNameOrSpecialty() {
+    ProgrammeMembership pm = createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_UUID,
+        ORIGINAL_SUFFIX, 0);
+
+    Curriculum curr1 = createCurriculum(CURRICULUM_SPECIALTY, null, null);
+    pm.setCurricula(List.of(curr1));
+
+    boolean isFoundation = ProgrammeMembershipService.isFoundationProgramme(pm);
+
+    assertThat("Unexpected isFoundationProgramme result.", isFoundation, is(false));
+  }
+
+  @Test
+  void isFoundationProgrammeShouldBeTrueIfPmHasFoundationCurriculumSpecialty() {
+    ProgrammeMembership pm = createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_UUID,
+        ORIGINAL_SUFFIX, 0);
+
+    Curriculum curr1 = createCurriculum(CURRICULUM_SPECIALTY, null, FOUNDATION_SPECIALTY);
+    pm.setCurricula(List.of(curr1));
+
+    boolean isFoundation = ProgrammeMembershipService.isFoundationProgramme(pm);
+
+    assertThat("Unexpected isFoundationProgramme result.", isFoundation, is(true));
+  }
+
+  @Test
+  void isFoundationProgrammeShouldBeTrueIfPmHasAcademicFoundationCurriculumName() {
+    ProgrammeMembership pm = createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_UUID,
+        ORIGINAL_SUFFIX, 0);
+
+    Curriculum curr1 = createCurriculum(CURRICULUM_SPECIALTY, null, null);
+    curr1.setCurriculumName(ACADEMIC_FOUNDATION_CURRICULUM_NAME);
+    pm.setCurricula(List.of(curr1));
+
+    boolean isFoundation = ProgrammeMembershipService.isFoundationProgramme(pm);
+
+    assertThat("Unexpected isFoundationProgramme result.", isFoundation, is(true));
   }
 
   @Test
@@ -1683,10 +1748,12 @@ class ProgrammeMembershipServiceTest {
     contacts.add(contact1);
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
-    when(restTemplate
-        .getForObject("http://localhost/8205/reference/api/local-office-contact-by-lo-name"
-                + "/{localOfficeName}",
-            List.class, Map.of("localOfficeName", MANAGING_DEANERY))).thenReturn(contacts);
+    when(restTemplate.getForObject(
+            "http://localhost/8205/reference/api/local-office-contact-by-lo-name"
+                + "/{localOfficeName}?traineeType={traineeType}",
+            List.class,
+            Map.of("localOfficeName", MANAGING_DEANERY, "traineeType", TraineeType.SPECIALTY)))
+        .thenReturn(contacts);
 
     service.generateProgrammeMembershipPdf(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
 
@@ -1701,6 +1768,72 @@ class ProgrammeMembershipServiceTest {
         is(OWNER_CONTACT));
     assertThat("Unexpected contact Href.", variables.get("contactHref"),
         is(NON_HREF.toString()));
+  }
+
+  @Test
+  void shouldUseFoundationTraineeTypeWhenGeneratingPdfForFoundationCurriculumSpecialty()
+      throws IOException {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPersonalDetails(createPersonalDetails(""));
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, START_DATE, END_DATE, MANAGING_DEANERY,
+            TSS_CURRICULA.get(0), CURRICULUM_SPECIALTY_CODE, FOUNDATION_SPECIALTY)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    service.generateProgrammeMembershipPdf(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    verify(restTemplate).getForObject(
+        "http://localhost/8205/reference/api/local-office-contact-by-lo-name/"
+            + "{localOfficeName}?traineeType={traineeType}",
+        List.class,
+        Map.of("localOfficeName", MANAGING_DEANERY, "traineeType", FOUNDATION));
+  }
+
+  @Test
+  void shouldUseFoundationTraineeTypeWhenGeneratingPdfForAcademicFoundationCurriculumName()
+      throws IOException {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPersonalDetails(createPersonalDetails(""));
+    ProgrammeMembership pm = getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+        PROGRAMME_MEMBERSHIP_TYPE, START_DATE, END_DATE, MANAGING_DEANERY,
+        TSS_CURRICULA.get(0), CURRICULUM_SPECIALTY_CODE, null);
+    pm.getCurricula().get(0).setCurriculumName(ACADEMIC_FOUNDATION_CURRICULUM_NAME);
+    traineeProfile.setProgrammeMemberships(List.of(pm));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    service.generateProgrammeMembershipPdf(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    verify(restTemplate)
+        .getForObject(
+            "http://localhost/8205/reference/api/local-office-contact-by-lo-name/"
+                + "{localOfficeName}?traineeType={traineeType}",
+            List.class,
+            Map.of("localOfficeName", MANAGING_DEANERY, "traineeType", FOUNDATION));
+  }
+
+  @Test
+  void shouldUsePublicHealthTraineeTypeWhenGeneratingPdfForPublicHealthCurriculumSpecialty()
+      throws IOException {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPersonalDetails(createPersonalDetails(""));
+    traineeProfile.setProgrammeMemberships(
+        List.of(getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
+            PROGRAMME_MEMBERSHIP_TYPE, START_DATE, END_DATE, MANAGING_DEANERY,
+            TSS_CURRICULA.get(0), CURRICULUM_SPECIALTY_CODE, PUBLIC_HEALTH_MEDICINE_SPECIALTY)));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    service.generateProgrammeMembershipPdf(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
+
+    verify(restTemplate)
+        .getForObject(
+            "http://localhost/8205/reference/api/local-office-contact-by-lo-name/"
+                + "{localOfficeName}?traineeType={traineeType}",
+            List.class,
+            Map.of("localOfficeName", MANAGING_DEANERY, "traineeType", TraineeType.PUBLIC_HEALTH));
   }
 
   @Test
@@ -1818,11 +1951,84 @@ class ProgrammeMembershipServiceTest {
   }
 
   @Test
+  void shouldGetFoundationContactWhenContactTypeExistsWithFoundationSuffix() {
+    List<Map<String, String>> contacts = new ArrayList<>();
+    Map<String, String> contact1 = new HashMap<>();
+    contact1.put(CONTACT_TYPE_FIELD,
+        LocalOfficeContactType.TSS_SUPPORT.getContactTypeName(FOUNDATION));
+    contact1.put(CONTACT_FIELD, "foundation@email.com");
+    contacts.add(contact1);
+    Map<String, String> contact2 = new HashMap<>();
+    contact2.put(CONTACT_TYPE_FIELD,
+        LocalOfficeContactType.DEFERRAL.getContactTypeName(FOUNDATION));
+    contact2.put(CONTACT_FIELD, "deferral@email.com");
+    contacts.add(contact2);
+
+    String ownerContact = service.getOwnerContact(contacts,
+        LocalOfficeContactType.TSS_SUPPORT, LocalOfficeContactType.DEFERRAL,
+        DEFAULT_NO_CONTACT_MESSAGE, FOUNDATION);
+
+    assertThat("Unexpected owner contact.", ownerContact, is(contact1.get(CONTACT_FIELD)));
+  }
+
+  @Test
+  void shouldGetFoundationFallbackContactWhenContactMissingAndFallbackHasFoundationSuffix() {
+    List<Map<String, String>> contacts = new ArrayList<>();
+    Map<String, String> contact1 = new HashMap<>();
+    contact1.put(CONTACT_TYPE_FIELD,
+        LocalOfficeContactType.TSS_SUPPORT.getContactTypeName(FOUNDATION));
+    contact1.put(CONTACT_FIELD, "foundation@email.com");
+    contacts.add(contact1);
+
+    String ownerContact = service.getOwnerContact(contacts,
+        LocalOfficeContactType.ONBOARDING_SUPPORT, LocalOfficeContactType.TSS_SUPPORT,
+        DEFAULT_NO_CONTACT_MESSAGE, FOUNDATION);
+
+    assertThat("Unexpected owner contact.", ownerContact, is(contact1.get(CONTACT_FIELD)));
+  }
+
+  @Test
+  void shouldGetDefaultNoContactWhenNeitherContactNorFallbackHasFoundationSuffix() {
+    List<Map<String, String>> contacts = new ArrayList<>();
+    Map<String, String> contact1 = new HashMap<>();
+    contact1.put(CONTACT_TYPE_FIELD, LocalOfficeContactType.TSS_SUPPORT.getContactTypeName());
+    contact1.put(CONTACT_FIELD, "tss@email.com");
+    contacts.add(contact1);
+    Map<String, String> contact2 = new HashMap<>();
+    contact2.put(CONTACT_TYPE_FIELD, LocalOfficeContactType.DEFERRAL.getContactTypeName());
+    contact2.put(CONTACT_FIELD, "deferral@email.com");
+    contacts.add(contact2);
+
+    String ownerContact = service.getOwnerContact(contacts,
+        LocalOfficeContactType.TSS_SUPPORT, LocalOfficeContactType.DEFERRAL,
+        DEFAULT_NO_CONTACT_MESSAGE, FOUNDATION);
+
+    assertThat("Unexpected owner contact.", ownerContact, is(DEFAULT_NO_CONTACT_MESSAGE));
+  }
+
+  @Test
+  void shouldGetDefaultNoContactWhenContactMissingAndFallbackNullForFoundation() {
+    List<Map<String, String>> contacts = new ArrayList<>();
+    Map<String, String> contact1 = new HashMap<>();
+    contact1.put(CONTACT_TYPE_FIELD,
+        LocalOfficeContactType.TSS_SUPPORT.getContactTypeName(FOUNDATION));
+    contact1.put(CONTACT_FIELD, "foundation@email.com");
+    contacts.add(contact1);
+
+    String ownerContact = service.getOwnerContact(contacts,
+        LocalOfficeContactType.ONBOARDING_SUPPORT, null,
+        DEFAULT_NO_CONTACT_MESSAGE, FOUNDATION);
+
+    assertThat("Unexpected owner contact.", ownerContact, is(DEFAULT_NO_CONTACT_MESSAGE));
+  }
+
+  @Test
   void shouldGetEmptyContactListIfReferenceServiceFailure() {
     doThrow(new RestClientException("error"))
         .when(restTemplate).getForObject(any(), any(), anyMap());
 
-    List<Map<String, String>> contactList = service.getOwnerContactList("a local office");
+    List<Map<String, String>> contactList = service.getOwnerContactList("a local office",
+        TraineeType.SPECIALTY);
 
     assertThat("Unexpected owner contact list.", contactList.size(), is(0));
   }
@@ -1831,16 +2037,56 @@ class ProgrammeMembershipServiceTest {
   void shouldReturnNullContactListIfOwnerContactListIsNull() {
     when(restTemplate.getForObject(any(), any(), anyMap())).thenReturn(null);
 
-    List<Map<String, String>> contactList = service.getOwnerContactList("a local office");
+    List<Map<String, String>> contactList = service.getOwnerContactList("a local office",
+        TraineeType.SPECIALTY);
 
     assertThat("Unexpected owner contact list.", contactList.size(), is(0));
   }
 
   @Test
   void shouldGetEmptyContactListIfLocalOfficeNull() {
-    List<Map<String, String>> contactList = service.getOwnerContactList(null);
+    List<Map<String, String>> contactList = service.getOwnerContactList(null,
+        TraineeType.SPECIALTY);
 
     assertThat("Unexpected owner contact.", contactList.size(), is(0));
+  }
+
+  @Test
+  void shouldUseFoundationTraineeTypeWhenGettingContactListForFoundationProgramme() {
+    ArgumentCaptor<Map<String, Object>> uriVarsCaptor = ArgumentCaptor.forClass(Map.class);
+    when(restTemplate.getForObject(any(), any(), anyMap())).thenReturn(new ArrayList<>());
+
+    service.getOwnerContactList("a local office", FOUNDATION);
+
+    verify(restTemplate).getForObject(any(), any(), uriVarsCaptor.capture());
+    assertThat("Unexpected trainee type.", uriVarsCaptor.getValue().get(TRAINEE_TYPE_FIELD),
+        is(FOUNDATION));
+  }
+
+  @Test
+  void shouldIncludeLocalOfficeNameWhenGettingContactListForFoundationProgramme() {
+    ArgumentCaptor<Map<String, Object>> uriVarsCaptor = ArgumentCaptor.forClass(Map.class);
+    when(restTemplate.getForObject(any(), any(), anyMap())).thenReturn(new ArrayList<>());
+
+    service.getOwnerContactList("a local office", FOUNDATION);
+
+    verify(restTemplate).getForObject(any(), any(), uriVarsCaptor.capture());
+    assertThat("Unexpected local office name.", uriVarsCaptor.getValue().get(OWNER_FIELD),
+        is("a local office"));
+  }
+
+  @Test
+  void shouldUseFoundationTraineeTypeWhenGettingOwnerContactForFoundationProgramme() {
+    ArgumentCaptor<Map<String, Object>> uriVarsCaptor = ArgumentCaptor.forClass(Map.class);
+    when(restTemplate.getForObject(any(), any(), anyMap())).thenReturn(new ArrayList<>());
+
+    service.getOwnerContact("a local office", LocalOfficeContactType.TSS_SUPPORT,
+        LocalOfficeContactType.ONBOARDING_SUPPORT, DEFAULT_NO_CONTACT_MESSAGE,
+        FOUNDATION);
+
+    verify(restTemplate).getForObject(any(), any(), uriVarsCaptor.capture());
+    assertThat("Unexpected trainee type.", uriVarsCaptor.getValue().get(TRAINEE_TYPE_FIELD),
+        is(FOUNDATION));
   }
 
   @Test

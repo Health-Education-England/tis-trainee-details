@@ -24,6 +24,8 @@ package uk.nhs.hee.trainee.details.service;
 import static uk.nhs.hee.trainee.details.model.HrefType.ABSOLUTE_URL;
 import static uk.nhs.hee.trainee.details.model.HrefType.NON_HREF;
 import static uk.nhs.hee.trainee.details.model.HrefType.PROTOCOL_EMAIL;
+import static uk.nhs.hee.trainee.details.service.FeatureService.ACADEMIC_FOUNDATION_CURRICULUM_NAME;
+import static uk.nhs.hee.trainee.details.service.FeatureService.FOUNDATION_SPECIALTY;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.io.File;
@@ -47,6 +49,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.thymeleaf.TemplateSpec;
 import org.thymeleaf.templatemode.TemplateMode;
+import uk.nhs.hee.trainee.details.dto.TraineeType;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapper;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
@@ -66,7 +69,7 @@ import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 public class ProgrammeMembershipService {
 
   protected static final String API_GET_OWNER_CONTACT
-      = "/api/local-office-contact-by-lo-name/{localOfficeName}";
+      = "/api/local-office-contact-by-lo-name/{localOfficeName}?traineeType={traineeType}";
   protected static final String DEFAULT_NO_CONTACT_MESSAGE
       = "your local office";
   protected static final List<String> MEDICAL_CURRICULA
@@ -77,6 +80,7 @@ public class ProgrammeMembershipService {
       = List.of("VISITOR", "LAT");
   protected static final Long PROGRAMME_BREAK_DAYS = 355L;
   protected static final String OWNER_FIELD = "localOfficeName";
+  protected static final String TRAINEE_TYPE_FIELD = "traineeType";
   protected static final String CONTACT_TYPE_FIELD = "contactTypeName";
   protected static final String CONTACT_FIELD = "contact";
   protected static final int PM_CONFIRM_WEEKS = 12;
@@ -447,7 +451,7 @@ public class ProgrammeMembershipService {
       log.info("2024 pilot rollout: [false] start date is null for {}", programmeMembershipId);
       return false;
     }
-    boolean isPublicHealth = isPublicHealth(programmeMembership);
+    boolean isPublicHealth = isPublicHealthProgramme(programmeMembership);
     log.debug("2024 pilot rollout: programme membership {} is for Public Health Medicine: {}",
         programmeMembershipId, isPublicHealth);
     LocalDate notificationEpoch;
@@ -468,19 +472,45 @@ public class ProgrammeMembershipService {
   }
 
   /**
-   * Assess if the programme membership is for Public Health Medicine.
+   * Identify if a programme membership is a Public Health Medicine programme, by checking if any
+   * of the curricula have a TSS-relevant sub-type and a Public Health Medicine specialty.
    *
-   * @param programmeMembership The programme membership to assess.
-   * @return true, or false if the programme membership is not for Public Health Medicine.
+   * @param programmeMembership The programme membership to check.
+   * @return true if the programme membership is a Public Health Medicine programme, otherwise
+   *     false.
    */
-  public boolean isPublicHealth(ProgrammeMembership programmeMembership) {
+  public static boolean isPublicHealthProgramme(ProgrammeMembership programmeMembership) {
     if (programmeMembership == null || programmeMembership.getCurricula() == null) {
       return false;
     }
     return programmeMembership.getCurricula().stream()
-        .anyMatch(curriculum -> curriculum.getCurriculumSpecialty() != null
-            && curriculum.getCurriculumSpecialty()
-            .equalsIgnoreCase(PUBLIC_HEALTH_MEDICINE_SPECIALTY));
+        .anyMatch(curriculum -> {
+          String subType = curriculum.getCurriculumSubType();
+          String specialty = curriculum.getCurriculumSpecialty();
+          return subType != null && specialty != null
+              && TSS_CURRICULA.stream().anyMatch(subType::equalsIgnoreCase)
+              && specialty.equalsIgnoreCase(PUBLIC_HEALTH_MEDICINE_SPECIALTY);
+        });
+  }
+
+  /**
+   * Identify if a programme membership is a foundation programme, by checking if any of the
+   * curricula have a name or specialty indicating it's a foundation programme.
+   *
+   * @param programmeMembership The programme membership to check.
+   * @return true if the programme membership is a foundation programme, otherwise false.
+   */
+  public static boolean isFoundationProgramme(ProgrammeMembership programmeMembership) {
+    if (programmeMembership == null || programmeMembership.getCurricula() == null) {
+      return false;
+    }
+    return programmeMembership.getCurricula().stream()
+        .anyMatch(curriculum -> {
+          String name = curriculum.getCurriculumName();
+          String specialty = curriculum.getCurriculumSpecialty();
+          return (name != null && (name.equalsIgnoreCase(ACADEMIC_FOUNDATION_CURRICULUM_NAME))
+              || (specialty != null && specialty.equalsIgnoreCase(FOUNDATION_SPECIALTY)));
+        });
   }
 
   /**
@@ -548,9 +578,10 @@ public class ProgrammeMembershipService {
               .isBefore(LocalDate.now())) {
 
             // Template Variables
+            TraineeType traineeType = TraineeType.from(programmeMembership);
             String contact = getOwnerContact(programmeMembership.getManagingDeanery(),
                 LocalOfficeContactType.ONBOARDING_SUPPORT,
-                LocalOfficeContactType.TSS_SUPPORT, "");
+                LocalOfficeContactType.TSS_SUPPORT, "", traineeType);
 
             Map<String, Object> templateVariables = new HashMap<>();
             templateVariables.put("pm", programmeMembership);
@@ -753,14 +784,16 @@ public class ProgrammeMembershipService {
    * Retrieve the full list of contacts for a local office from Trainee Reference Service.
    *
    * @param localOfficeName The local office name.
+   * @param traineeType     The trainee type to use to select the contact 'subtype'.
    * @return The list of contacts, or an empty list if there is an error.
    */
-  protected List<Map<String, String>> getOwnerContactList(String localOfficeName) {
+  protected List<Map<String, String>> getOwnerContactList(String localOfficeName,
+      TraineeType traineeType) {
     if (localOfficeName != null) {
       try {
         List<Map<String, String>> ownerContactList
-            = restTemplate.getForObject(referenceUrl + API_GET_OWNER_CONTACT,
-            List.class, Map.of(OWNER_FIELD, localOfficeName));
+            = restTemplate.getForObject(referenceUrl + API_GET_OWNER_CONTACT, List.class,
+            Map.of(OWNER_FIELD, localOfficeName, TRAINEE_TYPE_FIELD, traineeType));
         return ownerContactList == null ? new ArrayList<>() : ownerContactList;
       } catch (RestClientException rce) {
         log.warn("Exception occurred when requesting reference local-office-contact-by-lo-name "
@@ -783,16 +816,34 @@ public class ProgrammeMembershipService {
   protected String getOwnerContact(List<Map<String, String>> ownerContactList,
       LocalOfficeContactType contactType, LocalOfficeContactType fallbackContactType,
       String defaultMessage) {
+    return getOwnerContact(ownerContactList, contactType, fallbackContactType, defaultMessage,
+        null);
+  }
+
+  /**
+   * Get specified owner contact from a list of contacts.
+   *
+   * @param ownerContactList    The owner contact list to search.
+   * @param contactType         The contact type to return.
+   * @param fallbackContactType if the contactType is not available, return this contactType
+   *                            instead.
+   * @param defaultMessage      The default message if the contact was not found.
+   * @param traineeType         The trainee type to use to qualify the contact type name.
+   * @return The specific contact of the owner, or the default message if not found.
+   */
+  protected String getOwnerContact(List<Map<String, String>> ownerContactList,
+      LocalOfficeContactType contactType, LocalOfficeContactType fallbackContactType,
+      String defaultMessage, TraineeType traineeType) {
 
     Optional<Map<String, String>> ownerContact = ownerContactList.stream()
         .filter(c ->
-            c.get(CONTACT_TYPE_FIELD).equalsIgnoreCase(contactType.getContactTypeName()))
+            c.get(CONTACT_TYPE_FIELD).equalsIgnoreCase(contactType.getContactTypeName(traineeType)))
         .findFirst();
     if (ownerContact.isEmpty() && fallbackContactType != null) {
       ownerContact = ownerContactList.stream()
           .filter(c ->
               c.get(CONTACT_TYPE_FIELD)
-                  .equalsIgnoreCase(fallbackContactType.getContactTypeName()))
+                  .equalsIgnoreCase(fallbackContactType.getContactTypeName(traineeType)))
           .findFirst();
     }
     return ownerContact.map(oc -> oc.get(CONTACT_FIELD))
@@ -809,12 +860,14 @@ public class ProgrammeMembershipService {
    * @param fallbackContactType if the contactType is not available, return this contactType
    *                            instead.
    * @param defaultMessage      The default message if the contact was not found.
+   * @param traineeType         The trainee type to use to select the contact 'subtype'.
    * @return The specific contact of the local office, or the default message if not found.
    */
   public String getOwnerContact(String localOfficeName, LocalOfficeContactType contactType,
-      LocalOfficeContactType fallbackContactType, String defaultMessage) {
-    return getOwnerContact(
-        getOwnerContactList(localOfficeName), contactType, fallbackContactType, defaultMessage);
+      LocalOfficeContactType fallbackContactType, String defaultMessage, TraineeType traineeType) {
+
+    return getOwnerContact(getOwnerContactList(localOfficeName, traineeType), contactType,
+        fallbackContactType, defaultMessage, traineeType);
   }
 
   /**

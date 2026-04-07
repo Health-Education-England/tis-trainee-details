@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.dto.LocalOfficeContact;
+import uk.nhs.hee.trainee.details.dto.TraineeType;
 import uk.nhs.hee.trainee.details.dto.UserDetails;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
@@ -168,11 +169,13 @@ public class TraineeProfileService {
 
       for (ProgrammeMembership pm : currentPms) {
         if (pm.getManagingDeanery() != null) {
+          TraineeType traineeType = TraineeType.from(pm);
           String loTypeContact = programmeMembershipService.getOwnerContact(
                   pm.getManagingDeanery(),
                   contactType,
                   null,
-                  null);
+                  null,
+                  traineeType);
           if (loTypeContact != null) {
             localOfficeContacts.add(new LocalOfficeContact(
                 loTypeContact, pm.getManagingDeanery()));
