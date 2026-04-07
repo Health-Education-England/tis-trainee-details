@@ -816,16 +816,34 @@ public class ProgrammeMembershipService {
   protected String getOwnerContact(List<Map<String, String>> ownerContactList,
       LocalOfficeContactType contactType, LocalOfficeContactType fallbackContactType,
       String defaultMessage) {
+    return getOwnerContact(ownerContactList, contactType, fallbackContactType, defaultMessage,
+        null);
+  }
+
+  /**
+   * Get specified owner contact from a list of contacts.
+   *
+   * @param ownerContactList    The owner contact list to search.
+   * @param contactType         The contact type to return.
+   * @param fallbackContactType if the contactType is not available, return this contactType
+   *                            instead.
+   * @param defaultMessage      The default message if the contact was not found.
+   * @param traineeType         The trainee type to use to qualify the contact type name.
+   * @return The specific contact of the owner, or the default message if not found.
+   */
+  protected String getOwnerContact(List<Map<String, String>> ownerContactList,
+      LocalOfficeContactType contactType, LocalOfficeContactType fallbackContactType,
+      String defaultMessage, TraineeType traineeType) {
 
     Optional<Map<String, String>> ownerContact = ownerContactList.stream()
         .filter(c ->
-            c.get(CONTACT_TYPE_FIELD).equalsIgnoreCase(contactType.getContactTypeName()))
+            c.get(CONTACT_TYPE_FIELD).equalsIgnoreCase(contactType.getContactTypeName(traineeType)))
         .findFirst();
     if (ownerContact.isEmpty() && fallbackContactType != null) {
       ownerContact = ownerContactList.stream()
           .filter(c ->
               c.get(CONTACT_TYPE_FIELD)
-                  .equalsIgnoreCase(fallbackContactType.getContactTypeName()))
+                  .equalsIgnoreCase(fallbackContactType.getContactTypeName(traineeType)))
           .findFirst();
     }
     return ownerContact.map(oc -> oc.get(CONTACT_FIELD))
@@ -847,8 +865,9 @@ public class ProgrammeMembershipService {
    */
   public String getOwnerContact(String localOfficeName, LocalOfficeContactType contactType,
       LocalOfficeContactType fallbackContactType, String defaultMessage, TraineeType traineeType) {
+
     return getOwnerContact(getOwnerContactList(localOfficeName, traineeType), contactType,
-        fallbackContactType, defaultMessage);
+        fallbackContactType, defaultMessage, traineeType);
   }
 
   /**

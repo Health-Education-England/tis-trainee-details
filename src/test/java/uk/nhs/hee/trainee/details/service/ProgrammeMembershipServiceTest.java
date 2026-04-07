@@ -36,6 +36,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static uk.nhs.hee.trainee.details.dto.TraineeType.FOUNDATION;
 import static uk.nhs.hee.trainee.details.model.HrefType.ABSOLUTE_URL;
 import static uk.nhs.hee.trainee.details.model.HrefType.NON_HREF;
 import static uk.nhs.hee.trainee.details.model.HrefType.PROTOCOL_EMAIL;
@@ -1787,7 +1788,7 @@ class ProgrammeMembershipServiceTest {
         "http://localhost/8205/reference/api/local-office-contact-by-lo-name/"
             + "{localOfficeName}?traineeType={traineeType}",
         List.class,
-        Map.of("localOfficeName", MANAGING_DEANERY, "traineeType", TraineeType.FOUNDATION));
+        Map.of("localOfficeName", MANAGING_DEANERY, "traineeType", FOUNDATION));
   }
 
   @Test
@@ -1810,7 +1811,7 @@ class ProgrammeMembershipServiceTest {
             "http://localhost/8205/reference/api/local-office-contact-by-lo-name/"
                 + "{localOfficeName}?traineeType={traineeType}",
             List.class,
-            Map.of("localOfficeName", MANAGING_DEANERY, "traineeType", TraineeType.FOUNDATION));
+            Map.of("localOfficeName", MANAGING_DEANERY, "traineeType", FOUNDATION));
   }
 
   @Test
@@ -1950,6 +1951,78 @@ class ProgrammeMembershipServiceTest {
   }
 
   @Test
+  void shouldGetFoundationContactWhenContactTypeExistsWithFoundationSuffix() {
+    List<Map<String, String>> contacts = new ArrayList<>();
+    Map<String, String> contact1 = new HashMap<>();
+    contact1.put(CONTACT_TYPE_FIELD,
+        LocalOfficeContactType.TSS_SUPPORT.getContactTypeName(FOUNDATION));
+    contact1.put(CONTACT_FIELD, "foundation@email.com");
+    contacts.add(contact1);
+    Map<String, String> contact2 = new HashMap<>();
+    contact2.put(CONTACT_TYPE_FIELD,
+        LocalOfficeContactType.DEFERRAL.getContactTypeName(FOUNDATION));
+    contact2.put(CONTACT_FIELD, "deferral@email.com");
+    contacts.add(contact2);
+
+    String ownerContact = service.getOwnerContact(contacts,
+        LocalOfficeContactType.TSS_SUPPORT, LocalOfficeContactType.DEFERRAL,
+        DEFAULT_NO_CONTACT_MESSAGE, FOUNDATION);
+
+    assertThat("Unexpected owner contact.", ownerContact, is(contact1.get(CONTACT_FIELD)));
+  }
+
+  @Test
+  void shouldGetFoundationFallbackContactWhenContactMissingAndFallbackHasFoundationSuffix() {
+    List<Map<String, String>> contacts = new ArrayList<>();
+    Map<String, String> contact1 = new HashMap<>();
+    contact1.put(CONTACT_TYPE_FIELD,
+        LocalOfficeContactType.TSS_SUPPORT.getContactTypeName(FOUNDATION));
+    contact1.put(CONTACT_FIELD, "foundation@email.com");
+    contacts.add(contact1);
+
+    String ownerContact = service.getOwnerContact(contacts,
+        LocalOfficeContactType.ONBOARDING_SUPPORT, LocalOfficeContactType.TSS_SUPPORT,
+        DEFAULT_NO_CONTACT_MESSAGE, FOUNDATION);
+
+    assertThat("Unexpected owner contact.", ownerContact, is(contact1.get(CONTACT_FIELD)));
+  }
+
+  @Test
+  void shouldGetDefaultNoContactWhenNeitherContactNorFallbackHasFoundationSuffix() {
+    List<Map<String, String>> contacts = new ArrayList<>();
+    Map<String, String> contact1 = new HashMap<>();
+    contact1.put(CONTACT_TYPE_FIELD, LocalOfficeContactType.TSS_SUPPORT.getContactTypeName());
+    contact1.put(CONTACT_FIELD, "tss@email.com");
+    contacts.add(contact1);
+    Map<String, String> contact2 = new HashMap<>();
+    contact2.put(CONTACT_TYPE_FIELD, LocalOfficeContactType.DEFERRAL.getContactTypeName());
+    contact2.put(CONTACT_FIELD, "deferral@email.com");
+    contacts.add(contact2);
+
+    String ownerContact = service.getOwnerContact(contacts,
+        LocalOfficeContactType.TSS_SUPPORT, LocalOfficeContactType.DEFERRAL,
+        DEFAULT_NO_CONTACT_MESSAGE, FOUNDATION);
+
+    assertThat("Unexpected owner contact.", ownerContact, is(DEFAULT_NO_CONTACT_MESSAGE));
+  }
+
+  @Test
+  void shouldGetDefaultNoContactWhenContactMissingAndFallbackNullForFoundation() {
+    List<Map<String, String>> contacts = new ArrayList<>();
+    Map<String, String> contact1 = new HashMap<>();
+    contact1.put(CONTACT_TYPE_FIELD,
+        LocalOfficeContactType.TSS_SUPPORT.getContactTypeName(FOUNDATION));
+    contact1.put(CONTACT_FIELD, "foundation@email.com");
+    contacts.add(contact1);
+
+    String ownerContact = service.getOwnerContact(contacts,
+        LocalOfficeContactType.ONBOARDING_SUPPORT, null,
+        DEFAULT_NO_CONTACT_MESSAGE, FOUNDATION);
+
+    assertThat("Unexpected owner contact.", ownerContact, is(DEFAULT_NO_CONTACT_MESSAGE));
+  }
+
+  @Test
   void shouldGetEmptyContactListIfReferenceServiceFailure() {
     doThrow(new RestClientException("error"))
         .when(restTemplate).getForObject(any(), any(), anyMap());
@@ -1983,11 +2056,11 @@ class ProgrammeMembershipServiceTest {
     ArgumentCaptor<Map<String, Object>> uriVarsCaptor = ArgumentCaptor.forClass(Map.class);
     when(restTemplate.getForObject(any(), any(), anyMap())).thenReturn(new ArrayList<>());
 
-    service.getOwnerContactList("a local office", TraineeType.FOUNDATION);
+    service.getOwnerContactList("a local office", FOUNDATION);
 
     verify(restTemplate).getForObject(any(), any(), uriVarsCaptor.capture());
     assertThat("Unexpected trainee type.", uriVarsCaptor.getValue().get(TRAINEE_TYPE_FIELD),
-        is(TraineeType.FOUNDATION));
+        is(FOUNDATION));
   }
 
   @Test
@@ -1995,7 +2068,7 @@ class ProgrammeMembershipServiceTest {
     ArgumentCaptor<Map<String, Object>> uriVarsCaptor = ArgumentCaptor.forClass(Map.class);
     when(restTemplate.getForObject(any(), any(), anyMap())).thenReturn(new ArrayList<>());
 
-    service.getOwnerContactList("a local office", TraineeType.FOUNDATION);
+    service.getOwnerContactList("a local office", FOUNDATION);
 
     verify(restTemplate).getForObject(any(), any(), uriVarsCaptor.capture());
     assertThat("Unexpected local office name.", uriVarsCaptor.getValue().get(OWNER_FIELD),
@@ -2009,11 +2082,11 @@ class ProgrammeMembershipServiceTest {
 
     service.getOwnerContact("a local office", LocalOfficeContactType.TSS_SUPPORT,
         LocalOfficeContactType.ONBOARDING_SUPPORT, DEFAULT_NO_CONTACT_MESSAGE,
-        TraineeType.FOUNDATION);
+        FOUNDATION);
 
     verify(restTemplate).getForObject(any(), any(), uriVarsCaptor.capture());
     assertThat("Unexpected trainee type.", uriVarsCaptor.getValue().get(TRAINEE_TYPE_FIELD),
-        is(TraineeType.FOUNDATION));
+        is(FOUNDATION));
   }
 
   @Test

@@ -23,6 +23,7 @@ package uk.nhs.hee.trainee.details.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import uk.nhs.hee.trainee.details.dto.TraineeType;
 
 /**
  * An enumeration of possible local office contact types.
@@ -39,5 +40,22 @@ public enum LocalOfficeContactType {
   TSS_SUPPORT("TIS Self-Service Support"),
   LOCAL_OFFICE_WEBSITE("Local office website");
 
+  private static final String FOUNDATION_SUFFIX = " - Foundation";
+
   private final String contactTypeName;
+
+  /**
+   * Get the contact type name for the given trainee type. If the trainee type is
+   * {@link TraineeType#FOUNDATION}, the name is suffixed with " - Foundation"; otherwise the
+   * default name is returned.
+   *
+   * @param traineeType the trainee type, may be {@code null}
+   * @return the contact type name, qualified by trainee type where applicable
+   */
+  public String getContactTypeName(TraineeType traineeType) {
+    if (traineeType == TraineeType.FOUNDATION) {
+      return contactTypeName + FOUNDATION_SUFFIX;
+    }
+    return contactTypeName;
+  }
 }
