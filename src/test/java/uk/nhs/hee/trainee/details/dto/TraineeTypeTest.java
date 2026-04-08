@@ -51,7 +51,7 @@ class TraineeTypeTest {
 
   @ParameterizedTest
   @ValueSource(strings = {FOUNDATION_CURRICULUM_SUBTYPE, "aft"})
-  void shouldReturnFoundationWhenCurriculumNameIsAcademicFoundationTraining(String subtype) {
+  void shouldReturnFoundationWhenCurriculumSubtypeIsAcademicFoundationTraining(String subtype) {
     ProgrammeMembership pm = new ProgrammeMembership();
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSubType(subtype);

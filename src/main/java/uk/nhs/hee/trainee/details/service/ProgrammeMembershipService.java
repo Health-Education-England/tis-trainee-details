@@ -495,7 +495,7 @@ public class ProgrammeMembershipService {
 
   /**
    * Identify if a programme membership is a foundation programme, by checking if any of the
-   * curricula have a name or specialty indicating it's a foundation programme.
+   * curricula have a specialty or subtype indicating it's a foundation programme.
    *
    * @param programmeMembership The programme membership to check.
    * @return true if the programme membership is a foundation programme, otherwise false.
