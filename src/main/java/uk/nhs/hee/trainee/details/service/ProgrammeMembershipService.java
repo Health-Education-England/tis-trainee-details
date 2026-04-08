@@ -24,7 +24,7 @@ package uk.nhs.hee.trainee.details.service;
 import static uk.nhs.hee.trainee.details.model.HrefType.ABSOLUTE_URL;
 import static uk.nhs.hee.trainee.details.model.HrefType.NON_HREF;
 import static uk.nhs.hee.trainee.details.model.HrefType.PROTOCOL_EMAIL;
-import static uk.nhs.hee.trainee.details.service.FeatureService.ACADEMIC_FOUNDATION_CURRICULUM_NAME;
+import static uk.nhs.hee.trainee.details.service.FeatureService.FOUNDATION_CURRICULUM_SUBTYPE;
 import static uk.nhs.hee.trainee.details.service.FeatureService.FOUNDATION_SPECIALTY;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
@@ -73,9 +73,9 @@ public class ProgrammeMembershipService {
   protected static final String DEFAULT_NO_CONTACT_MESSAGE
       = "your local office";
   protected static final List<String> MEDICAL_CURRICULA
-      = List.of("DENTAL_CURRICULUM", "DENTAL_POST_CCST", "MEDICAL_CURRICULUM");
+      = List.of("DENTAL_CURRICULUM", "DENTAL_POST_CCST", "MEDICAL_CURRICULUM", "AFT");
   protected static final List<String> TSS_CURRICULA
-      = List.of("MEDICAL_CURRICULUM", "MEDICAL_SPR");
+      = List.of("MEDICAL_CURRICULUM", "MEDICAL_SPR", "AFT");
   protected static final List<String> NON_RELEVANT_PROGRAMME_MEMBERSHIP_TYPES
       = List.of("VISITOR", "LAT");
   protected static final Long PROGRAMME_BREAK_DAYS = 355L;
@@ -506,9 +506,9 @@ public class ProgrammeMembershipService {
     }
     return programmeMembership.getCurricula().stream()
         .anyMatch(curriculum -> {
-          String name = curriculum.getCurriculumName();
           String specialty = curriculum.getCurriculumSpecialty();
-          return (name != null && (name.equalsIgnoreCase(ACADEMIC_FOUNDATION_CURRICULUM_NAME))
+          String subtype = curriculum.getCurriculumSubType();
+          return (subtype != null && (subtype.equalsIgnoreCase(FOUNDATION_CURRICULUM_SUBTYPE))
               || (specialty != null && specialty.equalsIgnoreCase(FOUNDATION_SPECIALTY)));
         });
   }

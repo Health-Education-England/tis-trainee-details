@@ -126,7 +126,7 @@ class FeatureServiceTest {
       MEDICAL_SPR        | PUBLIC HEALTH MEDICINE | DUMMY
       medical_spr        | public health medicine | DUMMY
       AFT                | ACADEMIC               | ACADEMIC FOUNDATION TRAINING
-      aft                |                        | academic foundation training
+      aft                |                        | DUMMY
       MEDICAL_CURRICULUM | FOUNDATION             | DUMMY
       medical_curriculum | foundation             |
       """)
@@ -207,7 +207,7 @@ class FeatureServiceTest {
       MEDICAL_SPR        | PUBLIC HEALTH MEDICINE | DUMMY
       medical_spr        | public health medicine | DUMMY
       AFT                | ACADEMIC               | ACADEMIC FOUNDATION TRAINING
-      aft                |                        | academic foundation training
+      aft                |                        | DUMMY
       MEDICAL_CURRICULUM | FOUNDATION             | DUMMY
       medical_curriculum | foundation             |
       """)
@@ -347,7 +347,7 @@ class FeatureServiceTest {
   @ParameterizedTest
   @CsvSource(delimiter = '|', textBlock = """
       AFT                | ACADEMIC   | ACADEMIC FOUNDATION TRAINING
-      aft                |            | academic foundation training
+      aft                |            | DUMMY
       MEDICAL_CURRICULUM | FOUNDATION | DUMMY
       medical_curriculum | foundation |
       """)
@@ -407,14 +407,14 @@ class FeatureServiceTest {
   @ParameterizedTest
   @CsvSource(delimiter = '|', textBlock = """
       AFT                | ACADEMIC         | ACADEMIC FOUNDATION TRAINING
-      aft                |                  | academic foundation training
+      aft                |                  | DUMMY
       MEDICAL_CURRICULUM | FOUNDATION       | DUMMY
       medical_curriculum | foundation       |
       UNKNOWN            | General Practice | DUMMY
       ""                 | ""               | ""
       MEDICAL_SPR        |                  |
                          | FOUNDATION       |
-                         |                  | ACADEMIC FOUNDATION TRAINING
+                         |                  | DUMMY
                          |                  |
       """)
   void shouldDisableFormsWhenFoundationOrNoPublicHealthOrSpecialtyProgrammes(
@@ -523,7 +523,7 @@ class FeatureServiceTest {
   @ParameterizedTest
   @CsvSource(delimiter = '|', textBlock = """
       AFT                | ACADEMIC               | ACADEMIC FOUNDATION TRAINING
-      aft                |                        | academic foundation training
+      aft                |                        | DUMMY
       MEDICAL_CURRICULUM | FOUNDATION             | DUMMY
       medical_curriculum | foundation             |
       MEDICAL_CURRICULUM | PUBLIC HEALTH MEDICINE | DUMMY
@@ -532,7 +532,7 @@ class FeatureServiceTest {
       ""                 | ""                     | ""
       MEDICAL_SPR        |                        |
                          | FOUNDATION             |
-                         |                        | ACADEMIC FOUNDATION TRAINING
+                         |                        | DUMMY
                          |                        |
       """)
   void shouldDisableLtftWhenFoundationOrNoSpecialtyProgrammes(
@@ -873,7 +873,7 @@ class FeatureServiceTest {
       MEDICAL_SPR        | PUBLIC HEALTH MEDICINE | DUMMY
       medical_spr        | public health medicine | DUMMY
       AFT                | ACADEMIC               | ACADEMIC FOUNDATION TRAINING
-      aft                |                        | academic foundation training
+      aft                |                        | DUMMY
       MEDICAL_CURRICULUM | FOUNDATION             | DUMMY
       medical_curriculum | foundation             |
       """)
@@ -954,7 +954,7 @@ class FeatureServiceTest {
       MEDICAL_SPR        | PUBLIC HEALTH MEDICINE | DUMMY
       medical_spr        | public health medicine | DUMMY
       AFT                | ACADEMIC               | ACADEMIC FOUNDATION TRAINING
-      aft                |                        | academic foundation training
+      aft                |                        | DUMMY
       MEDICAL_CURRICULUM | FOUNDATION             | DUMMY
       medical_curriculum | foundation             |
       """)

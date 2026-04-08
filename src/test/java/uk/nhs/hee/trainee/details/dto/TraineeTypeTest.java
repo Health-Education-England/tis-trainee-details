@@ -23,7 +23,7 @@ package uk.nhs.hee.trainee.details.dto;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static uk.nhs.hee.trainee.details.service.FeatureService.ACADEMIC_FOUNDATION_CURRICULUM_NAME;
+import static uk.nhs.hee.trainee.details.service.FeatureService.FOUNDATION_CURRICULUM_SUBTYPE;
 import static uk.nhs.hee.trainee.details.service.FeatureService.FOUNDATION_SPECIALTY;
 
 import java.util.ArrayList;
@@ -50,11 +50,11 @@ class TraineeTypeTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {ACADEMIC_FOUNDATION_CURRICULUM_NAME, "academic foundation training"})
-  void shouldReturnFoundationWhenCurriculumNameIsAcademicFoundationTraining(String name) {
+  @ValueSource(strings = {FOUNDATION_CURRICULUM_SUBTYPE, "aft"})
+  void shouldReturnFoundationWhenCurriculumNameIsAcademicFoundationTraining(String subtype) {
     ProgrammeMembership pm = new ProgrammeMembership();
     Curriculum curriculum = new Curriculum();
-    curriculum.setCurriculumName(name);
+    curriculum.setCurriculumSubType(subtype);
     pm.setCurricula(List.of(curriculum));
 
     TraineeType result = TraineeType.from(pm);

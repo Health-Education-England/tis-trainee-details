@@ -40,7 +40,7 @@ import static uk.nhs.hee.trainee.details.dto.TraineeType.FOUNDATION;
 import static uk.nhs.hee.trainee.details.model.HrefType.ABSOLUTE_URL;
 import static uk.nhs.hee.trainee.details.model.HrefType.NON_HREF;
 import static uk.nhs.hee.trainee.details.model.HrefType.PROTOCOL_EMAIL;
-import static uk.nhs.hee.trainee.details.service.FeatureService.ACADEMIC_FOUNDATION_CURRICULUM_NAME;
+import static uk.nhs.hee.trainee.details.service.FeatureService.FOUNDATION_CURRICULUM_SUBTYPE;
 import static uk.nhs.hee.trainee.details.service.FeatureService.FOUNDATION_SPECIALTY;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.CONTACT_FIELD;
 import static uk.nhs.hee.trainee.details.service.ProgrammeMembershipService.CONTACT_TYPE_FIELD;
@@ -597,28 +597,12 @@ class ProgrammeMembershipServiceTest {
   }
 
   @ParameterizedTest
-  @NullSource
-  @ValueSource(strings = {"Foundation"})
-  void shouldNotBeOnboardableWhenNoOnboardableSpecialty(String specialty) {
+  @ValueSource(strings = {"MEDICAL_CURRICULUM", "MEDICAL_SPR", "AFT"})
+  void shouldBeOnboardableWhenOnboardableCurriculaSubType(String subType) {
     ProgrammeMembership pm = createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_UUID,
         ORIGINAL_SUFFIX, 0);
 
-    Curriculum curr1 = createCurriculum("MEDICAL_CURRICULUM", null, specialty);
-    Curriculum curr2 = createCurriculum("MEDICAL_SPR", null, specialty);
-    pm.setCurricula(List.of(curr1, curr2));
-
-    boolean canBeOnboarded = service.canBeOnboarded(pm);
-
-    assertThat("Unexpected canBeOnboarded result.", canBeOnboarded, is(true));
-  }
-
-  @ParameterizedTest
-  @ValueSource(strings = {"MEDICAL_CURRICULUM", "MEDICAL_SPR"})
-  void shouldBeOnboardableWhenProgrammeMembershipAndCurriculaOnboardable(String subType) {
-    ProgrammeMembership pm = createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_UUID,
-        ORIGINAL_SUFFIX, 0);
-
-    Curriculum curr1 = createCurriculum(subType, null, "Foundation");
+    Curriculum curr1 = createCurriculum(subType, null, "specialty1");
     Curriculum curr2 = createCurriculum(subType, null, "specialty2");
     pm.setCurricula(List.of(curr1, curr2));
 
@@ -718,12 +702,12 @@ class ProgrammeMembershipServiceTest {
   }
 
   @Test
-  void isFoundationProgrammeShouldBeTrueIfPmHasAcademicFoundationCurriculumName() {
+  void isFoundationProgrammeShouldBeTrueIfPmHasAcademicFoundationTraining() {
     ProgrammeMembership pm = createProgrammeMembership(EXISTING_PROGRAMME_MEMBERSHIP_UUID,
         ORIGINAL_SUFFIX, 0);
 
     Curriculum curr1 = createCurriculum(CURRICULUM_SPECIALTY, null, null);
-    curr1.setCurriculumName(ACADEMIC_FOUNDATION_CURRICULUM_NAME);
+    curr1.setCurriculumSubType(FOUNDATION_CURRICULUM_SUBTYPE);
     pm.setCurricula(List.of(curr1));
 
     boolean isFoundation = ProgrammeMembershipService.isFoundationProgramme(pm);
@@ -1792,14 +1776,14 @@ class ProgrammeMembershipServiceTest {
   }
 
   @Test
-  void shouldUseFoundationTraineeTypeWhenGeneratingPdfForAcademicFoundationCurriculumName()
+  void shouldUseFoundationTraineeTypeWhenGeneratingPdfForAcademicFoundationTraining()
       throws IOException {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setPersonalDetails(createPersonalDetails(""));
     ProgrammeMembership pm = getProgrammeMembershipWithOneCurriculum(PROGRAMME_TIS_ID,
         PROGRAMME_MEMBERSHIP_TYPE, START_DATE, END_DATE, MANAGING_DEANERY,
         TSS_CURRICULA.get(0), CURRICULUM_SPECIALTY_CODE, null);
-    pm.getCurricula().get(0).setCurriculumName(ACADEMIC_FOUNDATION_CURRICULUM_NAME);
+    pm.getCurricula().get(0).setCurriculumSubType(FOUNDATION_CURRICULUM_SUBTYPE);
     traineeProfile.setProgrammeMemberships(List.of(pm));
 
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
