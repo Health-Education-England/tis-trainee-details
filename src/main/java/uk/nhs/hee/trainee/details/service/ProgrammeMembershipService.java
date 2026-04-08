@@ -837,13 +837,13 @@ public class ProgrammeMembershipService {
 
     Optional<Map<String, String>> ownerContact = ownerContactList.stream()
         .filter(c ->
-            c.get(CONTACT_TYPE_FIELD).equalsIgnoreCase(contactType.getContactTypeName(traineeType)))
+            c.get(CONTACT_TYPE_FIELD).equalsIgnoreCase(contactType.getContactTypeName()))
         .findFirst();
     if (ownerContact.isEmpty() && fallbackContactType != null) {
       ownerContact = ownerContactList.stream()
           .filter(c ->
               c.get(CONTACT_TYPE_FIELD)
-                  .equalsIgnoreCase(fallbackContactType.getContactTypeName(traineeType)))
+                  .equalsIgnoreCase(fallbackContactType.getContactTypeName()))
           .findFirst();
     }
     return ownerContact.map(oc -> oc.get(CONTACT_FIELD))
