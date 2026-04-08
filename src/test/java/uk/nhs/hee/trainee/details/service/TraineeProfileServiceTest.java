@@ -34,7 +34,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion.GG10;
 import static uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion.GG9;
-import static uk.nhs.hee.trainee.details.service.FeatureService.ACADEMIC_FOUNDATION_CURRICULUM_NAME;
+import static uk.nhs.hee.trainee.details.service.FeatureService.FOUNDATION_CURRICULUM_SUBTYPE;
 import static uk.nhs.hee.trainee.details.service.FeatureService.FOUNDATION_SPECIALTY;
 
 import java.time.Instant;
@@ -794,11 +794,11 @@ class TraineeProfileServiceTest {
 
   @ParameterizedTest
   @EnumSource(LocalOfficeContactType.class)
-  void shouldPassFoundationTraineeTypeToGetOwnerContactWhenCurriculumNameIsAcademicFoundation(
+  void shouldPassFoundationTraineeTypeToGetOwnerContactWhenCurriculumIsAcademicFoundationTraining(
       LocalOfficeContactType contactType) {
     programmeMembership.setStartDate(LocalDate.MIN);
     programmeMembership.setEndDate(LocalDate.MAX);
-    curriculum.setCurriculumName(ACADEMIC_FOUNDATION_CURRICULUM_NAME);
+    curriculum.setCurriculumSubType(FOUNDATION_CURRICULUM_SUBTYPE);
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
     when(programmeMembershipService.getOwnerContact(MANAGING_DEANERY, contactType, null, null,
         TraineeType.FOUNDATION))

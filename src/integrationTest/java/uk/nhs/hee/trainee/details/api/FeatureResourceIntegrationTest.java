@@ -175,18 +175,19 @@ class FeatureResourceIntegrationTest {
 
   @ParameterizedTest
   @CsvSource(delimiter = '|', textBlock = """
-      ACADEMIC   | ACADEMIC FOUNDATION TRAINING
-                 | academic foundation training
-      FOUNDATION | DUMMY
-      foundation |
+      DUMMY      | AFT    | ACADEMIC FOUNDATION TRAINING
+      DUMMY      | aft    | DUMMY
+      FOUNDATION | DUMMY  | DUMMY
+      foundation |        | DUMMY
       """)
-  void shouldDisableFormsAndCojForFoundation(String specialty, String curriculumName)
-      throws Exception {
+  void shouldDisableFormsAndCojForFoundation(String specialty, String subType,
+      String curriculumName) throws Exception {
     TraineeProfile profile = new TraineeProfile();
     profile.setTraineeTisId(TRAINEE_ID);
 
     Curriculum curriculum = new Curriculum();
     curriculum.setCurriculumSpecialty(specialty);
+    curriculum.setCurriculumSubType(subType);
     curriculum.setCurriculumName(curriculumName);
 
     String pmId = UUID.randomUUID().toString();

@@ -42,7 +42,7 @@ import uk.nhs.hee.trainee.details.model.TraineeProfile;
 @Service
 public class FeatureService {
 
-  public static final String ACADEMIC_FOUNDATION_CURRICULUM_NAME = "ACADEMIC FOUNDATION TRAINING";
+  public static final String FOUNDATION_CURRICULUM_SUBTYPE = "AFT";
 
   private static final Set<String> NON_FOUNDATION_TRAINEE_CURRICULUM_SUB_TYPES = Set.of(
       "MEDICAL_CURRICULUM", "MEDICAL_SPR");
