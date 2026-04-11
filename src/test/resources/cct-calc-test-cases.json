@@ -1,0 +1,94 @@
+{
+  "calculateCctDate": [
+    {
+      "description": "half-time for full year",
+      "input": {
+        "currentProgEndDate": "2025-12-31",
+        "currentWte": 1,
+        "newWte": 0.5,
+        "changeStartDate": "2025-01-01"
+      },
+      "expected": "2026-07-02"
+    },
+    {
+      "description": "no change in WTE",
+      "input": {
+        "currentProgEndDate": "2025-06-30",
+        "currentWte": 1,
+        "newWte": 1,
+        "changeStartDate": "2025-01-01"
+      },
+      "expected": "2025-06-30"
+    },
+    {
+      "description": "80% WTE for 6 months",
+      "input": {
+        "currentProgEndDate": "2026-03-31",
+        "currentWte": 1,
+        "newWte": 0.8,
+        "changeStartDate": "2025-10-01"
+      },
+      "expected": "2026-05-06"
+    },
+    {
+      "description": "already part-time going more part-time",
+      "input": {
+        "currentProgEndDate": "2025-09-30",
+        "currentWte": 0.8,
+        "newWte": 0.6,
+        "changeStartDate": "2025-04-01"
+      },
+      "expected": "2025-11-15"
+    },
+    {
+      "description": "half-time for one month",
+      "input": {
+        "currentProgEndDate": "2025-03-31",
+        "currentWte": 1,
+        "newWte": 0.5,
+        "changeStartDate": "2025-03-01"
+      },
+      "expected": "2025-04-16"
+    },
+    {
+      "description": "half-time same start and end date",
+      "input": {
+        "currentProgEndDate": "2025-06-15",
+        "currentWte": 1,
+        "newWte": 0.5,
+        "changeStartDate": "2025-06-15"
+      },
+      "expected": "2025-06-16"
+    },
+    {
+      "description": "60% WTE over long period",
+      "input": {
+        "currentProgEndDate": "2027-08-31",
+        "currentWte": 1,
+        "newWte": 0.6,
+        "changeStartDate": "2025-09-01"
+      },
+      "expected": "2028-06-18"
+    },
+    {
+      "description": "increase from part-time to full-time",
+      "input": {
+        "currentProgEndDate": "2025-12-31",
+        "currentWte": 0.5,
+        "newWte": 1,
+        "changeStartDate": "2025-07-01"
+      },
+      "expected": "2025-06-30"
+    },
+    {
+      "description": "half-time leap year crossing",
+      "input": {
+        "currentProgEndDate": "2024-12-31",
+        "currentWte": 1,
+        "newWte": 0.5,
+        "changeStartDate": "2024-01-01"
+      },
+      "expected": "2025-07-02"
+    }
+  ]
+}
