@@ -287,7 +287,7 @@ public class CctService {
             c, currentEndDate);
         return null;
       }
-      long chunkDays = ChronoUnit.DAYS.between(startDate, currentEndDate);
+      long chunkDays = ChronoUnit.DAYS.between(startDate, currentEndDate) +1; //inclusive
       double currentWte = i == 0
           ? entity.programmeMembership().wte()
           : orderedChanges.get(i - 1).wte();
@@ -296,10 +296,10 @@ public class CctService {
         log.warn("CCT date cannot be calculated, WTE for change {} is less than minimum.", c);
         return null;
       }
-      long chunkDaysWte = (long) Math.ceil((chunkDays * currentWte) / wte);
-      currentEndDate = currentEndDate.plusDays(chunkDaysWte - chunkDays);
+      double wteDays = chunkDays * (wte / currentWte);
+      long ltftExtension = Math.round(chunkDays - wteDays);
+      currentEndDate = currentEndDate.plusDays(ltftExtension);
     }
-
     return currentEndDate;
   }
 
