@@ -44,6 +44,7 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import com.jayway.jsonpath.JsonPath;
 import io.awspring.cloud.sqs.operations.SqsTemplate;
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -85,10 +86,19 @@ import uk.nhs.hee.trainee.details.model.TraineeProfile;
 @AutoConfigureMockMvc
 class CctResourceIntegrationTest {
 
-  private static final String TRAINEE_ID = UUID.randomUUID().toString();
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().findAndRegisterModules();
 
-  private static final LocalDate CCT_DATE_75 = LocalDate.of(2024, 11, 1);
-  //based on calculationJson change below.
+  private static final String TRAINEE_ID = UUID.randomUUID().toString();
+  private static final String CCT_CALC_TEST_CASES_RESOURCE = "cct-calc-test-cases.json";
+  private static final String CCT_CASE_DESCRIPTION = "already part-time going more part-time";
+
+  private static final CalculateCctDateCase CCT_CASE = loadCctCase(CCT_CASE_DESCRIPTION);
+  private static final LocalDate CCT_PM_END_DATE = CCT_CASE.input().currentProgEndDate();
+  private static final LocalDate CCT_PM_START_DATE = CCT_PM_END_DATE.minusYears(1);
+  private static final LocalDate CCT_CHANGE_START_DATE = CCT_CASE.input().changeStartDate();
+  private static final double CCT_PM_WTE = CCT_CASE.input().currentWte();
+  private static final double CCT_CHANGE_WTE = CCT_CASE.input().newWte();
+  private static final LocalDate CCT_EXPECTED_DATE = CCT_CASE.expected();
 
   @Container
   @ServiceConnection
@@ -108,27 +118,33 @@ class CctResourceIntegrationTest {
 
   @BeforeEach
   void setUp() throws IOException {
-    calculationJson = (ObjectNode) new ObjectMapper().readTree("""
+    calculationJson = (ObjectNode) OBJECT_MAPPER.readTree("""
         {
           "name": "Test Calculation",
           "programmeMembership": {
             "id": "12345678-aaaa-bbbb-cccc-012345678910",
             "name": "Test Programme",
-            "startDate": "2024-01-01",
-            "endDate": "2025-01-01",
-            "wte": 0.5,
+            "startDate": "%s",
+            "endDate": "%s",
+            "wte": %s,
             "designatedBodyCode": "testDbc"
           },
-          "cctDate": "2024-01-01",
+          "cctDate": "%s",
           "changes": [
             {
               "type": "LTFT",
-              "startDate": "2024-07-01",
-              "wte": 0.75
+              "startDate": "%s",
+              "wte": %s
             }
           ]
         }
-        """);
+        """.formatted(
+        CCT_PM_START_DATE,
+        CCT_PM_END_DATE,
+        CCT_PM_WTE,
+        CCT_EXPECTED_DATE,
+        CCT_CHANGE_START_DATE,
+        CCT_CHANGE_WTE));
   }
 
   @AfterEach
@@ -180,21 +196,19 @@ class CctResourceIntegrationTest {
         .name("Test Calculation")
         .programmeMembership(CctProgrammeMembership.builder()
             .id(pmId)
-            .startDate(LocalDate.parse("2024-01-01"))
-            .endDate(LocalDate.parse("2025-01-01"))
-            .wte(1.0)
+        .startDate(CCT_PM_START_DATE)
+        .endDate(CCT_PM_END_DATE)
+        .wte(CCT_PM_WTE)
             .designatedBodyCode("testDbc")
             .build())
         .changes(List.of(
             CctChange.builder()
                 .type(CctChangeType.LTFT)
-                .startDate(LocalDate.parse("2024-07-01"))
-                .wte(0.5)
+          .startDate(CCT_CHANGE_START_DATE)
+          .wte(CCT_CHANGE_WTE)
                 .build()))
         .build();
     entity = template.insert(entity);
-
-    LocalDate cctDate = LocalDate.of(2025, 7, 4); //based on details above
 
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
     mockMvc.perform(get("/api/cct/calculation")
@@ -208,7 +222,7 @@ class CctResourceIntegrationTest {
         .andExpect(jsonPath("$[0].programmeMembership.id").value(pmId.toString()))
         .andExpect(jsonPath("$[0].created").value(
             entity.created().truncatedTo(ChronoUnit.MILLIS).toString()))
-        .andExpect(jsonPath("$[0].cctDate").value(cctDate.toString()))
+        .andExpect(jsonPath("$[0].cctDate").value(CCT_EXPECTED_DATE.toString()))
         .andExpect(jsonPath("$[0].lastModified").value(
             entity.lastModified().truncatedTo(ChronoUnit.MILLIS).toString()));
   }
@@ -330,22 +344,20 @@ class CctResourceIntegrationTest {
         .programmeMembership(CctProgrammeMembership.builder()
             .id(pmId)
             .name("Test Programme")
-            .startDate(LocalDate.parse("2024-01-01"))
-            .endDate(LocalDate.parse("2025-01-01"))
-            .wte(1.0)
+            .startDate(CCT_PM_START_DATE)
+            .endDate(CCT_PM_END_DATE)
+            .wte(CCT_PM_WTE)
             .designatedBodyCode("testDbc")
             .managingDeanery("Test Deanery")
             .build())
         .changes(List.of(
             CctChange.builder()
                 .type(CctChangeType.LTFT)
-                .startDate(LocalDate.parse("2024-07-01"))
-                .wte(0.5)
+                .startDate(CCT_CHANGE_START_DATE)
+                .wte(CCT_CHANGE_WTE)
                 .build()))
         .build();
     entity = template.insert(entity);
-
-    LocalDate cctDate = LocalDate.of(2025, 7, 4); //based on details above
 
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
     mockMvc.perform(get("/api/cct/calculation/{id}", entity.id())
@@ -357,17 +369,17 @@ class CctResourceIntegrationTest {
         .andExpect(jsonPath("$.name").value("Test Calculation"))
         .andExpect(jsonPath("$.programmeMembership").isMap())
         .andExpect(jsonPath("$.programmeMembership.id").value(pmId.toString()))
-        .andExpect(jsonPath("$.programmeMembership.startDate").value("2024-01-01"))
-        .andExpect(jsonPath("$.programmeMembership.endDate").value("2025-01-01"))
-        .andExpect(jsonPath("$.programmeMembership.wte").value(1))
+        .andExpect(jsonPath("$.programmeMembership.startDate").value(CCT_PM_START_DATE.toString()))
+        .andExpect(jsonPath("$.programmeMembership.endDate").value(CCT_PM_END_DATE.toString()))
+        .andExpect(jsonPath("$.programmeMembership.wte").value(CCT_PM_WTE))
         .andExpect(jsonPath("$.programmeMembership.designatedBodyCode").value("testDbc"))
         .andExpect(jsonPath("$.programmeMembership.managingDeanery").value("Test Deanery"))
         .andExpect(jsonPath("$.changes").isArray())
         .andExpect(jsonPath("$.changes", hasSize(1)))
         .andExpect(jsonPath("$.changes[0].type").value("LTFT"))
-        .andExpect(jsonPath("$.changes[0].startDate").value("2024-07-01"))
-        .andExpect(jsonPath("$.changes[0].wte").value(0.5))
-        .andExpect(jsonPath("$.cctDate").value(cctDate.toString()))
+        .andExpect(jsonPath("$.changes[0].startDate").value(CCT_CHANGE_START_DATE.toString()))
+        .andExpect(jsonPath("$.changes[0].wte").value(CCT_CHANGE_WTE))
+        .andExpect(jsonPath("$.cctDate").value(CCT_EXPECTED_DATE.toString()))
         .andExpect(
             jsonPath("$.created").value(entity.created().truncatedTo(ChronoUnit.MILLIS).toString()))
         .andExpect(jsonPath("$.lastModified").value(
@@ -633,7 +645,7 @@ class CctResourceIntegrationTest {
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.id").exists())
         .andExpect(jsonPath("$.traineeId").doesNotExist())
-        .andExpect(jsonPath("$.cctDate").value(CCT_DATE_75.toString()))
+        .andExpect(jsonPath("$.cctDate").value(CCT_EXPECTED_DATE.toString()))
         .andExpect(jsonPath("$.name").value("Test Calculation"))
         .andExpect(jsonPath("$.created").exists())
         .andExpect(jsonPath("$.lastModified").exists())
@@ -1012,5 +1024,36 @@ class CctResourceIntegrationTest {
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isOk())
         .andExpect(content().string("true"));
+  }
+
+  private static CalculateCctDateCase loadCctCase(String description) {
+    try (InputStream jsonInputStream = CctResourceIntegrationTest.class.getClassLoader()
+        .getResourceAsStream(CCT_CALC_TEST_CASES_RESOURCE)) {
+      if (jsonInputStream == null) {
+        throw new IllegalStateException("Unable to load test resource: "
+            + CCT_CALC_TEST_CASES_RESOURCE);
+      }
+
+      CalculateCctDateSourceOfTruth sourceOfTruth = OBJECT_MAPPER.readValue(jsonInputStream,
+          CalculateCctDateSourceOfTruth.class);
+      return sourceOfTruth.calculateCctDate().stream()
+          .filter(c -> description.equals(c.description()))
+          .findFirst()
+          .orElseThrow(() -> new IllegalStateException("Unable to find CCT test case: "
+              + description));
+    } catch (IOException e) {
+      throw new IllegalStateException("Unable to parse CCT test case resource.", e);
+    }
+  }
+
+  private record CalculateCctDateSourceOfTruth(List<CalculateCctDateCase> calculateCctDate) {
+  }
+
+  private record CalculateCctDateCase(String description, CalculateCctDateInput input,
+                                      LocalDate expected) {
+  }
+
+  private record CalculateCctDateInput(LocalDate currentProgEndDate, double currentWte,
+                                       double newWte, LocalDate changeStartDate) {
   }
 }
