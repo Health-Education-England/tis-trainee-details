@@ -743,6 +743,46 @@ class CctServiceTest {
     assertThat("Unexpected CCT date.", service.calculateCctDate(entity), is(nullValue()));
   }
 
+  @Test
+  void shouldReturnNullCctDateIfPmWteIsTooSmall() {
+    LocalDate pmStartDate = LocalDate.EPOCH;
+    CctCalculation entity = CctCalculation.builder()
+        .traineeId(TRAINEE_ID)
+        .programmeMembership(CctProgrammeMembership.builder()
+            .startDate(pmStartDate)
+            .endDate(LocalDate.EPOCH.plusYears(1))
+            .wte(0.0)
+            .designatedBodyCode("testDbc")
+            .build())
+        .changes(List.of(
+            CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(3))
+                .wte(0.5).build()))
+        .build();
+
+    assertThat("Unexpected CCT date.", service.calculateCctDate(entity), is(nullValue()));
+  }
+
+  @Test
+  void shouldReturnNullCctDateIfPreviousChangeWteIsTooSmall() {
+    LocalDate pmStartDate = LocalDate.EPOCH;
+    CctCalculation entity = CctCalculation.builder()
+        .traineeId(TRAINEE_ID)
+        .programmeMembership(CctProgrammeMembership.builder()
+            .startDate(pmStartDate)
+            .endDate(LocalDate.EPOCH.plusYears(1))
+            .wte(1.0)
+            .designatedBodyCode("testDbc")
+            .build())
+        .changes(List.of(
+            CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(3))
+                .wte(0.0).build(),
+            CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(6))
+                .wte(0.5).build()))
+        .build();
+
+    assertThat("Unexpected CCT date.", service.calculateCctDate(entity), is(nullValue()));
+  }
+
   private static Stream<Arguments> calculateCctDateCases() throws IOException {
     try (var jsonInputStream = CctServiceTest.class.getClassLoader()
         .getResourceAsStream(CCT_CALC_TEST_CASES_RESOURCE)) {

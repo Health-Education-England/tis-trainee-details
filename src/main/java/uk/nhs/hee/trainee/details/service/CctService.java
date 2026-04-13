@@ -291,6 +291,10 @@ public class CctService {
       double currentWte = i == 0
           ? entity.programmeMembership().wte()
           : orderedChanges.get(i - 1).wte();
+      if (currentWte < WTE_EPSILON) {
+        log.warn("CCT date cannot be calculated, current WTE is less than minimum.");
+        return null;
+      }
       double wte = c.wte();
       if (wte < WTE_EPSILON) {
         log.warn("CCT date cannot be calculated, WTE for change {} is less than minimum.", c);
