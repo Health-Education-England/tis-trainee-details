@@ -287,7 +287,7 @@ public class CctService {
             c, currentEndDate);
         return null;
       }
-      long chunkDays = ChronoUnit.DAYS.between(startDate, currentEndDate) +1; //inclusive
+      long chunkDays = ChronoUnit.DAYS.between(startDate, currentEndDate) + 1;
       double currentWte = i == 0
           ? entity.programmeMembership().wte()
           : orderedChanges.get(i - 1).wte();
