@@ -44,7 +44,6 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import com.jayway.jsonpath.JsonPath;
 import io.awspring.cloud.sqs.operations.SqsTemplate;
 import java.io.IOException;
-import java.io.InputStream;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -89,16 +88,12 @@ class CctResourceIntegrationTest {
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().findAndRegisterModules();
 
   private static final String TRAINEE_ID = UUID.randomUUID().toString();
-  private static final String CCT_CALC_TEST_CASES_RESOURCE = "cct-calc-test-cases.json";
-  private static final String CCT_CASE_DESCRIPTION = "already part-time going more part-time";
-
-  private static final CalculateCctDateCase CCT_CASE = loadCctCase(CCT_CASE_DESCRIPTION);
-  private static final LocalDate CCT_PM_END_DATE = CCT_CASE.input().currentProgEndDate();
+  private static final LocalDate CCT_PM_END_DATE = LocalDate.of(2025, 9, 30);
   private static final LocalDate CCT_PM_START_DATE = CCT_PM_END_DATE.minusYears(1);
-  private static final LocalDate CCT_CHANGE_START_DATE = CCT_CASE.input().changeStartDate();
-  private static final double CCT_PM_WTE = CCT_CASE.input().currentWte();
-  private static final double CCT_CHANGE_WTE = CCT_CASE.input().newWte();
-  private static final LocalDate CCT_EXPECTED_DATE = CCT_CASE.expected();
+  private static final LocalDate CCT_CHANGE_START_DATE = LocalDate.of(2025, 4, 1);
+  private static final double CCT_PM_WTE = 0.8;
+  private static final double CCT_CHANGE_WTE = 0.6;
+  private static final LocalDate CCT_EXPECTED_DATE = LocalDate.of(2025, 11, 15);
 
   @Container
   @ServiceConnection
@@ -1026,34 +1021,4 @@ class CctResourceIntegrationTest {
         .andExpect(content().string("true"));
   }
 
-  private static CalculateCctDateCase loadCctCase(String description) {
-    try (InputStream jsonInputStream = CctResourceIntegrationTest.class.getClassLoader()
-        .getResourceAsStream(CCT_CALC_TEST_CASES_RESOURCE)) {
-      if (jsonInputStream == null) {
-        throw new IllegalStateException("Unable to load test resource: "
-            + CCT_CALC_TEST_CASES_RESOURCE);
-      }
-
-      CalculateCctDateSourceOfTruth sourceOfTruth = OBJECT_MAPPER.readValue(jsonInputStream,
-          CalculateCctDateSourceOfTruth.class);
-      return sourceOfTruth.calculateCctDate().stream()
-          .filter(c -> description.equals(c.description()))
-          .findFirst()
-          .orElseThrow(() -> new IllegalStateException("Unable to find CCT test case: "
-              + description));
-    } catch (IOException e) {
-      throw new IllegalStateException("Unable to parse CCT test case resource.", e);
-    }
-  }
-
-  private record CalculateCctDateSourceOfTruth(List<CalculateCctDateCase> calculateCctDate) {
-  }
-
-  private record CalculateCctDateCase(String description, CalculateCctDateInput input,
-                                      LocalDate expected) {
-  }
-
-  private record CalculateCctDateInput(LocalDate currentProgEndDate, double currentWte,
-                                       double newWte, LocalDate changeStartDate) {
-  }
 }

@@ -132,12 +132,6 @@ testing {
   }
 }
 
-tasks.named<org.gradle.language.jvm.tasks.ProcessResources>("processIntegrationTestResources") {
-  from("src/test/resources") {
-    include("cct-calc-test-cases.json")
-  }
-}
-
 tasks.named("check") {
   dependsOn(testing.suites.named("integrationTest"))
 }
