@@ -37,13 +37,16 @@ public class Placement {
   @Unwrapped(onEmpty = OnEmpty.USE_NULL)
   private Site site;
   private Set<Site> otherSites;
+  private String gradeId;
   private String grade;
   private String specialty;
   private String subSpecialty;
   private Boolean postAllowsSubspecialty;
   private Set<Specialty> otherSpecialties;
   private String placementType;
+  private String employingBodyId;
   private String employingBody;
+  private String trainingBodyId;
   private String trainingBody;
   private String wholeTimeEquivalent;
   private Status status;

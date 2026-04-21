@@ -41,7 +41,9 @@ public class ProgrammeMembershipDto implements SignedDto {
   private String programmeTisId;
   private String programmeName;
   private String programmeNumber;
+  private String managingDeaneryId;
   private String managingDeanery;
+  private String designatedBodyId;
   private String designatedBody;
   private String designatedBodyCode;
   private String programmeMembershipType;

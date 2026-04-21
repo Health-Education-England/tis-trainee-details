@@ -130,11 +130,14 @@ class PlacementResourceTest {
     placement.setTisId("tisIdValue");
     placement.setStartDate(start);
     placement.setEndDate(end);
+    placement.setGradeId("gradeId");
     placement.setGrade("gradeValue");
     placement.setSpecialty("specialtyValue");
     placement.setSubSpecialty("subSpecialtyValue");
     placement.setPostAllowsSubspecialty(true);
     placement.setPlacementType("placementTypeValue");
+    placement.setEmployingBodyId("employingBodyId");
+    placement.setTrainingBodyId("trainingBodyId");
     placement.setStatus(Status.CURRENT);
 
     Specialty specialty = new Specialty();
@@ -142,6 +145,7 @@ class PlacementResourceTest {
     placement.setOtherSpecialties(Set.of(specialty));
 
     Site site = new Site();
+    site.setId("siteId");
     site.setName("siteValue");
     site.setKnownAs("siteKnownAsValue");
     site.setLocation("siteLocationValue");
@@ -169,9 +173,11 @@ class PlacementResourceTest {
         .andExpect(jsonPath("$.tisId").value(is("tisIdValue")))
         .andExpect(jsonPath("$.startDate").value(is(start.toString())))
         .andExpect(jsonPath("$.endDate").value(is(end.toString())))
+        .andExpect(jsonPath("$.siteId").value(is("siteId")))
         .andExpect(jsonPath("$.site").value(is("siteValue")))
         .andExpect(jsonPath("$.siteLocation").value(is("siteLocationValue")))
         .andExpect(jsonPath("$.siteKnownAs").value(is("siteKnownAsValue")))
+        .andExpect(jsonPath("$.gradeId").value(is("gradeId")))
         .andExpect(jsonPath("$.grade").value(is("gradeValue")))
         .andExpect(jsonPath("$.specialty").value(is("specialtyValue")))
         .andExpect(jsonPath("$.subSpecialty").value(is("subSpecialtyValue")))
@@ -179,6 +185,8 @@ class PlacementResourceTest {
         .andExpect(jsonPath("$.otherSpecialties.length()").value(is(1)))
         .andExpect(jsonPath("$.otherSpecialties.[0].name").value(is("otherSpecialtyValue")))
         .andExpect(jsonPath("$.placementType").value(is("placementTypeValue")))
+        .andExpect(jsonPath("$.employingBodyId").value(is("employingBodyId")))
+        .andExpect(jsonPath("$.trainingBodyId").value(is("trainingBodyId")))
         .andExpect(jsonPath("$.status").value(is("CURRENT")))
         .andExpect(jsonPath("$.signature.hmac").value(signature.getHmac()))
         .andExpect(jsonPath("$.signature.signedAt").value(signature.getSignedAt().toString()))

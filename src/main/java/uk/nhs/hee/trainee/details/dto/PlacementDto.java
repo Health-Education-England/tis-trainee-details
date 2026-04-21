@@ -43,13 +43,16 @@ public class PlacementDto implements SignedDto {
   @JsonUnwrapped
   private SiteDto site;
   private Set<SiteDto> otherSites;
+  private String gradeId;
   private String grade;
   private String specialty;
   private String subSpecialty;
   private Boolean postAllowsSubspecialty;
   private Set<SpecialtyDto> otherSpecialties;
   private String placementType;
+  private String employingBodyId;
   private String employingBody;
+  private String trainingBodyId;
   private String trainingBody;
   private String wholeTimeEquivalent;
   private Status status;
