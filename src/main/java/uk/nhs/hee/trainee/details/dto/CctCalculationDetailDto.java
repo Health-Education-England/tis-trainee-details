@@ -34,6 +34,8 @@ import lombok.Builder;
 import org.hibernate.validator.constraints.Range;
 import uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType;
 import uk.nhs.hee.trainee.details.dto.validation.Create;
+import uk.nhs.hee.trainee.details.dto.validation.ValidCctCalculation;
+import uk.nhs.hee.trainee.details.dto.validation.ValidCctChange;
 
 /**
  * A representation of a CCT calculation's detail.
@@ -47,6 +49,7 @@ import uk.nhs.hee.trainee.details.dto.validation.Create;
  * @param lastModified        When the calculation was last modified (auto-generated).
  */
 @Builder
+@ValidCctCalculation
 public record CctCalculationDetailDto(
 
     @Null(groups = Create.class)
@@ -108,9 +111,11 @@ public record CctCalculationDetailDto(
    * @param id        The identifier of the CCT change.
    * @param type      The type of CCT change.
    * @param startDate The start date of the CCT change.
-   * @param wte       The new desired whole time equivalent.
+   * @param endDate   The end date of the CCT change.
+   * @param wte       The new desired whole time equivalent for LTFT changes.
    */
   @Builder
+  @ValidCctChange
   public record CctChangeDto(
 
       @Null(groups = Create.class)
@@ -123,6 +128,8 @@ public record CctCalculationDetailDto(
       LocalDate startDate,
 
       @NotNull
+      LocalDate endDate,
+
       @Range(min = 0, max = 1)
       Double wte) {
 

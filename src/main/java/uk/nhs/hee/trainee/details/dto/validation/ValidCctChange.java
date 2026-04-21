@@ -19,19 +19,41 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package uk.nhs.hee.trainee.details.dto.enumeration;
+package uk.nhs.hee.trainee.details.dto.validation;
+
+import jakarta.validation.Constraint;
+import jakarta.validation.Payload;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Supported CCT Change types.
+ * Validate cross-field rules for a CCT change.
  */
-public enum CctChangeType {
-  LTFT,
-  OOPC,
-  OOPP,
-  OOPE,
-  PARENTAL,
-  PHASED,
-  SHIELDING,
-  SICKNESS,
-  UNPAID
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Constraint(validatedBy = ValidCctChangeValidator.class)
+public @interface ValidCctChange {
+
+  /**
+   * The validation error message.
+   *
+   * @return The validation error message.
+   */
+  String message() default "Invalid CCT change.";
+
+  /**
+   * The validation groups.
+   *
+   * @return The validation groups.
+   */
+  Class<?>[] groups() default {};
+
+  /**
+   * The payload associated with a validation error.
+   *
+   * @return The validation error payload.
+   */
+  Class<? extends Payload>[] payload() default {};
 }

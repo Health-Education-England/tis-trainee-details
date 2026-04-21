@@ -4,91 +4,163 @@
       "description": "half-time for full year",
       "input": {
         "currentProgEndDate": "2025-12-31",
-        "currentWte": 1,
+        "changeType": "LTFT",
         "newWte": 0.5,
-        "changeStartDate": "2025-01-01"
+        "changeStartDate": "2025-01-01",
+        "changeEndDate": "2025-12-31"
       },
       "expected": "2026-07-02"
     },
     {
-      "description": "no change in WTE",
+      "description": "80% WTE for a quarter",
       "input": {
-        "currentProgEndDate": "2025-06-30",
-        "currentWte": 1,
-        "newWte": 1,
-        "changeStartDate": "2025-01-01"
-      },
-      "expected": "2025-06-30"
-    },
-    {
-      "description": "80% WTE for 6 months",
-      "input": {
-        "currentProgEndDate": "2026-03-31",
-        "currentWte": 1,
+        "currentProgEndDate": "2028-03-31",
+        "changeType": "LTFT",
         "newWte": 0.8,
-        "changeStartDate": "2025-10-01"
+        "changeStartDate": "2026-10-01",
+        "changeEndDate": "2026-12-31"
       },
-      "expected": "2026-05-06"
-    },
-    {
-      "description": "already part-time going more part-time",
-      "input": {
-        "currentProgEndDate": "2025-09-30",
-        "currentWte": 0.8,
-        "newWte": 0.6,
-        "changeStartDate": "2025-04-01"
-      },
-      "expected": "2025-11-15"
-    },
-    {
-      "description": "half-time for one month",
-      "input": {
-        "currentProgEndDate": "2025-03-31",
-        "currentWte": 1,
-        "newWte": 0.5,
-        "changeStartDate": "2025-03-01"
-      },
-      "expected": "2025-04-16"
+      "expected": "2028-04-18"
     },
     {
       "description": "half-time same start and end date",
       "input": {
         "currentProgEndDate": "2025-06-15",
-        "currentWte": 1,
+        "changeType": "LTFT",
         "newWte": 0.5,
-        "changeStartDate": "2025-06-15"
+        "changeStartDate": "2025-06-15",
+        "changeEndDate": "2025-06-15"
       },
       "expected": "2025-06-16"
     },
     {
-      "description": "60% WTE over long period",
+      "description": "60% WTE over one year",
       "input": {
         "currentProgEndDate": "2027-08-31",
-        "currentWte": 1,
+        "changeType": "LTFT",
         "newWte": 0.6,
-        "changeStartDate": "2025-09-01"
+        "changeStartDate": "2025-09-01",
+        "changeEndDate": "2026-08-31"
       },
-      "expected": "2028-06-18"
+      "expected": "2028-01-24"
     },
     {
-      "description": "increase from part-time to full-time",
-      "input": {
-        "currentProgEndDate": "2025-12-31",
-        "currentWte": 0.5,
-        "newWte": 1,
-        "changeStartDate": "2025-07-01"
-      },
-      "expected": "2025-06-30"
-    },
-    {
-      "description": "half-time leap year crossing",
+      "description": "70% over leap-year first two months",
       "input": {
         "currentProgEndDate": "2024-12-31",
-        "currentWte": 1,
-        "newWte": 0.5,
-        "changeStartDate": "2024-01-01"
+        "changeType": "LTFT",
+        "newWte": 0.7,
+        "changeStartDate": "2024-01-01",
+        "changeEndDate": "2024-02-29"
       },
-      "expected": "2025-07-02"
+      "expected": "2025-01-18"
+    },
+    {
+      "description": "sickness for ten days",
+      "input": {
+        "currentProgEndDate": "2025-06-30",
+        "changeType": "SICKNESS",
+        "changeStartDate": "2025-06-01",
+        "changeEndDate": "2025-06-10"
+      },
+      "expected": "2025-07-10"
+    },
+    {
+      "description": "OOPE for a year",
+      "input": {
+        "currentProgEndDate": "2028-01-01",
+        "changeType": "OOPE",
+        "changeStartDate": "2026-01-01",
+        "changeEndDate": "2027-01-01"
+      },
+      "expected": "2029-01-01"
+    }
+  ],
+  "calculateAllCctChanges": [
+    {
+      "description": "two LTFT changes: half-time then 80%",
+      "programmeEndDate": "2027-06-30",
+      "changes": [
+        {
+          "type": "LTFT",
+          "startDate": "2025-07-01",
+          "endDate": "2026-06-30",
+          "wte": 0.5
+        },
+        {
+          "type": "LTFT",
+          "startDate": "2026-07-01",
+          "endDate": "2027-06-30",
+          "wte": 0.8
+        }
+      ],
+      "expectedFinalCctDate": "2028-03-12",
+      "expectedDaysAdded": [183, 73]
+    },
+    {
+      "description": "LTFT then sickness",
+      "programmeEndDate": "2026-12-31",
+      "changes": [
+        {
+          "type": "LTFT",
+          "startDate": "2025-07-01",
+          "endDate": "2025-12-31",
+          "wte": 0.6
+        },
+        {
+          "type": "SICKNESS",
+          "startDate": "2026-03-01",
+          "endDate": "2026-03-31"
+        }
+      ],
+      "expectedFinalCctDate": "2027-04-15",
+      "expectedDaysAdded": [74, 31]
+    },
+    {
+      "description": "three changes: LTFT, OOPP, LTFT",
+      "programmeEndDate": "2027-12-31",
+      "changes": [
+        {
+          "type": "LTFT",
+          "startDate": "2025-09-01",
+          "endDate": "2026-02-28",
+          "wte": 0.7
+        },
+        {
+          "type": "OOPP",
+          "startDate": "2026-06-01",
+          "endDate": "2026-06-14"
+        },
+        {
+          "type": "LTFT",
+          "startDate": "2026-09-01",
+          "endDate": "2027-08-31",
+          "wte": 0.8
+        }
+      ],
+      "expectedFinalCctDate": "2028-05-20",
+      "expectedDaysAdded": [54, 14, 73]
+    },
+    {
+      "description": "single change via multi-change path",
+      "programmeEndDate": "2026-06-30",
+      "changes": [
+        {
+          "type": "LTFT",
+          "startDate": "2025-07-01",
+          "endDate": "2026-06-30",
+          "wte": 0.5
+        }
+      ],
+      "expectedFinalCctDate": "2026-12-30",
+      "expectedDaysAdded": [183]
+    },
+    {
+      "description": "no changes returns programme end date",
+      "programmeEndDate": "2026-06-30",
+      "changes": [],
+      "expectedFinalCctDate": "2026-06-30",
+      "expectedDaysAdded": []
     }
   ]
 }

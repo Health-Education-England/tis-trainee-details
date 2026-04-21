@@ -55,6 +55,7 @@ import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto.CctChangeDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto.CctProgrammeMembershipDto;
 import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
+import uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType;
 import uk.nhs.hee.trainee.details.exception.NotRecordOwnerException;
 import uk.nhs.hee.trainee.details.mapper.CctMapperImpl;
 import uk.nhs.hee.trainee.details.model.CctCalculation;
@@ -651,17 +652,62 @@ class CctServiceTest {
         .programmeMembership(CctProgrammeMembership.builder()
             .startDate(input.changeStartDate())
             .endDate(input.currentProgEndDate())
-            .wte(input.currentWte())
+            .wte(1.0)
             .designatedBodyCode("testDbc")
             .build())
         .changes(List.of(
-            CctChange.builder().type(LTFT).startDate(input.changeStartDate())
-                .wte(input.newWte()).build()))
+            CctChange.builder()
+                .type(input.changeType())
+                .startDate(input.changeStartDate())
+                .endDate(input.changeEndDate())
+                .wte(input.newWte())
+                .build()))
         .build();
 
     assertThat("Unexpected CCT date for case: " + description,
         service.calculateCctDate(entity),
         is(calculateCctDateCase.expected()));
+  }
+
+  @ParameterizedTest(name = "{index}: {0}")
+  @MethodSource("calculateAllCctChangesCases")
+  void shouldCalculateAllCctChangesFromSourceOfTruthJson(String description,
+      CalculateAllCctChangesCase calculateAllCctChangesCase) {
+    List<CctChange> changes = calculateAllCctChangesCase.changes().stream()
+        .map(change -> CctChange.builder()
+            .type(change.type())
+            .startDate(change.startDate())
+            .endDate(change.endDate())
+            .wte(change.wte())
+            .build())
+        .toList();
+
+    CctCalculation entity = CctCalculation.builder()
+        .traineeId(TRAINEE_ID)
+        .programmeMembership(CctProgrammeMembership.builder()
+            .startDate(calculateAllCctChangesCase.programmeEndDate().minusYears(1))
+            .endDate(calculateAllCctChangesCase.programmeEndDate())
+            .wte(1.0)
+            .designatedBodyCode("testDbc")
+            .build())
+        .changes(changes)
+        .build();
+
+    assertThat("Unexpected CCT date for case: " + description,
+        service.calculateCctDate(entity),
+        is(calculateAllCctChangesCase.expectedFinalCctDate()));
+
+    assertThat("Unexpected expected days-added count for case: " + description,
+        calculateAllCctChangesCase.expectedDaysAdded(),
+        hasSize(calculateAllCctChangesCase.changes().size()));
+
+    for (int i = 0; i < calculateAllCctChangesCase.changes().size(); i++) {
+      CalculateAllCctChangeInput change = calculateAllCctChangesCase.changes().get(i);
+      assertThat("Unexpected days added for case: " + description + ", change: " + i,
+          service.calculateExtensionDays(change.type(), change.startDate(), change.endDate(),
+              change.wte()).orElse(null),
+          is(calculateAllCctChangesCase.expectedDaysAdded().get(i)));
+    }
   }
 
   @Test
@@ -691,33 +737,40 @@ class CctServiceTest {
   @Test
   void shouldCalculateSameCctDateRegardlessOfChangeOrder() {
     LocalDate pmStartDate = LocalDate.EPOCH;
+    LocalDate pmEndDate = LocalDate.EPOCH.plusYears(1);
 
     CctCalculation orderedChanges = CctCalculation.builder()
         .traineeId(TRAINEE_ID)
         .programmeMembership(CctProgrammeMembership.builder()
             .startDate(pmStartDate)
-            .endDate(LocalDate.EPOCH.plusYears(1))
+            .endDate(pmEndDate)
             .wte(1.0)
             .designatedBodyCode("testDbc")
             .build())
         .changes(List.of(
-            CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(3)).wte(0.5).build(),
-            CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(6)).wte(0.75).build(),
-            CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(9)).wte(1.0).build()))
+            CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(3))
+                .endDate(pmStartDate.plusMonths(5)).wte(0.5).build(),
+            CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(6))
+                .endDate(pmStartDate.plusMonths(8)).wte(0.75).build(),
+            CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(9))
+                .endDate(pmEndDate).wte(1.0).build()))
         .build();
 
     CctCalculation unorderedChanges = CctCalculation.builder()
         .traineeId(TRAINEE_ID)
         .programmeMembership(CctProgrammeMembership.builder()
             .startDate(pmStartDate)
-            .endDate(LocalDate.EPOCH.plusYears(1))
+            .endDate(pmEndDate)
             .wte(1.0)
             .designatedBodyCode("testDbc")
             .build())
         .changes(List.of(
-            CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(9)).wte(1.0).build(),
-            CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(3)).wte(0.5).build(),
-            CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(6)).wte(0.75).build()))
+            CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(9))
+                .endDate(pmEndDate).wte(1.0).build(),
+            CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(3))
+                .endDate(pmStartDate.plusMonths(5)).wte(0.5).build(),
+            CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(6))
+                .endDate(pmStartDate.plusMonths(8)).wte(0.75).build()))
         .build();
 
     assertThat("Unexpected CCT date.", service.calculateCctDate(orderedChanges),
@@ -744,43 +797,34 @@ class CctServiceTest {
   }
 
   @Test
-  void shouldReturnNullCctDateIfPmWteIsTooSmall() {
-    LocalDate pmStartDate = LocalDate.EPOCH;
+  void shouldCalculateCctDateForMultipleMixedChangeTypes() {
+    LocalDate pmStartDate = LocalDate.of(2025, 1, 1);
+    LocalDate pmEndDate = LocalDate.of(2025, 12, 31);
+
     CctCalculation entity = CctCalculation.builder()
         .traineeId(TRAINEE_ID)
         .programmeMembership(CctProgrammeMembership.builder()
             .startDate(pmStartDate)
-            .endDate(LocalDate.EPOCH.plusYears(1))
-            .wte(0.0)
-            .designatedBodyCode("testDbc")
-            .build())
-        .changes(List.of(
-            CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(3))
-                .wte(0.5).build()))
-        .build();
-
-    assertThat("Unexpected CCT date.", service.calculateCctDate(entity), is(nullValue()));
-  }
-
-  @Test
-  void shouldReturnNullCctDateIfPreviousChangeWteIsTooSmall() {
-    LocalDate pmStartDate = LocalDate.EPOCH;
-    CctCalculation entity = CctCalculation.builder()
-        .traineeId(TRAINEE_ID)
-        .programmeMembership(CctProgrammeMembership.builder()
-            .startDate(pmStartDate)
-            .endDate(LocalDate.EPOCH.plusYears(1))
+            .endDate(pmEndDate)
             .wte(1.0)
             .designatedBodyCode("testDbc")
             .build())
         .changes(List.of(
-            CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(3))
-                .wte(0.0).build(),
-            CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(6))
-                .wte(0.5).build()))
+            CctChange.builder()
+                .type(CctChangeType.SICKNESS)
+                .startDate(LocalDate.of(2025, 2, 1))
+                .endDate(LocalDate.of(2025, 2, 10))
+                .build(),
+            CctChange.builder()
+                .type(LTFT)
+                .startDate(LocalDate.of(2025, 7, 1))
+                .endDate(LocalDate.of(2025, 9, 30))
+                .wte(0.5)
+                .build()))
         .build();
 
-    assertThat("Unexpected CCT date.", service.calculateCctDate(entity), is(nullValue()));
+    assertThat("Unexpected CCT date.", service.calculateCctDate(entity),
+        is(LocalDate.of(2026, 2, 25)));
   }
 
   private static Stream<Arguments> calculateCctDateCases() throws IOException {
@@ -796,15 +840,41 @@ class CctServiceTest {
     }
   }
 
-  private record CalculateCctDateSourceOfTruth(List<CalculateCctDateCase> calculateCctDate) {
+  private static Stream<Arguments> calculateAllCctChangesCases() throws IOException {
+    try (var jsonInputStream = CctServiceTest.class.getClassLoader()
+        .getResourceAsStream(CCT_CALC_TEST_CASES_RESOURCE)) {
+      if (jsonInputStream == null) {
+        throw new IOException("Unable to load test resource: " + CCT_CALC_TEST_CASES_RESOURCE);
+      }
+      var sourceOfTruth = OBJECT_MAPPER.readValue(jsonInputStream,
+          CalculateCctDateSourceOfTruth.class);
+      return sourceOfTruth.calculateAllCctChanges().stream()
+          .map(c -> Arguments.of(c.description(), c));
+    }
+  }
+
+  private record CalculateCctDateSourceOfTruth(List<CalculateCctDateCase> calculateCctDate,
+                                               List<CalculateAllCctChangesCase>
+                                                   calculateAllCctChanges) {
   }
 
   private record CalculateCctDateCase(String description, CalculateCctDateInput input,
                                       LocalDate expected) {
   }
 
-  private record CalculateCctDateInput(LocalDate currentProgEndDate, double currentWte,
-                                       double newWte, LocalDate changeStartDate) {
+  private record CalculateCctDateInput(LocalDate currentProgEndDate, CctChangeType changeType,
+                                       LocalDate changeStartDate, LocalDate changeEndDate,
+                                       Double newWte) {
+  }
+
+  private record CalculateAllCctChangesCase(String description, LocalDate programmeEndDate,
+                                            List<CalculateAllCctChangeInput> changes,
+                                            LocalDate expectedFinalCctDate,
+                                            List<Long> expectedDaysAdded) {
+  }
+
+  private record CalculateAllCctChangeInput(CctChangeType type, LocalDate startDate,
+                                            LocalDate endDate, Double wte) {
   }
 
   @Test
