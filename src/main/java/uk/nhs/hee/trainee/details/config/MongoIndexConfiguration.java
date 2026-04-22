@@ -58,5 +58,15 @@ public class MongoIndexConfiguration {
       }
     }
     traineeProfileIndexOps.createIndex(new Index().on("traineeTisId", Direction.ASC).unique());
+
+    // Reference Ids
+    traineeProfileIndexOps.createIndex(new Index().on("programmeMemberships.managingDeaneryId",
+        Direction.ASC));
+    traineeProfileIndexOps.createIndex(new Index().on("programmeMemberships.designatedBodyId",
+        Direction.ASC));
+    traineeProfileIndexOps.createIndex(new Index().on("placements.site.siteId", Direction.ASC));
+    traineeProfileIndexOps.createIndex(new Index().on("placements.gradeId", Direction.ASC));
+    traineeProfileIndexOps.createIndex(new Index().on("placements.employingBodyId", Direction.ASC));
+    traineeProfileIndexOps.createIndex(new Index().on("placements.trainingBodyId", Direction.ASC));
   }
 }
