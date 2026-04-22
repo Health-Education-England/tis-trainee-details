@@ -29,10 +29,10 @@ import org.junit.jupiter.api.Test;
 class FeaturesDtoTest {
 
   @Test
-  void emailUpdateShouldBeDisabledWhenAllFeaturesEnabled() {
+  void emailUpdateShouldBeEnabledWhenAllFeaturesEnabled() {
     FeaturesDto features = FeaturesDto.enable();
-    assertThat("emailUpdate should be disabled when all features are enabled.",
-        features.details().profile().emailUpdate().enabled(), is(false));
+    assertThat("emailUpdate should be enabled when all features are enabled.",
+        features.details().profile().emailUpdate().enabled(), is(true));
   }
 
   @Test

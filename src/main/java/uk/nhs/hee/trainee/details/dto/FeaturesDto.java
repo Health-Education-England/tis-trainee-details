@@ -222,7 +222,7 @@ public record FeaturesDto(
       private static ProfileFeatures enable() {
         return new ProfileFeatures(
             true,
-            Feature.disable(), //pending resolution of concerns re. auditing
+            Feature.enable(),
             Feature.enable()
         );
       }
