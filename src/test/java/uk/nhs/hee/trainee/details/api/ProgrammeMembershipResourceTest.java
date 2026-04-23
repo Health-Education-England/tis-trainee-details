@@ -130,7 +130,9 @@ class ProgrammeMembershipResourceTest {
     programmeMembership.setProgrammeTisId("programmeTisIdValue");
     programmeMembership.setProgrammeName("programmeNameValue");
     programmeMembership.setProgrammeNumber("programmeNumberValue");
+    programmeMembership.setManagingDeaneryId("managingDeaneryId");
     programmeMembership.setManagingDeanery("managingDeaneryValue");
+    programmeMembership.setDesignatedBodyId("designatedBodyId");
     programmeMembership.setDesignatedBody("designatedBodyValue");
     programmeMembership.setDesignatedBodyCode("designatedBodyCodeValue");
     programmeMembership.setProgrammeMembershipType("programmeMembershipTypeValue");
@@ -169,7 +171,9 @@ class ProgrammeMembershipResourceTest {
         .andExpect(jsonPath("$.programmeTisId").value(is("programmeTisIdValue")))
         .andExpect(jsonPath("$.programmeName").value(is("programmeNameValue")))
         .andExpect(jsonPath("$.programmeNumber").value(is("programmeNumberValue")))
+        .andExpect(jsonPath("$.managingDeaneryId").value(is("managingDeaneryId")))
         .andExpect(jsonPath("$.managingDeanery").value(is("managingDeaneryValue")))
+        .andExpect(jsonPath("$.designatedBodyId").value(is("designatedBodyId")))
         .andExpect(jsonPath("$.designatedBody").value(is("designatedBodyValue")))
         .andExpect(jsonPath("$.designatedBodyCode").value(is("designatedBodyCodeValue")))
         .andExpect(jsonPath("$.programmeMembershipType").value(is("programmeMembershipTypeValue")))

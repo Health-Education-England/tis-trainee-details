@@ -73,12 +73,15 @@ class MongoIndexConfigurationTest {
     verify(indexOperations, atLeastOnce()).createIndex(indexCaptor.capture());
 
     List<IndexDefinition> indexes = indexCaptor.getAllValues();
-    assertThat("Unexpected number of indexes.", indexes.size(), is(2));
+    assertThat("Unexpected number of indexes.", indexes.size(), is(8));
 
     List<String> indexKeys = indexes.stream()
         .flatMap(i -> i.getIndexKeys().keySet().stream())
         .toList();
-    assertThat("Unexpected index.", indexKeys, hasItems("traineeTisId", "personalDetails.email"));
+    assertThat("Unexpected index.", indexKeys, hasItems("traineeTisId", "personalDetails.email",
+        "programmeMemberships.managingDeaneryId", "programmeMemberships.designatedBodyId",
+        "placements.site.siteId", "placements.gradeId", "placements.employingBodyId",
+        "placements.trainingBodyId"));
   }
 
   @Test

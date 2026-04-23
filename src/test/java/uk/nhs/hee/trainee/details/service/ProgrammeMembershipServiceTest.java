@@ -100,7 +100,9 @@ class ProgrammeMembershipServiceTest {
   private static final String PROGRAMME_TIS_ID = "programmeTisId-";
   private static final String PROGRAMME_NAME = "programmeName-";
   private static final String PROGRAMME_NUMBER = "programmeNumber-";
+  private static final String MANAGING_DEANERY_ID = "managingDeaneryId-";
   private static final String MANAGING_DEANERY = "managingDeanery-";
+  private static final String DESIGNATED_BODY_ID = "designatedBodyId-";
   private static final String DESIGNATED_BODY = "designatedBody-";
   private static final String DESIGNATED_BODY_CODE = "designatedBodyCode-";
   private static final String PROGRAMME_MEMBERSHIP_TYPE = "programmeMembershipType-";
@@ -170,7 +172,9 @@ class ProgrammeMembershipServiceTest {
     expectedProgrammeMembership.setProgrammeTisId(PROGRAMME_TIS_ID + MODIFIED_SUFFIX);
     expectedProgrammeMembership.setProgrammeName(PROGRAMME_NAME + MODIFIED_SUFFIX);
     expectedProgrammeMembership.setProgrammeNumber(PROGRAMME_NUMBER + MODIFIED_SUFFIX);
+    expectedProgrammeMembership.setManagingDeaneryId(MANAGING_DEANERY_ID + MODIFIED_SUFFIX);
     expectedProgrammeMembership.setManagingDeanery(MANAGING_DEANERY + MODIFIED_SUFFIX);
+    expectedProgrammeMembership.setDesignatedBodyId(DESIGNATED_BODY_ID + MODIFIED_SUFFIX);
     expectedProgrammeMembership.setDesignatedBody(DESIGNATED_BODY + MODIFIED_SUFFIX);
     expectedProgrammeMembership.setDesignatedBodyCode(DESIGNATED_BODY_CODE + MODIFIED_SUFFIX);
     expectedProgrammeMembership
@@ -206,7 +210,9 @@ class ProgrammeMembershipServiceTest {
     expectedProgrammeMembership.setProgrammeTisId(PROGRAMME_TIS_ID + MODIFIED_SUFFIX);
     expectedProgrammeMembership.setProgrammeName(PROGRAMME_NAME + MODIFIED_SUFFIX);
     expectedProgrammeMembership.setProgrammeNumber(PROGRAMME_NUMBER + MODIFIED_SUFFIX);
+    expectedProgrammeMembership.setManagingDeaneryId(MANAGING_DEANERY_ID + MODIFIED_SUFFIX);
     expectedProgrammeMembership.setManagingDeanery(MANAGING_DEANERY + MODIFIED_SUFFIX);
+    expectedProgrammeMembership.setDesignatedBodyId(DESIGNATED_BODY_ID + MODIFIED_SUFFIX);
     expectedProgrammeMembership.setDesignatedBody(DESIGNATED_BODY + MODIFIED_SUFFIX);
     expectedProgrammeMembership.setDesignatedBodyCode(DESIGNATED_BODY_CODE + MODIFIED_SUFFIX);
     expectedProgrammeMembership
@@ -244,7 +250,9 @@ class ProgrammeMembershipServiceTest {
     expectedProgrammeMembership.setProgrammeTisId(PROGRAMME_TIS_ID + MODIFIED_SUFFIX);
     expectedProgrammeMembership.setProgrammeName(PROGRAMME_NAME + MODIFIED_SUFFIX);
     expectedProgrammeMembership.setProgrammeNumber(PROGRAMME_NUMBER + MODIFIED_SUFFIX);
+    expectedProgrammeMembership.setManagingDeaneryId(MANAGING_DEANERY_ID + MODIFIED_SUFFIX);
     expectedProgrammeMembership.setManagingDeanery(MANAGING_DEANERY + MODIFIED_SUFFIX);
+    expectedProgrammeMembership.setDesignatedBodyId(DESIGNATED_BODY_ID + MODIFIED_SUFFIX);
     expectedProgrammeMembership.setDesignatedBody(DESIGNATED_BODY + MODIFIED_SUFFIX);
     expectedProgrammeMembership.setDesignatedBodyCode(DESIGNATED_BODY_CODE + MODIFIED_SUFFIX);
     expectedProgrammeMembership
@@ -2037,7 +2045,9 @@ class ProgrammeMembershipServiceTest {
     programmeMembership.setProgrammeTisId(PROGRAMME_TIS_ID + stringSuffix);
     programmeMembership.setProgrammeName(PROGRAMME_NAME + stringSuffix);
     programmeMembership.setProgrammeNumber(PROGRAMME_NUMBER + stringSuffix);
+    programmeMembership.setManagingDeaneryId(MANAGING_DEANERY_ID + stringSuffix);
     programmeMembership.setManagingDeanery(MANAGING_DEANERY + stringSuffix);
+    programmeMembership.setDesignatedBodyId(DESIGNATED_BODY_ID + stringSuffix);
     programmeMembership.setDesignatedBody(DESIGNATED_BODY + stringSuffix);
     programmeMembership.setDesignatedBodyCode(DESIGNATED_BODY_CODE + stringSuffix);
     programmeMembership.setProgrammeMembershipType(PROGRAMME_MEMBERSHIP_TYPE + stringSuffix);
@@ -2099,7 +2109,9 @@ class ProgrammeMembershipServiceTest {
     programmeMembership.setProgrammeTisId(PROGRAMME_TIS_ID);
     programmeMembership.setProgrammeName(PROGRAMME_NAME);
     programmeMembership.setProgrammeNumber(PROGRAMME_NUMBER);
+    programmeMembership.setManagingDeaneryId(MANAGING_DEANERY_ID);
     programmeMembership.setManagingDeanery(managingDeanery);
+    programmeMembership.setDesignatedBodyId(DESIGNATED_BODY_ID);
     programmeMembership.setDesignatedBody(DESIGNATED_BODY);
     programmeMembership.setProgrammeMembershipType(programmeMembershipType);
     programmeMembership.setStartDate(startDate);

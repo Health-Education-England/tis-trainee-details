@@ -30,6 +30,9 @@ import lombok.Data;
 @Data
 public class SiteDto {
 
+  @JsonProperty("siteId")
+  private String id;
+
   @JsonProperty("site")
   private String name;
 

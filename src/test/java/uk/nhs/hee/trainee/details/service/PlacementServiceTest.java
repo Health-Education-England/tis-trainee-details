@@ -56,9 +56,11 @@ class PlacementServiceTest {
   private static final LocalDate START_DATE_ROLLOUT = LocalDate.of(2024, 11, 1);
   private static final LocalDate START_DATE_ROLLOUT_TV = LocalDate.of(2025, 2, 1);
   private static final LocalDate START_DATE_ROLLOUT_NE = LocalDate.of(2025, 4, 14);
+  private static final String SITE_ID = "siteId-";
   private static final String SITE = "site-";
   private static final String SITE_LOCATION = "siteLocation-";
   private static final String SITE_KNOWN_AS = "siteKnownAs-";
+  private static final String GRADE_ID = "gradeId-";
   private static final String GRADE = "grade-";
   private static final String SPECIALTY = "specialty-";
   private static final String SUB_SPECIALTY = "subSpecialty-";
@@ -72,6 +74,8 @@ class PlacementServiceTest {
   private static final String EXISTING_PLACEMENT_ID = "2";
   private static final String NOT_EXISTING_PLACEMENT_ID = "3";
   private static final String PROGRAMME_MEMBERSHIP_ID = "pm-id";
+  private static final String EMPLOYING_BODY_ID = "employing-id";
+  private static final String TRAINING_BODY_ID = "training-id";
 
   private PlacementService service;
   private TraineeProfileRepository repository;
@@ -111,11 +115,14 @@ class PlacementServiceTest {
     expectedPlacement.setTisId(NEW_PLACEMENT_ID);
     expectedPlacement.setStartDate(START_DATE.plusDays(100));
     expectedPlacement.setEndDate(END_DATE.plusDays(100));
+    expectedPlacement.setGradeId(GRADE_ID);
     expectedPlacement.setGrade(GRADE);
     expectedPlacement.setSpecialty(SPECIALTY);
     expectedPlacement.setSubSpecialty(SUB_SPECIALTY);
     expectedPlacement.setPostAllowsSubspecialty(POST_ALLOWS_SUBSPECIALTY);
     expectedPlacement.setPlacementType(PLACEMENT_TYPE);
+    expectedPlacement.setEmployingBodyId(EMPLOYING_BODY_ID);
+    expectedPlacement.setTrainingBodyId(TRAINING_BODY_ID);
     expectedPlacement.setStatus(Status.CURRENT);
 
     Specialty otherSpecialty = new Specialty();
@@ -123,6 +130,7 @@ class PlacementServiceTest {
     expectedPlacement.setOtherSpecialties(Set.of(otherSpecialty));
 
     Site site = new Site();
+    site.setId(SITE_ID + MODIFIED_SUFFIX);
     site.setName(SITE + MODIFIED_SUFFIX);
     site.setKnownAs(SITE_KNOWN_AS + MODIFIED_SUFFIX);
     site.setLocation(SITE_LOCATION + MODIFIED_SUFFIX);
@@ -149,11 +157,14 @@ class PlacementServiceTest {
     expectedPlacement.setTisId(NEW_PLACEMENT_ID);
     expectedPlacement.setStartDate(START_DATE.plusDays(100));
     expectedPlacement.setEndDate(END_DATE.plusDays(100));
+    expectedPlacement.setGradeId(GRADE_ID);
     expectedPlacement.setGrade(GRADE);
     expectedPlacement.setSpecialty(SPECIALTY);
     expectedPlacement.setSubSpecialty(SUB_SPECIALTY);
     expectedPlacement.setPostAllowsSubspecialty(POST_ALLOWS_SUBSPECIALTY);
     expectedPlacement.setPlacementType(PLACEMENT_TYPE);
+    expectedPlacement.setEmployingBodyId(EMPLOYING_BODY_ID);
+    expectedPlacement.setTrainingBodyId(TRAINING_BODY_ID);
     expectedPlacement.setStatus(Status.CURRENT);
 
     Specialty otherSpecialty = new Specialty();
@@ -161,6 +172,7 @@ class PlacementServiceTest {
     expectedPlacement.setOtherSpecialties(Set.of(otherSpecialty));
 
     Site site = new Site();
+    site.setId(SITE_ID + MODIFIED_SUFFIX);
     site.setName(SITE + MODIFIED_SUFFIX);
     site.setKnownAs(SITE_KNOWN_AS + MODIFIED_SUFFIX);
     site.setLocation(SITE_LOCATION + MODIFIED_SUFFIX);
@@ -188,14 +200,18 @@ class PlacementServiceTest {
     expectedPlacement.setTisId(EXISTING_PLACEMENT_ID);
     expectedPlacement.setStartDate(START_DATE.plusDays(100));
     expectedPlacement.setEndDate(END_DATE.plusDays(100));
+    expectedPlacement.setGradeId(GRADE_ID);
     expectedPlacement.setGrade(GRADE);
     expectedPlacement.setSpecialty(SPECIALTY);
     expectedPlacement.setSubSpecialty(SUB_SPECIALTY);
     expectedPlacement.setPostAllowsSubspecialty(POST_ALLOWS_SUBSPECIALTY);
     expectedPlacement.setPlacementType(PLACEMENT_TYPE);
+    expectedPlacement.setEmployingBodyId(EMPLOYING_BODY_ID);
+    expectedPlacement.setTrainingBodyId(TRAINING_BODY_ID);
     expectedPlacement.setStatus(Status.CURRENT);
 
     Site site = new Site();
+    site.setId(SITE_ID + MODIFIED_SUFFIX);
     site.setName(SITE + MODIFIED_SUFFIX);
     site.setKnownAs(SITE_KNOWN_AS + MODIFIED_SUFFIX);
     site.setLocation(SITE_LOCATION + MODIFIED_SUFFIX);
@@ -703,11 +719,14 @@ class PlacementServiceTest {
     placement.setTisId(tisId);
     placement.setStartDate(START_DATE.plusDays(dateAdjustmentDays));
     placement.setEndDate(END_DATE.plusDays(dateAdjustmentDays));
+    placement.setGradeId(GRADE_ID);
     placement.setGrade(GRADE);
     placement.setSpecialty(SPECIALTY);
     placement.setSubSpecialty(SUB_SPECIALTY);
     placement.setPostAllowsSubspecialty(POST_ALLOWS_SUBSPECIALTY);
     placement.setPlacementType(PLACEMENT_TYPE);
+    placement.setEmployingBodyId(EMPLOYING_BODY_ID);
+    placement.setTrainingBodyId(TRAINING_BODY_ID);
     placement.setStatus(Status.CURRENT);
 
     Specialty otherSpecialty = new Specialty();
@@ -715,6 +734,7 @@ class PlacementServiceTest {
     placement.setOtherSpecialties(Set.of(otherSpecialty));
 
     Site site = new Site();
+    site.setId(SITE_ID + stringSuffix);
     site.setName(SITE + stringSuffix);
     site.setKnownAs(SITE_KNOWN_AS + stringSuffix);
     site.setLocation(SITE_LOCATION + stringSuffix);

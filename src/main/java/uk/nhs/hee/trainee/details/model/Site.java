@@ -30,6 +30,9 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @Data
 public class Site {
 
+  @Field("siteId")
+  private String id;
+
   @Field("site")
   private String name;
 
