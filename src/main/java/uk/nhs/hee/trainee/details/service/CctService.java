@@ -44,6 +44,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto.CctChangeDto;
 import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
+import uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType;
 import uk.nhs.hee.trainee.details.exception.NotRecordOwnerException;
 import uk.nhs.hee.trainee.details.mapper.CctMapper;
 import uk.nhs.hee.trainee.details.model.CctCalculation;
@@ -271,40 +272,51 @@ public class CctService {
 
     //entity validation rules mean we can assume programmeMembership and changes are non-null
     //and contain values for referenced properties, and WTE's are in the range 0-1.
-    LocalDate currentEndDate = entity.programmeMembership().endDate();
     List<CctCalculation.CctChange> orderedChanges = entity.changes().stream()
         .sorted(Comparator.comparing(CctCalculation.CctChange::startDate)).toList();
-    for (int i = 0; i < orderedChanges.size(); i++) {
-      CctCalculation.CctChange c = orderedChanges.get(i);
-      LocalDate startDate = c.startDate();
-      if (startDate.isBefore(entity.programmeMembership().startDate())) {
-        log.warn("CCT date calculation: start date for change {} set to PM start date {}.",
-            c, entity.programmeMembership().startDate());
-        startDate = entity.programmeMembership().startDate();
-      }
-      if (startDate.isAfter(currentEndDate)) {
-        log.warn("CCT date cannot be calculated, start date for change {} after end date {}.",
-            c, currentEndDate);
+
+    boolean singleCctChange = orderedChanges.size() == 1;
+
+    long ltftExtension = 0;
+    for (CctCalculation.CctChange c : orderedChanges) {
+      Optional<LocalDate> startDate = getChangeStartDate(entity, c);
+      if (startDate.isEmpty()) {
         return null;
       }
-      long chunkDays = ChronoUnit.DAYS.between(startDate, currentEndDate) + 1;
-      double currentWte = i == 0
-          ? entity.programmeMembership().wte()
-          : orderedChanges.get(i - 1).wte();
-      if (currentWte < WTE_EPSILON) {
-        log.warn("CCT date cannot be calculated, current WTE is less than minimum.");
+
+      LocalDate endDate = c.endDate();
+      if (endDate == null && singleCctChange) {
+        endDate = entity.programmeMembership().endDate();
+      } else if (endDate == null) {
+        log.warn("CCT date cannot be calculated, end date for change {} not set.", c);
         return null;
       }
-      double wte = c.wte();
-      if (wte < WTE_EPSILON) {
+
+      if (startDate.get().isAfter(endDate)) {
+        log.warn("CCT date cannot be calculated, start date for change {} after change end date "
+            + "{}.", c, endDate);
+        return null;
+      }
+
+      long changeDays = ChronoUnit.DAYS.between(startDate.get(), endDate) + 1;
+      if (c.type() == null) {
+        log.warn("CCT date cannot be calculated, type for change {} not set.", c);
+        return null;
+      }
+
+      if (c.type() != CctChangeType.LTFT) {
+        ltftExtension += changeDays;
+        continue;
+      }
+
+      Double wte = c.wte();
+      if (wte == null || wte < WTE_EPSILON) {
         log.warn("CCT date cannot be calculated, WTE for change {} is less than minimum.", c);
         return null;
       }
-      double wteDays = chunkDays * (wte / currentWte);
-      long ltftExtension = Math.round(chunkDays - wteDays);
-      currentEndDate = currentEndDate.plusDays(ltftExtension);
+      ltftExtension += Math.round(changeDays - (changeDays * wte));
     }
-    return currentEndDate;
+    return entity.programmeMembership().endDate().plusDays(ltftExtension);
   }
 
   /**
@@ -315,6 +327,22 @@ public class CctService {
    */
   public LocalDate calculateCctDate(CctCalculationDetailDto dto) {
     return calculateCctDate(mapper.toEntity(dto, null));
+  }
+
+  private Optional<LocalDate> getChangeStartDate(CctCalculation entity,
+      CctCalculation.CctChange change) {
+    LocalDate startDate = change.startDate();
+    if (startDate.isBefore(entity.programmeMembership().startDate())) {
+      log.warn("CCT date calculation: start date for change {} set to PM start date {}.",
+          change, entity.programmeMembership().startDate());
+      startDate = entity.programmeMembership().startDate();
+    }
+    if (startDate.isAfter(entity.programmeMembership().endDate())) {
+      log.warn("CCT date cannot be calculated, start date for change {} after end date {}.",
+          change, entity.programmeMembership().endDate());
+      return Optional.empty();
+    }
+    return Optional.of(startDate);
   }
 
   /**

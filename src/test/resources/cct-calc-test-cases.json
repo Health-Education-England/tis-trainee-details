@@ -1,94 +1,190 @@
 {
   "calculateCctDate": [
     {
-      "description": "half-time for full year",
+      "description": "LTFT single change uses PM endDate when change endDate is absent",
       "input": {
-        "currentProgEndDate": "2025-12-31",
-        "currentWte": 1,
-        "newWte": 0.5,
-        "changeStartDate": "2025-01-01"
+        "programmeMembership": {
+          "id": "11111111-1111-1111-1111-111111111111",
+          "name": "Test Programme",
+          "startDate": "2025-01-01",
+          "endDate": "2025-12-31",
+          "wte": 1
+        },
+        "changes": [
+          {
+            "id": "21111111-1111-1111-1111-111111111111",
+            "type": "LTFT",
+            "startDate": "2025-08-01",
+            "wte": 0.5
+          }
+        ]
       },
-      "expected": "2026-07-02"
+      "expected": "2026-03-18"
     },
     {
-      "description": "no change in WTE",
+      "description": "LTFT single change uses explicit change endDate when present",
       "input": {
-        "currentProgEndDate": "2025-06-30",
-        "currentWte": 1,
-        "newWte": 1,
-        "changeStartDate": "2025-01-01"
+        "programmeMembership": {
+          "id": "11111111-1111-1111-1111-111111111112",
+          "name": "Test Programme",
+          "startDate": "2020-01-01",
+          "endDate": "2028-01-01",
+          "wte": 1
+        },
+        "changes": [
+          {
+            "id": "21111111-1111-1111-1111-111111111112",
+            "type": "LTFT",
+            "startDate": "2025-10-01",
+            "endDate": "2026-03-31",
+            "wte": 0.8
+          }
+        ]
+      },
+      "expected": "2028-02-06"
+    },
+    {
+      "description": "LTFT 100% WTE edge case does not extend CCT date",
+      "input": {
+        "programmeMembership": {
+          "id": "11111111-1111-1111-1111-111111111113",
+          "name": "Test Programme",
+          "startDate": "2025-01-01",
+          "endDate": "2025-06-30",
+          "wte": 1
+        },
+        "changes": [
+          {
+            "id": "21111111-1111-1111-1111-111111111113",
+            "type": "LTFT",
+            "startDate": "2025-01-01",
+            "endDate": "2025-06-30",
+            "wte": 1
+          }
+        ]
       },
       "expected": "2025-06-30"
     },
     {
-      "description": "80% WTE for 6 months",
+      "description": "LTFT same start and end date counts as one change day",
       "input": {
-        "currentProgEndDate": "2026-03-31",
-        "currentWte": 1,
-        "newWte": 0.8,
-        "changeStartDate": "2025-10-01"
+        "programmeMembership": {
+          "id": "11111111-1111-1111-1111-111111111114",
+          "name": "Test Programme",
+          "startDate": "2025-01-01",
+          "endDate": "2025-12-31",
+          "wte": 1
+        },
+        "changes": [
+          {
+            "id": "21111111-1111-1111-1111-111111111114",
+            "type": "LTFT",
+            "startDate": "2025-06-15",
+            "endDate": "2025-06-15",
+            "wte": 0.5
+          }
+        ]
       },
-      "expected": "2026-05-06"
+      "expected": "2026-01-01"
     },
     {
-      "description": "already part-time going more part-time",
+      "description": "LTFT leap year change includes all change days",
       "input": {
-        "currentProgEndDate": "2025-09-30",
-        "currentWte": 0.8,
-        "newWte": 0.6,
-        "changeStartDate": "2025-04-01"
+        "programmeMembership": {
+          "id": "11111111-1111-1111-1111-111111111115",
+          "name": "Test Programme",
+          "startDate": "2018-09-05",
+          "endDate": "2026-09-01",
+          "wte": 0.8
+        },
+        "changes": [
+          {
+            "id": "21111111-1111-1111-1111-111111111115",
+            "type": "LTFT",
+            "startDate": "2024-01-01",
+            "endDate": "2024-12-31",
+            "wte": 0.5
+          }
+        ]
       },
-      "expected": "2025-11-15"
+      "expected": "2027-03-03"
     },
     {
-      "description": "half-time for one month",
+      "description": "Multiple LTFT changes use explicit end dates",
       "input": {
-        "currentProgEndDate": "2025-03-31",
-        "currentWte": 1,
-        "newWte": 0.5,
-        "changeStartDate": "2025-03-01"
+        "programmeMembership": {
+          "id": "11111111-1111-1111-1111-111111111116",
+          "name": "Test Programme",
+          "startDate": "2020-01-01",
+          "endDate": "2028-01-01",
+          "wte": 1
+        },
+        "changes": [
+          {
+            "id": "21111111-1111-1111-1111-111111111116",
+            "type": "LTFT",
+            "startDate": "2024-11-01",
+            "endDate": "2026-05-14",
+            "wte": 0.7
+          },
+          {
+            "id": "21111111-1111-1111-1111-111111111117",
+            "type": "LTFT",
+            "startDate": "2026-05-15",
+            "endDate": "2026-12-01",
+            "wte": 0.8
+          },
+          {
+            "id": "21111111-1111-1111-1111-111111111118",
+            "type": "LTFT",
+            "startDate": "2027-10-11",
+            "endDate": "2028-01-01",
+            "wte": 0.5
+          }
+        ]
       },
-      "expected": "2025-04-16"
+      "expected": "2028-09-07"
     },
     {
-      "description": "half-time same start and end date",
+      "description": "Multiple changes combine LTFT and non-LTFT extensions",
       "input": {
-        "currentProgEndDate": "2025-06-15",
-        "currentWte": 1,
-        "newWte": 0.5,
-        "changeStartDate": "2025-06-15"
+        "programmeMembership": {
+          "id": "11111111-1111-1111-1111-111111111117",
+          "name": "Test Programme",
+          "startDate": "2020-01-01",
+          "endDate": "2028-01-01",
+          "wte": 1
+        },
+        "changes": [
+          {
+            "id": "21111111-1111-1111-1111-111111111119",
+            "type": "LTFT",
+            "startDate": "2024-11-01",
+            "endDate": "2026-05-14",
+            "wte": 0.7
+          },
+          {
+            "id": "21111111-1111-1111-1111-111111111120",
+            "type": "OOPC",
+            "startDate": "2026-05-15",
+            "endDate": "2026-12-01"
+          },
+          {
+            "id": "21111111-1111-1111-1111-111111111121",
+            "type": "SICKNESS",
+            "startDate": "2027-05-05",
+            "endDate": "2027-09-01"
+          },
+          {
+            "id": "21111111-1111-1111-1111-111111111122",
+            "type": "LTFT",
+            "startDate": "2027-11-01",
+            "endDate": "2027-12-15",
+            "wte": 0.5
+          }
+        ]
       },
-      "expected": "2025-06-16"
-    },
-    {
-      "description": "60% WTE over long period",
-      "input": {
-        "currentProgEndDate": "2027-08-31",
-        "currentWte": 1,
-        "newWte": 0.6,
-        "changeStartDate": "2025-09-01"
-      },
-      "expected": "2028-06-18"
-    },
-    {
-      "description": "increase from part-time to full-time",
-      "input": {
-        "currentProgEndDate": "2025-12-31",
-        "currentWte": 0.5,
-        "newWte": 1,
-        "changeStartDate": "2025-07-01"
-      },
-      "expected": "2025-06-30"
-    },
-    {
-      "description": "half-time leap year crossing",
-      "input": {
-        "currentProgEndDate": "2024-12-31",
-        "currentWte": 1,
-        "newWte": 0.5,
-        "changeStartDate": "2024-01-01"
-      },
-      "expected": "2025-07-02"
+      "expected": "2029-05-27"
     }
   ]
 }

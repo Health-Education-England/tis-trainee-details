@@ -108,6 +108,7 @@ public record CctCalculationDetailDto(
    * @param id        The identifier of the CCT change.
    * @param type      The type of CCT change.
    * @param startDate The start date of the CCT change.
+   * @param endDate   The end date of the CCT change.
    * @param wte       The new desired whole time equivalent.
    */
   @Builder
@@ -121,6 +122,8 @@ public record CctCalculationDetailDto(
 
       @NotNull
       LocalDate startDate,
+
+      LocalDate endDate,
 
       @NotNull
       @Range(min = 0, max = 1)

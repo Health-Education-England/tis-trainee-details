@@ -93,7 +93,7 @@ class CctResourceIntegrationTest {
   private static final LocalDate CCT_CHANGE_START_DATE = LocalDate.of(2025, 4, 1);
   private static final double CCT_PM_WTE = 0.8;
   private static final double CCT_CHANGE_WTE = 0.6;
-  private static final LocalDate CCT_EXPECTED_DATE = LocalDate.of(2025, 11, 15);
+  private static final LocalDate CCT_EXPECTED_DATE = LocalDate.of(2025, 12, 12);
 
   @Container
   @ServiceConnection
