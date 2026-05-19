@@ -403,7 +403,7 @@ class TraineeProfileServiceTest {
 
   @Test
   void shouldFindProfilesByLowerCaseEmail() {
-    ArgumentCaptor<String> emailCaptor = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<String> emailCaptor = ArgumentCaptor.captor();
     when(repository.findAllByTraineeEmail(emailCaptor.capture()))
         .thenReturn(Collections.emptyList());
 

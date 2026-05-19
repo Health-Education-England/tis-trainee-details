@@ -62,7 +62,7 @@ class BasicDetailsListenerTest {
 
     listener.updateBasicDetails(event);
 
-    ArgumentCaptor<PersonalDetails> entityCaptor = ArgumentCaptor.forClass(PersonalDetails.class);
+    ArgumentCaptor<PersonalDetails> entityCaptor = ArgumentCaptor.captor();
     verify(service).createProfileOrUpdateBasicDetailsByTisId(eq(TIS_ID), entityCaptor.capture());
 
     PersonalDetails entity = entityCaptor.getValue();

@@ -78,7 +78,7 @@ class GdcDetailsListenerTest {
     Update update = new Update(dto);
     PersonalDetailsUpdateEvent event = new PersonalDetailsUpdateEvent(TIS_ID, update);
 
-    ArgumentCaptor<PersonalDetails> entityCaptor = ArgumentCaptor.forClass(PersonalDetails.class);
+    ArgumentCaptor<PersonalDetails> entityCaptor = ArgumentCaptor.captor();
     when(service.updateGdcDetailsByTisId(eq(TIS_ID), entityCaptor.capture())).then(
         inv ->
             new PersonalDetailsUpdated(true, Optional.of(inv.getArgument(1))));

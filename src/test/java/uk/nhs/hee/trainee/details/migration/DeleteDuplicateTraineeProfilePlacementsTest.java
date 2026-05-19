@@ -56,8 +56,8 @@ class DeleteDuplicateTraineeProfilePlacementsTest {
     final Update update =
         new Update().pull("placements",
             new BasicDBObject("tisId", new BasicDBObject("$regex", "^\\w{24}$")));
-    ArgumentCaptor<Query> queryCaptor = ArgumentCaptor.forClass(Query.class);
-    ArgumentCaptor<Update> updateCaptor = ArgumentCaptor.forClass(Update.class);
+    ArgumentCaptor<Query> queryCaptor = ArgumentCaptor.captor();
+    ArgumentCaptor<Update> updateCaptor = ArgumentCaptor.captor();
     UpdateResult result = mock(UpdateResult.class);
 
     when(template.updateMulti(
