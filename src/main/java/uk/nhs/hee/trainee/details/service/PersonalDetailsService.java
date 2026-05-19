@@ -101,6 +101,7 @@ public class PersonalDetailsService {
       GmcDetailsDto gmcDetails) {
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(gmcDetails.gmcNumber());
+    personalDetails.setGmcStatus(gmcDetails.gmcStatus());
 
     PersonalDetailsUpdated updatedDetails = updateGmcDetailsByTisId(tisId, personalDetails);
 

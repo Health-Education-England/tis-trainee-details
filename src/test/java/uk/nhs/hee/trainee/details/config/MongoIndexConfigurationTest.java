@@ -69,7 +69,7 @@ class MongoIndexConfigurationTest {
 
     configuration.initIndexes();
 
-    ArgumentCaptor<IndexDefinition> indexCaptor = ArgumentCaptor.forClass(IndexDefinition.class);
+    ArgumentCaptor<IndexDefinition> indexCaptor = ArgumentCaptor.captor();
     verify(indexOperations, atLeastOnce()).createIndex(indexCaptor.capture());
 
     List<IndexDefinition> indexes = indexCaptor.getAllValues();
@@ -96,9 +96,9 @@ class MongoIndexConfigurationTest {
 
     configuration.initIndexes();
 
-    ArgumentCaptor<IndexDefinition> indexCaptor = ArgumentCaptor.forClass(IndexDefinition.class);
+    ArgumentCaptor<IndexDefinition> indexCaptor = ArgumentCaptor.captor();
     verify(indexOperations, atLeastOnce()).createIndex(indexCaptor.capture());
-    ArgumentCaptor<String> indexCaptorDel = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<String> indexCaptorDel = ArgumentCaptor.captor();
     verify(indexOperations, atLeastOnce()).dropIndex(indexCaptorDel.capture());
 
     List<IndexDefinition> indexes = indexCaptor.getAllValues();
