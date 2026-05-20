@@ -100,7 +100,7 @@ class PersonalDetailsServiceTest {
 
   @Test
   void shouldCreateTraineeProfileWhenTraineeIdNotFound() {
-    ArgumentCaptor<TraineeProfile> profileCaptor = ArgumentCaptor.forClass(TraineeProfile.class);
+    ArgumentCaptor<TraineeProfile> profileCaptor = ArgumentCaptor.captor();
 
     when(repository.save(profileCaptor.capture()))
         .thenAnswer(invocation -> invocation.getArgument(0));
@@ -126,7 +126,7 @@ class PersonalDetailsServiceTest {
     service.createProfileOrUpdateBasicDetailsByTisId("notFound",
         createPersonalDetails(MODIFIED_SUFFIX, 0));
 
-    ArgumentCaptor<TraineeProfile> profileCaptor = ArgumentCaptor.forClass(TraineeProfile.class);
+    ArgumentCaptor<TraineeProfile> profileCaptor = ArgumentCaptor.captor();
     verify(eventService).publishProfileCreateEvent(profileCaptor.capture());
 
     TraineeProfile eventTraineeProfile = profileCaptor.getValue();
@@ -310,6 +310,31 @@ class PersonalDetailsServiceTest {
         is(expectedPersonalDetails));
   }
 
+  @Test
+  void shouldUpdateGmcDetailsWhenTraineeIdFoundAndNoGmcNumberUpdate() {
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPersonalDetails(createPersonalDetails(ORIGINAL_SUFFIX, 0));
+
+    when(repository.findByTraineeTisId("40")).thenReturn(traineeProfile);
+    when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
+
+    PersonalDetails modifiedPersonalDetails = createPersonalDetails(MODIFIED_SUFFIX, 100);
+    modifiedPersonalDetails.setGmcNumber(GMC_NUMBER + ORIGINAL_SUFFIX);
+    PersonalDetailsUpdated personalDetails = service.updateGmcDetailsByTisId("40",
+        modifiedPersonalDetails);
+
+    assertThat("Unexpected isUpdated flag.", personalDetails.isUpdated(), is(true));
+    assertThat("Unexpected optional isEmpty flag.",
+        personalDetails.getPersonalDetails().isEmpty(), is(false));
+
+    PersonalDetails expectedPersonalDetails = createPersonalDetails(ORIGINAL_SUFFIX, 0);
+    // GMC number not updated, so GMC status uses provided value.
+    expectedPersonalDetails.setGmcStatus(GMC_STATUS + MODIFIED_SUFFIX);
+
+    assertThat("Unexpected personal details.", personalDetails.getPersonalDetails().get(),
+        is(expectedPersonalDetails));
+  }
+
   @ParameterizedTest
   @NullAndEmptySource
   void shouldUpdateGmcDetailsWhenTraineeIdFoundWithNoExistingGmc(String existingGmc) {
@@ -332,7 +357,7 @@ class PersonalDetailsServiceTest {
 
     PersonalDetails expectedPersonalDetails = createPersonalDetails(ORIGINAL_SUFFIX, 0);
     expectedPersonalDetails.setGmcNumber(GMC_NUMBER + MODIFIED_SUFFIX);
-    // GMC number updated, so GMC status changes to DEFAULT_GMC_STATUS
+    // GMC number updated, so GMC status changes to DEFAULT_GMC_STATUS.
     expectedPersonalDetails.setGmcStatus(DEFAULT_GMC_STATUS);
 
     assertThat("Unexpected personal details.", personalDetails.getPersonalDetails().get(),
@@ -408,6 +433,7 @@ class PersonalDetailsServiceTest {
 
     GmcDetailsDto gmcDetails = GmcDetailsDto.builder()
         .gmcNumber(GMC_NUMBER + ORIGINAL_SUFFIX)
+        .gmcStatus(GMC_STATUS + ORIGINAL_SUFFIX)
         .build();
 
     service.updateGmcDetailsWithTraineeProvidedDetails("40", gmcDetails);

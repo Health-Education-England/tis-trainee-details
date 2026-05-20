@@ -194,7 +194,7 @@ class BasicDetailsResourceIntegrationTest {
         .andExpect(status().isNoContent());
 
     ArgumentCaptor<SnsNotification<EmailDetailsProvidedEvent>> notificationCaptor
-        = ArgumentCaptor.forClass(SnsNotification.class);
+        = ArgumentCaptor.captor();
     verify(snsTemplate, times(1))
         .sendNotification(eq("dummy"), notificationCaptor.capture());
     EmailDetailsProvidedEvent event = notificationCaptor.getValue().getPayload();

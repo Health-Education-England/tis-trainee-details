@@ -114,10 +114,15 @@ public abstract class TraineeProfileMapper {
   protected void perUpdateGmcDetails(@MappingTarget TraineeProfile target,
       PersonalDetails source) {
     if (target.getPersonalDetails() != null) {
+      PersonalDetails targetPersonalDetails = target.getPersonalDetails();
+
       // If the gmcNumber is updated
-      if (!Objects.equals(target.getPersonalDetails().getGmcNumber(), source.getGmcNumber())) {
-        // TODO: Default all GMCs to registered until we can properly prompt/determine the correct status.
-        target.getPersonalDetails().setGmcStatus("Registered with Licence");
+      if (!Objects.equals(targetPersonalDetails.getGmcNumber(), source.getGmcNumber())) {
+        // TODO: Default all updated GMCs to registered until we can properly prompt/determine the correct status.
+        targetPersonalDetails.setGmcStatus("Registered with Licence");
+      } else {
+        // If the GMC was not updated then carry the latest source GMC status forward.
+        targetPersonalDetails.setGmcStatus(source.getGmcStatus());
       }
     } else if (source.getGmcNumber() != null) {
       // If target personal details is null and source GMC number has a new value

@@ -52,8 +52,8 @@ class AddTraineeProfileVersioningTest {
   void shouldAddAndInitialiseVersionOnAllRecords() {
     Update correctUpdate = new Update();
     correctUpdate.set("version", VERSION_INIT_VALUE);
-    ArgumentCaptor<Query> queryCaptor = ArgumentCaptor.forClass(Query.class);
-    ArgumentCaptor<Update> updateCaptor = ArgumentCaptor.forClass(Update.class);
+    ArgumentCaptor<Query> queryCaptor = ArgumentCaptor.captor();
+    ArgumentCaptor<Update> updateCaptor = ArgumentCaptor.captor();
     UpdateResult result = mock(UpdateResult.class);
 
     when(template.updateMulti(

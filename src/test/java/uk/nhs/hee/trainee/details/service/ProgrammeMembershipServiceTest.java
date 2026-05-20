@@ -512,7 +512,7 @@ class ProgrammeMembershipServiceTest {
 
     assertThat("Unexpected result.", deleted, is(true));
 
-    ArgumentCaptor<TraineeProfile> profileCaptor = ArgumentCaptor.forClass(TraineeProfile.class);
+    ArgumentCaptor<TraineeProfile> profileCaptor = ArgumentCaptor.captor();
     verify(repository).save(profileCaptor.capture());
 
     List<ProgrammeMembership> programmeMemberships = profileCaptor.getValue()
@@ -1749,7 +1749,7 @@ class ProgrammeMembershipServiceTest {
 
     service.generateProgrammeMembershipPdf(TRAINEE_TIS_ID, PROGRAMME_TIS_ID);
 
-    ArgumentCaptor<Map<String, Object>> variablesCaptor = ArgumentCaptor.forClass(Map.class);
+    ArgumentCaptor<Map<String, Object>> variablesCaptor = ArgumentCaptor.captor();
     verify(pdfService).generatePdf(any(), variablesCaptor.capture());
     Map<String, Object> variables = variablesCaptor.getValue();
     assertThat("Unexpected programme membership.", variables.get("pm"),
@@ -1973,7 +1973,7 @@ class ProgrammeMembershipServiceTest {
 
   @Test
   void shouldUseFoundationTraineeTypeWhenGettingContactListForFoundationProgramme() {
-    ArgumentCaptor<Map<String, Object>> uriVarsCaptor = ArgumentCaptor.forClass(Map.class);
+    ArgumentCaptor<Map<String, Object>> uriVarsCaptor = ArgumentCaptor.captor();
     when(restTemplate.getForObject(any(), any(), anyMap())).thenReturn(new ArrayList<>());
 
     service.getOwnerContactList("a local office", FOUNDATION);
@@ -1985,7 +1985,7 @@ class ProgrammeMembershipServiceTest {
 
   @Test
   void shouldIncludeLocalOfficeNameWhenGettingContactListForFoundationProgramme() {
-    ArgumentCaptor<Map<String, Object>> uriVarsCaptor = ArgumentCaptor.forClass(Map.class);
+    ArgumentCaptor<Map<String, Object>> uriVarsCaptor = ArgumentCaptor.captor();
     when(restTemplate.getForObject(any(), any(), anyMap())).thenReturn(new ArrayList<>());
 
     service.getOwnerContactList("a local office", FOUNDATION);
@@ -1997,7 +1997,7 @@ class ProgrammeMembershipServiceTest {
 
   @Test
   void shouldUseFoundationTraineeTypeWhenGettingOwnerContactForFoundationProgramme() {
-    ArgumentCaptor<Map<String, Object>> uriVarsCaptor = ArgumentCaptor.forClass(Map.class);
+    ArgumentCaptor<Map<String, Object>> uriVarsCaptor = ArgumentCaptor.captor();
     when(restTemplate.getForObject(any(), any(), anyMap())).thenReturn(new ArrayList<>());
 
     service.getOwnerContact("a local office", LocalOfficeContactType.TSS_SUPPORT,
