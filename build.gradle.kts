@@ -58,7 +58,7 @@ dependencies {
   implementation(libs.aws.xray.spring)
 
   // TODO: added to avoid refactoring after transitive dependency removed.
-  implementation("commons-codec:commons-codec:1.21.0")
+  implementation("commons-codec:commons-codec:1.22.0")
 
   // PDF
   implementation(libs.bundles.pdf.publishing)
