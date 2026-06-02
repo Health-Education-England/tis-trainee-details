@@ -238,7 +238,7 @@ public class PlacementService {
    * @param placement      The placement to assess.
    * @return A list of possible programme memberships.
    */
-  private List<ProgrammeMembership> getPossiblePlacementProgrammes(TraineeProfile traineeProfile,
+  public List<ProgrammeMembership> getPossiblePlacementProgrammes(TraineeProfile traineeProfile,
       Placement placement) {
     LocalDate dayAfterPlacementStart = placement.getStartDate().plusDays(1);
     LocalDate dayBeforePlacementStart = placement.getStartDate().minusDays(1);

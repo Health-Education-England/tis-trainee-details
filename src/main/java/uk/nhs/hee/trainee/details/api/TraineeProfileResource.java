@@ -42,6 +42,7 @@ import uk.nhs.hee.trainee.details.dto.TraineeProfileDto;
 import uk.nhs.hee.trainee.details.dto.UserDetails;
 import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapper;
 import uk.nhs.hee.trainee.details.model.LocalOfficeContactType;
+import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.service.TraineeProfileService;
 
@@ -164,5 +165,19 @@ public class TraineeProfileResource {
   public ResponseEntity<Set<LocalOfficeContact>> getTraineeLocalOfficeContacts(
       @PathVariable String tisId, @PathVariable LocalOfficeContactType contactType) {
     return ResponseEntity.of(service.getTraineeLocalOfficeContacts(tisId, contactType));
+  }
+
+  /**
+   * Get Programme Membership details for the first F2 Placement.
+   *
+   * @param tisId    The person ID to search for.
+   * @param placementId The placement to search for.
+   * @return The Programme Membership details of the First F2 Placement,
+   *     or null if no Programme Membership found or the Placement is not the first F2.
+   */
+  @GetMapping("/first-f2-programme/{tisId}/{placementId}")
+  public ResponseEntity<ProgrammeMembership> getTraineeFirstF2Programme(
+      @PathVariable String tisId, @PathVariable String placementId) {
+    return ResponseEntity.of(service.getFirstF2ProgrammeMembership(tisId, placementId));
   }
 }

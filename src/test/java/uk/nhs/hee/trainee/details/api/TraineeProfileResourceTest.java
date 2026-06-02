@@ -497,4 +497,49 @@ class TraineeProfileResourceTest {
         .andExpect(jsonPath("$[0].contact").value(LOCAL_OFFICE_EMAIL))
         .andExpect(jsonPath("$[0].localOffice").value(PERSON_PERSONOWNER));
   }
+
+  @Test
+  void getFirstF2ProgrammeShouldReturnNotFoundWhenTisIdNotFound() throws Exception {
+    when(service.getFirstF2ProgrammeMembership("unknown-tis-id", PLACEMENT_TISID))
+        .thenReturn(Optional.empty());
+
+    mockMvc.perform(
+            get("/api/trainee-profile/first-f2-programme/{tisId}/{placementId}",
+                "unknown-tis-id", PLACEMENT_TISID)
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$").doesNotExist());
+  }
+
+  @Test
+  void getFirstF2ProgrammeShouldReturnNotFoundWhenServiceReturnsEmpty() throws Exception {
+    when(service.getFirstF2ProgrammeMembership(DEFAULT_TIS_ID_1, PLACEMENT_TISID))
+        .thenReturn(Optional.empty());
+
+    mockMvc.perform(
+            get("/api/trainee-profile/first-f2-programme/{tisId}/{placementId}",
+                DEFAULT_TIS_ID_1, PLACEMENT_TISID)
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$").doesNotExist());
+  }
+
+  @Test
+  void getFirstF2ProgrammesShouldReturnEarliestProgrammeWhenFirstF2PlacementFound()
+      throws Exception {
+    programmeMembership.setTisId(DEFAULT_TIS_ID_1);
+
+    when(service.getFirstF2ProgrammeMembership(DEFAULT_TIS_ID_1, PLACEMENT_TISID))
+        .thenReturn(Optional.of(programmeMembership));
+
+    mockMvc.perform(
+            get("/api/trainee-profile/first-f2-programme/{tisId}/{placementId}",
+                DEFAULT_TIS_ID_1, PLACEMENT_TISID)
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.tisId").value(DEFAULT_TIS_ID_1));
+
+    verify(service).getFirstF2ProgrammeMembership(DEFAULT_TIS_ID_1, PLACEMENT_TISID);
+  }
 }

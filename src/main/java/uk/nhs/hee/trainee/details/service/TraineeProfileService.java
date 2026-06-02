@@ -38,6 +38,7 @@ import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
 import uk.nhs.hee.trainee.details.model.LocalOfficeContactType;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
+import uk.nhs.hee.trainee.details.model.Placement;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.Qualification;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
@@ -50,11 +51,14 @@ public class TraineeProfileService {
 
   private final TraineeProfileRepository repository;
   private final ProgrammeMembershipService programmeMembershipService;
+  private final PlacementService placementService;
 
   TraineeProfileService(TraineeProfileRepository repository,
-                        ProgrammeMembershipService programmeMembershipService) {
+                        ProgrammeMembershipService programmeMembershipService,
+                        PlacementService placementService) {
     this.repository = repository;
     this.programmeMembershipService = programmeMembershipService;
+    this.placementService = placementService;
   }
 
   /**
@@ -207,6 +211,34 @@ public class TraineeProfileService {
                 && traineeProfile.getPersonalDetails().getDateOfBirth().equals(dob))
         .map(TraineeProfile::getTraineeTisId)
         .toList();
+  }
+
+  /**
+   * Get Programme Membership details for the first F2 Placement.
+   *
+   * @param tisId    The person ID to search for.
+   * @param placementId The placement to search for.
+   * @return The Programme Membership details of the First F2 Placement,
+   *     or null if no Programme Membership found or the Placement is not the first F2.
+   */
+  public Optional<ProgrammeMembership> getFirstF2ProgrammeMembership(String tisId,
+                                                                     String placementId) {
+    TraineeProfile traineeProfile = repository.findByTraineeTisId(tisId);
+
+    // find the first F2 Placement of the trainee
+    Placement firstF2 = traineeProfile.getPlacements().stream()
+        .filter(p -> "F2".equals(p.getGrade()))
+        .min(Comparator.comparing(Placement::getStartDate))
+        .orElse(null);
+
+    // return null if the provided Placement is not the first F2
+    if (firstF2 == null || !firstF2.getTisId().equals(placementId)) {
+      return Optional.empty();
+    }
+
+    // return the Placement Programme with earliest programme start date
+    return placementService.getPossiblePlacementProgrammes(traineeProfile, firstF2).stream()
+        .min(Comparator.comparing(ProgrammeMembership::getStartDate));
   }
 
   /**
