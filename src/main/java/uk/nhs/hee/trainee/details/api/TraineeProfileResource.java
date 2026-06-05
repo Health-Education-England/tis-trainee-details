@@ -37,6 +37,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import uk.nhs.hee.trainee.details.dto.LocalOfficeContact;
 import uk.nhs.hee.trainee.details.dto.PersonalDetailsDto;
+import uk.nhs.hee.trainee.details.dto.ProgrammeMembershipDto;
 import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
 import uk.nhs.hee.trainee.details.dto.TraineeProfileDto;
 import uk.nhs.hee.trainee.details.dto.UserDetails;
@@ -168,16 +169,17 @@ public class TraineeProfileResource {
   }
 
   /**
-   * Get Programme Membership details for the first F2 Placement.
+   * Get Programme Membership details if this is the trainee's first F2 placement.
    *
    * @param tisId    The person ID to search for.
    * @param placementId The placement to search for.
    * @return The Programme Membership details of the First F2 Placement,
-   *     or null if no Programme Membership found or the Placement is not the first F2.
+   *     or No Content if no Programme Membership found or the Placement is not the first F2.
    */
   @GetMapping("/first-f2-programme/{tisId}/{placementId}")
-  public ResponseEntity<ProgrammeMembership> getTraineeFirstF2Programme(
+  public ResponseEntity<ProgrammeMembershipDto> getTraineeFirstF2Programme(
       @PathVariable String tisId, @PathVariable String placementId) {
-    return ResponseEntity.of(service.getFirstF2ProgrammeMembership(tisId, placementId));
+    ProgrammeMembershipDto result = service.getFirstF2ProgrammeMembership(tisId, placementId);
+    return result != null ? ResponseEntity.ok(result) : ResponseEntity.noContent().build();
   }
 }

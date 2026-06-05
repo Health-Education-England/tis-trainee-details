@@ -60,10 +60,13 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.nhs.hee.trainee.details.dto.HeeUserDto;
 import uk.nhs.hee.trainee.details.dto.LocalOfficeContact;
+import uk.nhs.hee.trainee.details.dto.ProgrammeMembershipDto;
 import uk.nhs.hee.trainee.details.dto.TraineeType;
 import uk.nhs.hee.trainee.details.dto.UserDetails;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
+import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapper;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
 import uk.nhs.hee.trainee.details.model.Curriculum;
 import uk.nhs.hee.trainee.details.model.HeeUser;
@@ -146,6 +149,9 @@ class TraineeProfileServiceTest {
 
   @Mock
   private PlacementService placementService;
+
+  @Mock
+  private ProgrammeMembershipMapper programmeMembershipMapper;
 
   @Mock
   private TrainingNumberGenerator trainingNumberGenerator;
@@ -564,10 +570,10 @@ class TraineeProfileServiceTest {
     traineeProfile.setPlacements(new ArrayList<>(List.of(placement1))); // F1
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
 
-    Optional<ProgrammeMembership> result =
+    ProgrammeMembershipDto result =
         service.getFirstF2ProgrammeMembership(DEFAULT_TIS_ID_1, PLACEMENT_TISID2);
 
-    assertThat(result.isPresent(), is(false));
+    assertThat(result, is(nullValue()));
     verifyNoInteractions(placementService);
   }
 
@@ -576,10 +582,10 @@ class TraineeProfileServiceTest {
     traineeProfile.setPlacements(new ArrayList<>());
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
 
-    Optional<ProgrammeMembership> result =
+    ProgrammeMembershipDto result =
         service.getFirstF2ProgrammeMembership(DEFAULT_TIS_ID_1, PLACEMENT_TISID2);
 
-    assertThat(result.isPresent(), is(false));
+    assertThat(result, is(nullValue()));
     verifyNoInteractions(placementService);
   }
 
@@ -595,10 +601,10 @@ class TraineeProfileServiceTest {
     traineeProfile.setPlacements(new ArrayList<>(List.of(placement1, placement2, laterF2)));
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
 
-    Optional<ProgrammeMembership> result =
+    ProgrammeMembershipDto result =
         service.getFirstF2ProgrammeMembership(DEFAULT_TIS_ID_1, "999");
 
-    assertThat(result.isPresent(), is(false));
+    assertThat(result, is(nullValue()));
     verifyNoInteractions(placementService);
   }
 
@@ -608,10 +614,10 @@ class TraineeProfileServiceTest {
     traineeProfile.setPlacements(new ArrayList<>(List.of(placement1, placement2)));
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
 
-    Optional<ProgrammeMembership> result =
+    ProgrammeMembershipDto result =
         service.getFirstF2ProgrammeMembership(DEFAULT_TIS_ID_1, PLACEMENT_TISID1);
 
-    assertThat(result.isPresent(), is(false));
+    assertThat(result, is(nullValue()));
     verifyNoInteractions(placementService);
   }
 
@@ -627,15 +633,23 @@ class TraineeProfileServiceTest {
     programmeMembership.setDesignatedBody(DESIGNATED_BODY);
     programmeMembership.setStartDate(LocalDate.of(2020, 1, 1));
 
+    ProgrammeMembershipDto expectedPmDto = new ProgrammeMembershipDto();
+    HeeUserDto roDto = new HeeUserDto();
+    roDto.setFirstName(RO_FIRST_NAME);
+    roDto.setLastName(RO_LAST_NAME);
+    expectedPmDto.setResponsibleOfficer(roDto);
+    expectedPmDto.setDesignatedBody(DESIGNATED_BODY);
+    expectedPmDto.setStartDate(LocalDate.of(2020, 1, 1));
+
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
     when(placementService.getPossiblePlacementProgrammes(traineeProfile, placement2))
         .thenReturn(List.of(programmeMembership));
+    when(programmeMembershipMapper.toDto(programmeMembership)).thenReturn(expectedPmDto);
 
-    Optional<ProgrammeMembership> optionalResult =
+    ProgrammeMembershipDto result =
         service.getFirstF2ProgrammeMembership(DEFAULT_TIS_ID_1, PLACEMENT_TISID2);
-    ProgrammeMembership result = optionalResult.orElse(null);
 
-    assertThat(optionalResult.isPresent(), is(true));
+    assertThat(result, is(notNullValue()));
     assertThat(result.getDesignatedBody(), is(DESIGNATED_BODY));
     assertThat(result.getResponsibleOfficer().getFirstName(), is(RO_FIRST_NAME));
     assertThat(result.getResponsibleOfficer().getLastName(), is(RO_LAST_NAME));
@@ -659,18 +673,26 @@ class TraineeProfileServiceTest {
     programmeMembership.setDesignatedBody(DESIGNATED_BODY);
     programmeMembership.setStartDate(LocalDate.of(2020, 1, 1));
 
+    ProgrammeMembershipDto expectedPmDto = new ProgrammeMembershipDto();
+    HeeUserDto roDto = new HeeUserDto();
+    roDto.setFirstName(RO_FIRST_NAME);
+    roDto.setLastName(RO_LAST_NAME);
+    expectedPmDto.setResponsibleOfficer(roDto);
+    expectedPmDto.setDesignatedBody(DESIGNATED_BODY);
+    expectedPmDto.setStartDate(LocalDate.of(2020, 1, 1));
+
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
     when(placementService.getPossiblePlacementProgrammes(traineeProfile, placement2))
         .thenReturn(List.of(programmeMembership));
+    when(programmeMembershipMapper.toDto(programmeMembership)).thenReturn(expectedPmDto);
 
-    Optional<ProgrammeMembership> optionalResult =
+    ProgrammeMembershipDto result =
         service.getFirstF2ProgrammeMembership(DEFAULT_TIS_ID_1, PLACEMENT_TISID2);
 
     verify(placementService).getPossiblePlacementProgrammes(traineeProfile, placement2);
     verify(placementService, never()).getPossiblePlacementProgrammes(traineeProfile, laterF2);
 
-    ProgrammeMembership result = optionalResult.orElse(null);
-    assertThat(optionalResult.isPresent(), is(true));
+    assertThat(result, is(notNullValue()));
     assertThat(result.getDesignatedBody(), is(DESIGNATED_BODY));
     assertThat(result.getResponsibleOfficer().getFirstName(), is(RO_FIRST_NAME));
     assertThat(result.getResponsibleOfficer().getLastName(), is(RO_LAST_NAME));
@@ -697,15 +719,23 @@ class TraineeProfileServiceTest {
     laterPm.setDesignatedBody("something else");
     laterPm.setStartDate(LocalDate.of(2021, 8, 1));
 
+    ProgrammeMembershipDto expectedPmDto = new ProgrammeMembershipDto();
+    HeeUserDto roDto = new HeeUserDto();
+    roDto.setFirstName(RO_FIRST_NAME);
+    roDto.setLastName(RO_LAST_NAME);
+    expectedPmDto.setResponsibleOfficer(roDto);
+    expectedPmDto.setDesignatedBody(DESIGNATED_BODY);
+    expectedPmDto.setStartDate(LocalDate.of(2019, 8, 1));
+
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
     when(placementService.getPossiblePlacementProgrammes(traineeProfile, placement2))
         .thenReturn(List.of(laterPm, earlierPm));
+    when(programmeMembershipMapper.toDto(earlierPm)).thenReturn(expectedPmDto);
 
-    Optional<ProgrammeMembership> optionalResult =
+    ProgrammeMembershipDto result =
         service.getFirstF2ProgrammeMembership(DEFAULT_TIS_ID_1, PLACEMENT_TISID2);
-    ProgrammeMembership result = optionalResult.orElse(null);
 
-    assertThat(optionalResult.isPresent(), is(true));
+    assertThat(result, is(notNullValue()));
     assertThat(result.getDesignatedBody(), is(DESIGNATED_BODY));
     assertThat(result.getResponsibleOfficer().getFirstName(), is(RO_FIRST_NAME));
     assertThat(result.getResponsibleOfficer().getLastName(), is(RO_LAST_NAME));
@@ -720,10 +750,10 @@ class TraineeProfileServiceTest {
     when(placementService.getPossiblePlacementProgrammes(traineeProfile, placement2))
         .thenReturn(Collections.emptyList());
 
-    Optional<ProgrammeMembership> result =
+    ProgrammeMembershipDto result =
         service.getFirstF2ProgrammeMembership(DEFAULT_TIS_ID_1, PLACEMENT_TISID2);
 
-    assertThat(result.isPresent(), is(false));
+    assertThat(result, is(nullValue()));
   }
 
   @Test

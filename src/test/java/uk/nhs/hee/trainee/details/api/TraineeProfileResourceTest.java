@@ -55,7 +55,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.nhs.hee.trainee.details.TestJwtUtil;
 import uk.nhs.hee.trainee.details.config.InterceptorConfiguration;
+import uk.nhs.hee.trainee.details.dto.HeeUserDto;
 import uk.nhs.hee.trainee.details.dto.LocalOfficeContact;
+import uk.nhs.hee.trainee.details.dto.ProgrammeMembershipDto;
 import uk.nhs.hee.trainee.details.dto.UserDetails;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
@@ -63,6 +65,7 @@ import uk.nhs.hee.trainee.details.dto.signature.Signature;
 import uk.nhs.hee.trainee.details.dto.signature.SignedDto;
 import uk.nhs.hee.trainee.details.mapper.PersonalDetailsMapperImpl;
 import uk.nhs.hee.trainee.details.mapper.PlacementMapperImpl;
+import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapper;
 import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapperImpl;
 import uk.nhs.hee.trainee.details.mapper.SignatureMapperImpl;
 import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapperImpl;
@@ -117,6 +120,9 @@ class TraineeProfileResourceTest {
   private static final String PROGRAMME_TISID = "1";
   private static final String PROGRAMME_NAME = "General Practice";
   private static final String PROGRAMME_NUMBER = "EOE8950";
+  private static final String PROGRAMME_DESIGNATED_BODY = "NHSE Education East Midlands";
+  private static final String PROGRAMME_RO_FIRST_NAME = "RO First Name";
+  private static final String PROGRAMME_RO_LAST_NAME = "RO Last Name";
 
   private static final String CURRICULUM_TISID = "1";
   private static final String CURRICULUM_NAME = "ST3";
@@ -499,38 +505,43 @@ class TraineeProfileResourceTest {
   }
 
   @Test
-  void getFirstF2ProgrammeShouldReturnNotFoundWhenTisIdNotFound() throws Exception {
+  void getFirstF2ProgrammeShouldReturnNoContentWhenTisIdNotFound() throws Exception {
     when(service.getFirstF2ProgrammeMembership("unknown-tis-id", PLACEMENT_TISID))
-        .thenReturn(Optional.empty());
+        .thenReturn(null);
 
     mockMvc.perform(
             get("/api/trainee-profile/first-f2-programme/{tisId}/{placementId}",
                 "unknown-tis-id", PLACEMENT_TISID)
                 .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isNotFound())
+        .andExpect(status().isNoContent())
         .andExpect(jsonPath("$").doesNotExist());
   }
 
   @Test
-  void getFirstF2ProgrammeShouldReturnNotFoundWhenServiceReturnsEmpty() throws Exception {
+  void getFirstF2ProgrammeShouldReturnNoContentWhenServiceReturnsEmpty() throws Exception {
     when(service.getFirstF2ProgrammeMembership(DEFAULT_TIS_ID_1, PLACEMENT_TISID))
-        .thenReturn(Optional.empty());
+        .thenReturn(null);
 
     mockMvc.perform(
             get("/api/trainee-profile/first-f2-programme/{tisId}/{placementId}",
                 DEFAULT_TIS_ID_1, PLACEMENT_TISID)
                 .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isNotFound())
+        .andExpect(status().isNoContent())
         .andExpect(jsonPath("$").doesNotExist());
   }
 
   @Test
   void getFirstF2ProgrammesShouldReturnEarliestProgrammeWhenFirstF2PlacementFound()
       throws Exception {
-    programmeMembership.setTisId(DEFAULT_TIS_ID_1);
+    ProgrammeMembershipDto pmDto = new ProgrammeMembershipDto();
+    pmDto.setDesignatedBody(PROGRAMME_DESIGNATED_BODY);
+    HeeUserDto roDto = new HeeUserDto();
+    roDto.setFirstName(PROGRAMME_RO_FIRST_NAME);
+    roDto.setLastName(PROGRAMME_RO_LAST_NAME);
+    pmDto.setResponsibleOfficer(roDto);
 
     when(service.getFirstF2ProgrammeMembership(DEFAULT_TIS_ID_1, PLACEMENT_TISID))
-        .thenReturn(Optional.of(programmeMembership));
+        .thenReturn(pmDto);
 
     mockMvc.perform(
             get("/api/trainee-profile/first-f2-programme/{tisId}/{placementId}",
@@ -538,7 +549,9 @@ class TraineeProfileResourceTest {
                 .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.tisId").value(DEFAULT_TIS_ID_1));
+        .andExpect(jsonPath("$.designatedBody").value(PROGRAMME_DESIGNATED_BODY))
+        .andExpect(jsonPath("$.responsibleOfficer.firstName").value(PROGRAMME_RO_FIRST_NAME))
+        .andExpect(jsonPath("$.responsibleOfficer.lastName").value(PROGRAMME_RO_LAST_NAME));
 
     verify(service).getFirstF2ProgrammeMembership(DEFAULT_TIS_ID_1, PLACEMENT_TISID);
   }
