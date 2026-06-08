@@ -573,6 +573,18 @@ class TraineeProfileServiceTest {
   }
 
   @Test
+  void getFirstF2ProgrammeMembershipShouldReturnNullWhenTraineeNotFound() {
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(null);
+
+    ProgrammeMembershipDto result =
+        service.getFirstF2ProgrammeMembership(DEFAULT_TIS_ID_1, PLACEMENT_TISID2);
+
+    assertThat(result, is(nullValue()));
+    verifyNoInteractions(placementService);
+    verifyNoInteractions(programmeMembershipMapper);
+  }
+
+  @Test
   void getFirstF2ProgrammeMembershipShouldReturnEmptyWhenNoF2PlacementsExist() {
     traineeProfile.setPlacements(new ArrayList<>(List.of(placement1))); // F1
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
