@@ -392,7 +392,7 @@ class TraineeProfileServiceTest {
 
   @Test
   void shouldUseSignedVersionWhenCojSigned() {
-    Instant now = Instant.now();
+    Instant now = Instant.now(CLOCK);
     programmeMembership.setConditionsOfJoining(new ConditionsOfJoining(now, GG9, null));
 
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(this.traineeProfile);
