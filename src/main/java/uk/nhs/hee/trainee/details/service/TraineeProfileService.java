@@ -23,6 +23,7 @@ package uk.nhs.hee.trainee.details.service;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -168,8 +169,8 @@ public class TraineeProfileService {
     TraineeProfile traineeProfile = repository.findByTraineeTisId(tisId);
 
     if (traineeProfile != null) {
-      LocalDate tomorrow = LocalDate.now().plusDays(1);
-      LocalDate yesterday = LocalDate.now().minusDays(1);
+      LocalDate tomorrow = LocalDate.now(ZoneId.of("UTC")).plusDays(1);
+      LocalDate yesterday = LocalDate.now(ZoneId.of("UTC")).minusDays(1);
       List<ProgrammeMembership> currentPms = traineeProfile.getProgrammeMemberships().stream()
           .filter(pm -> pm.getStartDate().isBefore(tomorrow))
           .filter(pm -> pm.getEndDate().isAfter(yesterday))
@@ -248,7 +249,8 @@ public class TraineeProfileService {
     }
 
     // return the Placement Programme with earliest programme start date
-    Optional<ProgrammeMembership> optionalPm =  placementService.getPossiblePlacementProgrammes(traineeProfile, firstF2).stream()
+    Optional<ProgrammeMembership> optionalPm =  placementService.getPossiblePlacementProgrammes(
+        traineeProfile, firstF2).stream()
         .min(Comparator.comparing(ProgrammeMembership::getStartDate));
 
     if (!optionalPm.isPresent()) {

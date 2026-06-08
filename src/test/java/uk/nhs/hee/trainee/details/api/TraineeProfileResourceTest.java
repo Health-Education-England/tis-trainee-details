@@ -32,9 +32,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.HashSet;
@@ -65,7 +67,6 @@ import uk.nhs.hee.trainee.details.dto.signature.Signature;
 import uk.nhs.hee.trainee.details.dto.signature.SignedDto;
 import uk.nhs.hee.trainee.details.mapper.PersonalDetailsMapperImpl;
 import uk.nhs.hee.trainee.details.mapper.PlacementMapperImpl;
-import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapper;
 import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapperImpl;
 import uk.nhs.hee.trainee.details.mapper.SignatureMapperImpl;
 import uk.nhs.hee.trainee.details.mapper.TraineeProfileMapperImpl;
@@ -132,7 +133,9 @@ class TraineeProfileResourceTest {
   private static final String PLACEMENT_TISID = "1";
   private static final String PLACEMENT_SITE = "Addenbrookes Hospital";
   private static final Status PLACEMENT_STATUS = Status.CURRENT;
-  private static final Instant NOW = Instant.now();
+  private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-01-01T00:00:00Z"),
+      ZoneOffset.UTC);
+  private static final Instant NOW = Instant.now(CLOCK);
   private static final Instant COJ_SYNCED_AT = Instant.MAX;
 
   private static final String LOCAL_OFFICE_EMAIL = "some@contact.com";

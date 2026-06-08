@@ -39,8 +39,11 @@ import static uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion.GG9;
 import static uk.nhs.hee.trainee.details.service.FeatureService.FOUNDATION_CURRICULUM_SUBTYPE;
 import static uk.nhs.hee.trainee.details.service.FeatureService.FOUNDATION_SPECIALTY;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.Month;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -137,6 +140,10 @@ class TraineeProfileServiceTest {
   private static final String LO_CONTACT1 = "gmc@local.office";
   private static final String LO_CONTACT2 = "ltft@local.office";
   private static final String PUBLIC_HEALTH_MEDICINE_SPECIALTY = "Public Health Medicine";
+
+  private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-01-01T00:00:00Z"),
+      ZoneId.of("UTC"));
+  private static final LocalDate NOW = LocalDate.now(CLOCK);
 
   @InjectMocks
   private TraineeProfileService service;
@@ -281,11 +288,11 @@ class TraineeProfileServiceTest {
   @Test
   void shouldSortQualificationsInDescendingOrder() {
     Qualification qualification1 = new Qualification();
-    qualification1.setDateAttained(LocalDate.now());
+    qualification1.setDateAttained(NOW);
     Qualification qualification2 = new Qualification();
-    qualification2.setDateAttained(LocalDate.now().plusDays(100));
+    qualification2.setDateAttained(NOW.plusDays(100));
     Qualification qualification3 = new Qualification();
-    qualification3.setDateAttained(LocalDate.now().minusDays(100));
+    qualification3.setDateAttained(NOW.minusDays(100));
 
     List<Qualification> qualifications = Arrays
         .asList(qualification1, qualification2, qualification3);
@@ -308,9 +315,9 @@ class TraineeProfileServiceTest {
   void shouldSortQualificationsWithNullsLast() {
     Qualification qualification1 = new Qualification();
     Qualification qualification2 = new Qualification();
-    qualification2.setDateAttained(LocalDate.now().plusDays(100));
+    qualification2.setDateAttained(NOW.plusDays(100));
     Qualification qualification3 = new Qualification();
-    qualification3.setDateAttained(LocalDate.now().minusDays(100));
+    qualification3.setDateAttained(NOW.minusDays(100));
 
     List<Qualification> qualifications = Arrays
         .asList(qualification1, qualification2, qualification3);
@@ -332,10 +339,10 @@ class TraineeProfileServiceTest {
   @Test
   void shouldPopulatePersonalDetailsWithLatestQualification() {
     Qualification qualification1 = new Qualification();
-    qualification1.setDateAttained(LocalDate.now());
+    qualification1.setDateAttained(NOW);
     Qualification qualification2 = new Qualification();
     qualification2.setQualification("qualification2");
-    qualification2.setDateAttained(LocalDate.now().plusDays(100));
+    qualification2.setDateAttained(NOW.plusDays(100));
     qualification2.setMedicalSchool("medicalSchool2");
 
     List<Qualification> qualifications = Arrays.asList(qualification1, qualification2);
@@ -349,7 +356,7 @@ class TraineeProfileServiceTest {
     assertThat("Unexpected qualification, check order is correct.",
         personalDetails.getQualification(), is("qualification2"));
     assertThat("Unexpected qualification, check order is correct.",
-        personalDetails.getDateAttained(), is(LocalDate.now().plusDays(100)));
+        personalDetails.getDateAttained(), is(NOW.plusDays(100)));
     assertThat("Unexpected qualification, check order is correct.",
         personalDetails.getMedicalSchool(), is("medicalSchool2"));
   }
@@ -591,12 +598,12 @@ class TraineeProfileServiceTest {
 
   @Test
   void getFirstF2ProgrammeMembershipShouldReturnEmptyWhenProvidedPlacementIdIsNotTheFirstF2() {
-    placement2.setStartDate(LocalDate.of(2025, 1, 1));
+    placement2.setStartDate(LocalDate.of(2025, Month.JANUARY, 1));
 
     Placement laterF2 = new Placement();
     laterF2.setTisId("999");
     laterF2.setGrade(PLACEMENT_GRADE2); // "F2"
-    laterF2.setStartDate(LocalDate.of(2025, 6, 1));
+    laterF2.setStartDate(LocalDate.of(2025, Month.JUNE, 1));
 
     traineeProfile.setPlacements(new ArrayList<>(List.of(placement1, placement2, laterF2)));
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
@@ -610,7 +617,7 @@ class TraineeProfileServiceTest {
 
   @Test
   void getFirstF2ProgrammeMembershipShouldReturnEmptyWhenProvidedPlacementIdIsNotF2() {
-    placement2.setStartDate(LocalDate.of(2020, 1, 1));
+    placement2.setStartDate(LocalDate.of(2020, Month.JANUARY, 1));
     traineeProfile.setPlacements(new ArrayList<>(List.of(placement1, placement2)));
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
 
@@ -623,7 +630,7 @@ class TraineeProfileServiceTest {
 
   @Test
   void getFirstF2ProgrammeMembershipShouldReturnProgramme() {
-    placement2.setStartDate(LocalDate.of(2020, 1, 1));
+    placement2.setStartDate(LocalDate.of(2020, Month.JANUARY, 1));
     traineeProfile.setPlacements(new ArrayList<>(List.of(placement1, placement2)));
 
     HeeUser ro = new HeeUser();
@@ -631,7 +638,7 @@ class TraineeProfileServiceTest {
     ro.setLastName(RO_LAST_NAME);
     programmeMembership.setResponsibleOfficer(ro);
     programmeMembership.setDesignatedBody(DESIGNATED_BODY);
-    programmeMembership.setStartDate(LocalDate.of(2020, 1, 1));
+    programmeMembership.setStartDate(LocalDate.of(2020, Month.JANUARY, 1));
 
     ProgrammeMembershipDto expectedPmDto = new ProgrammeMembershipDto();
     HeeUserDto roDto = new HeeUserDto();
@@ -639,7 +646,7 @@ class TraineeProfileServiceTest {
     roDto.setLastName(RO_LAST_NAME);
     expectedPmDto.setResponsibleOfficer(roDto);
     expectedPmDto.setDesignatedBody(DESIGNATED_BODY);
-    expectedPmDto.setStartDate(LocalDate.of(2020, 1, 1));
+    expectedPmDto.setStartDate(LocalDate.of(2020, Month.JANUARY, 1));
 
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
     when(placementService.getPossiblePlacementProgrammes(traineeProfile, placement2))
@@ -657,12 +664,12 @@ class TraineeProfileServiceTest {
 
   @Test
   void getFirstF2ProgrammeMembershipShouldReturnProgrammeWhenPlacementIsFirstOfMultipleF2s() {
-    placement2.setStartDate(LocalDate.of(2020, 1, 1));
+    placement2.setStartDate(LocalDate.of(2020, Month.JANUARY, 1));
 
     Placement laterF2 = new Placement();
     laterF2.setTisId("999");
     laterF2.setGrade(PLACEMENT_GRADE2); // "F2"
-    laterF2.setStartDate(LocalDate.of(2022, 6, 1));
+    laterF2.setStartDate(LocalDate.of(2022, Month.JUNE, 1));
 
     traineeProfile.setPlacements(new ArrayList<>(List.of(placement1, laterF2, placement2)));
 
@@ -671,7 +678,7 @@ class TraineeProfileServiceTest {
     ro.setLastName(RO_LAST_NAME);
     programmeMembership.setResponsibleOfficer(ro);
     programmeMembership.setDesignatedBody(DESIGNATED_BODY);
-    programmeMembership.setStartDate(LocalDate.of(2020, 1, 1));
+    programmeMembership.setStartDate(LocalDate.of(2020, Month.JANUARY, 1));
 
     ProgrammeMembershipDto expectedPmDto = new ProgrammeMembershipDto();
     HeeUserDto roDto = new HeeUserDto();
@@ -679,7 +686,7 @@ class TraineeProfileServiceTest {
     roDto.setLastName(RO_LAST_NAME);
     expectedPmDto.setResponsibleOfficer(roDto);
     expectedPmDto.setDesignatedBody(DESIGNATED_BODY);
-    expectedPmDto.setStartDate(LocalDate.of(2020, 1, 1));
+    expectedPmDto.setStartDate(LocalDate.of(2020, Month.JANUARY, 1));
 
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
     when(placementService.getPossiblePlacementProgrammes(traineeProfile, placement2))
@@ -700,7 +707,7 @@ class TraineeProfileServiceTest {
 
   @Test
   void getFirstF2ProgrammeMembershipShouldReturnEarliestProgrammeWhenMultipleMatchingProgrammes() {
-    placement2.setStartDate(LocalDate.of(2020, 1, 1));
+    placement2.setStartDate(LocalDate.of(2020, Month.JANUARY, 1));
     traineeProfile.setPlacements(new ArrayList<>(List.of(placement1, placement2)));
 
     ProgrammeMembership earlierPm = new ProgrammeMembership();
@@ -709,7 +716,7 @@ class TraineeProfileServiceTest {
     ro.setLastName(RO_LAST_NAME);
     earlierPm.setResponsibleOfficer(ro);
     earlierPm.setDesignatedBody(DESIGNATED_BODY);
-    earlierPm.setStartDate(LocalDate.of(2019, 8, 1));
+    earlierPm.setStartDate(LocalDate.of(2019, Month.AUGUST, 1));
 
     ProgrammeMembership laterPm = new ProgrammeMembership();
     HeeUser laterRo = new HeeUser();
@@ -717,7 +724,7 @@ class TraineeProfileServiceTest {
     laterRo.setLastName("something else");
     laterPm.setResponsibleOfficer(ro);
     laterPm.setDesignatedBody("something else");
-    laterPm.setStartDate(LocalDate.of(2021, 8, 1));
+    laterPm.setStartDate(LocalDate.of(2021, Month.AUGUST, 1));
 
     ProgrammeMembershipDto expectedPmDto = new ProgrammeMembershipDto();
     HeeUserDto roDto = new HeeUserDto();
@@ -725,7 +732,7 @@ class TraineeProfileServiceTest {
     roDto.setLastName(RO_LAST_NAME);
     expectedPmDto.setResponsibleOfficer(roDto);
     expectedPmDto.setDesignatedBody(DESIGNATED_BODY);
-    expectedPmDto.setStartDate(LocalDate.of(2019, 8, 1));
+    expectedPmDto.setStartDate(LocalDate.of(2019, Month.AUGUST, 1));
 
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
     when(placementService.getPossiblePlacementProgrammes(traineeProfile, placement2))
@@ -743,7 +750,7 @@ class TraineeProfileServiceTest {
 
   @Test
   void getFirstF2ProgrammeMembershipShouldReturnEmptyWhenPlacementServiceReturnsNoProgrammes() {
-    placement2.setStartDate(LocalDate.of(2020, 1, 1));
+    placement2.setStartDate(LocalDate.of(2020, Month.JANUARY, 1));
     traineeProfile.setPlacements(new ArrayList<>(List.of(placement1, placement2)));
 
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
@@ -924,12 +931,12 @@ class TraineeProfileServiceTest {
     programmeMembership.setStartDate(LocalDate.now());
     programmeMembership.setEndDate(LocalDate.now());
     ProgrammeMembership programmeMembership2 = new ProgrammeMembership();
-    programmeMembership2.setStartDate(LocalDate.now().plusDays(1));
+    programmeMembership2.setStartDate(LocalDate.now().plusYears(1));
     programmeMembership2.setEndDate(LocalDate.MAX);
     programmeMembership2.setManagingDeanery(MANAGING_DEANERY2);
     ProgrammeMembership programmeMembership3 = new ProgrammeMembership();
     programmeMembership3.setStartDate(LocalDate.MIN);
-    programmeMembership3.setEndDate(LocalDate.now().minusDays(1));
+    programmeMembership3.setEndDate(LocalDate.now().minusYears(1));
     programmeMembership3.setManagingDeanery(MANAGING_DEANERY2);
 
     traineeProfile.setProgrammeMemberships(new ArrayList<>(List.of(

@@ -28,6 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import io.awspring.cloud.sns.core.SnsTemplate;
 import io.awspring.cloud.sqs.operations.SqsTemplate;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 import java.util.UUID;
 
@@ -129,10 +130,10 @@ class TraineeProfileResourceIntegrationTest {
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
     TraineeProfile profile = buildProfile(TIS_ID,
         List.of(
-            buildPlacement(F2_PLACEMENT_ID, "F2", LocalDate.of(2020, 1, 1))
+            buildPlacement(F2_PLACEMENT_ID, "F2", LocalDate.of(2020, Month.JANUARY, 1))
         ),
         List.of(
-            buildProgrammeMembership(PROGRAMME_MEMBERSHIP_ID, LocalDate.of(2019, 8, 1),
+            buildProgrammeMembership(PROGRAMME_MEMBERSHIP_ID, LocalDate.of(2019, Month.AUGUST, 1),
                 LocalDate.of(2022, 7, 31), PROGRAMME_DESIGNATED_BODY,
                 PROGRAMME_RO_FIRST_NAME, PROGRAMME_RO_LAST_NAME)
         )
@@ -156,12 +157,12 @@ class TraineeProfileResourceIntegrationTest {
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
     TraineeProfile profile = buildProfile(TIS_ID,
         List.of(
-            buildPlacement(F2_PLACEMENT_ID, "F2", LocalDate.of(2020, 1, 1))
+            buildPlacement(F2_PLACEMENT_ID, "F2", LocalDate.of(2020, Month.JANUARY, 1))
         ),
         List.of(
-            buildProgrammeMembership("pm-later", LocalDate.of(2020, 2, 1),
+            buildProgrammeMembership("pm-later", LocalDate.of(2020, Month.FEBRUARY, 1),
                 LocalDate.of(2023, 1, 31), "dummy", "dummy", "dummy"),
-            buildProgrammeMembership("pm-earlier", LocalDate.of(2019, 8, 1),
+            buildProgrammeMembership("pm-earlier", LocalDate.of(2019, Month.AUGUST, 1),
                 LocalDate.of(2022, 7, 31), PROGRAMME_DESIGNATED_BODY,
                 PROGRAMME_RO_FIRST_NAME, PROGRAMME_RO_LAST_NAME)
         )
@@ -186,11 +187,11 @@ class TraineeProfileResourceIntegrationTest {
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
     TraineeProfile profile = buildProfile(TIS_ID,
         List.of(
-            buildPlacement(F2_PLACEMENT_ID,  "F2", LocalDate.of(2020, 1, 1)),
-            buildPlacement("p-f2-002",       "F2", LocalDate.of(2022, 1, 1))
+            buildPlacement(F2_PLACEMENT_ID,  "F2", LocalDate.of(2020, Month.JANUARY, 1)),
+            buildPlacement("p-f2-002",       "F2", LocalDate.of(2022, Month.JANUARY, 1))
         ),
         List.of(
-            buildProgrammeMembership(PROGRAMME_MEMBERSHIP_ID, LocalDate.of(2019, 8, 1),
+            buildProgrammeMembership(PROGRAMME_MEMBERSHIP_ID, LocalDate.of(2019, Month.AUGUST, 1),
                 LocalDate.of(2023, 7, 31), PROGRAMME_DESIGNATED_BODY,
                 PROGRAMME_RO_FIRST_NAME, PROGRAMME_RO_LAST_NAME)
         )
@@ -210,10 +211,10 @@ class TraineeProfileResourceIntegrationTest {
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
     TraineeProfile profile = buildProfile(TIS_ID,
         List.of(
-            buildPlacement(NON_F2_PLACEMENT_ID, "F3", LocalDate.of(2020, 1, 1))
+            buildPlacement(NON_F2_PLACEMENT_ID, "F3", LocalDate.of(2020, Month.JANUARY, 1))
         ),
         List.of(
-            buildProgrammeMembership(PROGRAMME_MEMBERSHIP_ID, LocalDate.of(2019, 8, 1),
+            buildProgrammeMembership(PROGRAMME_MEMBERSHIP_ID, LocalDate.of(2019, Month.AUGUST, 1),
                 LocalDate.of(2022, 7, 31), PROGRAMME_DESIGNATED_BODY,
                 PROGRAMME_RO_FIRST_NAME, PROGRAMME_RO_LAST_NAME)
         )
@@ -232,10 +233,10 @@ class TraineeProfileResourceIntegrationTest {
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
     TraineeProfile profile = buildProfile(TIS_ID,
         List.of(
-            buildPlacement(NON_F2_PLACEMENT_ID, "F1", LocalDate.of(2019, 1, 1))
+            buildPlacement(NON_F2_PLACEMENT_ID, "F1", LocalDate.of(2019, Month.JANUARY, 1))
         ),
         List.of(
-            buildProgrammeMembership(PROGRAMME_MEMBERSHIP_ID, LocalDate.of(2018, 8, 1),
+            buildProgrammeMembership(PROGRAMME_MEMBERSHIP_ID, LocalDate.of(2018, Month.AUGUST, 1),
                 LocalDate.of(2021, 7, 31), PROGRAMME_DESIGNATED_BODY,
                 PROGRAMME_RO_FIRST_NAME, PROGRAMME_RO_LAST_NAME)
         )
@@ -255,11 +256,11 @@ class TraineeProfileResourceIntegrationTest {
 
     TraineeProfile profile = buildProfile(TIS_ID,
         List.of(
-            buildPlacement(F2_PLACEMENT_ID, "F2", LocalDate.of(2020, 1, 1)),
-            buildPlacement("p-f2-002",      "F2", LocalDate.of(2022, 1, 1))
+            buildPlacement(F2_PLACEMENT_ID, "F2", LocalDate.of(2020, Month.JANUARY, 1)),
+            buildPlacement("p-f2-002",      "F2", LocalDate.of(2022, Month.JANUARY, 1))
         ),
         List.of(
-            buildProgrammeMembership(PROGRAMME_MEMBERSHIP_ID, LocalDate.of(2019, 8, 1),
+            buildProgrammeMembership(PROGRAMME_MEMBERSHIP_ID, LocalDate.of(2019, Month.AUGUST, 1),
                 LocalDate.of(2023, 7, 31), PROGRAMME_DESIGNATED_BODY,
                 PROGRAMME_RO_FIRST_NAME, PROGRAMME_RO_LAST_NAME)
         )
@@ -280,10 +281,10 @@ class TraineeProfileResourceIntegrationTest {
     // Programme date not overlap with the F2 placement
     TraineeProfile profile = buildProfile(TIS_ID,
         List.of(
-            buildPlacement(F2_PLACEMENT_ID, "F2", LocalDate.of(2022, 1, 1))
+            buildPlacement(F2_PLACEMENT_ID, "F2", LocalDate.of(2022, Month.JANUARY, 1))
         ),
         List.of(
-            buildProgrammeMembership(PROGRAMME_MEMBERSHIP_ID, LocalDate.of(2018, 8, 1),
+            buildProgrammeMembership(PROGRAMME_MEMBERSHIP_ID, LocalDate.of(2018, Month.AUGUST, 1),
                 LocalDate.of(2019, 7, 31), PROGRAMME_DESIGNATED_BODY,
                 PROGRAMME_RO_FIRST_NAME, PROGRAMME_RO_LAST_NAME)
         )
