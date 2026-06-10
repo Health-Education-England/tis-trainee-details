@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "uk.nhs.hee.trainee.details"
-version = "2.9.2"
+version = "2.10.0"
 
 configurations {
   compileOnly {
@@ -58,7 +58,7 @@ dependencies {
   implementation(libs.aws.xray.spring)
 
   // TODO: added to avoid refactoring after transitive dependency removed.
-  implementation("commons-codec:commons-codec:1.21.0")
+  implementation("commons-codec:commons-codec:1.22.0")
 
   // PDF
   implementation(libs.bundles.pdf.publishing)
