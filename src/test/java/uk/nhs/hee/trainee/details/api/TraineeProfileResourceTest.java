@@ -32,9 +32,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.HashSet;
@@ -55,7 +57,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.nhs.hee.trainee.details.TestJwtUtil;
 import uk.nhs.hee.trainee.details.config.InterceptorConfiguration;
+import uk.nhs.hee.trainee.details.dto.HeeUserDto;
 import uk.nhs.hee.trainee.details.dto.LocalOfficeContact;
+import uk.nhs.hee.trainee.details.dto.ProgrammeMembershipDto;
 import uk.nhs.hee.trainee.details.dto.UserDetails;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
@@ -117,6 +121,9 @@ class TraineeProfileResourceTest {
   private static final String PROGRAMME_TISID = "1";
   private static final String PROGRAMME_NAME = "General Practice";
   private static final String PROGRAMME_NUMBER = "EOE8950";
+  private static final String PROGRAMME_DESIGNATED_BODY = "NHSE Education East Midlands";
+  private static final String PROGRAMME_RO_FIRST_NAME = "RO First Name";
+  private static final String PROGRAMME_RO_LAST_NAME = "RO Last Name";
 
   private static final String CURRICULUM_TISID = "1";
   private static final String CURRICULUM_NAME = "ST3";
@@ -126,7 +133,9 @@ class TraineeProfileResourceTest {
   private static final String PLACEMENT_TISID = "1";
   private static final String PLACEMENT_SITE = "Addenbrookes Hospital";
   private static final Status PLACEMENT_STATUS = Status.CURRENT;
-  private static final Instant NOW = Instant.now();
+  private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-01-01T00:00:00Z"),
+      ZoneOffset.UTC);
+  private static final Instant NOW = Instant.now(CLOCK);
   private static final Instant COJ_SYNCED_AT = Instant.MAX;
 
   private static final String LOCAL_OFFICE_EMAIL = "some@contact.com";
@@ -496,5 +505,57 @@ class TraineeProfileResourceTest {
         .andExpect(jsonPath("$", hasSize(1)))
         .andExpect(jsonPath("$[0].contact").value(LOCAL_OFFICE_EMAIL))
         .andExpect(jsonPath("$[0].localOffice").value(PERSON_PERSONOWNER));
+  }
+
+  @Test
+  void getFirstF2ProgrammeShouldReturnNoContentWhenTisIdNotFound() throws Exception {
+    when(service.getFirstF2ProgrammeMembership("unknown-tis-id", PLACEMENT_TISID))
+        .thenReturn(null);
+
+    mockMvc.perform(
+            get("/api/trainee-profile/first-f2-programme/{tisId}/{placementId}",
+                "unknown-tis-id", PLACEMENT_TISID)
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isNoContent())
+        .andExpect(jsonPath("$").doesNotExist());
+  }
+
+  @Test
+  void getFirstF2ProgrammeShouldReturnNoContentWhenServiceReturnsEmpty() throws Exception {
+    when(service.getFirstF2ProgrammeMembership(DEFAULT_TIS_ID_1, PLACEMENT_TISID))
+        .thenReturn(null);
+
+    mockMvc.perform(
+            get("/api/trainee-profile/first-f2-programme/{tisId}/{placementId}",
+                DEFAULT_TIS_ID_1, PLACEMENT_TISID)
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isNoContent())
+        .andExpect(jsonPath("$").doesNotExist());
+  }
+
+  @Test
+  void getFirstF2ProgrammesShouldReturnEarliestProgrammeWhenFirstF2PlacementFound()
+      throws Exception {
+    ProgrammeMembershipDto pmDto = new ProgrammeMembershipDto();
+    pmDto.setDesignatedBody(PROGRAMME_DESIGNATED_BODY);
+    HeeUserDto roDto = new HeeUserDto();
+    roDto.setFirstName(PROGRAMME_RO_FIRST_NAME);
+    roDto.setLastName(PROGRAMME_RO_LAST_NAME);
+    pmDto.setResponsibleOfficer(roDto);
+
+    when(service.getFirstF2ProgrammeMembership(DEFAULT_TIS_ID_1, PLACEMENT_TISID))
+        .thenReturn(pmDto);
+
+    mockMvc.perform(
+            get("/api/trainee-profile/first-f2-programme/{tisId}/{placementId}",
+                DEFAULT_TIS_ID_1, PLACEMENT_TISID)
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.designatedBody").value(PROGRAMME_DESIGNATED_BODY))
+        .andExpect(jsonPath("$.responsibleOfficer.firstName").value(PROGRAMME_RO_FIRST_NAME))
+        .andExpect(jsonPath("$.responsibleOfficer.lastName").value(PROGRAMME_RO_LAST_NAME));
+
+    verify(service).getFirstF2ProgrammeMembership(DEFAULT_TIS_ID_1, PLACEMENT_TISID);
   }
 }

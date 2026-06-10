@@ -29,7 +29,9 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion.GG10;
@@ -37,8 +39,11 @@ import static uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion.GG9;
 import static uk.nhs.hee.trainee.details.service.FeatureService.FOUNDATION_CURRICULUM_SUBTYPE;
 import static uk.nhs.hee.trainee.details.service.FeatureService.FOUNDATION_SPECIALTY;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.Month;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,12 +63,16 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.nhs.hee.trainee.details.dto.HeeUserDto;
 import uk.nhs.hee.trainee.details.dto.LocalOfficeContact;
+import uk.nhs.hee.trainee.details.dto.ProgrammeMembershipDto;
 import uk.nhs.hee.trainee.details.dto.TraineeType;
 import uk.nhs.hee.trainee.details.dto.UserDetails;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
+import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapper;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
 import uk.nhs.hee.trainee.details.model.Curriculum;
+import uk.nhs.hee.trainee.details.model.HeeUser;
 import uk.nhs.hee.trainee.details.model.LocalOfficeContactType;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
 import uk.nhs.hee.trainee.details.model.Placement;
@@ -111,6 +120,9 @@ class TraineeProfileServiceTest {
   private static final String PROGRAMME_NUMBER = "EOE8950";
   private static final String MANAGING_DEANERY = "West Midlands";
   private static final String MANAGING_DEANERY2 = "Thames Valley";
+  private static final String DESIGNATED_BODY = "NHSE Education East Midlands";
+  private static final String RO_FIRST_NAME = "RO First Name";
+  private static final String RO_LAST_NAME = "RO Last Name";
 
   private static final String CURRICULUM_TISID = "1";
   private static final String CURRICULUM_NAME = "ST3";
@@ -119,13 +131,19 @@ class TraineeProfileServiceTest {
   private static final String PLACEMENT_TISID1 = "1";
   private static final String PLACEMENT_SITE1 = "Addenbrookes Hospital";
   private static final Status PLACEMENT_STATUS1 = Status.CURRENT;
+  private static final String PLACEMENT_GRADE1 = "F1";
   private static final String PLACEMENT_TISID2 = "2";
   private static final String PLACEMENT_SITE2 = "Addenbrookes Hospital";
   private static final Status PLACEMENT_STATUS2 = Status.PAST;
+  private static final String PLACEMENT_GRADE2 = "F2";
 
   private static final String LO_CONTACT1 = "gmc@local.office";
   private static final String LO_CONTACT2 = "ltft@local.office";
   private static final String PUBLIC_HEALTH_MEDICINE_SPECIALTY = "Public Health Medicine";
+
+  private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-01-01T00:00:00Z"),
+      ZoneId.of("UTC"));
+  private static final LocalDate NOW = LocalDate.now(CLOCK);
 
   @InjectMocks
   private TraineeProfileService service;
@@ -135,6 +153,12 @@ class TraineeProfileServiceTest {
 
   @Mock
   private ProgrammeMembershipService programmeMembershipService;
+
+  @Mock
+  private PlacementService placementService;
+
+  @Mock
+  private ProgrammeMembershipMapper programmeMembershipMapper;
 
   @Mock
   private TrainingNumberGenerator trainingNumberGenerator;
@@ -229,6 +253,7 @@ class TraineeProfileServiceTest {
     placement1 = new Placement();
     placement1.setTisId(PLACEMENT_TISID1);
     placement1.setStatus(PLACEMENT_STATUS1);
+    placement1.setGrade(PLACEMENT_GRADE1);
 
     Site site1 = new Site();
     site1.setName(PLACEMENT_SITE1);
@@ -237,6 +262,7 @@ class TraineeProfileServiceTest {
     placement2 = new Placement();
     placement2.setTisId(PLACEMENT_TISID2);
     placement2.setStatus(PLACEMENT_STATUS2);
+    placement2.setGrade(PLACEMENT_GRADE2);
 
     Site site2 = new Site();
     site2.setName(PLACEMENT_SITE2);
@@ -262,11 +288,11 @@ class TraineeProfileServiceTest {
   @Test
   void shouldSortQualificationsInDescendingOrder() {
     Qualification qualification1 = new Qualification();
-    qualification1.setDateAttained(LocalDate.now());
+    qualification1.setDateAttained(NOW);
     Qualification qualification2 = new Qualification();
-    qualification2.setDateAttained(LocalDate.now().plusDays(100));
+    qualification2.setDateAttained(NOW.plusDays(100));
     Qualification qualification3 = new Qualification();
-    qualification3.setDateAttained(LocalDate.now().minusDays(100));
+    qualification3.setDateAttained(NOW.minusDays(100));
 
     List<Qualification> qualifications = Arrays
         .asList(qualification1, qualification2, qualification3);
@@ -289,9 +315,9 @@ class TraineeProfileServiceTest {
   void shouldSortQualificationsWithNullsLast() {
     Qualification qualification1 = new Qualification();
     Qualification qualification2 = new Qualification();
-    qualification2.setDateAttained(LocalDate.now().plusDays(100));
+    qualification2.setDateAttained(NOW.plusDays(100));
     Qualification qualification3 = new Qualification();
-    qualification3.setDateAttained(LocalDate.now().minusDays(100));
+    qualification3.setDateAttained(NOW.minusDays(100));
 
     List<Qualification> qualifications = Arrays
         .asList(qualification1, qualification2, qualification3);
@@ -313,10 +339,10 @@ class TraineeProfileServiceTest {
   @Test
   void shouldPopulatePersonalDetailsWithLatestQualification() {
     Qualification qualification1 = new Qualification();
-    qualification1.setDateAttained(LocalDate.now());
+    qualification1.setDateAttained(NOW);
     Qualification qualification2 = new Qualification();
     qualification2.setQualification("qualification2");
-    qualification2.setDateAttained(LocalDate.now().plusDays(100));
+    qualification2.setDateAttained(NOW.plusDays(100));
     qualification2.setMedicalSchool("medicalSchool2");
 
     List<Qualification> qualifications = Arrays.asList(qualification1, qualification2);
@@ -330,7 +356,7 @@ class TraineeProfileServiceTest {
     assertThat("Unexpected qualification, check order is correct.",
         personalDetails.getQualification(), is("qualification2"));
     assertThat("Unexpected qualification, check order is correct.",
-        personalDetails.getDateAttained(), is(LocalDate.now().plusDays(100)));
+        personalDetails.getDateAttained(), is(NOW.plusDays(100)));
     assertThat("Unexpected qualification, check order is correct.",
         personalDetails.getMedicalSchool(), is("medicalSchool2"));
   }
@@ -366,7 +392,7 @@ class TraineeProfileServiceTest {
 
   @Test
   void shouldUseSignedVersionWhenCojSigned() {
-    Instant now = Instant.now();
+    Instant now = Instant.now(CLOCK);
     programmeMembership.setConditionsOfJoining(new ConditionsOfJoining(now, GG9, null));
 
     when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(this.traineeProfile);
@@ -547,6 +573,209 @@ class TraineeProfileServiceTest {
   }
 
   @Test
+  void getFirstF2ProgrammeMembershipShouldReturnNullWhenTraineeNotFound() {
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(null);
+
+    ProgrammeMembershipDto result =
+        service.getFirstF2ProgrammeMembership(DEFAULT_TIS_ID_1, PLACEMENT_TISID2);
+
+    assertThat(result, is(nullValue()));
+    verifyNoInteractions(placementService);
+    verifyNoInteractions(programmeMembershipMapper);
+  }
+
+  @Test
+  void getFirstF2ProgrammeMembershipShouldReturnEmptyWhenNoF2PlacementsExist() {
+    traineeProfile.setPlacements(new ArrayList<>(List.of(placement1))); // F1
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+
+    ProgrammeMembershipDto result =
+        service.getFirstF2ProgrammeMembership(DEFAULT_TIS_ID_1, PLACEMENT_TISID2);
+
+    assertThat(result, is(nullValue()));
+    verifyNoInteractions(placementService);
+  }
+
+  @Test
+  void getFirstF2ProgrammeMembershipShouldReturnEmptyWhenPlacementsListIsEmpty() {
+    traineeProfile.setPlacements(new ArrayList<>());
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+
+    ProgrammeMembershipDto result =
+        service.getFirstF2ProgrammeMembership(DEFAULT_TIS_ID_1, PLACEMENT_TISID2);
+
+    assertThat(result, is(nullValue()));
+    verifyNoInteractions(placementService);
+  }
+
+  @Test
+  void getFirstF2ProgrammeMembershipShouldReturnEmptyWhenProvidedPlacementIdIsNotTheFirstF2() {
+    placement2.setStartDate(LocalDate.of(2025, Month.JANUARY, 1));
+
+    Placement laterF2 = new Placement();
+    laterF2.setTisId("999");
+    laterF2.setGrade(PLACEMENT_GRADE2); // "F2"
+    laterF2.setStartDate(LocalDate.of(2025, Month.JUNE, 1));
+
+    traineeProfile.setPlacements(new ArrayList<>(List.of(placement1, placement2, laterF2)));
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+
+    ProgrammeMembershipDto result =
+        service.getFirstF2ProgrammeMembership(DEFAULT_TIS_ID_1, "999");
+
+    assertThat(result, is(nullValue()));
+    verifyNoInteractions(placementService);
+  }
+
+  @Test
+  void getFirstF2ProgrammeMembershipShouldReturnEmptyWhenProvidedPlacementIdIsNotF2() {
+    placement2.setStartDate(LocalDate.of(2020, Month.JANUARY, 1));
+    traineeProfile.setPlacements(new ArrayList<>(List.of(placement1, placement2)));
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+
+    ProgrammeMembershipDto result =
+        service.getFirstF2ProgrammeMembership(DEFAULT_TIS_ID_1, PLACEMENT_TISID1);
+
+    assertThat(result, is(nullValue()));
+    verifyNoInteractions(placementService);
+  }
+
+  @Test
+  void getFirstF2ProgrammeMembershipShouldReturnProgramme() {
+    placement2.setStartDate(LocalDate.of(2020, Month.JANUARY, 1));
+    traineeProfile.setPlacements(new ArrayList<>(List.of(placement1, placement2)));
+
+    HeeUser ro = new HeeUser();
+    ro.setFirstName(RO_FIRST_NAME);
+    ro.setLastName(RO_LAST_NAME);
+    programmeMembership.setResponsibleOfficer(ro);
+    programmeMembership.setDesignatedBody(DESIGNATED_BODY);
+    programmeMembership.setStartDate(LocalDate.of(2020, Month.JANUARY, 1));
+
+    ProgrammeMembershipDto expectedPmDto = new ProgrammeMembershipDto();
+    HeeUserDto roDto = new HeeUserDto();
+    roDto.setFirstName(RO_FIRST_NAME);
+    roDto.setLastName(RO_LAST_NAME);
+    expectedPmDto.setResponsibleOfficer(roDto);
+    expectedPmDto.setDesignatedBody(DESIGNATED_BODY);
+    expectedPmDto.setStartDate(LocalDate.of(2020, Month.JANUARY, 1));
+
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+    when(placementService.getPossiblePlacementProgrammes(traineeProfile, placement2))
+        .thenReturn(List.of(programmeMembership));
+    when(programmeMembershipMapper.toDto(programmeMembership)).thenReturn(expectedPmDto);
+
+    ProgrammeMembershipDto result =
+        service.getFirstF2ProgrammeMembership(DEFAULT_TIS_ID_1, PLACEMENT_TISID2);
+
+    assertThat(result, is(notNullValue()));
+    assertThat(result.getDesignatedBody(), is(DESIGNATED_BODY));
+    assertThat(result.getResponsibleOfficer().getFirstName(), is(RO_FIRST_NAME));
+    assertThat(result.getResponsibleOfficer().getLastName(), is(RO_LAST_NAME));
+  }
+
+  @Test
+  void getFirstF2ProgrammeMembershipShouldReturnProgrammeWhenPlacementIsFirstOfMultipleF2s() {
+    placement2.setStartDate(LocalDate.of(2020, Month.JANUARY, 1));
+
+    Placement laterF2 = new Placement();
+    laterF2.setTisId("999");
+    laterF2.setGrade(PLACEMENT_GRADE2); // "F2"
+    laterF2.setStartDate(LocalDate.of(2022, Month.JUNE, 1));
+
+    traineeProfile.setPlacements(new ArrayList<>(List.of(placement1, laterF2, placement2)));
+
+    HeeUser ro = new HeeUser();
+    ro.setFirstName(RO_FIRST_NAME);
+    ro.setLastName(RO_LAST_NAME);
+    programmeMembership.setResponsibleOfficer(ro);
+    programmeMembership.setDesignatedBody(DESIGNATED_BODY);
+    programmeMembership.setStartDate(LocalDate.of(2020, Month.JANUARY, 1));
+
+    ProgrammeMembershipDto expectedPmDto = new ProgrammeMembershipDto();
+    HeeUserDto roDto = new HeeUserDto();
+    roDto.setFirstName(RO_FIRST_NAME);
+    roDto.setLastName(RO_LAST_NAME);
+    expectedPmDto.setResponsibleOfficer(roDto);
+    expectedPmDto.setDesignatedBody(DESIGNATED_BODY);
+    expectedPmDto.setStartDate(LocalDate.of(2020, Month.JANUARY, 1));
+
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+    when(placementService.getPossiblePlacementProgrammes(traineeProfile, placement2))
+        .thenReturn(List.of(programmeMembership));
+    when(programmeMembershipMapper.toDto(programmeMembership)).thenReturn(expectedPmDto);
+
+    ProgrammeMembershipDto result =
+        service.getFirstF2ProgrammeMembership(DEFAULT_TIS_ID_1, PLACEMENT_TISID2);
+
+    verify(placementService).getPossiblePlacementProgrammes(traineeProfile, placement2);
+    verify(placementService, never()).getPossiblePlacementProgrammes(traineeProfile, laterF2);
+
+    assertThat(result, is(notNullValue()));
+    assertThat(result.getDesignatedBody(), is(DESIGNATED_BODY));
+    assertThat(result.getResponsibleOfficer().getFirstName(), is(RO_FIRST_NAME));
+    assertThat(result.getResponsibleOfficer().getLastName(), is(RO_LAST_NAME));
+  }
+
+  @Test
+  void getFirstF2ProgrammeMembershipShouldReturnEarliestProgrammeWhenMultipleMatchingProgrammes() {
+    placement2.setStartDate(LocalDate.of(2020, Month.JANUARY, 1));
+    traineeProfile.setPlacements(new ArrayList<>(List.of(placement1, placement2)));
+
+    ProgrammeMembership earlierPm = new ProgrammeMembership();
+    HeeUser ro = new HeeUser();
+    ro.setFirstName(RO_FIRST_NAME);
+    ro.setLastName(RO_LAST_NAME);
+    earlierPm.setResponsibleOfficer(ro);
+    earlierPm.setDesignatedBody(DESIGNATED_BODY);
+    earlierPm.setStartDate(LocalDate.of(2019, Month.AUGUST, 1));
+
+    ProgrammeMembership laterPm = new ProgrammeMembership();
+    HeeUser laterRo = new HeeUser();
+    laterRo.setFirstName("something else");
+    laterRo.setLastName("something else");
+    laterPm.setResponsibleOfficer(ro);
+    laterPm.setDesignatedBody("something else");
+    laterPm.setStartDate(LocalDate.of(2021, Month.AUGUST, 1));
+
+    ProgrammeMembershipDto expectedPmDto = new ProgrammeMembershipDto();
+    HeeUserDto roDto = new HeeUserDto();
+    roDto.setFirstName(RO_FIRST_NAME);
+    roDto.setLastName(RO_LAST_NAME);
+    expectedPmDto.setResponsibleOfficer(roDto);
+    expectedPmDto.setDesignatedBody(DESIGNATED_BODY);
+    expectedPmDto.setStartDate(LocalDate.of(2019, Month.AUGUST, 1));
+
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+    when(placementService.getPossiblePlacementProgrammes(traineeProfile, placement2))
+        .thenReturn(List.of(laterPm, earlierPm));
+    when(programmeMembershipMapper.toDto(earlierPm)).thenReturn(expectedPmDto);
+
+    ProgrammeMembershipDto result =
+        service.getFirstF2ProgrammeMembership(DEFAULT_TIS_ID_1, PLACEMENT_TISID2);
+
+    assertThat(result, is(notNullValue()));
+    assertThat(result.getDesignatedBody(), is(DESIGNATED_BODY));
+    assertThat(result.getResponsibleOfficer().getFirstName(), is(RO_FIRST_NAME));
+    assertThat(result.getResponsibleOfficer().getLastName(), is(RO_LAST_NAME));
+  }
+
+  @Test
+  void getFirstF2ProgrammeMembershipShouldReturnEmptyWhenPlacementServiceReturnsNoProgrammes() {
+    placement2.setStartDate(LocalDate.of(2020, Month.JANUARY, 1));
+    traineeProfile.setPlacements(new ArrayList<>(List.of(placement1, placement2)));
+
+    when(repository.findByTraineeTisId(DEFAULT_TIS_ID_1)).thenReturn(traineeProfile);
+    when(placementService.getPossiblePlacementProgrammes(traineeProfile, placement2))
+        .thenReturn(Collections.emptyList());
+
+    ProgrammeMembershipDto result =
+        service.getFirstF2ProgrammeMembership(DEFAULT_TIS_ID_1, PLACEMENT_TISID2);
+
+    assertThat(result, is(nullValue()));
+  }
+
+  @Test
   void shouldDeleteProfileById() {
     service.deleteTraineeProfileByTraineeTisId("1");
     verify(repository).deleteByTraineeTisId("1");
@@ -714,12 +943,12 @@ class TraineeProfileServiceTest {
     programmeMembership.setStartDate(LocalDate.now());
     programmeMembership.setEndDate(LocalDate.now());
     ProgrammeMembership programmeMembership2 = new ProgrammeMembership();
-    programmeMembership2.setStartDate(LocalDate.now().plusDays(1));
+    programmeMembership2.setStartDate(LocalDate.now().plusYears(1));
     programmeMembership2.setEndDate(LocalDate.MAX);
     programmeMembership2.setManagingDeanery(MANAGING_DEANERY2);
     ProgrammeMembership programmeMembership3 = new ProgrammeMembership();
     programmeMembership3.setStartDate(LocalDate.MIN);
-    programmeMembership3.setEndDate(LocalDate.now().minusDays(1));
+    programmeMembership3.setEndDate(LocalDate.now().minusYears(1));
     programmeMembership3.setManagingDeanery(MANAGING_DEANERY2);
 
     traineeProfile.setProgrammeMemberships(new ArrayList<>(List.of(

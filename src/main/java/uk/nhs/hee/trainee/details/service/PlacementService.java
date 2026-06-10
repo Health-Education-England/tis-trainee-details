@@ -23,6 +23,7 @@ package uk.nhs.hee.trainee.details.service;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -206,7 +207,7 @@ public class PlacementService {
     Placement placement = optionalPlacement.get();
 
     //short-circuit
-    if (placement.getStartDate().isBefore(LocalDate.of(2024, 11, 1))) {
+    if (placement.getStartDate().isBefore(LocalDate.of(2024, Month.NOVEMBER, 1))) {
       return false;
     }
 
@@ -220,12 +221,12 @@ public class PlacementService {
         .toList();
     return pmsInPeriod.stream()
         .anyMatch(pmInRollout -> {
-          LocalDate notificationEpoch = LocalDate.of(2024, 10, 31);
+          LocalDate notificationEpoch = LocalDate.of(2024, Month.OCTOBER, 31);
           if (pmInRollout.getManagingDeanery().equalsIgnoreCase("Thames Valley")) {
-            notificationEpoch = LocalDate.of(2025, 1, 31);
+            notificationEpoch = LocalDate.of(2025, Month.JANUARY, 31);
           }
           if (pmInRollout.getManagingDeanery().equalsIgnoreCase("North East")) {
-            notificationEpoch = LocalDate.of(2025, 4, 13);
+            notificationEpoch = LocalDate.of(2025, Month.APRIL, 13);
           }
           return (placement.getStartDate().isAfter(notificationEpoch));
         });
@@ -238,7 +239,7 @@ public class PlacementService {
    * @param placement      The placement to assess.
    * @return A list of possible programme memberships.
    */
-  private List<ProgrammeMembership> getPossiblePlacementProgrammes(TraineeProfile traineeProfile,
+  public List<ProgrammeMembership> getPossiblePlacementProgrammes(TraineeProfile traineeProfile,
       Placement placement) {
     LocalDate dayAfterPlacementStart = placement.getStartDate().plusDays(1);
     LocalDate dayBeforePlacementStart = placement.getStartDate().minusDays(1);

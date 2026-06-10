@@ -23,6 +23,7 @@ package uk.nhs.hee.trainee.details.service;
 
 import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -32,12 +33,15 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.dto.LocalOfficeContact;
+import uk.nhs.hee.trainee.details.dto.ProgrammeMembershipDto;
 import uk.nhs.hee.trainee.details.dto.TraineeType;
 import uk.nhs.hee.trainee.details.dto.UserDetails;
 import uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion;
+import uk.nhs.hee.trainee.details.mapper.ProgrammeMembershipMapper;
 import uk.nhs.hee.trainee.details.model.ConditionsOfJoining;
 import uk.nhs.hee.trainee.details.model.LocalOfficeContactType;
 import uk.nhs.hee.trainee.details.model.PersonalDetails;
+import uk.nhs.hee.trainee.details.model.Placement;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.Qualification;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
@@ -50,11 +54,17 @@ public class TraineeProfileService {
 
   private final TraineeProfileRepository repository;
   private final ProgrammeMembershipService programmeMembershipService;
+  private final PlacementService placementService;
+  private final ProgrammeMembershipMapper programmeMembershipMapper;
 
   TraineeProfileService(TraineeProfileRepository repository,
-                        ProgrammeMembershipService programmeMembershipService) {
+                        ProgrammeMembershipService programmeMembershipService,
+                        PlacementService placementService,
+                        ProgrammeMembershipMapper programmeMembershipMapper) {
     this.repository = repository;
     this.programmeMembershipService = programmeMembershipService;
+    this.placementService = placementService;
+    this.programmeMembershipMapper = programmeMembershipMapper;
   }
 
   /**
@@ -159,8 +169,8 @@ public class TraineeProfileService {
     TraineeProfile traineeProfile = repository.findByTraineeTisId(tisId);
 
     if (traineeProfile != null) {
-      LocalDate tomorrow = LocalDate.now().plusDays(1);
-      LocalDate yesterday = LocalDate.now().minusDays(1);
+      LocalDate tomorrow = LocalDate.now(ZoneId.of("UTC")).plusDays(1);
+      LocalDate yesterday = LocalDate.now(ZoneId.of("UTC")).minusDays(1);
       List<ProgrammeMembership> currentPms = traineeProfile.getProgrammeMemberships().stream()
           .filter(pm -> pm.getStartDate().isBefore(tomorrow))
           .filter(pm -> pm.getEndDate().isAfter(yesterday))
@@ -207,6 +217,47 @@ public class TraineeProfileService {
                 && traineeProfile.getPersonalDetails().getDateOfBirth().equals(dob))
         .map(TraineeProfile::getTraineeTisId)
         .toList();
+  }
+
+  /**
+   * Get Programme Membership details if this is the trainee's first F2 placement.
+   *
+   * @param tisId    The person ID to search for.
+   * @param placementId The placement to search for.
+   * @return The Programme Membership details of the First F2 Placement,
+   *     or null if no Programme Membership found or the Placement is not the first F2.
+   */
+  public ProgrammeMembershipDto getFirstF2ProgrammeMembership(String tisId,
+                                                                        String placementId) {
+    TraineeProfile traineeProfile = repository.findByTraineeTisId(tisId);
+
+    if (traineeProfile == null) {
+      log.info("Trainee with ID {} not found.", tisId);
+      return null;
+    }
+
+    // find the first F2 Placement of the trainee
+    Placement firstF2 = traineeProfile.getPlacements().stream()
+        .filter(p -> "F2".equals(p.getGrade()))
+        .min(Comparator.comparing(Placement::getStartDate))
+        .orElse(null);
+
+    // return null if the provided Placement is not the first F2
+    if (firstF2 == null || !firstF2.getTisId().equals(placementId)) {
+      log.info("Placement {} is not the first F2 of trainee {}", placementId, tisId);
+      return null;
+    }
+
+    // return the Placement Programme with earliest programme start date
+    Optional<ProgrammeMembership> optionalPm =  placementService.getPossiblePlacementProgrammes(
+        traineeProfile, firstF2).stream()
+        .min(Comparator.comparing(ProgrammeMembership::getStartDate));
+
+    if (!optionalPm.isPresent()) {
+      return null;
+    }
+
+    return programmeMembershipMapper.toDto(optionalPm.get());
   }
 
   /**
