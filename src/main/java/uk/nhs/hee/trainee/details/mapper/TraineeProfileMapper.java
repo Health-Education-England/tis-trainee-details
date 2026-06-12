@@ -103,36 +103,9 @@ public abstract class TraineeProfileMapper {
   public abstract void updateGdcDetails(@MappingTarget TraineeProfile target,
       PersonalDetails source);
 
-  /**
-   * Pre GMC update process to set default GMC to registered if GMC number is updated.
-   *
-   * @param target The existing trainee profile.
-   * @param source The new personal details.
-   */
-  @Named("updateGmc")
-  @BeforeMapping
-  protected void perUpdateGmcDetails(@MappingTarget TraineeProfile target,
-      PersonalDetails source) {
-    if (target.getPersonalDetails() != null) {
-      PersonalDetails targetPersonalDetails = target.getPersonalDetails();
-
-      // If the gmcNumber is updated
-      if (!Objects.equals(targetPersonalDetails.getGmcNumber(), source.getGmcNumber())) {
-        // TODO: Default all updated GMCs to registered until we can properly prompt/determine the correct status.
-        targetPersonalDetails.setGmcStatus("Registered with Licence");
-      } else {
-        // If the GMC was not updated then carry the latest source GMC status forward.
-        targetPersonalDetails.setGmcStatus(source.getGmcStatus());
-      }
-    } else if (source.getGmcNumber() != null) {
-      // If target personal details is null and source GMC number has a new value
-      target.setPersonalDetails(new PersonalDetails());
-      target.getPersonalDetails().setGmcStatus("Registered with Licence");
-    }
-  }
-
-  @BeanMapping(ignoreByDefault = true, qualifiedByName = "updateGmc")
+  @BeanMapping(ignoreByDefault = true)
   @Mapping(target = "personalDetails.gmcNumber", source = "gmcNumber")
+  @Mapping(target = "personalDetails.gmcStatus", source = "gmcStatus")
   public abstract void updateGmcDetails(@MappingTarget TraineeProfile target,
       PersonalDetails source);
 
