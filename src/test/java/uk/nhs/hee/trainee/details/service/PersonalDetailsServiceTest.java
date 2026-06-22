@@ -303,8 +303,7 @@ class PersonalDetailsServiceTest {
 
     PersonalDetails expectedPersonalDetails = createPersonalDetails(ORIGINAL_SUFFIX, 0);
     expectedPersonalDetails.setGmcNumber(GMC_NUMBER + MODIFIED_SUFFIX);
-    // GMC number updated, so GMC status changes to DEFAULT_GMC_STATUS
-    expectedPersonalDetails.setGmcStatus(DEFAULT_GMC_STATUS);
+    expectedPersonalDetails.setGmcStatus(GMC_STATUS + MODIFIED_SUFFIX);
 
     assertThat("Unexpected personal details.", personalDetails.getPersonalDetails().get(),
         is(expectedPersonalDetails));
@@ -357,8 +356,7 @@ class PersonalDetailsServiceTest {
 
     PersonalDetails expectedPersonalDetails = createPersonalDetails(ORIGINAL_SUFFIX, 0);
     expectedPersonalDetails.setGmcNumber(GMC_NUMBER + MODIFIED_SUFFIX);
-    // GMC number updated, so GMC status changes to DEFAULT_GMC_STATUS.
-    expectedPersonalDetails.setGmcStatus(DEFAULT_GMC_STATUS);
+    expectedPersonalDetails.setGmcStatus(GMC_STATUS + MODIFIED_SUFFIX);
 
     assertThat("Unexpected personal details.", personalDetails.getPersonalDetails().get(),
         is(expectedPersonalDetails));
@@ -380,8 +378,7 @@ class PersonalDetailsServiceTest {
 
     PersonalDetails expectedPersonalDetails = new PersonalDetails();
     expectedPersonalDetails.setGmcNumber(GMC_NUMBER + MODIFIED_SUFFIX);
-    // GMC number updated, so GMC status changes to DEFAULT_GMC_STATUS
-    expectedPersonalDetails.setGmcStatus(DEFAULT_GMC_STATUS);
+    expectedPersonalDetails.setGmcStatus(GMC_STATUS + MODIFIED_SUFFIX);
 
     assertThat("Unexpected personal details.", personalDetails.getPersonalDetails().get(),
         is(expectedPersonalDetails));
@@ -427,13 +424,14 @@ class PersonalDetailsServiceTest {
   void shouldNotPublishEventWhenGmcDetailsNotUpdated() {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setPersonalDetails(createPersonalDetails(ORIGINAL_SUFFIX, 0));
+    traineeProfile.getPersonalDetails().setGmcStatus(DEFAULT_GMC_STATUS);
 
     when(repository.findByTraineeTisId("40")).thenReturn(traineeProfile);
     when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
 
     GmcDetailsDto gmcDetails = GmcDetailsDto.builder()
         .gmcNumber(GMC_NUMBER + ORIGINAL_SUFFIX)
-        .gmcStatus(GMC_STATUS + ORIGINAL_SUFFIX)
+        .gmcStatus(DEFAULT_GMC_STATUS)
         .build();
 
     service.updateGmcDetailsWithTraineeProvidedDetails("40", gmcDetails);
@@ -463,6 +461,7 @@ class PersonalDetailsServiceTest {
   void shouldPublishEventWhenGmcDetailsProvidedByTrainee() {
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.setPersonalDetails(createPersonalDetails(ORIGINAL_SUFFIX, 0));
+    traineeProfile.getPersonalDetails().setGmcStatus(null);
 
     when(repository.findByTraineeTisId("40")).thenReturn(traineeProfile);
     when(repository.save(traineeProfile)).thenAnswer(invocation -> invocation.getArgument(0));
@@ -481,7 +480,7 @@ class PersonalDetailsServiceTest {
     assertThat("Unexpected GMC number.", eventDetails.gmcNumber(),
         is(GMC_NUMBER + MODIFIED_SUFFIX));
     assertThat("Unexpected GMC status.", eventDetails.gmcStatus(),
-        is(GMC_STATUS + MODIFIED_SUFFIX));
+        is(DEFAULT_GMC_STATUS));
   }
 
   @Test

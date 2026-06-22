@@ -63,7 +63,7 @@ public class PersonalDetailsService {
       PersonalDetails personalDetails) {
     PersonalDetailsUpdated updatedDetails = updatePersonalDetailsByTisId(tisId, personalDetails,
         mapper::updateBasicDetails);
-    Optional<PersonalDetails> updatedPersonalDetails =  updatedDetails.getPersonalDetails();
+    Optional<PersonalDetails> updatedPersonalDetails = updatedDetails.getPersonalDetails();
 
     if (updatedPersonalDetails.isEmpty()) {
       TraineeProfile traineeProfile = new TraineeProfile();
@@ -101,20 +101,23 @@ public class PersonalDetailsService {
       GmcDetailsDto gmcDetails) {
     PersonalDetails personalDetails = new PersonalDetails();
     personalDetails.setGmcNumber(gmcDetails.gmcNumber());
-    personalDetails.setGmcStatus(gmcDetails.gmcStatus());
+
+    // Use a default GMC status as we don't support trainee-provided statuses yet.
+    personalDetails.setGmcStatus("Registered with Licence");
 
     PersonalDetailsUpdated updatedDetails = updateGmcDetailsByTisId(tisId, personalDetails);
-
     updatedDetails.getPersonalDetails().ifPresent(details -> {
       // if gmcNumber is updated
       if (updatedDetails.isUpdated()) {
         // don't publish to TIS if it is a test user
         if (tisId.startsWith("-")) {
           log.warn("Tester trainee ID {} provided. Ignore GMC number update.", tisId);
-        }
-        else {
+        } else {
           log.info("Trainee {} updated their GMC number to {}.", tisId, details.getGmcNumber());
-          eventService.publishGmcDetailsProvidedEvent(tisId, gmcDetails);
+          eventService.publishGmcDetailsProvidedEvent(tisId, GmcDetailsDto.builder()
+              .gmcNumber(details.getGmcNumber())
+              .gmcStatus(details.getGmcStatus())
+              .build());
         }
       }
     });
@@ -218,7 +221,7 @@ public class PersonalDetailsService {
     List<TraineeProfile> profilesWithEmail = repository.findAllByTraineeEmail(email);
     if (!profilesWithEmail.isEmpty()) {
       log.warn("Email address {} for trainee {} is already in use (by at least one other trainee, "
-              + "or is unchanged from their current email).", tisId, email);
+          + "or is unchanged from their current email).", tisId, email);
       return false;
     }
     return true;
