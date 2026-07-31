@@ -45,6 +45,8 @@ application:
       profile-move: ${PROFILE_MOVE_QUEUE_URL:}
   environment: ${ENVIRONMENT:local}
   features:
+    foundation-deaneries:
+      - South West
     ltft:
       pilot:
         start-date: 2025-04-28

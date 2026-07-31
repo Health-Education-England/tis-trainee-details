@@ -89,6 +89,7 @@ public class FeatureService {
       return FeaturesDto.disable();
     }
 
+    // Specialty
     if (isSpecialtyTrainee(profile)) {
       log.debug("{} is a specialty trainee.", profile.getTraineeTisId());
       // Check whether LTFT pilot participation should be enabled.
@@ -103,19 +104,33 @@ public class FeatureService {
       return FeaturesDto.enable();
     }
 
+    // Public Health
     if (isPublicHealthTrainee(profile)) {
       log.debug("{} is a Public Health trainee, enabling all features except LTFT.",
           profile.getTraineeTisId());
       return FeaturesDto.enable();
     }
 
+    // Foundation
     if (isFoundationTrainee(profile)) {
-      log.debug("{} is a Foundation trainee, enabling all features except Form Rs, LTFT, CoJ.",
-          profile.getTraineeTisId());
-      return FeaturesDto.enableForFoundation();
+      List<String> ltftProgrammes = List.of();
+
+      if (isFoundationInEnabledDeanery(profile)) {
+        ltftProgrammes = getCurrentProgrammes(profile);
+        log.debug("{} is a Foundation trainee in enabled Deanery, enabling all features except "
+                + "Form Rs, CoJ.",
+            profile.getTraineeTisId());
+      }
+      else {
+        log.debug("{} is a Foundation trainee, enabling all features except Form Rs, LTFT, CoJ.",
+            profile.getTraineeTisId());
+      }
+
+      return FeaturesDto.enableForFoundation(ltftProgrammes);
     }
 
-    log.debug("Not a specialty or public health trainee, setting read-only features.");
+    // None of the above
+    log.debug("Not a specialty, public health or foundation trainee, setting read-only features.");
     return FeaturesDto.readOnly();
   }
 
@@ -161,6 +176,22 @@ public class FeatureService {
   private boolean isFoundationTrainee(TraineeProfile profile) {
     return profile.getProgrammeMemberships().stream()
         .anyMatch(ProgrammeMembershipService::isFoundationProgramme);
+  }
+
+  /**
+   *  Return true if any programme membership is both a Foundation programme
+   *  and managed by enabled deanery.
+   *
+   * @param profile The trainee profile to check.
+   * @return Whether the trainee has a foundation programme South West.
+   */
+  private boolean isFoundationInEnabledDeanery(TraineeProfile profile) {
+    Set<String> foundationDeaneries = featuresProperties.foundationDeaneries();
+
+    return profile.getProgrammeMemberships().stream()
+        .anyMatch(pm -> ProgrammeMembershipService.isFoundationProgramme(pm)
+            && pm.getManagingDeanery() != null
+            && foundationDeaneries.contains(pm.getManagingDeanery()));
   }
 
   /**
@@ -211,5 +242,26 @@ public class FeatureService {
         profile.getTraineeTisId(), ltftPmIds);
 
     return ltftPmIds;
+  }
+
+  /**
+   * Get the list of current programmes for the given profile.
+   *
+   * @param profile The trainee profile to check.
+   * @return The list of current programmes, or an empty list if no programme.
+   */
+  private List<String> getCurrentProgrammes(TraineeProfile profile) {
+    LocalDate now = LocalDate.now(timezone);
+
+    List<String> pmIds = profile.getProgrammeMemberships().stream()
+        // Past programmes are not valid for LTFT.
+        .filter(pm -> pm.getEndDate() != null && pm.getEndDate().isAfter(now))
+        .map(ProgrammeMembership::getTisId)
+        .toList();
+
+    log.info("Current programme memberships for trainee {}: {}",
+        profile.getTraineeTisId(), pmIds);
+
+    return pmIds;
   }
 }
