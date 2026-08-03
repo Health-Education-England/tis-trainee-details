@@ -32,7 +32,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  */
 @Builder
 @ConfigurationProperties(prefix = "application.features")
-public record FeaturesProperties(Map<String, Tranche> ltft) {
+public record FeaturesProperties(Set<String> foundationDeaneries, Map<String, Tranche> ltft) {
 
   /**
    * A tranche of deaneries for feature rollout.

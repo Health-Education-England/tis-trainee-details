@@ -60,6 +60,7 @@ class FeatureServiceTest {
 
     profileService = mock(TraineeProfileService.class);
     FeaturesProperties featuresProperties = FeaturesProperties.builder()
+        .foundationDeaneries(Set.of("South West"))
         .ltft(Map.of("pilot", Tranche.builder()
             .startDate(LocalDate.EPOCH)
             .deaneries(Set.of("test 1", "test 2", "test 3"))
@@ -632,6 +633,106 @@ class FeatureServiceTest {
     FeaturesDto features = service.getFeatures();
 
     assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(false));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"South West"})
+  void shouldEnableLtftForCurrentProgrammesWhenFoundationTraineeInEnabledDeanery(String deanery) {
+    TraineeProfile profile = new TraineeProfile();
+    profile.setTraineeTisId(TRAINEE_ID);
+
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSubType("MEDICAL_CURRICULUM");
+    curriculum.setCurriculumSpecialty("Foundation");
+
+    String pmId = UUID.randomUUID().toString();
+    ProgrammeMembership currentPm = new ProgrammeMembership();
+    currentPm.setCurricula(List.of(curriculum));
+    currentPm.setTisId(pmId);
+    currentPm.setManagingDeanery(deanery);
+    currentPm.setEndDate(LocalDate.now().plusDays(1));
+
+    ProgrammeMembership pastPm = new ProgrammeMembership();
+    pastPm.setCurricula(List.of(curriculum));
+    pastPm.setTisId(UUID.randomUUID().toString());
+    pastPm.setManagingDeanery(deanery);
+    pastPm.setEndDate(LocalDate.now().minusDays(1));
+
+    profile.setProgrammeMemberships(List.of(currentPm, pastPm));
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(true));
+    assertThat("Unexpected qualifying programmes.",
+        features.forms().ltft().qualifyingProgrammes(), hasItem(pmId));
+    assertThat("Unexpected FormR flag.",
+        features.forms().formr().enabled(), is(false));
+    assertThat("Unexpected COJ flag.",
+        features.details().programmes().conditionsOfJoining().enabled(), is(false));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"North West London", "Wessex", "Yorkshire and the Humber"})
+  void shouldDisableLtftWhenFoundationTraineeNotInEnabledDeanery(String deanery) {
+    TraineeProfile profile = new TraineeProfile();
+    profile.setTraineeTisId(TRAINEE_ID);
+
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSubType("MEDICAL_CURRICULUM");
+    curriculum.setCurriculumSpecialty("Foundation");
+
+    ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setCurricula(List.of(curriculum));
+    pm.setTisId(UUID.randomUUID().toString());
+    pm.setManagingDeanery(deanery);
+    pm.setEndDate(LocalDate.now().plusDays(1));
+
+    profile.setProgrammeMemberships(List.of(pm));
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(false));
+    assertThat("Unexpected FormR flag.",
+        features.forms().formr().enabled(), is(false));
+    assertThat("Unexpected COJ flag.",
+        features.details().programmes().conditionsOfJoining().enabled(), is(false));
+  }
+
+  @Test
+  void shouldNotReturnPastProgrammesFromCurrentProgrammes() {
+    TraineeProfile profile = new TraineeProfile();
+    profile.setTraineeTisId(TRAINEE_ID);
+
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSubType("MEDICAL_CURRICULUM");
+    curriculum.setCurriculumSpecialty("Foundation");
+
+    ProgrammeMembership endedToday = new ProgrammeMembership();
+    endedToday.setCurricula(List.of(curriculum));
+    endedToday.setTisId(UUID.randomUUID().toString());
+    endedToday.setManagingDeanery("South West");
+    endedToday.setEndDate(LocalDate.now());
+
+    ProgrammeMembership endedYesterday = new ProgrammeMembership();
+    endedYesterday.setCurricula(List.of(curriculum));
+    endedYesterday.setTisId(UUID.randomUUID().toString());
+    endedYesterday.setManagingDeanery("South West");
+    endedYesterday.setEndDate(LocalDate.now().minusDays(1));
+
+    ProgrammeMembership emptyDate = new ProgrammeMembership();
+    emptyDate.setCurricula(List.of(curriculum));
+    emptyDate.setTisId(UUID.randomUUID().toString());
+    emptyDate.setManagingDeanery("South West");
+
+    profile.setProgrammeMemberships(List.of(endedToday, endedYesterday, emptyDate));
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected LTFT programme count.",
+        features.forms().ltft().qualifyingProgrammes().size(), is(0));
   }
 
   @ParameterizedTest
