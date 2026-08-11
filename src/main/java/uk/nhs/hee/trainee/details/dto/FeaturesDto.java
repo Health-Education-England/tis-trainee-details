@@ -66,18 +66,21 @@ public record FeaturesDto(
   }
 
   /**
-   * Create a set of feature flags with all features enabled, except Form Rs, LTFT, CoJ.
+   * Create a set of feature flags with all features enabled, except Form Rs, CoJ.
+   * LTFT enabled depends on Local Office and programme.
    *
    * @return The created set of feature flags.
    */
-  public static FeaturesDto enableForFoundation() {
+  public static FeaturesDto enableForFoundation(List<String> ltftProgrammes) {
     return new FeaturesDto(
         Feature.enable(),
         Feature.enable(),
         DetailsFeatures.enable()
             .withProgrammes(DetailsFeatures.ProgrammeFeatures.enable()
                 .withConditionsOfJoining(Feature.disable())),
-        FormFeatures.disable(),
+        (ltftProgrammes != null && !ltftProgrammes.isEmpty())
+            ? FormFeatures.disable().withLtft(FormFeatures.LtftFeatures.enable(ltftProgrammes))
+            : FormFeatures.disable(),
         Feature.enable(),
         Feature.enable()
     );
