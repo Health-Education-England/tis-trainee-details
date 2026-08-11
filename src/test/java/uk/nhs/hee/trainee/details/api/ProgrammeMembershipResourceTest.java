@@ -342,7 +342,7 @@ class ProgrammeMembershipResourceTest {
         .andExpect(jsonPath("$.programmeNumber").value(is("programmeNumberValue")))
         .andExpect(jsonPath("$.conditionsOfJoining.signedAt").value(is(signedAt.toString())))
         .andExpect(jsonPath("$.conditionsOfJoining.version")
-            .value(is(GoldGuideVersion.GG10.toString())))
+            .value(is(GoldGuideVersion.GG11.toString())))
         .andExpect(jsonPath("$.conditionsOfJoining.syncedAt")
             .isEmpty());
   }
