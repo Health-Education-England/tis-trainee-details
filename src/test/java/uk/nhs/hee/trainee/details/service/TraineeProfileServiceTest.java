@@ -34,7 +34,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import static uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion.GG10;
+import static uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion.GG11;
 import static uk.nhs.hee.trainee.details.dto.enumeration.GoldGuideVersion.GG9;
 import static uk.nhs.hee.trainee.details.service.FeatureService.FOUNDATION_CURRICULUM_SUBTYPE;
 import static uk.nhs.hee.trainee.details.service.FeatureService.FOUNDATION_SPECIALTY;
@@ -372,7 +372,7 @@ class TraineeProfileServiceTest {
     ConditionsOfJoining coj = programmeMembership.getConditionsOfJoining();
     assertThat("Unexpected Conditions of Joining", coj, notNullValue());
     assertThat("Unexpected CoJ signed at timestamp", coj.signedAt(), nullValue());
-    assertThat("Unexpected CoJ version", coj.version(), is(GG10));
+    assertThat("Unexpected CoJ version", coj.version(), is(GG11));
   }
 
   @Test
@@ -386,7 +386,7 @@ class TraineeProfileServiceTest {
     ConditionsOfJoining coj = programmeMembership.getConditionsOfJoining();
     assertThat("Unexpected Conditions of Joining", coj, notNullValue());
     assertThat("Unexpected CoJ signed at timestamp", coj.signedAt(), nullValue());
-    assertThat("Unexpected CoJ version", coj.version(), is(GG10));
+    assertThat("Unexpected CoJ version", coj.version(), is(GG11));
     assertThat("Unexpected CoJ synced at", coj.syncedAt(), nullValue());
   }
 
