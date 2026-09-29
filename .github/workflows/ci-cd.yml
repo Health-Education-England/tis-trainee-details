@@ -18,7 +18,6 @@ jobs:
     needs: get-context
     uses: health-education-england/.github/.github/workflows/build-gradle.yml@TIS21-8924-integrate-ecr-scan
     with:
-      cluster-prefix: trainee
       publish-build-scan: ${{ needs.get-context.outputs.runner-debug == '1' }}
     secrets:
       sonar-token: ${{ secrets.SONAR_TOKEN }}
