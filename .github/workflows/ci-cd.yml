@@ -3,7 +3,7 @@ name: CI/CD
 on:
   push:
     branches:
-      - main
+      - TIS21-8924-integrate-ecr-scan
 
 jobs:
   get-context:
@@ -14,12 +14,18 @@ jobs:
     steps:
       - run: echo "Loading context variables"
   ci-cd:
-    name: Build and deploy
+    name: Build
     needs: get-context
-    uses: health-education-england/.github/.github/workflows/ci-cd-gradle.yml@main
+    uses: health-education-england/.github/.github/workflows/build-gradle.yml@TIS21-8924-integrate-ecr-scan
     with:
       cluster-prefix: trainee
       publish-build-scan: ${{ needs.get-context.outputs.runner-debug == '1' }}
     secrets:
       sonar-token: ${{ secrets.SONAR_TOKEN }}
-      reject-pat: ${{ secrets.PAT_REJECT_APPROVALS }}
+
+  ecr-image-scan:
+    needs: ci-cd
+    uses: health-education-england/.github/.github/workflows/ecr-image-scan.yml@TIS21-8924-integrate-ecr-scan
+    with:
+      ecr-repository: ${{ github.event.repository.name }}
+      image-tag: ${{ github.sha }}
