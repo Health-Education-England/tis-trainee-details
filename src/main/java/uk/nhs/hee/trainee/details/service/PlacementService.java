@@ -46,6 +46,7 @@ public class PlacementService {
       "DCT3", // Dental Core Training Year 3
       "DFT" // Dental Foundation Training
   );
+  private static final String IN_POST_POG_PLACEMENT_TYPE = "In Post - POG";
 
   private final TraineeProfileRepository repository;
   private final PlacementMapper mapper;
@@ -211,15 +212,8 @@ public class PlacementService {
       return false;
     }
 
-    LocalDate dayAfterPlacementStart = placement.getStartDate().plusDays(1);
-    LocalDate dayBeforePlacementStart = placement.getStartDate().minusDays(1);
-
     TraineeProfile traineeProfile = repository.findByTraineeTisId(traineeTisId);
-    List<ProgrammeMembership> pmsInPeriod = traineeProfile.getProgrammeMemberships().stream()
-        .filter(pm -> pm.getStartDate().withDayOfMonth(1).isBefore(dayAfterPlacementStart)
-            && pm.getProgrammeCompletionDate().isAfter(dayBeforePlacementStart))
-        .toList();
-    return pmsInPeriod.stream()
+    return getPossiblePlacementProgrammes(traineeProfile, placement).stream()
         .anyMatch(pmInRollout -> {
           LocalDate notificationEpoch = LocalDate.of(2024, Month.OCTOBER, 31);
           if (pmInRollout.getManagingDeanery().equalsIgnoreCase("Thames Valley")) {
@@ -246,7 +240,34 @@ public class PlacementService {
 
     return traineeProfile.getProgrammeMemberships().stream().filter(pm ->
             pm.getStartDate().withDayOfMonth(1).isBefore(dayAfterPlacementStart)
-                && pm.getProgrammeCompletionDate().isAfter(dayBeforePlacementStart))
+                && getProgrammeEndDate(pm, placement).isAfter(dayBeforePlacementStart))
         .toList();
+  }
+
+  /**
+   * Get the end date of the programme membership to assess for placement linkage, taking into
+   * account whether the placement is an in-post POG placement.
+   *
+   * @param programmeMembership The programme membership against which to assess the placement.
+   * @param placement           The placement to assess.
+   * @return The end date of the programme membership to assess placement linkage.
+   */
+  private LocalDate getProgrammeEndDate(ProgrammeMembership programmeMembership,
+      Placement placement) {
+    if (isInPostPogPlacement(placement)) {
+      return programmeMembership.getEndDate();
+    }
+    return programmeMembership.getProgrammeCompletionDate();
+  }
+
+  /**
+   * Determine whether the given placement is an in-post POG placement.
+   *
+   * @param placement The placement to assess.
+   * @return True if the placement is an in-post POG placement, otherwise false.
+   */
+  private boolean isInPostPogPlacement(Placement placement) {
+    return placement.getPlacementType() != null
+        && placement.getPlacementType().equalsIgnoreCase(IN_POST_POG_PLACEMENT_TYPE);
   }
 }
