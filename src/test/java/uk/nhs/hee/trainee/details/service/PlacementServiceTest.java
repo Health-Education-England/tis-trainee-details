@@ -39,6 +39,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 import uk.nhs.hee.trainee.details.mapper.PlacementMapperImpl;
@@ -388,15 +389,18 @@ class PlacementServiceTest {
     verify(programmeMembershipService).canBeOnboarded(programmeMembership);
   }
 
-  @Test
-  void shouldNotBeOnboardableWhenPlacementIsNotInPostPogAndProgrammeCompletionDateDoesNotCoverIt() {
+  @ParameterizedTest
+  @NullSource
+  @ValueSource(strings = {OTHER_PLACEMENT_TYPE})
+  void shouldNotBeOnboardableWhenPlacementIsNotInPostPogAndProgrammeCompletionDateExcludesIt(
+      String placementType) {
     Placement placement = createPlacement(EXISTING_PLACEMENT_ID, ORIGINAL_SUFFIX,
         LocalDate.of(2024, 11, 1));
-    placement.setPlacementType(OTHER_PLACEMENT_TYPE);
+    placement.setPlacementType(placementType);
 
     ProgrammeMembership programmeMembership = getProgrammeMembership("pm1",
         LocalDate.of(2024, 10, 1), LocalDate.of(2024, 10, 31));
-    programmeMembership.setEndDate(LocalDate.of(2024, 11, 1));
+    programmeMembership.setEndDate(LocalDate.of(2025, 10, 31));
 
     TraineeProfile traineeProfile = new TraineeProfile();
     traineeProfile.getPlacements().add(placement);
@@ -601,7 +605,7 @@ class PlacementServiceTest {
   }
 
   @Test
-  void rollout2024ShouldBeFalseWhenPlacementIsNotInPostPogAndProgrammeCompletionDateDoesNotCoverIt() {
+  void rollout2024ShouldBeFalseWhenPlacementIsNotInPostPogAndProgrammeCompletionDateExcludesIt() {
     Placement placement = createPlacement(EXISTING_PLACEMENT_ID, ORIGINAL_SUFFIX,
         LocalDate.of(2024, 11, 1));
     placement.setPlacementType(OTHER_PLACEMENT_TYPE);
@@ -883,7 +887,8 @@ class PlacementServiceTest {
   private ProgrammeMembership getProgrammeMembership(
       String programmeMembershipTisId, LocalDate startDate,
       LocalDate completionDate, String managingDeanery) {
-    ProgrammeMembership pm = getProgrammeMembership(programmeMembershipTisId, startDate, completionDate);
+    ProgrammeMembership pm
+        = getProgrammeMembership(programmeMembershipTisId, startDate, completionDate);
     pm.setManagingDeanery(managingDeanery);
     return pm;
   }
