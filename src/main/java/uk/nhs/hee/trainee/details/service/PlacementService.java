@@ -238,9 +238,12 @@ public class PlacementService {
     LocalDate dayAfterPlacementStart = placement.getStartDate().plusDays(1);
     LocalDate dayBeforePlacementStart = placement.getStartDate().minusDays(1);
 
-    return traineeProfile.getProgrammeMemberships().stream().filter(pm ->
-            pm.getStartDate().withDayOfMonth(1).isBefore(dayAfterPlacementStart)
-                && getProgrammeEndDate(pm, placement).isAfter(dayBeforePlacementStart))
+    return traineeProfile.getProgrammeMemberships().stream().filter(pm -> {
+      LocalDate endDate = getProgrammeEndDate(pm, placement);
+      return endDate != null
+          && pm.getStartDate().withDayOfMonth(1).isBefore(dayAfterPlacementStart)
+          && endDate.isAfter(dayBeforePlacementStart);
+    })
         .toList();
   }
 

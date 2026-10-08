@@ -415,6 +415,56 @@ class PlacementServiceTest {
   }
 
   @Test
+  void shouldNotBeOnboardableWhenInPostPogPlacementMembershipHasNullEndDate() {
+    Placement placement = createPlacement(EXISTING_PLACEMENT_ID, ORIGINAL_SUFFIX,
+        LocalDate.of(2024, 11, 1));
+    placement.setPlacementType(IN_POST_POG_PLACEMENT_TYPE);
+
+    ProgrammeMembership programmeMembership = getProgrammeMembership("pm1",
+        LocalDate.of(2024, 10, 1), LocalDate.of(2025, 10, 31));
+    programmeMembership.setEndDate(null);
+
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.getPlacements().add(placement);
+    traineeProfile.getProgrammeMemberships().add(programmeMembership);
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean canBeOnboarded = service.canBeOnboarded(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected canBeOnboarded result.", canBeOnboarded, is(false));
+    verifyNoInteractions(programmeMembershipService);
+  }
+
+  @Test
+  void shouldBeOnboardableWhenInPostPogPlacementHasNullEndDateButAnotherValidMembership() {
+    Placement placement = createPlacement(EXISTING_PLACEMENT_ID, ORIGINAL_SUFFIX,
+        LocalDate.of(2024, 11, 1));
+    placement.setPlacementType(IN_POST_POG_PLACEMENT_TYPE);
+
+    ProgrammeMembership membershipWithNullEndDate = getProgrammeMembership("pm1",
+        LocalDate.of(2024, 10, 1), LocalDate.of(2025, 10, 31));
+    membershipWithNullEndDate.setEndDate(null);
+
+    ProgrammeMembership validMembership = getProgrammeMembership("pm2",
+        LocalDate.of(2024, 10, 1), LocalDate.of(2024, 10, 31));
+    validMembership.setEndDate(LocalDate.of(2024, 11, 1));
+
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.getPlacements().add(placement);
+    traineeProfile.getProgrammeMemberships().add(membershipWithNullEndDate);
+    traineeProfile.getProgrammeMemberships().add(validMembership);
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+    when(programmeMembershipService.canBeOnboarded(validMembership)).thenReturn(true);
+
+    boolean canBeOnboarded = service.canBeOnboarded(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected canBeOnboarded result.", canBeOnboarded, is(true));
+    verify(programmeMembershipService).canBeOnboarded(validMembership);
+  }
+
+  @Test
   void pilot2024ShouldBeFalseIfTraineeNotFound() {
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(null);
 
