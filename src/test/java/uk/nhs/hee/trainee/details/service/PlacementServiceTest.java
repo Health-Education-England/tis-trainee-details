@@ -39,6 +39,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import uk.nhs.hee.trainee.details.dto.enumeration.Status;
 import uk.nhs.hee.trainee.details.mapper.PlacementMapperImpl;
@@ -67,6 +68,8 @@ class PlacementServiceTest {
   private static final Boolean POST_ALLOWS_SUBSPECIALTY = true;
   private static final String OTHER_SPECIALTY = "otherSpecialty-";
   private static final String PLACEMENT_TYPE = "placementType-";
+  private static final String IN_POST_POG_PLACEMENT_TYPE = "In Post - POG";
+  private static final String OTHER_PLACEMENT_TYPE = "Other placement type";
   private static final String TRAINEE_TIS_ID = "40";
   private static final String MODIFIED_SUFFIX = "post";
   private static final String ORIGINAL_SUFFIX = "pre";
@@ -364,6 +367,104 @@ class PlacementServiceTest {
   }
 
   @Test
+  void shouldBeOnboardableWhenInPostPogPlacementUsesProgrammeEndDate() {
+    Placement placement = createPlacement(EXISTING_PLACEMENT_ID, ORIGINAL_SUFFIX,
+        LocalDate.of(2024, 11, 1));
+    placement.setPlacementType(IN_POST_POG_PLACEMENT_TYPE);
+
+    ProgrammeMembership programmeMembership = getProgrammeMembership("pm1",
+        LocalDate.of(2024, 10, 1), LocalDate.of(2024, 10, 31));
+    programmeMembership.setEndDate(LocalDate.of(2024, 11, 1));
+
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.getPlacements().add(placement);
+    traineeProfile.getProgrammeMemberships().add(programmeMembership);
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+    when(programmeMembershipService.canBeOnboarded(programmeMembership)).thenReturn(true);
+
+    boolean canBeOnboarded = service.canBeOnboarded(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected canBeOnboarded result.", canBeOnboarded, is(true));
+    verify(programmeMembershipService).canBeOnboarded(programmeMembership);
+  }
+
+  @ParameterizedTest
+  @NullSource
+  @ValueSource(strings = {OTHER_PLACEMENT_TYPE})
+  void shouldNotBeOnboardableWhenPlacementIsNotInPostPogAndProgrammeCompletionDateExcludesIt(
+      String placementType) {
+    Placement placement = createPlacement(EXISTING_PLACEMENT_ID, ORIGINAL_SUFFIX,
+        LocalDate.of(2024, 11, 1));
+    placement.setPlacementType(placementType);
+
+    ProgrammeMembership programmeMembership = getProgrammeMembership("pm1",
+        LocalDate.of(2024, 10, 1), LocalDate.of(2024, 10, 31));
+    programmeMembership.setEndDate(LocalDate.of(2025, 10, 31));
+
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.getPlacements().add(placement);
+    traineeProfile.getProgrammeMemberships().add(programmeMembership);
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean canBeOnboarded = service.canBeOnboarded(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected canBeOnboarded result.", canBeOnboarded, is(false));
+    verifyNoInteractions(programmeMembershipService);
+  }
+
+  @Test
+  void shouldNotBeOnboardableWhenInPostPogPlacementMembershipHasNullEndDate() {
+    Placement placement = createPlacement(EXISTING_PLACEMENT_ID, ORIGINAL_SUFFIX,
+        LocalDate.of(2024, 11, 1));
+    placement.setPlacementType(IN_POST_POG_PLACEMENT_TYPE);
+
+    ProgrammeMembership programmeMembership = getProgrammeMembership("pm1",
+        LocalDate.of(2024, 10, 1), LocalDate.of(2025, 10, 31));
+    programmeMembership.setEndDate(null);
+
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.getPlacements().add(placement);
+    traineeProfile.getProgrammeMemberships().add(programmeMembership);
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean canBeOnboarded = service.canBeOnboarded(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected canBeOnboarded result.", canBeOnboarded, is(false));
+    verifyNoInteractions(programmeMembershipService);
+  }
+
+  @Test
+  void shouldBeOnboardableWhenInPostPogPlacementHasNullEndDateButAnotherValidMembership() {
+    Placement placement = createPlacement(EXISTING_PLACEMENT_ID, ORIGINAL_SUFFIX,
+        LocalDate.of(2024, 11, 1));
+    placement.setPlacementType(IN_POST_POG_PLACEMENT_TYPE);
+
+    ProgrammeMembership membershipWithNullEndDate = getProgrammeMembership("pm1",
+        LocalDate.of(2024, 10, 1), LocalDate.of(2025, 10, 31));
+    membershipWithNullEndDate.setEndDate(null);
+
+    ProgrammeMembership validMembership = getProgrammeMembership("pm2",
+        LocalDate.of(2024, 10, 1), LocalDate.of(2024, 10, 31));
+    validMembership.setEndDate(LocalDate.of(2024, 11, 1));
+
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.getPlacements().add(placement);
+    traineeProfile.getProgrammeMemberships().add(membershipWithNullEndDate);
+    traineeProfile.getProgrammeMemberships().add(validMembership);
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+    when(programmeMembershipService.canBeOnboarded(validMembership)).thenReturn(true);
+
+    boolean canBeOnboarded = service.canBeOnboarded(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected canBeOnboarded result.", canBeOnboarded, is(true));
+    verify(programmeMembershipService).canBeOnboarded(validMembership);
+  }
+
+  @Test
   void pilot2024ShouldBeFalseIfTraineeNotFound() {
     when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(null);
 
@@ -527,6 +628,53 @@ class PlacementServiceTest {
     boolean isPilot2024 = service.isPilot2024(TRAINEE_TIS_ID, EXISTING_PLACEMENT_ID);
 
     assertThat("Unexpected isPilot2024 value.", isPilot2024, is(false));
+  }
+
+  @Test
+  void rollout2024ShouldBeTrueWhenInPostPogPlacementUsesProgrammeEndDate() {
+    Placement placement = createPlacement(EXISTING_PLACEMENT_ID, ORIGINAL_SUFFIX,
+        LocalDate.of(2024, 11, 1));
+    placement.setPlacementType(IN_POST_POG_PLACEMENT_TYPE);
+
+    ProgrammeMembership programmeMembership = getProgrammeMembership(PROGRAMME_MEMBERSHIP_ID,
+        LocalDate.of(2024, 10, 1), LocalDate.of(2024, 10, 31), "London LETBs");
+    programmeMembership.setEndDate(LocalDate.of(2024, 11, 1));
+
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPlacements(List.of(placement));
+    traineeProfile.setProgrammeMemberships(List.of(programmeMembership));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+    when(programmeMembershipService.isPilotRollout2024(TRAINEE_TIS_ID, PROGRAMME_MEMBERSHIP_ID))
+        .thenReturn(true);
+
+    boolean isPilotRollout2024 = service.isPilotRollout2024(TRAINEE_TIS_ID,
+        EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected isPilotRollout2024 value.", isPilotRollout2024, is(true));
+  }
+
+  @Test
+  void rollout2024ShouldBeFalseWhenPlacementIsNotInPostPogAndProgrammeCompletionDateExcludesIt() {
+    Placement placement = createPlacement(EXISTING_PLACEMENT_ID, ORIGINAL_SUFFIX,
+        LocalDate.of(2024, 11, 1));
+    placement.setPlacementType(OTHER_PLACEMENT_TYPE);
+
+    ProgrammeMembership programmeMembership = getProgrammeMembership(PROGRAMME_MEMBERSHIP_ID,
+        LocalDate.of(2024, 10, 1), LocalDate.of(2024, 10, 31), "London LETBs");
+    programmeMembership.setEndDate(LocalDate.of(2024, 11, 1));
+
+    TraineeProfile traineeProfile = new TraineeProfile();
+    traineeProfile.setPlacements(List.of(placement));
+    traineeProfile.setProgrammeMemberships(List.of(programmeMembership));
+
+    when(repository.findByTraineeTisId(TRAINEE_TIS_ID)).thenReturn(traineeProfile);
+
+    boolean isPilotRollout2024 = service.isPilotRollout2024(TRAINEE_TIS_ID,
+        EXISTING_PLACEMENT_ID);
+
+    assertThat("Unexpected isPilotRollout2024 value.", isPilotRollout2024, is(false));
+    verifyNoInteractions(programmeMembershipService);
   }
 
   @Test
@@ -763,16 +911,16 @@ class PlacementServiceTest {
    *
    * @param programmeMembershipTisId The TIS ID to set on the programmeMembership.
    * @param startDate                The start date.
-   * @param endDate                  The end date.
+   * @param completionDate           The completion date.
    * @return The programme membership.
    */
   private ProgrammeMembership getProgrammeMembership(
       String programmeMembershipTisId, LocalDate startDate,
-      LocalDate endDate) {
+      LocalDate completionDate) {
     ProgrammeMembership programmeMembership = new ProgrammeMembership();
     programmeMembership.setTisId(programmeMembershipTisId);
     programmeMembership.setStartDate(startDate);
-    programmeMembership.setProgrammeCompletionDate(endDate);
+    programmeMembership.setProgrammeCompletionDate(completionDate);
 
     return programmeMembership;
   }
@@ -782,14 +930,15 @@ class PlacementServiceTest {
    *
    * @param programmeMembershipTisId The TIS ID to set on the programmeMembership.
    * @param startDate                The start date.
-   * @param endDate                  The end date.
+   * @param completionDate           The completion date.
    * @param managingDeanery          The managing deanery.
    * @return The programme membership.
    */
   private ProgrammeMembership getProgrammeMembership(
       String programmeMembershipTisId, LocalDate startDate,
-      LocalDate endDate, String managingDeanery) {
-    ProgrammeMembership pm = getProgrammeMembership(programmeMembershipTisId, startDate, endDate);
+      LocalDate completionDate, String managingDeanery) {
+    ProgrammeMembership pm
+        = getProgrammeMembership(programmeMembershipTisId, startDate, completionDate);
     pm.setManagingDeanery(managingDeanery);
     return pm;
   }
