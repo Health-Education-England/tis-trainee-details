@@ -267,8 +267,11 @@ class FeatureResourceIntegrationTest {
         .andExpect(jsonPath("$.forms.ltft.qualifyingProgrammes[0]", is(kssPmId)));
   }
 
-  @Test
-  void shouldNotEnableLtftForFoundationTraineeInKentSurreyAndSussex() throws Exception {
+  @ParameterizedTest
+  @ValueSource(strings = {"Kent", "Surrey and Sussex", "Kent, Surrey & Sussex", "Wessex",
+      "Thames Valley", "Yorkshire and the Humber"})
+  void shouldNotEnableLtftForFoundationTraineeNotInEnabledDeanery(String deanery)
+      throws Exception {
     TraineeProfile profile = new TraineeProfile();
     profile.setTraineeTisId(TRAINEE_ID);
 
@@ -279,7 +282,7 @@ class FeatureResourceIntegrationTest {
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setCurricula(List.of(curriculum));
     pm.setTisId(UUID.randomUUID().toString());
-    pm.setManagingDeanery("Kent, Surrey and Sussex");
+    pm.setManagingDeanery(deanery);
     pm.setEndDate(LocalDate.now().plusDays(1));
     profile.setProgrammeMemberships(List.of(pm));
 
@@ -370,7 +373,8 @@ class FeatureResourceIntegrationTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"South West"})
+  @ValueSource(strings = {"Kent, Surrey and Sussex", "North West London",
+      "North Central and East London", "South London", "South West"})
   void shouldDisableLtftForFoundationTraineeInEnabledDeaneryIfNoCurrentProgramme(String deanery)
       throws Exception {
     TraineeProfile profile = new TraineeProfile();

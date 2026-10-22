@@ -46,6 +46,10 @@ application:
   environment: ${ENVIRONMENT:local}
   features:
     foundation-deaneries:
+      - Kent, Surrey and Sussex
+      - North West London
+      - North Central and East London
+      - South London
       - South West
     ltft:
       pilot:
