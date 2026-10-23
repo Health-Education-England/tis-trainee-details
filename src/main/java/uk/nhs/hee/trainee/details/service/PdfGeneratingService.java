@@ -54,8 +54,8 @@ import org.thymeleaf.context.Context;
 public class PdfGeneratingService {
 
   private static final String FALLBACK_FONT_FAMILY = "Noto Sans";
-  private static final String FALLBACK_FONT_REGULAR = "/fonts/NotoSans-Regular.ttf";
-  private static final String FALLBACK_FONT_BOLD = "/fonts/NotoSans-Bold.ttf";
+  private static final String FALLBACK_FONT_REGULAR = "/fonts/noto/NotoSans-Regular.ttf";
+  private static final String FALLBACK_FONT_BOLD = "/fonts/noto/NotoSans-Bold.ttf";
 
   private final TemplateEngine templateEngine;
   private final ZoneId timezone;

@@ -94,7 +94,7 @@ class PdfGeneratingServiceTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"/fonts/NotoSans-Regular.ttf", "/fonts/NotoSans-Bold.ttf"})
+  @ValueSource(strings = {"/fonts/noto/NotoSans-Regular.ttf", "/fonts/noto/NotoSans-Bold.ttf"})
   void shouldLoadFontWhenFoundOnClasspath(String path) throws IOException {
     try (InputStream is = PdfGeneratingService.loadFont(path)) {
       assertThat("Unexpected font stream.", is, notNullValue());
