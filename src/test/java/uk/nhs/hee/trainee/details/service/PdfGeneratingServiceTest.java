@@ -39,6 +39,8 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.TemplateSpec;
 import org.thymeleaf.templatemode.TemplateMode;
@@ -69,5 +71,22 @@ class PdfGeneratingServiceTest {
     String pdfText = new PDFTextStripper().getText(pdf);
 
     assertThat("Unexpected content.", pdfText, is("test content" + System.lineSeparator()));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"Łukasz", "Józef Wiśniewski", "Erdős", "Ağaoğlu Şahin", "Ćosić Čapek",
+      "Dvořák Kněžek", "Țepeș Ștefan", "Zoë Muñoz Óscar"})
+  void shouldRenderLatinExtendedCharactersUsingFallbackFont(String name) throws IOException {
+    TemplateSpec templateSpec = new TemplateSpec("template", Set.of(), TemplateMode.HTML, null);
+
+    when(templateEngine.process(any(TemplateSpec.class), any())).thenReturn(
+        "<html><body style=\"font-family: 'Frutiger W01', Arial, sans-serif;\">" + name
+            + "</body></html>");
+
+    byte[] resultByte = service.generatePdf(templateSpec, Map.of());
+    PDDocument pdf = Loader.loadPDF(new RandomAccessReadBuffer(resultByte));
+    String pdfText = new PDFTextStripper().getText(pdf);
+
+    assertThat("Unexpected content.", pdfText, is(name + System.lineSeparator()));
   }
 }

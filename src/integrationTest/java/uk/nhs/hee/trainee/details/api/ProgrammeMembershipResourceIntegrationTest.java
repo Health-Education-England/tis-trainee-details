@@ -22,7 +22,9 @@
 package uk.nhs.hee.trainee.details.api;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
@@ -54,7 +56,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.imageio.ImageIO;
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.io.IOUtils;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -321,6 +326,58 @@ class ProgrammeMembershipResourceIntegrationTest {
     byte[] responseBytes = response.getContentAsByteArray();
 
     int problems = compareGeneratedPdf("programme-confirmation", responseBytes);
+    assertThat("Unexpected PDF comparison problem count.", problems, is(0));
+  }
+
+  @Test
+  void shouldReturnPdfWithExtendedCharactersWhenNamesNotSupportedByPrimaryFont() throws Exception {
+    TraineeProfile profile = new TraineeProfile();
+    profile.setTraineeTisId(TRAINEE_ID);
+
+    // Latin Extended characters not in the NHS Frutiger fonts, rendered using the fallback font.
+    // Polish (Ł), Romanian (Ș comma-below), Turkish (Ş cedilla, ğ), Latin-1 (ë, ó) for comparison.
+    PersonalDetails personalDetails = new PersonalDetails();
+    personalDetails.setForenames("Łukasz Ștefan Şahin Ağaoğlu Zoë");
+    // Polish (ś), Czech (ř, ě, ž), Hungarian (ő), Croatian (ć), Romanian (ț, ș comma-below).
+    personalDetails.setSurname("Wiśniewski-Dvořák-Erdős-Ćosić-Țepeș-Kněžek");
+    personalDetails.setGmcNumber("0000000");
+    profile.setPersonalDetails(personalDetails);
+
+    ProgrammeMembership pm = new ProgrammeMembership();
+    pm.setTisId(PM_ID);
+    pm.setStartDate(START_DATE);
+    pm.setEndDate(END_DATE);
+    pm.setProgrammeName("General Practice");
+    pm.setManagingDeanery("North West");
+    profile.setProgrammeMemberships(List.of(pm));
+
+    mongoTemplate.save(profile);
+
+    when(restTemplate.getForObject(anyString(), any(), anyMap())).thenReturn(List.of(
+        Map.of(
+            "contactTypeName", "Onboarding Support",
+            "contact", "local.office@example.com"
+        )
+    ));
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    MvcResult result = mockMvc.perform(
+            get("/api/programme-membership/{programmeMembershipId}/confirmation", PM_ID)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isOk())
+        .andReturn();
+
+    MockHttpServletResponse response = result.getResponse();
+    byte[] responseBytes = response.getContentAsByteArray();
+
+    try (PDDocument pdf = Loader.loadPDF(responseBytes)) {
+      String pdfText = new PDFTextStripper().getText(pdf);
+      assertThat("Unexpected replacement character.", pdfText, not(containsString("#")));
+    }
+
+    int problems = compareGeneratedPdf("programme-confirmation-extended-characters",
+        responseBytes);
     assertThat("Unexpected PDF comparison problem count.", problems, is(0));
   }
 
