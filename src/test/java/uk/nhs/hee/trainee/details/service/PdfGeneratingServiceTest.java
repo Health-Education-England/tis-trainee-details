@@ -22,7 +22,9 @@
 package uk.nhs.hee.trainee.details.service;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -30,6 +32,7 @@ import static org.mockito.Mockito.when;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.ZoneId;
 import java.util.Map;
 import java.util.Set;
@@ -88,5 +91,24 @@ class PdfGeneratingServiceTest {
     String pdfText = new PDFTextStripper().getText(pdf);
 
     assertThat("Unexpected content.", pdfText, is(name + System.lineSeparator()));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"/fonts/NotoSans-Regular.ttf", "/fonts/NotoSans-Bold.ttf"})
+  void shouldLoadFontWhenFoundOnClasspath(String path) throws IOException {
+    try (InputStream is = PdfGeneratingService.loadFont(path)) {
+      assertThat("Unexpected font stream.", is, notNullValue());
+    }
+  }
+
+  @Test
+  void shouldThrowExceptionWhenFontNotFoundOnClasspath() {
+    String path = "/fonts/missing.ttf";
+
+    IllegalStateException exception = assertThrows(IllegalStateException.class,
+        () -> PdfGeneratingService.loadFont(path));
+
+    assertThat("Unexpected exception message.", exception.getMessage(),
+        is("Font not found on classpath: " + path));
   }
 }

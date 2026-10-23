@@ -125,8 +125,9 @@ public class PdfGeneratingService {
    *
    * @param path The classpath location of the font.
    * @return The font's input stream.
+   * @throws IllegalStateException If the font could not be found on the classpath.
    */
-  private InputStream loadFont(String path) {
+  static InputStream loadFont(String path) {
     InputStream is = PdfGeneratingService.class.getResourceAsStream(path);
 
     if (is == null) {
