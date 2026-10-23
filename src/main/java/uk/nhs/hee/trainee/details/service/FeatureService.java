@@ -106,8 +106,16 @@ public class FeatureService {
 
     // Public Health
     if (isPublicHealthTrainee(profile)) {
-      log.debug("{} is a Public Health trainee, enabling all features except LTFT.",
-          profile.getTraineeTisId());
+      log.debug("{} is a Public Health trainee.", profile.getTraineeTisId());
+      // Public Health trainees follow the same LTFT pilot rules as specialty trainees.
+      List<String> ltftProgrammes = getLtftEnabledProgrammes(profile);
+
+      if (isLtftEnabled(profile, ltftProgrammes)) {
+        log.debug("Trainee is in LTFT pilot, enabling all features including LTFT pilot access.");
+        return FeaturesDto.enableWithLtftPilot(ltftProgrammes);
+      }
+
+      log.debug("Enabling all released features.");
       return FeaturesDto.enable();
     }
 
@@ -233,7 +241,7 @@ public class FeatureService {
 
     List<String> ltftPmIds = profile.getProgrammeMemberships().stream()
         // Past programmes are not valid for LTFT.
-        .filter(pm -> pm.getEndDate().isAfter(now)
+        .filter(pm -> pm.getEndDate() != null && pm.getEndDate().isAfter(now)
             && enabledDeaneries.contains(pm.getManagingDeanery()))
         .map(ProgrammeMembership::getTisId)
         .toList();
