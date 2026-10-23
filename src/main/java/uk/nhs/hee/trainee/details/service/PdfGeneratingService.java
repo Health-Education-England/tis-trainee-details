@@ -21,16 +21,21 @@
 
 package uk.nhs.hee.trainee.details.service;
 
+import com.openhtmltopdf.outputdevice.helper.BaseRendererBuilder.FSFontUseCase;
+import com.openhtmltopdf.outputdevice.helper.BaseRendererBuilder.FontStyle;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.openhtmltopdf.slf4j.Slf4jLogger;
 import com.openhtmltopdf.svgsupport.BatikSVGDrawer;
 import com.openhtmltopdf.util.XRLog;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.ZoneId;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.helper.W3CDom;
@@ -47,6 +52,10 @@ import org.thymeleaf.context.Context;
 @Slf4j
 @Service
 public class PdfGeneratingService {
+
+  private static final String FALLBACK_FONT_FAMILY = "Noto Sans";
+  private static final String FALLBACK_FONT_REGULAR = "/fonts/noto/NotoSans-Regular.ttf";
+  private static final String FALLBACK_FONT_BOLD = "/fonts/noto/NotoSans-Bold.ttf";
 
   private final TemplateEngine templateEngine;
   private final ZoneId timezone;
@@ -85,12 +94,46 @@ public class PdfGeneratingService {
     Document parsedBody = Jsoup.parse(body);
 
     ByteArrayOutputStream os = new ByteArrayOutputStream();
-    new PdfRendererBuilder()
+    PdfRendererBuilder builder = new PdfRendererBuilder()
         .toStream(os)
         .useSVGDrawer(new BatikSVGDrawer())
-        .withW3cDocument(W3CDom.convert(parsedBody), "classpath:/")
-        .run();
+        .withW3cDocument(W3CDom.convert(parsedBody), "classpath:/");
+    registerFallbackFonts(builder);
+    builder.run();
 
     return os.toByteArray();
+  }
+
+  /**
+   * Register fallback fonts, used for any glyph not supported by the document's fonts (e.g. Latin
+   * Extended characters such as Ł, ś, ő, ț which are missing from the NHS Frutiger fonts).
+   * Without a fallback the renderer substitutes unsupported glyphs with '#'. The fonts are used as
+   * a final fallback, after the built-in fonts, so that existing rendering is unaffected.
+   *
+   * @param builder The builder to register the fonts with.
+   */
+  private void registerFallbackFonts(PdfRendererBuilder builder) {
+    Set<FSFontUseCase> useCases = EnumSet.of(FSFontUseCase.FALLBACK_FINAL);
+    builder.useFont(() -> loadFont(FALLBACK_FONT_REGULAR), FALLBACK_FONT_FAMILY, 400,
+        FontStyle.NORMAL, true, useCases);
+    builder.useFont(() -> loadFont(FALLBACK_FONT_BOLD), FALLBACK_FONT_FAMILY, 700,
+        FontStyle.NORMAL, true, useCases);
+  }
+
+  /**
+   * Load a font from the classpath.
+   *
+   * @param path The classpath location of the font.
+   * @return The font's input stream.
+   * @throws IllegalStateException If the font could not be found on the classpath.
+   */
+  static InputStream loadFont(String path) {
+    InputStream is = PdfGeneratingService.class.getResourceAsStream(path);
+
+    if (is == null) {
+      throw new IllegalStateException("Font not found on classpath: " + path);
+    }
+
+    return is;
   }
 }
