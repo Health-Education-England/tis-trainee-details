@@ -23,13 +23,15 @@ package uk.nhs.hee.trainee.details.mapper;
 
 import static org.mapstruct.MappingConstants.ComponentModel.SPRING;
 
-import java.time.LocalDate;
 import java.util.List;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import uk.nhs.hee.trainee.details.dto.CctCalculateResponseDto;
+import uk.nhs.hee.trainee.details.dto.CctCalculatedChangeDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
-import uk.nhs.hee.trainee.details.dto.CctCalculationSummaryDto;
+import uk.nhs.hee.trainee.details.dto.CctCalculationSaveRequestDto;
 import uk.nhs.hee.trainee.details.model.CctCalculation;
+import uk.nhs.hee.trainee.details.model.CctCalculation.CctChange;
 
 /**
  * A mapper to convert between CCT related entities and DTOs.
@@ -38,40 +40,12 @@ import uk.nhs.hee.trainee.details.model.CctCalculation;
 public interface CctMapper {
 
   /**
-   * Convert a {@link CctCalculation} entity to a {@link CctCalculationSummaryDto} DTO.
-   *
-   * @param entity The entity to convert to a DTO.
-   * @return The equivalent summary DTO.
-   */
-  @Mapping(target = "programmeMembershipId", source = "programmeMembership.id")
-  CctCalculationSummaryDto toSummaryDto(CctCalculation entity);
-
-  /**
-   * Convert a list of {@link CctCalculation} to a list of {@link CctCalculationDetailDto}.
-   *
-   * @param entities The entities to convert to DTOs.
-   * @return The equivalent summary DTOs.
-   */
-  List<CctCalculationSummaryDto> toSummaryDtos(List<CctCalculation> entities);
-
-  /**
    * Convert a {@link CctCalculation} entity to a {@link CctCalculationDetailDto} DTO.
    *
    * @param entity The entity to convert to a DTO.
    * @return The equivalent detail DTO.
    */
-  @Mapping(target = "cctDate", ignore = true)
   CctCalculationDetailDto toDetailDto(CctCalculation entity);
-
-  /**
-   * Convert a {@link CctCalculation} entity to a {@link CctCalculationDetailDto} DTO, injecting
-   * the CCT date into this.
-   *
-   * @param entity The entity to convert to a DTO.
-   * @return The equivalent detail DTO.
-   */
-  @Mapping(target = "cctDate", source = "cctDate")
-  CctCalculationDetailDto toDetailDto(CctCalculation entity, LocalDate cctDate);
 
   /**
    * Convert a list of {@link CctCalculation} to a list of {@link CctCalculationDetailDto}.
@@ -79,17 +53,39 @@ public interface CctMapper {
    * @param entities The entities to convert to DTOs.
    * @return The equivalent detail DTOs.
    */
-  @Mapping(target = "cctDate", ignore = true)
   List<CctCalculationDetailDto> toDetailDtos(List<CctCalculation> entities);
 
   /**
-   * Convert a {@link CctCalculationDetailDto} DTO to a {@link CctCalculation} entity.
+   * Convert a {@link CctCalculationSaveRequestDto} DTO to a {@link CctCalculation} entity.
    *
-   * @param dto       The DTO to convert to an entity.
-   * @param traineeId The ID of the trainee the calculation is for.
-   * @return The equivalent entity with trainee ID injected.
+   * @param dto         The DTO to convert to an entity.
+   * @param calculation The calculation made from the DTO.
+   * @param traineeId   The ID of the trainee the calculation is for.
+   * @return The equivalent entity with the calculation and trainee ID injected.
    */
+  @Mapping(target = "changes", source = "calculation.changes")
+  @Mapping(target = "result", source = "calculation.result")
   @Mapping(target = "traineeId", source = "traineeId")
-  CctCalculation toEntity(CctCalculationDetailDto dto, String traineeId);
+  @Mapping(target = "created", ignore = true)
+  @Mapping(target = "lastModified", ignore = true)
+  CctCalculation toEntity(CctCalculationSaveRequestDto dto, CctCalculateResponseDto calculation,
+      String traineeId);
 
+  /**
+   * Convert a {@link CctCalculatedChangeDto} DTO to a {@link CctChange} entity.
+   *
+   * @param dto The DTO to convert to an entity.
+   * @return The equivalent entity.
+   */
+  @Mapping(target = ".", source = "change")
+  CctChange toEntity(CctCalculatedChangeDto dto);
+
+  /**
+   * Convert a {@link CctChange} entity to a {@link CctCalculatedChangeDto} DTO.
+   *
+   * @param entity The entity to convert to a DTO.
+   * @return The equivalent DTO.
+   */
+  @Mapping(target = "change", source = ".")
+  CctCalculatedChangeDto toDto(CctChange entity);
 }

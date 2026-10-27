@@ -53,6 +53,7 @@ import org.springframework.web.server.ResponseStatusException;
 import uk.nhs.hee.trainee.details.dto.CctCalculateRequestDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculateResponseDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
+import uk.nhs.hee.trainee.details.dto.CctCalculationSaveRequestDto;
 import uk.nhs.hee.trainee.details.dto.CctChangeDto;
 import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto;
 import uk.nhs.hee.trainee.details.dto.CctResultDto;
@@ -144,14 +145,14 @@ class CctResourceTest {
   }
 
   @Test
-  void shouldReturnCreatedCalculation() {
-    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
+  void shouldReturnCreatedCalculation() throws MethodArgumentNotValidException {
+    CctCalculationSaveRequestDto dto = CctCalculationSaveRequestDto.builder()
         .name("Test Calculation")
         .build();
 
     UUID id = UUID.randomUUID();
     when(service.createCalculation(any())).thenAnswer(inv -> {
-      CctCalculationDetailDto arg = inv.getArgument(0);
+      CctCalculationSaveRequestDto arg = inv.getArgument(0);
       return CctCalculationDetailDto.builder()
           .id(id)
           .name(arg.name())
@@ -171,14 +172,14 @@ class CctResourceTest {
   }
 
   @Test
-  void shouldReturnCreatedCalculationLocation() {
-    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
+  void shouldReturnCreatedCalculationLocation() throws MethodArgumentNotValidException {
+    CctCalculationSaveRequestDto dto = CctCalculationSaveRequestDto.builder()
         .name("Test Calculation")
         .build();
 
     UUID id = UUID.randomUUID();
     when(service.createCalculation(any())).thenAnswer(inv -> {
-      CctCalculationDetailDto arg = inv.getArgument(0);
+      CctCalculationSaveRequestDto arg = inv.getArgument(0);
       return CctCalculationDetailDto.builder()
           .id(id)
           .name(arg.name())
@@ -193,23 +194,33 @@ class CctResourceTest {
   }
 
   @Test
+  void shouldNotCatchValidationErrorWhenCreateCalculationValidationFails()
+      throws MethodArgumentNotValidException {
+    CctCalculationSaveRequestDto dto = CctCalculationSaveRequestDto.builder()
+        .name("Test Calculation")
+        .build();
+
+    when(service.createCalculation(any())).thenThrow(MethodArgumentNotValidException.class);
+
+    assertThrows(MethodArgumentNotValidException.class, () -> controller.createCalculation(dto));
+  }
+
+  @Test
   void shouldReturnUpdatedCalculation() throws MethodArgumentNotValidException {
     UUID id = UUID.randomUUID();
     Instant created = Instant.now();
-    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
+    CctCalculationSaveRequestDto dto = CctCalculationSaveRequestDto.builder()
         .id(id)
         .name("Test Calculation")
-        .created(created)
-        .lastModified(created)
         .build();
 
     Instant modified = created.plusSeconds(1);
     when(service.updateCalculation(any(), any())).thenAnswer(inv -> {
-      CctCalculationDetailDto arg = inv.getArgument(1);
+      CctCalculationSaveRequestDto arg = inv.getArgument(1);
       return Optional.of(CctCalculationDetailDto.builder()
           .id(arg.id())
           .name(arg.name())
-          .created(arg.created())
+          .created(created)
           .lastModified(modified)
           .build());
     });
@@ -230,7 +241,7 @@ class CctResourceTest {
   void shouldReturnBadRequestWhenUpdateIsInconsistent() throws MethodArgumentNotValidException {
     UUID id1 = UUID.randomUUID();
     UUID id2 = UUID.randomUUID();
-    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
+    CctCalculationSaveRequestDto dto = CctCalculationSaveRequestDto.builder()
         .id(id2)
         .name("Test Calculation")
         .build();
@@ -247,7 +258,7 @@ class CctResourceTest {
   @Test
   void shouldReturnBadRequestWhenUpdateHasNoEntityId() throws MethodArgumentNotValidException {
     UUID id = UUID.randomUUID();
-    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
+    CctCalculationSaveRequestDto dto = CctCalculationSaveRequestDto.builder()
         .name("Test Calculation")
         .build();
 
@@ -262,12 +273,9 @@ class CctResourceTest {
   @Test
   void shouldReturnNotFoundWhenCalculationCannotBeUpdated() throws MethodArgumentNotValidException {
     UUID id = UUID.randomUUID();
-    Instant created = Instant.now();
-    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
+    CctCalculationSaveRequestDto dto = CctCalculationSaveRequestDto.builder()
         .id(id)
         .name("Test Calculation")
-        .created(created)
-        .lastModified(created)
         .build();
 
     //e.g. because not owned by the user, or non-existent
@@ -285,12 +293,9 @@ class CctResourceTest {
   void shouldNotCatchValidationErrorWhenUpdateCalculationValidationFails()
       throws MethodArgumentNotValidException {
     UUID id = UUID.randomUUID();
-    Instant created = Instant.now();
-    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
+    CctCalculationSaveRequestDto dto = CctCalculationSaveRequestDto.builder()
         .id(id)
         .name("Test Calculation")
-        .created(created)
-        .lastModified(created)
         .build();
 
     when(service.updateCalculation(any(), any())).thenThrow(MethodArgumentNotValidException.class);

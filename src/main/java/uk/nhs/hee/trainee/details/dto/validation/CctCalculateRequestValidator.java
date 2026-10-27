@@ -31,7 +31,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.IntStream;
-import uk.nhs.hee.trainee.details.dto.CctCalculateRequestDto;
+import uk.nhs.hee.trainee.details.dto.CctCalculationInput;
 import uk.nhs.hee.trainee.details.dto.CctChangeDto;
 import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto;
 import uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType;
@@ -40,14 +40,14 @@ import uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType;
  * Implementation of the {@link CctCalculateRequestValidation} validator.
  */
 public class CctCalculateRequestValidator implements
-    ConstraintValidator<CctCalculateRequestValidation, CctCalculateRequestDto> {
+    ConstraintValidator<CctCalculateRequestValidation, CctCalculationInput> {
 
   private static final int NOTES_MAX_LENGTH = 1000;
   private static final DateTimeFormatter MESSAGE_DATE_FORMAT =
       DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
   @Override
-  public boolean isValid(CctCalculateRequestDto request, ConstraintValidatorContext context) {
+  public boolean isValid(CctCalculationInput request, ConstraintValidatorContext context) {
     Violations violations = new Violations(context);
 
     if (request.programmeDetails() != null) {

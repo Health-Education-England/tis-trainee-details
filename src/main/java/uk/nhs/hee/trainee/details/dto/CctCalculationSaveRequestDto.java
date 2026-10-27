@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright 2024 Crown Copyright (Health Education England)
+ * Copyright 2026 Crown Copyright (Health Education England)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -21,24 +21,42 @@
 
 package uk.nhs.hee.trainee.details.dto;
 
-import java.time.Instant;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Null;
+import jakarta.validation.constraints.Size;
+import java.util.List;
 import java.util.UUID;
 import lombok.Builder;
+import uk.nhs.hee.trainee.details.dto.validation.CctCalculateRequestValidation;
+import uk.nhs.hee.trainee.details.dto.validation.Create;
 
 /**
- * A summary of a CCT calculation.
+ * A request to save a CCT calculation.
  *
- * @param id                    The ID of the calculation.
- * @param name                  The name of the calculation.
- * @param programmeMembershipId The ID of the associated programme membership.
+ * @param id               The ID of the calculation, or null for a new calculation.
+ * @param name             A name for the calculation.
+ * @param programmeDetails The details of the programme.
+ * @param changes          The changes to the programme.
  */
 @Builder
-public record CctCalculationSummaryDto(
+@CctCalculateRequestValidation
+public record CctCalculationSaveRequestDto(
 
+    @Null(groups = Create.class)
     UUID id,
+
+    @NotBlank
     String name,
-    UUID programmeMembershipId,
-    Instant created,
-    Instant lastModified) {
+
+    @NotNull
+    @Valid
+    CctProgrammeDetailsDto programmeDetails,
+
+    @NotNull
+    @Size(max = 200)
+    @Valid
+    List<@NotNull CctChangeDto> changes) implements CctCalculationInput {
 
 }
