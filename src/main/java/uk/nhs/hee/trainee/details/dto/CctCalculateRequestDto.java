@@ -45,6 +45,6 @@ public record CctCalculateRequestDto(
     @NotNull
     @Size(max = 200)
     @Valid
-    List<@NotNull CctChangeDto> changes) {
+    List<@NotNull CctChangeDto> changes) implements CctCalculationInput {
 
 }
