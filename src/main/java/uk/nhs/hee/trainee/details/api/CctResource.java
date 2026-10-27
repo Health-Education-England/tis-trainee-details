@@ -41,9 +41,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import uk.nhs.hee.trainee.details.dto.CctCalculateRequestDto;
+import uk.nhs.hee.trainee.details.dto.CctCalculateResponseDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
+import uk.nhs.hee.trainee.details.dto.CctSpecialtyDto;
 import uk.nhs.hee.trainee.details.dto.validation.Create;
+import uk.nhs.hee.trainee.details.service.CctEngine;
 import uk.nhs.hee.trainee.details.service.CctService;
+import uk.nhs.hee.trainee.details.service.CctSpecialtyService;
 
 /**
  * A REST controller for CCT related endpoints.
@@ -55,14 +60,20 @@ import uk.nhs.hee.trainee.details.service.CctService;
 public class CctResource {
 
   private final CctService service;
+  private final CctEngine engine;
+  private final CctSpecialtyService specialtyService;
 
   /**
    * Construct a REST controller for CCT related endpoints.
    *
-   * @param service               A service providing CCT functionality.
+   * @param service          A service providing CCT functionality.
+   * @param engine           A calculator for CCT dates.
+   * @param specialtyService A service providing the specialties for CCT calculations.
    */
-  public CctResource(CctService service) {
+  public CctResource(CctService service, CctEngine engine, CctSpecialtyService specialtyService) {
     this.service = service;
+    this.engine = engine;
+    this.specialtyService = specialtyService;
   }
 
   /**
@@ -153,5 +164,29 @@ public class CctResource {
         savedCalculation.id());
     return ResponseEntity.created(URI.create("/api/cct/calculation/" + savedCalculation.id()))
         .body(savedCalculation);
+  }
+
+  /**
+   * Calculate a CCT date for the given programme details and changes.
+   *
+   * @param request The programme details and changes to calculate the CCT date for.
+   * @return The changes, with the months they credit, and the CCT date calculated from them.
+   */
+  @PostMapping("/calculate")
+  public ResponseEntity<CctCalculateResponseDto> calculate(
+      @Validated @RequestBody CctCalculateRequestDto request) {
+    log.info("Request to calculate a CCT date");
+    return ResponseEntity.ok(engine.calculate(request.programmeDetails(), request.changes()));
+  }
+
+  /**
+   * Get the specialties that CCT dates can be calculated for.
+   *
+   * @return The specialties.
+   */
+  @GetMapping("/specialties")
+  public ResponseEntity<List<CctSpecialtyDto>> getSpecialties() {
+    log.info("Request to get CCT specialties");
+    return ResponseEntity.ok(specialtyService.getSpecialties());
   }
 }

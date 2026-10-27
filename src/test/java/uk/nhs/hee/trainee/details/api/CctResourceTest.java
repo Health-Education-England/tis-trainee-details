@@ -35,9 +35,11 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST1;
 
 import java.net.URI;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -48,18 +50,30 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.server.ResponseStatusException;
+import uk.nhs.hee.trainee.details.dto.CctCalculateRequestDto;
+import uk.nhs.hee.trainee.details.dto.CctCalculateResponseDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
+import uk.nhs.hee.trainee.details.dto.CctChangeDto;
+import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto;
+import uk.nhs.hee.trainee.details.dto.CctResultDto;
+import uk.nhs.hee.trainee.details.dto.CctSpecialtyDto;
+import uk.nhs.hee.trainee.details.service.CctEngine;
 import uk.nhs.hee.trainee.details.service.CctService;
+import uk.nhs.hee.trainee.details.service.CctSpecialtyService;
 
 class CctResourceTest {
 
   private CctResource controller;
   private CctService service;
+  private CctEngine engine;
+  private CctSpecialtyService specialtyService;
 
   @BeforeEach
   void setUp() {
     service = mock(CctService.class);
-    controller = new CctResource(service);
+    engine = mock(CctEngine.class);
+    specialtyService = mock(CctSpecialtyService.class);
+    controller = new CctResource(service, engine, specialtyService);
   }
 
   @Test
@@ -331,5 +345,37 @@ class CctResourceTest {
     ResponseStatusException exception = assertThrows(ResponseStatusException.class,
         () -> controller.deleteCalculation(id));
     assertThat("Unexpected status code.", exception.getStatusCode(), is(NOT_FOUND));
+  }
+
+  @Test
+  void shouldReturnCalculatedResult() {
+    CctProgrammeDetailsDto programmeDetails = CctProgrammeDetailsDto.builder()
+        .startDate(LocalDate.of(2023, 8, 2))
+        .lengthMonths(84)
+        .build();
+    List<CctChangeDto> changes = List.of();
+    CctCalculateResponseDto result = CctCalculateResponseDto.builder()
+        .result(CctResultDto.builder()
+            .cctDate(LocalDate.of(2030, 7, 29))
+            .build())
+        .build();
+    when(engine.calculate(programmeDetails, changes)).thenReturn(result);
+
+    ResponseEntity<CctCalculateResponseDto> response = controller.calculate(
+        new CctCalculateRequestDto(programmeDetails, changes));
+
+    assertThat("Unexpected response code.", response.getStatusCode(), is(OK));
+    assertThat("Unexpected response body.", response.getBody(), sameInstance(result));
+  }
+
+  @Test
+  void shouldGetSpecialties() {
+    List<CctSpecialtyDto> specialties = List.of(new CctSpecialtyDto("Paediatrics", 84, ST1));
+    when(specialtyService.getSpecialties()).thenReturn(specialties);
+
+    ResponseEntity<List<CctSpecialtyDto>> response = controller.getSpecialties();
+
+    assertThat("Unexpected response code.", response.getStatusCode(), is(OK));
+    assertThat("Unexpected response body.", response.getBody(), is(specialties));
   }
 }
