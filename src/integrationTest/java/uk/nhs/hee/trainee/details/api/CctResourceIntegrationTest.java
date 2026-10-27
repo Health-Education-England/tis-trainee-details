@@ -27,6 +27,7 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.IsNot.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -36,9 +37,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.LTFT;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST1;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.DoubleNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.jayway.jsonpath.JsonPath;
@@ -55,7 +57,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
-import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -71,15 +72,18 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.json.JsonCompareMode;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultActions;
 import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import uk.nhs.hee.trainee.details.DockerImageNames;
 import uk.nhs.hee.trainee.details.TestJwtUtil;
-import uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType;
 import uk.nhs.hee.trainee.details.model.CctCalculation;
+import uk.nhs.hee.trainee.details.model.CctCalculation.CctAssumedFullTimePeriod;
 import uk.nhs.hee.trainee.details.model.CctCalculation.CctChange;
-import uk.nhs.hee.trainee.details.model.CctCalculation.CctProgrammeMembership;
+import uk.nhs.hee.trainee.details.model.CctCalculation.CctProgrammeDetails;
+import uk.nhs.hee.trainee.details.model.CctCalculation.CctProjection;
+import uk.nhs.hee.trainee.details.model.CctCalculation.CctResult;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 
 @SpringBootTest
@@ -88,9 +92,6 @@ import uk.nhs.hee.trainee.details.model.TraineeProfile;
 class CctResourceIntegrationTest {
 
   private static final String TRAINEE_ID = UUID.randomUUID().toString();
-
-  private static final LocalDate CCT_DATE_75 = LocalDate.of(2024, 11, 1);
-  //based on calculationJson change below.
 
   @Container
   @ServiceConnection
@@ -110,27 +111,19 @@ class CctResourceIntegrationTest {
 
   @BeforeEach
   void setUp() throws IOException {
-    calculationJson = (ObjectNode) new ObjectMapper().readTree("""
-        {
-          "name": "Test Calculation",
-          "programmeMembership": {
-            "id": "12345678-aaaa-bbbb-cccc-012345678910",
-            "name": "Test Programme",
-            "startDate": "2024-01-01",
-            "endDate": "2025-01-01",
-            "wte": 0.5,
-            "designatedBodyCode": "testDbc"
-          },
-          "cctDate": "2024-01-01",
-          "changes": [
-            {
-              "type": "LTFT",
-              "startDate": "2024-07-01",
-              "wte": 0.75
-            }
-          ]
-        }
+    calculationJson = calculateJson("""
+        [
+          {
+            "type": "LTFT",
+            "startDate": "2024-02-01",
+            "endDate": "2024-08-01",
+            "wte": 0.6,
+            "countsTowardsCompletion": true,
+            "notes": "Cardiology rotation"
+          }
+        ]
         """);
+    calculationJson.put("name", "Test Calculation");
   }
 
   @AfterEach
@@ -174,29 +167,8 @@ class CctResourceIntegrationTest {
   }
 
   @Test
-  void shouldGetCalculationsWhenOwnedByUser() throws Exception {
-    UUID pmId = UUID.randomUUID();
-
-    CctCalculation entity = CctCalculation.builder()
-        .traineeId(TRAINEE_ID)
-        .name("Test Calculation")
-        .programmeMembership(CctProgrammeMembership.builder()
-            .id(pmId)
-            .startDate(LocalDate.parse("2024-01-01"))
-            .endDate(LocalDate.parse("2025-01-01"))
-            .wte(1.0)
-            .designatedBodyCode("testDbc")
-            .build())
-        .changes(List.of(
-            CctChange.builder()
-                .type(CctChangeType.LTFT)
-                .startDate(LocalDate.parse("2024-07-01"))
-                .wte(0.5)
-                .build()))
-        .build();
-    entity = template.insert(entity);
-
-    LocalDate cctDate = LocalDate.of(2025, 7, 4); //based on details above
+  void shouldGetCalculationsAsSavedWhenOwnedByUser() throws Exception {
+    CctCalculation entity = template.insert(savedCalculation(TRAINEE_ID));
 
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
     mockMvc.perform(get("/api/cct/calculation")
@@ -207,10 +179,11 @@ class CctResourceIntegrationTest {
         .andExpect(jsonPath("$", hasSize(1)))
         .andExpect(jsonPath("$[0].id").value(entity.id().toString()))
         .andExpect(jsonPath("$[0].name").value("Test Calculation"))
-        .andExpect(jsonPath("$[0].programmeMembership.id").value(pmId.toString()))
+        .andExpect(jsonPath("$[0].programmeDetails.specialty").value("Paediatrics"))
+        .andExpect(jsonPath("$[0].changes[0].wteMonths").value(3.6))
+        .andExpect(jsonPath("$[0].result.cctDate").value("2099-01-01"))
         .andExpect(jsonPath("$[0].created").value(
             entity.created().truncatedTo(ChronoUnit.MILLIS).toString()))
-        .andExpect(jsonPath("$[0].cctDate").value(cctDate.toString()))
         .andExpect(jsonPath("$[0].lastModified").value(
             entity.lastModified().truncatedTo(ChronoUnit.MILLIS).toString()));
   }
@@ -220,38 +193,12 @@ class CctResourceIntegrationTest {
     CctCalculation future = CctCalculation.builder()
         .traineeId(TRAINEE_ID)
         .name("Future")
-        .programmeMembership(CctProgrammeMembership.builder()
-            .id(UUID.randomUUID())
-            .startDate(LocalDate.parse("2024-01-01"))
-            .endDate(LocalDate.parse("2025-01-01"))
-            .wte(1.0)
-            .designatedBodyCode("testDbc")
-            .build())
-        .changes(List.of(
-            CctChange.builder()
-                .type(CctChangeType.LTFT)
-                .startDate(LocalDate.parse("2024-07-01"))
-                .wte(0.5)
-                .build()))
         .build();
     future = template.insert(future);
 
     CctCalculation past = CctCalculation.builder()
         .traineeId(TRAINEE_ID)
         .name("Past")
-        .programmeMembership(CctProgrammeMembership.builder()
-            .id(UUID.randomUUID())
-            .startDate(LocalDate.parse("2024-01-01"))
-            .endDate(LocalDate.parse("2025-01-01"))
-            .wte(1.0)
-            .designatedBodyCode("testDbc")
-            .build())
-        .changes(List.of(
-            CctChange.builder()
-                .type(CctChangeType.LTFT)
-                .startDate(LocalDate.parse("2024-07-01"))
-                .wte(0.5)
-                .build()))
         .build();
     template.insert(past);
     sleep(10); //ensure different last updated timestamps for ordering
@@ -259,19 +206,6 @@ class CctResourceIntegrationTest {
     CctCalculation present = CctCalculation.builder()
         .traineeId(TRAINEE_ID)
         .name("Present")
-        .programmeMembership(CctProgrammeMembership.builder()
-            .id(UUID.randomUUID())
-            .startDate(LocalDate.parse("2024-01-01"))
-            .endDate(LocalDate.parse("2025-01-01"))
-            .wte(1.0)
-            .designatedBodyCode("testDbc")
-            .build())
-        .changes(List.of(
-            CctChange.builder()
-                .type(CctChangeType.LTFT)
-                .startDate(LocalDate.parse("2024-07-01"))
-                .wte(0.5)
-                .build()))
         .build();
     template.insert(present);
     sleep(10); //ensure different last updated timestamps for ordering
@@ -323,57 +257,70 @@ class CctResourceIntegrationTest {
   }
 
   @Test
-  void shouldGetCalculationWhenOwnedByUser() throws Exception {
-    UUID pmId = UUID.randomUUID();
-
-    CctCalculation entity = CctCalculation.builder()
-        .traineeId(TRAINEE_ID)
-        .name("Test Calculation")
-        .programmeMembership(CctProgrammeMembership.builder()
-            .id(pmId)
-            .name("Test Programme")
-            .startDate(LocalDate.parse("2024-01-01"))
-            .endDate(LocalDate.parse("2025-01-01"))
-            .wte(1.0)
-            .designatedBodyCode("testDbc")
-            .managingDeanery("Test Deanery")
-            .build())
-        .changes(List.of(
-            CctChange.builder()
-                .type(CctChangeType.LTFT)
-                .startDate(LocalDate.parse("2024-07-01"))
-                .wte(0.5)
-                .build()))
-        .build();
-    entity = template.insert(entity);
-
-    LocalDate cctDate = LocalDate.of(2025, 7, 4); //based on details above
+  void shouldGetCalculationAsSavedWhenOwnedByUser() throws Exception {
+    CctCalculation entity = template.insert(savedCalculation(TRAINEE_ID));
 
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
     mockMvc.perform(get("/api/cct/calculation/{id}", entity.id())
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.id").value(entity.id().toString()))
-        .andExpect(jsonPath("$.traineeId").doesNotExist())
-        .andExpect(jsonPath("$.name").value("Test Calculation"))
-        .andExpect(jsonPath("$.programmeMembership").isMap())
-        .andExpect(jsonPath("$.programmeMembership.id").value(pmId.toString()))
-        .andExpect(jsonPath("$.programmeMembership.startDate").value("2024-01-01"))
-        .andExpect(jsonPath("$.programmeMembership.endDate").value("2025-01-01"))
-        .andExpect(jsonPath("$.programmeMembership.wte").value(1))
-        .andExpect(jsonPath("$.programmeMembership.designatedBodyCode").value("testDbc"))
-        .andExpect(jsonPath("$.programmeMembership.managingDeanery").value("Test Deanery"))
-        .andExpect(jsonPath("$.changes").isArray())
-        .andExpect(jsonPath("$.changes", hasSize(1)))
-        .andExpect(jsonPath("$.changes[0].type").value("LTFT"))
-        .andExpect(jsonPath("$.changes[0].startDate").value("2024-07-01"))
-        .andExpect(jsonPath("$.changes[0].wte").value(0.5))
-        .andExpect(jsonPath("$.cctDate").value(cctDate.toString()))
-        .andExpect(
-            jsonPath("$.created").value(entity.created().truncatedTo(ChronoUnit.MILLIS).toString()))
-        .andExpect(jsonPath("$.lastModified").value(
-            entity.lastModified().truncatedTo(ChronoUnit.MILLIS).toString()));
+        .andExpect(content().json("""
+            {
+              "id": "%s",
+              "name": "Test Calculation",
+              "programmeDetails": {
+                "specialty": "Paediatrics",
+                "startDate": "2023-08-02",
+                "lengthMonths": 84,
+                "startGrade": "ST1",
+                "startGradeOverrideNotes": null,
+                "additionalMonths": 0,
+                "additionalMonthsNotes": null,
+                "acceleratedMonths": 0,
+                "acceleratedMonthsNotes": null,
+                "eighteenMonthFinalGrade": null,
+                "eighteenMonthFinalGradeNotes": null,
+                "skippedGrade": null,
+                "skippedGradeNotes": null
+              },
+              "changes": [
+                {
+                  "type": "LTFT",
+                  "startDate": "2024-02-01",
+                  "endDate": "2024-08-01",
+                  "wte": 0.6,
+                  "countsTowardsCompletion": true,
+                  "notes": "Cardiology rotation",
+                  "calendarMonths": 6.0,
+                  "wteMonths": 3.6
+                }
+              ],
+              "result": {
+                "cctDate": "2099-01-01",
+                "originalProgrammeEndDate": "2030-07-29",
+                "adjustedProgrammeEndDate": "2030-07-29",
+                "totalWteMonthsCompleted": 9.6,
+                "monthsRemaining": 74.4,
+                "assumedFullTimePeriods": [
+                  {
+                    "startDate": "2023-08-02",
+                    "endDate": "2024-01-31",
+                    "months": 6.0
+                  }
+                ],
+                "projection": {
+                  "startDate": "2024-08-02",
+                  "wte": 1.0,
+                  "calendarMonths": 74.4,
+                  "wteMonths": 74.4
+                }
+              },
+              "created": "%s",
+              "lastModified": "%s"
+            }
+            """.formatted(entity.id(), entity.created().truncatedTo(ChronoUnit.MILLIS),
+            entity.lastModified().truncatedTo(ChronoUnit.MILLIS)), JsonCompareMode.STRICT));
   }
 
   @Test
@@ -440,140 +387,27 @@ class CctResourceIntegrationTest {
   }
 
   @Test
-  void shouldFailCreateCalculationValidationWhenProgrammeMembershipNull() throws Exception {
-    calculationJson.remove("programmeMembership");
+  void shouldFailCreateCalculationValidationWhenChangesNull() throws Exception {
+    calculationJson.putNull("changes");
 
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
     mockMvc.perform(post("/api/cct/calculation")
             .header(HttpHeaders.AUTHORIZATION, token)
             .contentType(MediaType.APPLICATION_JSON)
             .content(calculationJson.toString()))
-        .andExpect(jsonPath("$.errors", hasSize(1)))
-        .andExpect(jsonPath("$.errors[0].pointer", is("#/programmeMembership")))
-        .andExpect(jsonPath("$.errors[0].detail", is("must not be null")));
-  }
-
-  @ParameterizedTest
-  @ValueSource(strings = {"id", "startDate", "endDate", "wte"})
-  void shouldFailCreateCalculationValidationWhenProgrammeMembershipFieldNull(String propertyName)
-      throws Exception {
-    calculationJson.withObject("programmeMembership")
-        .remove(propertyName);
-
-    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
-    mockMvc.perform(post("/api/cct/calculation")
-            .header(HttpHeaders.AUTHORIZATION, token)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(calculationJson.toString()))
-        .andExpect(jsonPath("$.errors", hasSize(1)))
-        .andExpect(jsonPath("$.errors[0].pointer", is("#/programmeMembership/" + propertyName)))
-        .andExpect(jsonPath("$.errors[0].detail", is("must not be null")));
-  }
-
-  @ParameterizedTest
-  @NullAndEmptySource
-  @ValueSource(strings = " ")
-  void shouldFailCreateCalculationValidationWhenProgrammeMembershipNameNotValid(String pmName)
-      throws Exception {
-    calculationJson.withObject("programmeMembership")
-        .replace("name", TextNode.valueOf(pmName));
-
-    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
-    mockMvc.perform(post("/api/cct/calculation")
-            .header(HttpHeaders.AUTHORIZATION, token)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(calculationJson.toString()))
-        .andExpect(jsonPath("$.errors", hasSize(1)))
-        .andExpect(jsonPath("$.errors[0].pointer", is("#/programmeMembership/name")))
-        .andExpect(jsonPath("$.errors[0].detail", is("must not be blank")));
-  }
-
-  @ParameterizedTest
-  @ValueSource(doubles = {-10, -0.1, 1.1, 10})
-  void shouldFailCreateCalculationValidationWhenProgrammeMembershipWteNotValid(double wte)
-      throws Exception {
-    calculationJson.withObject("programmeMembership")
-        .replace("wte", DoubleNode.valueOf(wte));
-
-    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
-    mockMvc.perform(post("/api/cct/calculation")
-            .header(HttpHeaders.AUTHORIZATION, token)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(calculationJson.toString()))
-        .andExpect(jsonPath("$.errors", hasSize(1)))
-        .andExpect(jsonPath("$.errors[0].pointer", is("#/programmeMembership/wte")))
-        .andExpect(jsonPath("$.errors[0].detail", is("must be between 0 and 1")));
-  }
-
-  @ParameterizedTest
-  @NullSource
-  @ValueSource(strings = "[]")
-  void shouldFailCreateCalculationValidationWhenChangesNotValid(String changes) throws Exception {
-    String body = """
-        {
-          "name": "Test Calculation",
-          "programmeMembership": {
-            "id": "12345678-aaaa-bbbb-cccc-012345678910",
-            "name": "Test Programme",
-            "startDate": "2024-01-01",
-            "endDate": "2025-01-01",
-            "wte": 0.5,
-            "designatedBodyCode": "testDbc",
-            "managingDeanery": "Test Deanery"
-          },
-          "changes": %s
-        }
-        """.formatted(changes);
-
-    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
-    mockMvc.perform(post("/api/cct/calculation")
-            .header(HttpHeaders.AUTHORIZATION, token)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(body))
         .andExpect(jsonPath("$.errors", hasSize(1)))
         .andExpect(jsonPath("$.errors[0].pointer", is("#/changes")))
-        .andExpect(jsonPath("$.errors[0].detail", is("must not be empty")));
-  }
-
-  @Test
-  void shouldFailCreateCalculationValidationWhenChangeIdPopulated() throws Exception {
-    String body = """
-        {
-          "name": "Test Calculation",
-          "programmeMembership": {
-            "id": "12345678-aaaa-bbbb-cccc-012345678910",
-            "name": "Test Programme",
-            "startDate": "2024-01-01",
-            "endDate": "2025-01-01",
-            "wte": 0.5,
-            "designatedBodyCode": "testDbc",
-            "managingDeanery": "Test Deanery"
-          },
-          "changes": [
-            {
-              "id": "%s",
-              "type": "LTFT",
-              "startDate": "2024-07-01",
-              "wte": 0.75
-            }
-          ]
-        }
-        """.formatted(UUID.randomUUID());
-
-    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
-    mockMvc.perform(post("/api/cct/calculation")
-            .header(HttpHeaders.AUTHORIZATION, token)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(body))
-        .andExpect(jsonPath("$.errors", hasSize(1)))
-        .andExpect(jsonPath("$.errors[0].pointer", is("#/changes[0]/id")))
-        .andExpect(jsonPath("$.errors[0].detail", is("must be null")));
+        .andExpect(jsonPath("$.errors[0].detail", is("must not be null")));
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"type", "startDate", "wte"})
-  void shouldFailCreateCalculationValidationWhenChangePropertyNull(String propertyName)
-      throws Exception {
+  @CsvSource(delimiter = '|', textBlock = """
+      type      | Please choose a change type.
+      startDate | Please enter a start date.
+      wte       | LTFT WTE must be a whole number between 1 and 99.
+      """)
+  void shouldFailCreateCalculationValidationWhenChangePropertyNull(String propertyName,
+      String detail) throws Exception {
     ((ObjectNode) calculationJson.withArray("changes").get(0))
         .remove(propertyName);
 
@@ -584,42 +418,122 @@ class CctResourceIntegrationTest {
             .content(calculationJson.toString()))
         .andExpect(jsonPath("$.errors", hasSize(1)))
         .andExpect(jsonPath("$.errors[0].pointer", is("#/changes[0]/" + propertyName)))
-        .andExpect(jsonPath("$.errors[0].detail", is("must not be null")));
+        .andExpect(jsonPath("$.errors[0].detail", is(detail)));
   }
 
   @ParameterizedTest
-  @ValueSource(doubles = {-10, -0.1, 1.1, 10})
+  @ValueSource(doubles = {-10, -0.1, 0.125, 1.0, 10})
   void shouldFailCreateCalculationValidationWhenChangeWteNotValid(double wte) throws Exception {
-    String body = """
-        {
-          "name": "Test Calculation",
-          "programmeMembership": {
-            "id": "12345678-aaaa-bbbb-cccc-012345678910",
-            "name": "Test Programme",
-            "startDate": "2024-01-01",
-            "endDate": "2025-01-01",
-            "wte": 0.5,
-            "designatedBodyCode": "testDbc",
-            "managingDeanery": "Test Deanery"
-          },
-          "changes": [
-            {
-              "type": "LTFT",
-              "startDate": "2024-07-01",
-              "wte": %s
-            }
-          ]
-        }
-        """.formatted(wte);
+    ((ObjectNode) calculationJson.withArray("changes").get(0))
+        .put("wte", wte);
 
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
     mockMvc.perform(post("/api/cct/calculation")
             .header(HttpHeaders.AUTHORIZATION, token)
             .contentType(MediaType.APPLICATION_JSON)
-            .content(body))
+            .content(calculationJson.toString()))
         .andExpect(jsonPath("$.errors", hasSize(1)))
         .andExpect(jsonPath("$.errors[0].pointer", is("#/changes[0]/wte")))
-        .andExpect(jsonPath("$.errors[0].detail", is("must be between 0 and 1")));
+        .andExpect(jsonPath("$.errors[0].detail",
+            is("LTFT WTE must be a whole number between 1 and 99.")));
+  }
+
+  @Test
+  void shouldNotCreateCalculationWhenChangeStartsBeforeProgramme() throws Exception {
+    ObjectNode request = calculateJson("""
+        [
+          {
+            "type": "LTFT",
+            "startDate": "2023-08-01",
+            "endDate": "2024-07-31",
+            "wte": 0.5,
+            "countsTowardsCompletion": true,
+            "notes": ""
+          }
+        ]
+        """);
+    request.put("name", "Test Calculation");
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculation")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(request.toString()))
+        .andExpect(status().isBadRequest())
+        .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+        .andExpect(content().json("""
+            {
+              "type": "about:blank",
+              "title": "Validation failure",
+              "status": 400,
+              "instance": "/api/cct/calculation",
+              "errors": [
+                {
+                  "pointer": "#/changes[0]/startDate",
+                  "detail": "Start date cannot be before programme start (02/08/2023)."
+                }
+              ]
+            }
+            """, JsonCompareMode.STRICT));
+
+    assertThat("Unexpected saved calculation count.",
+        template.count(new Query(), CctCalculation.class), is(0L));
+  }
+
+  @Test
+  void shouldNotCreateCalculationWhenChangeStartsOrEndsAfterCctDate() throws Exception {
+    ObjectNode request = calculateJson("""
+        [
+          {
+            "type": "LTFT",
+            "startDate": "2030-01-01",
+            "endDate": "2032-12-31",
+            "wte": 0.5,
+            "countsTowardsCompletion": true,
+            "notes": ""
+          },
+          {
+            "type": "LTFT",
+            "startDate": "2033-01-01",
+            "endDate": null,
+            "wte": 0.5,
+            "countsTowardsCompletion": true,
+            "notes": ""
+          }
+        ]
+        """);
+    request.put("name", "Test Calculation");
+    String cctDateLimit = "cannot be after the current projected Completion of Training Date "
+        + "(26/02/2031).";
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculation")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(request.toString()))
+        .andExpect(status().isBadRequest())
+        .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+        .andExpect(content().json("""
+            {
+              "type": "about:blank",
+              "title": "Validation failure",
+              "status": 400,
+              "instance": "/api/cct/calculation",
+              "errors": [
+                {
+                  "pointer": "#/changes[0]/endDate",
+                  "detail": "End date %s"
+                },
+                {
+                  "pointer": "#/changes[1]/startDate",
+                  "detail": "Start date %s"
+                }
+              ]
+            }
+            """.formatted(cctDateLimit, cctDateLimit), JsonCompareMode.STRICT));
+
+    assertThat("Unexpected saved calculation count.",
+        template.count(new Query(), CctCalculation.class), is(0L));
   }
 
   @Test
@@ -627,27 +541,76 @@ class CctResourceIntegrationTest {
     Instant start = Instant.now();
 
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
-    MvcResult result = mockMvc.perform(post("/api/cct/calculation")
+    ResultActions result = mockMvc.perform(post("/api/cct/calculation")
             .header(HttpHeaders.AUTHORIZATION, token)
             .contentType(MediaType.APPLICATION_JSON)
             .content(calculationJson.toString()))
         .andExpect(status().isCreated())
-        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.id").exists())
-        .andExpect(jsonPath("$.traineeId").doesNotExist())
-        .andExpect(jsonPath("$.cctDate").value(CCT_DATE_75.toString()))
-        .andExpect(jsonPath("$.name").value("Test Calculation"))
-        .andExpect(jsonPath("$.created").exists())
-        .andExpect(jsonPath("$.lastModified").exists())
-        .andExpect(jsonPath("$.changes[0].id").exists())
-        .andReturn();
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
-    String response = result.getResponse().getContentAsString();
-    Instant created = Instant.parse(JsonPath.read(response, "$.created"));
-    assertThat("Unexpected created timestamp.", created, greaterThan(start));
+    String response = result.andReturn().getResponse().getContentAsString();
+    String id = JsonPath.read(response, "$.id");
+    String created = JsonPath.read(response, "$.created");
+    String lastModified = JsonPath.read(response, "$.lastModified");
+    assertThat("Unexpected created timestamp.", Instant.parse(created), greaterThan(start));
+    assertThat("Unexpected last modified timestamp.", Instant.parse(lastModified),
+        greaterThan(start));
 
-    Instant lastModified = Instant.parse(JsonPath.read(response, "$.lastModified"));
-    assertThat("Unexpected last modified timestamp.", lastModified, greaterThan(start));
+    result.andExpect(content().json("""
+        {
+          "id": "%s",
+          "name": "Test Calculation",
+          "programmeDetails": {
+            "specialty": "Paediatrics",
+            "startDate": "2023-08-02",
+            "lengthMonths": 84,
+            "startGrade": "ST1",
+            "startGradeOverrideNotes": "",
+            "additionalMonths": 0,
+            "additionalMonthsNotes": "",
+            "acceleratedMonths": 0,
+            "acceleratedMonthsNotes": "",
+            "eighteenMonthFinalGrade": null,
+            "eighteenMonthFinalGradeNotes": "",
+            "skippedGrade": null,
+            "skippedGradeNotes": ""
+          },
+          "changes": [
+            {
+              "type": "LTFT",
+              "startDate": "2024-02-01",
+              "endDate": "2024-08-01",
+              "wte": 0.6,
+              "countsTowardsCompletion": true,
+              "notes": "Cardiology rotation",
+              "calendarMonths": 6.016438356164383,
+              "wteMonths": 3.6098630136986296
+            }
+          ],
+          "result": {
+            "cctDate": "2030-10-10",
+            "originalProgrammeEndDate": "2030-07-29",
+            "adjustedProgrammeEndDate": "2030-07-29",
+            "totalWteMonthsCompleted": 9.626301369863013,
+            "monthsRemaining": 74.37,
+            "assumedFullTimePeriods": [
+              {
+                "startDate": "2023-08-02",
+                "endDate": "2024-01-31",
+                "months": 6.016438356164383
+              }
+            ],
+            "projection": {
+              "startDate": "2024-08-02",
+              "wte": 1,
+              "calendarMonths": 74.37,
+              "wteMonths": 74.37
+            }
+          },
+          "created": "%s",
+          "lastModified": "%s"
+        }
+        """.formatted(id, created, lastModified), JsonCompareMode.STRICT));
   }
 
   @Test
@@ -670,6 +633,73 @@ class CctResourceIntegrationTest {
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(jsonPath("$.id").value(id))
         .andExpect(jsonPath("$.name").value("Test Calculation"));
+  }
+
+  @Test
+  void shouldSaveAndGetChangesAndResultAsCalculated() throws Exception {
+    ObjectNode request = calculateJson("""
+        [
+          {
+            "type": "LTFT",
+            "startDate": "2025-09-01",
+            "endDate": null,
+            "wte": 0.8,
+            "countsTowardsCompletion": true,
+            "notes": ""
+          },
+          {
+            "type": "PARENTAL",
+            "startDate": "2025-01-01",
+            "endDate": "2025-06-30",
+            "wte": null,
+            "countsTowardsCompletion": false,
+            "notes": ""
+          },
+          {
+            "type": "OOPT",
+            "startDate": "2024-03-01",
+            "endDate": "2024-08-31",
+            "wte": null,
+            "countsTowardsCompletion": true,
+            "notes": ""
+          }
+        ]
+        """);
+    ObjectNode programmeDetails = (ObjectNode) request.get("programmeDetails");
+    programmeDetails.put("additionalMonths", 6);
+    programmeDetails.put("additionalMonthsNotes", "ARCP outcome");
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    String calculated = mockMvc.perform(post("/api/cct/calculate")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(request.toString()))
+        .andExpect(status().isOk())
+        .andReturn().getResponse().getContentAsString();
+
+    request.put("name", "Test Calculation");
+    String saved = mockMvc.perform(post("/api/cct/calculation")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(request.toString()))
+        .andExpect(status().isCreated())
+        .andReturn().getResponse().getContentAsString();
+
+    String loaded = mockMvc.perform(get("/api/cct/calculation/{id}",
+            JsonPath.<String>read(saved, "$.id"))
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isOk())
+        .andReturn().getResponse().getContentAsString();
+
+    ObjectMapper mapper = new ObjectMapper();
+    JsonNode expected = mapper.readTree(calculated);
+    for (String body : List.of(saved, loaded)) {
+      JsonNode actual = mapper.readTree(body);
+      assertThat("Unexpected changes.", actual.get("changes"), is(expected.get("changes")));
+      assertThat("Unexpected result.", actual.get("result"), is(expected.get("result")));
+    }
+    assertThat("Unexpected CCT date.", expected.at("/result/cctDate").asText(),
+        is("2033-01-17"));
   }
 
   @Test
@@ -714,217 +744,94 @@ class CctResourceIntegrationTest {
     entity = template.insert(entity);
 
     UUID id = entity.id();
-    Instant created = entity.created();
-
-    String body = """
-        {
-          "id": "%s",
-          "created": "%s",
-          "name": "Test Calculation updated",
-          "programmeMembership": {
-            "id": "12345678-aaaa-bbbb-cccc-012345678910",
-            "name": "Test Programme",
-            "startDate": "2024-01-01",
-            "endDate": "2025-01-01",
-            "wte": 0.5,
-            "designatedBodyCode": "testDbc",
-            "managingDeanery": "Test Deanery"
-          },
-          "changes": [
-            {
-              "type": "LTFT",
-              "startDate": "2024-07-01",
-              "wte": 0.75
-            }
-          ]
-        }
-        """.formatted(id, created);
+    calculationJson.put("id", id.toString());
+    calculationJson.put("name", "Test Calculation updated");
 
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
 
     mockMvc.perform(put("/api/cct/calculation/" + id)
             .header(HttpHeaders.AUTHORIZATION, token)
             .contentType(MediaType.APPLICATION_JSON)
-            .content(body))
+            .content(calculationJson.toString()))
         .andExpect(status().isForbidden());
   }
 
   @Test
   void shouldReturnNotFoundWhenUpdatingNewCalculation() throws Exception {
     UUID id = UUID.randomUUID();
-    String body = """
-        {
-          "id": "%s",
-          "name": "Test Calculation updated",
-          "programmeMembership": {
-            "id": "12345678-aaaa-bbbb-cccc-012345678910",
-            "name": "Test Programme",
-            "startDate": "2024-01-01",
-            "endDate": "2025-01-01",
-            "wte": 0.5,
-            "designatedBodyCode": "testDbc",
-            "managingDeanery": "Test Deanery"
-          },
-          "changes": [
-            {
-              "type": "LTFT",
-              "startDate": "2024-07-01",
-              "wte": 0.75
-            }
-          ]
-        }
-        """.formatted(id);
+    calculationJson.put("id", id.toString());
 
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
 
     mockMvc.perform(put("/api/cct/calculation/" + id)
             .header(HttpHeaders.AUTHORIZATION, token)
             .contentType(MediaType.APPLICATION_JSON)
-            .content(body))
+            .content(calculationJson.toString()))
         .andExpect(status().isNotFound());
   }
 
   @Test
-  void shouldNotUpdateCalculationWhenChangeIdValidationFails() throws Exception {
-    CctCalculation entity = CctCalculation.builder()
-        .traineeId(TRAINEE_ID)
-        .name("Test Calculation")
-        .programmeMembership(CctProgrammeMembership.builder()
-            .startDate(LocalDate.of(2024, 1, 1))
-            .endDate(LocalDate.of(2025, 1, 1))
-            .wte(0.5)
-            .designatedBodyCode("testDbc")
-            .managingDeanery("Test Deanery")
-            .build())
-        .changes(List.of(
-                CctChange.builder().type(LTFT).startDate(LocalDate.of(2024, 11, 1))
-                    .wte(1.0)
-                    .build()
-            )
-        )
-        .build();
-    entity = template.insert(entity);
+  void shouldNotUpdateCalculationWhenChangeEndsAfterCctDate() throws Exception {
+    CctCalculation entity = template.insert(savedCalculation(TRAINEE_ID));
 
     UUID id = entity.id();
-    UUID changeId1 = entity.changes().get(0).id();
-    UUID changeId2 = UUID.randomUUID();
-
-    String body = """
-        {
-          "id": "%s",
-          "name": "Test Calculation updated",
-          "programmeMembership": {
-            "id": "12345678-aaaa-bbbb-cccc-012345678910",
-            "name": "Test Programme",
-            "startDate": "2024-01-01",
-            "endDate": "2025-01-01",
+    ObjectNode request = calculateJson("""
+        [
+          {
+            "type": "LTFT",
+            "startDate": "2030-01-01",
+            "endDate": "2032-12-31",
             "wte": 0.5,
-            "designatedBodyCode": "testDbc",
-            "managingDeanery": "Test Deanery"
-          },
-          "changes": [
-            {
-              "id": "%s",
-              "type": "LTFT",
-              "startDate": "2024-07-01",
-              "wte": 0.75
-            },
-            {
-              "id": "%s",
-              "type": "LTFT",
-              "startDate": "2025-08-02",
-              "wte": 1.0
-            },
-            {
-              "id": "%s",
-              "type": "LTFT",
-              "startDate": "2026-09-03",
-              "wte": 0.8
-            }
-          ]
-        }
-        """.formatted(id, changeId1, changeId1, changeId2);
+            "countsTowardsCompletion": true,
+            "notes": ""
+          }
+        ]
+        """);
+    request.put("id", id.toString());
+    request.put("name", "Test Calculation updated");
 
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
 
     mockMvc.perform(put("/api/cct/calculation/" + id)
             .header(HttpHeaders.AUTHORIZATION, token)
             .contentType(MediaType.APPLICATION_JSON)
-            .content(body))
-        .andExpect(jsonPath("$.errors", hasSize(2)))
-        .andExpect(jsonPath("$.errors[0].pointer", is("#/changes[1]/id")))
-        .andExpect(jsonPath("$.errors[0].detail", is("must be unique")))
-        .andExpect(jsonPath("$.errors[1].pointer", is("#/changes[2]/id")))
-        .andExpect(jsonPath("$.errors[1].detail", is("must be null or match existing value")));
+            .content(request.toString()))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errors", hasSize(1)))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/changes[0]/endDate")))
+        .andExpect(jsonPath("$.errors[0].detail", is(
+            "End date cannot be after the current projected Completion of Training Date "
+                + "(26/02/2031).")));
+
+    CctCalculation savedEntity = template.findById(id, CctCalculation.class);
+    assertThat("Unexpected missing saved entity.", savedEntity, notNullValue());
+    assertThat("Unexpected saved entity name.", savedEntity.name(), is("Test Calculation"));
   }
 
   @Test
   void shouldUpdateCalculation() throws Exception {
-    CctCalculation entity = CctCalculation.builder()
-        .traineeId(TRAINEE_ID)
-        .name("Test Calculation")
-        .programmeMembership(CctProgrammeMembership.builder()
-            .startDate(LocalDate.of(2024, 1, 1))
-            .endDate(LocalDate.of(2025, 1, 1))
-            .wte(0.5)
-            .designatedBodyCode("testDbc")
-            .managingDeanery("Test Deanery")
-            .build())
-        .changes(List.of(
-            CctChange.builder().type(LTFT).startDate(LocalDate.of(2024, 11, 1))
-                .wte(1.0)
-                .build()))
-        .build();
-    entity = template.insert(entity);
+    CctCalculation entity = template.insert(savedCalculation(TRAINEE_ID));
 
     UUID id = entity.id();
-    UUID changeId = entity.changes().get(0).id();
-    Instant created = entity.created();
-    Instant lastModified = entity.lastModified();
-    assertThat("Unexpected initial last modified date.", created, is(lastModified));
+    Instant created = entity.created().truncatedTo(ChronoUnit.MILLIS);
+    assertThat("Unexpected initial last modified date.", entity.created(),
+        is(entity.lastModified()));
 
-    String body = """
-        {
-          "id": "%s",
-          "created": "%s",
-          "name": "Test Calculation updated",
-          "programmeMembership": {
-            "id": "12345678-aaaa-bbbb-cccc-012345678910",
-            "name": "Test Programme",
-            "startDate": "2024-01-01",
-            "endDate": "2025-01-01",
-            "wte": 0.5,
-            "designatedBodyCode": "testDbc",
-            "managingDeanery": "Test Deanery"
-          },
-          "changes": [
-            {
-              "id": "%s",
-              "type": "LTFT",
-              "startDate": "2024-07-01",
-              "wte": 0.75
-            },
-            {
-              "type": "LTFT",
-              "startDate": "2025-08-02",
-              "wte": 1.0
-            }
-          ]
-        }
-        """.formatted(id, created, changeId);
+    calculationJson.put("id", id.toString());
+    calculationJson.put("name", "Test Calculation updated");
 
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
 
     MvcResult result = mockMvc.perform(put("/api/cct/calculation/" + id)
             .header(HttpHeaders.AUTHORIZATION, token)
             .contentType(MediaType.APPLICATION_JSON)
-            .content(body))
+            .content(calculationJson.toString()))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.id").value(id.toString()))
         .andExpect(jsonPath("$.name").value("Test Calculation updated"))
-        .andExpect(jsonPath("$.changes[0].id").value(changeId.toString()))
-        .andExpect(jsonPath("$.changes[1].id").exists())
+        .andExpect(jsonPath("$.changes[0].wteMonths").value(3.6098630136986296))
+        .andExpect(jsonPath("$.result.cctDate").value("2030-10-10"))
         .andExpect(jsonPath("$.created").value(created.toString()))
         .andReturn();
 
@@ -937,6 +844,9 @@ class CctResourceIntegrationTest {
     assertThat("Unexpected missing saved entity.", updatedEntity, notNullValue());
     assertThat("Unexpected updated entity name.", updatedEntity.name(),
         is("Test Calculation updated"));
+    assertThat("Unexpected updated entity created.", updatedEntity.created(), is(created));
+    assertThat("Unexpected updated entity CCT date.", updatedEntity.result().cctDate(),
+        is(LocalDate.of(2030, 10, 10)));
   }
 
   @Test
@@ -990,23 +900,7 @@ class CctResourceIntegrationTest {
 
   @Test
   void shouldDeleteCalculation() throws Exception {
-    UUID id = UUID.randomUUID();
-    CctCalculation entity = CctCalculation.builder()
-        .id(id)
-        .traineeId(TRAINEE_ID)
-        .programmeMembership(CctProgrammeMembership.builder()
-            .startDate(LocalDate.of(2024, 1, 1))
-            .endDate(LocalDate.of(2025, 1, 1))
-            .wte(0.5)
-            .designatedBodyCode("testDbc")
-            .managingDeanery("Test Deanery")
-            .build())
-        .changes(List.of(
-            CctChange.builder().type(LTFT).startDate(LocalDate.of(2024, 11, 1))
-                .wte(1.0)
-                .build()))
-        .build();
-    template.insert(entity);
+    UUID id = template.insert(savedCalculation(TRAINEE_ID)).id();
 
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
 
@@ -1014,6 +908,9 @@ class CctResourceIntegrationTest {
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isOk())
         .andExpect(content().string("true"));
+
+    assertThat("Unexpected deleted entity.", template.findById(id, CctCalculation.class),
+        nullValue());
   }
 
   @Test
@@ -1345,6 +1242,49 @@ class CctResourceIntegrationTest {
         .andExpect(jsonPath("$[0].name", is("ACCS anaesthetics")))
         .andExpect(jsonPath("$[0].lengthMonths", is(48)))
         .andExpect(jsonPath("$[0].entryGrade", is("CT1")));
+  }
+
+  private static CctCalculation savedCalculation(String traineeId) {
+    return CctCalculation.builder()
+        .traineeId(traineeId)
+        .name("Test Calculation")
+        .programmeDetails(CctProgrammeDetails.builder()
+            .specialty("Paediatrics")
+            .startDate(LocalDate.of(2023, 8, 2))
+            .lengthMonths(84)
+            .startGrade(ST1)
+            .additionalMonths(0)
+            .acceleratedMonths(0)
+            .build())
+        .changes(List.of(CctChange.builder()
+            .type(LTFT)
+            .startDate(LocalDate.of(2024, 2, 1))
+            .endDate(LocalDate.of(2024, 8, 1))
+            .wte(0.6)
+            .countsTowardsCompletion(true)
+            .notes("Cardiology rotation")
+            .calendarMonths(6.0)
+            .wteMonths(3.6)
+            .build()))
+        .result(CctResult.builder()
+            .cctDate(LocalDate.of(2099, 1, 1))
+            .originalProgrammeEndDate(LocalDate.of(2030, 7, 29))
+            .adjustedProgrammeEndDate(LocalDate.of(2030, 7, 29))
+            .totalWteMonthsCompleted(9.6)
+            .monthsRemaining(74.4)
+            .assumedFullTimePeriods(List.of(CctAssumedFullTimePeriod.builder()
+                .startDate(LocalDate.of(2023, 8, 2))
+                .endDate(LocalDate.of(2024, 1, 31))
+                .months(6.0)
+                .build()))
+            .projection(CctProjection.builder()
+                .startDate(LocalDate.of(2024, 8, 2))
+                .wte(1.0)
+                .calendarMonths(74.4)
+                .wteMonths(74.4)
+                .build())
+            .build())
+        .build();
   }
 
   private static ObjectNode calculateJson(String changes) throws IOException {

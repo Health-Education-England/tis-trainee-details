@@ -24,25 +24,21 @@ package uk.nhs.hee.trainee.details.service;
 import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.lang.reflect.Method;
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashSet;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.MethodParameter;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import uk.nhs.hee.trainee.details.dto.CctCalculateResponseDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
-import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto.CctChangeDto;
+import uk.nhs.hee.trainee.details.dto.CctCalculationSaveRequestDto;
+import uk.nhs.hee.trainee.details.dto.CctChangeDto;
 import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
 import uk.nhs.hee.trainee.details.exception.NotRecordOwnerException;
 import uk.nhs.hee.trainee.details.mapper.CctMapper;
@@ -57,24 +53,25 @@ import uk.nhs.hee.trainee.details.repository.CctCalculationRepository;
 @XRayEnabled
 public class CctService {
 
-  protected static final double WTE_EPSILON = 0.01; //minimum WTE value
+  private static final DateTimeFormatter MESSAGE_DATE_FORMAT =
+      DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
   private final TraineeIdentity traineeIdentity;
 
   private final CctCalculationRepository calculationRepository;
   private final CctMapper mapper;
+  private final CctEngine engine;
 
-  private static final Method UPDATE_CALCULATION_METHOD;
-  private static final MethodParameter UPDATE_CALCULATION_METHOD_PARAMETER;
+  private static final Method CALCULATE_METHOD;
+  private static final MethodParameter CALCULATE_METHOD_PARAMETER;
 
   static {
     try {
-      UPDATE_CALCULATION_METHOD = CctService.class.getDeclaredMethod(
-          "updateCalculation", UUID.class, CctCalculationDetailDto.class);
-      UPDATE_CALCULATION_METHOD_PARAMETER = new MethodParameter(
-          UPDATE_CALCULATION_METHOD, 1); // 1 = calculation parameter
+      CALCULATE_METHOD = CctService.class.getDeclaredMethod(
+          "calculate", CctCalculationSaveRequestDto.class);
+      CALCULATE_METHOD_PARAMETER = new MethodParameter(CALCULATE_METHOD, 0);
     } catch (NoSuchMethodException e) {
-      throw new IllegalStateException("Unabled to reflect updateCalculation method.", e);
+      throw new IllegalStateException("Unable to reflect calculate method.", e);
     }
   }
 
@@ -84,12 +81,14 @@ public class CctService {
    * @param traineeIdentity       The identity of the current user.
    * @param calculationRepository The repository for CCT calculations.
    * @param mapper                A mapper to convert between CCT data types.
+   * @param engine                A calculator for CCT dates.
    */
   public CctService(TraineeIdentity traineeIdentity, CctCalculationRepository calculationRepository,
-      CctMapper mapper) {
+      CctMapper mapper, CctEngine engine) {
     this.traineeIdentity = traineeIdentity;
     this.calculationRepository = calculationRepository;
     this.mapper = mapper;
+    this.engine = engine;
   }
 
   /**
@@ -105,10 +104,7 @@ public class CctService {
         traineeId);
     log.info("Found {} CCT calculations for trainee [{}]", entities.size(), traineeId);
 
-    List<CctCalculationDetailDto> entityDtos = new ArrayList<>();
-    entities.forEach(entity ->
-        entityDtos.add(mapper.toDetailDto(entity, calculateCctDate(entity))));
-    return entityDtos;
+    return mapper.toDetailDtos(entities);
   }
 
   /**
@@ -131,52 +127,51 @@ public class CctService {
     }
 
     log.info("CCT calculation found: [{}]", entity.isPresent());
-    return entity.map(cctCalculation
-            -> mapper.toDetailDto(cctCalculation, calculateCctDate(cctCalculation)))
-        .or(() -> entity.map(mapper::toDetailDto));
+    return entity.map(mapper::toDetailDto);
   }
 
   /**
-   * Create a new CCT calculation.
+   * Create a new CCT calculation, with the CCT date calculated from its programme details and
+   * changes.
    *
    * @param dto The detail of the CCT calculation.
    * @return The created CCT calculation.
+   * @throws MethodArgumentNotValidException If a change starts before the programme, or starts or
+   *                                         ends after the calculated CCT date.
    */
-  public CctCalculationDetailDto createCalculation(CctCalculationDetailDto dto) {
+  public CctCalculationDetailDto createCalculation(CctCalculationSaveRequestDto dto)
+      throws MethodArgumentNotValidException {
     log.info("Creating CCT calculation [{}]", dto.name());
-    CctCalculation entity = mapper.toEntity(dto, traineeIdentity.getTraineeId());
+    CctCalculateResponseDto calculation = calculate(dto);
+    CctCalculation entity = mapper.toEntity(dto, calculation, traineeIdentity.getTraineeId());
     entity = calculationRepository.insert(entity);
 
     log.info("Created CCT calculation [{}] with id [{}]", dto.name(), entity.id());
-    return mapper.toDetailDto(entity, calculateCctDate(entity));
+    return mapper.toDetailDto(entity);
   }
 
   /**
-   * Update a CCT calculation.
+   * Update a CCT calculation, with the CCT date recalculated from its programme details and
+   * changes.
    *
-   * @param id                  The ID of the CCT calculation to update
-   * @param dto                 The detail of the CCT calculation.
-   *
-   * @return The updated CCT calculation, or optional empty if error.
+   * @param id  The ID of the CCT calculation to update
+   * @param dto The detail of the CCT calculation.
+   * @return The updated CCT calculation, or optional empty if not found.
+   * @throws MethodArgumentNotValidException If a change starts before the programme, or starts or
+   *                                         ends after the calculated CCT date.
    */
-  public Optional<CctCalculationDetailDto> updateCalculation(UUID id, CctCalculationDetailDto dto)
-      throws MethodArgumentNotValidException {
+  public Optional<CctCalculationDetailDto> updateCalculation(UUID id,
+      CctCalculationSaveRequestDto dto) throws MethodArgumentNotValidException {
     log.info("Updating CCT calculation [{}] with id [{}]", dto.name(), id);
 
     Optional<CctCalculationDetailDto> existingCalc = getCalculation(id);
     if (existingCalc.isPresent()) {
-      BeanPropertyBindingResult validationResult =
-          validateChangeIds(dto.changes(), existingCalc.get().changes());
-      if (validationResult.hasErrors()) {
-        log.warn("CCT calculation [{}] cannot be updated: invalid changes.", id);
-        throw new MethodArgumentNotValidException(UPDATE_CALCULATION_METHOD_PARAMETER,
-            validationResult);
-      }
-
-      CctCalculation entity = mapper.toEntity(dto, traineeIdentity.getTraineeId());
+      CctCalculateResponseDto calculation = calculate(dto);
+      CctCalculation entity = mapper.toEntity(dto, calculation, traineeIdentity.getTraineeId())
+          .withCreated(existingCalc.get().created());
       entity = calculationRepository.save(entity);
       log.info("Updated CCT calculation [{}] with id [{}]", dto.name(), entity.id());
-      return Optional.of(mapper.toDetailDto(entity, calculateCctDate(entity)));
+      return Optional.of(mapper.toDetailDto(entity));
     } else {
       log.warn("CCT calculation [{}] cannot be updated: not found.", id);
     }
@@ -205,112 +200,73 @@ public class CctService {
   }
 
   /**
-   * Validation the {@link CctChangeDto} IDs.
+   * Calculate the CCT date for a CCT calculation being saved, and validate its changes against it.
    *
-   * @param newChanges      The new changes being saved.
-   * @param existingChanges The existing changes from the database.
-   * @return True if valid, else false.
+   * @param dto The detail of the CCT calculation.
+   * @return The changes, with the months they credit, and the CCT date calculated from them.
+   * @throws MethodArgumentNotValidException If a change starts before the programme, or starts or
+   *                                         ends after the calculated CCT date.
    */
-  private BeanPropertyBindingResult validateChangeIds(List<CctChangeDto> newChanges,
-      List<CctChangeDto> existingChanges) {
-    BeanPropertyBindingResult result = new BeanPropertyBindingResult(newChanges, "newChanges");
+  private CctCalculateResponseDto calculate(CctCalculationSaveRequestDto dto)
+      throws MethodArgumentNotValidException {
+    CctCalculateResponseDto calculation = engine.calculate(dto.programmeDetails(), dto.changes());
 
-    Set<UUID> existingChangeIds = Set.of();
-    if (existingChanges != null) {
-      existingChangeIds = existingChanges.stream()
-          .map(CctChangeDto::id)
-          .filter(Objects::nonNull)
-          .collect(Collectors.toSet());
+    BeanPropertyBindingResult validationResult = validateChangeDates(dto,
+        calculation.result().cctDate());
+    if (validationResult.hasErrors()) {
+      log.warn("CCT calculation [{}] cannot be saved: invalid change dates.", dto.name());
+      throw new MethodArgumentNotValidException(CALCULATE_METHOD_PARAMETER, validationResult);
     }
 
-    Set<UUID> uniqueNewChangeIds = new HashSet<>();
+    return calculation;
+  }
 
-    for (var iterator = newChanges.listIterator(); iterator.hasNext(); ) {
-      CctChangeDto newChange = iterator.next();
-      UUID newChangeId = newChange.id();
+  /**
+   * Validate the {@link CctChangeDto} dates against the programme start and the CCT date.
+   *
+   * @param dto     The CCT calculation being saved.
+   * @param cctDate The CCT date calculated for it.
+   * @return The validation result.
+   */
+  private BeanPropertyBindingResult validateChangeDates(CctCalculationSaveRequestDto dto,
+      LocalDate cctDate) {
+    BeanPropertyBindingResult result = new BeanPropertyBindingResult(dto, "dto");
+    LocalDate programmeStartDate = dto.programmeDetails().startDate();
+    String cctDateLimit = "cannot be after the current projected Completion of Training Date (%s)."
+        .formatted(cctDate.format(MESSAGE_DATE_FORMAT));
 
-      // Add an error if the caller has generated change IDs themselves.
-      if (newChangeId != null && !existingChangeIds.contains(newChangeId)) {
-        String field = "changes[%d].id".formatted(iterator.previousIndex());
-        result.addError(
-            new FieldError("CctChangeDto", field, "must be null or match existing value"));
+    List<CctChangeDto> changes = dto.changes();
+    for (int index = 0; index < changes.size(); index++) {
+      CctChangeDto change = changes.get(index);
+
+      if (change.startDate().isBefore(programmeStartDate)) {
+        addChangeError(result, index, "startDate",
+            "Start date cannot be before programme start (%s)."
+                .formatted(programmeStartDate.format(MESSAGE_DATE_FORMAT)));
+      } else if (change.startDate().isAfter(cctDate)) {
+        addChangeError(result, index, "startDate", "Start date " + cctDateLimit);
       }
 
-      // Add an error if change IDs are not unique
-      if (uniqueNewChangeIds.contains(newChangeId)) {
-        String field = "changes[%d].id".formatted(iterator.previousIndex());
-        result.addError(new FieldError("CctChangeDto", field, "must be unique"));
+      if (change.endDate() != null && change.endDate().isAfter(cctDate)) {
+        addChangeError(result, index, "endDate", "End date " + cctDateLimit);
       }
-      uniqueNewChangeIds.add(newChangeId);
     }
 
     return result;
   }
 
   /**
-   * Calculate the CCT end date and insert it into a CCT Calculation DTO.
+   * Add an error for a {@link CctChangeDto} field to a validation result.
    *
-   * @param dto The CctCalculationDetailDto to use to calculate the CCT end date.
-   * @return A copy of the DTO with the CCT end date set.
+   * @param result  The validation result.
+   * @param index   The index of the change.
+   * @param field   The name of the field.
+   * @param message The error message.
    */
-  public Optional<CctCalculationDetailDto> insertCctDate(CctCalculationDetailDto dto) {
-    CctCalculation entity = mapper.toEntity(dto, null);
-    return Optional.of(mapper.toDetailDto(entity, calculateCctDate(entity)));
-  }
-
-  /**
-   * Calculate the CCT end date for a CCT Calculation.
-   *
-   * @param entity The CctCalculation to use to calculate the CCT end date.
-   * @return the CCT end date, or null if this is not possible to calculate.
-   */
-  public LocalDate calculateCctDate(CctCalculation entity) {
-    if (entity == null) {
-      return null;
-    }
-
-    //entity validation rules mean we can assume programmeMembership and changes are non-null
-    //and contain values for referenced properties, and WTE's are in the range 0-1.
-    LocalDate currentEndDate = entity.programmeMembership().endDate();
-    List<CctCalculation.CctChange> orderedChanges = entity.changes().stream()
-        .sorted(Comparator.comparing(CctCalculation.CctChange::startDate)).toList();
-    for (int i = 0; i < orderedChanges.size(); i++) {
-      CctCalculation.CctChange c = orderedChanges.get(i);
-      LocalDate startDate = c.startDate();
-      if (startDate.isBefore(entity.programmeMembership().startDate())) {
-        log.warn("CCT date calculation: start date for change {} set to PM start date {}.",
-            c, entity.programmeMembership().startDate());
-        startDate = entity.programmeMembership().startDate();
-      }
-      if (startDate.isAfter(currentEndDate)) {
-        log.warn("CCT date cannot be calculated, start date for change {} after end date {}.",
-            c, currentEndDate);
-        return null;
-      }
-      long chunkDays = ChronoUnit.DAYS.between(startDate, currentEndDate);
-      double currentWte = i == 0
-          ? entity.programmeMembership().wte()
-          : orderedChanges.get(i - 1).wte();
-      double wte = c.wte();
-      if (wte < WTE_EPSILON) {
-        log.warn("CCT date cannot be calculated, WTE for change {} is less than minimum.", c);
-        return null;
-      }
-      long chunkDaysWte = (long) Math.ceil((chunkDays * currentWte) / wte);
-      currentEndDate = currentEndDate.plusDays(chunkDaysWte - chunkDays);
-    }
-
-    return currentEndDate;
-  }
-
-  /**
-   * Calculate the CCT end date for a CCT Calculation DTO.
-   *
-   * @param dto The CctCalculation DTO to use to calculate the CCT end date.
-   * @return the CCT end date, or null if this is not possible to calculate.
-   */
-  public LocalDate calculateCctDate(CctCalculationDetailDto dto) {
-    return calculateCctDate(mapper.toEntity(dto, null));
+  private static void addChangeError(BeanPropertyBindingResult result, int index, String field,
+      String message) {
+    String path = "changes[%d].%s".formatted(index, field);
+    result.addError(new FieldError("CctChangeDto", path, message));
   }
 
   /**

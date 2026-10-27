@@ -44,6 +44,7 @@ import org.springframework.web.server.ResponseStatusException;
 import uk.nhs.hee.trainee.details.dto.CctCalculateRequestDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculateResponseDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
+import uk.nhs.hee.trainee.details.dto.CctCalculationSaveRequestDto;
 import uk.nhs.hee.trainee.details.dto.CctSpecialtyDto;
 import uk.nhs.hee.trainee.details.dto.validation.Create;
 import uk.nhs.hee.trainee.details.service.CctEngine;
@@ -109,7 +110,7 @@ public class CctResource {
    */
   @PutMapping("/calculation/{id}")
   public ResponseEntity<CctCalculationDetailDto> updateCalculationDetails(@PathVariable UUID id,
-      @Validated @RequestBody CctCalculationDetailDto calculation)
+      @Validated @RequestBody CctCalculationSaveRequestDto calculation)
       throws MethodArgumentNotValidException {
     log.info("Request to update CCT calculation[{}]", id);
     Optional<CctCalculationDetailDto> savedCalculation;
@@ -156,7 +157,8 @@ public class CctResource {
    */
   @PostMapping("/calculation")
   public ResponseEntity<CctCalculationDetailDto> createCalculation(
-      @Validated(Create.class) @RequestBody CctCalculationDetailDto calculation) {
+      @Validated(Create.class) @RequestBody CctCalculationSaveRequestDto calculation)
+      throws MethodArgumentNotValidException {
     log.info("Request to create CCT calculation [{}]", calculation.name());
     CctCalculationDetailDto savedCalculation = service.createCalculation(calculation);
 
