@@ -53,6 +53,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -67,6 +68,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.json.JsonCompareMode;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.testcontainers.containers.MongoDBContainer;
@@ -1012,5 +1014,361 @@ class CctResourceIntegrationTest {
             .header(HttpHeaders.AUTHORIZATION, token))
         .andExpect(status().isOk())
         .andExpect(content().string("true"));
+  }
+
+  @Test
+  void shouldBeForbiddenCalculatingWhenNoToken() throws Exception {
+    mockMvc.perform(post("/api/cct/calculate"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$").doesNotExist());
+  }
+
+  @Test
+  void shouldBeForbiddenCalculatingWhenNoTraineeId() throws Exception {
+    String token = TestJwtUtil.generateToken("{}");
+    mockMvc.perform(post("/api/cct/calculate")
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$").doesNotExist());
+  }
+
+  @Test
+  void shouldCalculateWhenNoChanges() throws Exception {
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculate")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(calculateJson("[]").toString()))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(content().json("""
+            {
+              "changes": [],
+              "result": {
+                "cctDate": "2030-07-29",
+                "originalProgrammeEndDate": "2030-07-29",
+                "adjustedProgrammeEndDate": "2030-07-29",
+                "totalWteMonthsCompleted": 0,
+                "monthsRemaining": 84,
+                "assumedFullTimePeriods": [],
+                "projection": {
+                  "startDate": "2023-08-02",
+                  "wte": 1,
+                  "calendarMonths": 84,
+                  "wteMonths": 84
+                }
+              }
+            }
+            """, JsonCompareMode.STRICT));
+  }
+
+  @Test
+  void shouldCalculateWhenDatedLtftChange() throws Exception {
+    ObjectNode request = calculateJson("""
+        [
+          {
+            "type": "LTFT",
+            "startDate": "2024-02-01",
+            "endDate": "2024-08-01",
+            "wte": 0.6,
+            "countsTowardsCompletion": true,
+            "notes": "Cardiology rotation"
+          }
+        ]
+        """);
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculate")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(request.toString()))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(content().json("""
+            {
+              "changes": [
+                {
+                  "type": "LTFT",
+                  "startDate": "2024-02-01",
+                  "endDate": "2024-08-01",
+                  "wte": 0.6,
+                  "countsTowardsCompletion": true,
+                  "notes": "Cardiology rotation",
+                  "calendarMonths": 6.016438356164383,
+                  "wteMonths": 3.6098630136986296
+                }
+              ],
+              "result": {
+                "cctDate": "2030-10-10",
+                "originalProgrammeEndDate": "2030-07-29",
+                "adjustedProgrammeEndDate": "2030-07-29",
+                "totalWteMonthsCompleted": 9.626301369863013,
+                "monthsRemaining": 74.37,
+                "assumedFullTimePeriods": [
+                  {
+                    "startDate": "2023-08-02",
+                    "endDate": "2024-01-31",
+                    "months": 6.016438356164383
+                  }
+                ],
+                "projection": {
+                  "startDate": "2024-08-02",
+                  "wte": 1,
+                  "calendarMonths": 74.37,
+                  "wteMonths": 74.37
+                }
+              }
+            }
+            """, JsonCompareMode.STRICT));
+  }
+
+  @Test
+  void shouldCalculateWhenOpenLtftChange() throws Exception {
+    ObjectNode request = calculateJson("""
+        [
+          {
+            "type": "LTFT",
+            "startDate": "2025-02-01",
+            "endDate": null,
+            "wte": 0.6,
+            "countsTowardsCompletion": true,
+            "notes": ""
+          }
+        ]
+        """);
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculate")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(request.toString()))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(content().json("""
+            {
+              "changes": [
+                {
+                  "type": "LTFT",
+                  "startDate": "2025-02-01",
+                  "endDate": null,
+                  "wte": 0.6,
+                  "countsTowardsCompletion": true,
+                  "notes": "",
+                  "calendarMonths": null,
+                  "wteMonths": null
+                }
+              ],
+              "result": {
+                "cctDate": "2034-03-27",
+                "originalProgrammeEndDate": "2030-07-29",
+                "adjustedProgrammeEndDate": "2030-07-29",
+                "totalWteMonthsCompleted": 18.04931506849315,
+                "monthsRemaining": 65.95,
+                "assumedFullTimePeriods": [
+                  {
+                    "startDate": "2023-08-02",
+                    "endDate": "2025-01-31",
+                    "months": 18.04931506849315
+                  }
+                ],
+                "projection": {
+                  "startDate": "2025-02-01",
+                  "wte": 0.6,
+                  "calendarMonths": 109.91666666666667,
+                  "wteMonths": 65.95
+                }
+              }
+            }
+            """, JsonCompareMode.STRICT));
+  }
+
+  @Test
+  void shouldNotCalculateWhenValidationFails() throws Exception {
+    ObjectNode request = calculateJson("""
+        [
+          {
+            "type": "LTFT",
+            "startDate": "2024-01-01",
+            "endDate": "2023-12-31",
+            "wte": 1,
+            "countsTowardsCompletion": true
+          }
+        ]
+        """);
+    ObjectNode programmeDetails = (ObjectNode) request.get("programmeDetails");
+    programmeDetails.put("specialty", "");
+    programmeDetails.put("lengthMonths", 0);
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculate")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(request.toString()))
+        .andExpect(status().isBadRequest())
+        .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+        .andExpect(content().json("""
+            {
+              "type": "about:blank",
+              "title": "Validation failure",
+              "status": 400,
+              "instance": "/api/cct/calculate",
+              "errors": [
+                {
+                  "pointer": "#/changes[0]/startDate",
+                  "detail": "Start date cannot be after end date."
+                },
+                {
+                  "pointer": "#/changes[0]/wte",
+                  "detail": "LTFT WTE must be a whole number between 1 and 99."
+                },
+                {
+                  "pointer": "#/programmeDetails/lengthMonths",
+                  "detail": "Programme length must be a whole number of months between 1 and 120."
+                },
+                {
+                  "pointer": "#/programmeDetails/specialty",
+                  "detail": "Please choose a specialty."
+                }
+              ]
+            }
+            """, JsonCompareMode.STRICT));
+  }
+
+  @Test
+  void shouldNotCalculateWhenProgrammeDetailsAndChangesMissing() throws Exception {
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculate")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{}"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.title", is("Validation failure")))
+        .andExpect(jsonPath("$.errors", hasSize(2)))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/changes")))
+        .andExpect(jsonPath("$.errors[0].detail", is("must not be null")))
+        .andExpect(jsonPath("$.errors[1].pointer", is("#/programmeDetails")))
+        .andExpect(jsonPath("$.errors[1].detail", is("must not be null")));
+  }
+
+  @Test
+  void shouldNotCalculateWhenBodyMissing() throws Exception {
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculate")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest())
+        .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+        .andExpect(jsonPath("$.title", is("Bad Request")))
+        .andExpect(jsonPath("$.instance", is("/api/cct/calculate")))
+        .andExpect(jsonPath("$.errors").doesNotExist());
+  }
+
+  @ParameterizedTest
+  @CsvSource(delimiter = '|', textBlock = """
+      startDate         | '"2023-02-30"'
+      startGrade        | '"ST99"'
+      lengthMonths      | 84.5
+      additionalMonths  | 2.5
+      acceleratedMonths | 2.5
+      """)
+  void shouldNotCalculateWhenProgrammeDetailsNotReadable(String field, String value)
+      throws Exception {
+    ObjectNode request = calculateJson("[]");
+    ObjectNode programmeDetails = (ObjectNode) request.get("programmeDetails");
+    programmeDetails.set(field, new ObjectMapper().readTree(value));
+    programmeDetails.put("additionalMonthsNotes", "why");
+    programmeDetails.put("acceleratedMonthsNotes", "why");
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculate")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(request.toString()))
+        .andExpect(status().isBadRequest())
+        .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+        .andExpect(jsonPath("$.title", is("Bad Request")))
+        .andExpect(jsonPath("$.detail", is("Failed to read request")))
+        .andExpect(jsonPath("$.instance", is("/api/cct/calculate")))
+        .andExpect(jsonPath("$.errors").doesNotExist());
+  }
+
+  @Test
+  void shouldNotCalculateWhenChangeTypeNotReadable() throws Exception {
+    ObjectNode request = calculateJson("""
+        [
+          {
+            "type": "HOLIDAY",
+            "startDate": "2024-01-01",
+            "endDate": "2024-12-31",
+            "wte": 0.5,
+            "countsTowardsCompletion": true
+          }
+        ]
+        """);
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculate")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(request.toString()))
+        .andExpect(status().isBadRequest())
+        .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+        .andExpect(jsonPath("$.title", is("Bad Request")))
+        .andExpect(jsonPath("$.detail", is("Failed to read request")))
+        .andExpect(jsonPath("$.errors").doesNotExist());
+  }
+
+  @Test
+  void shouldBeForbiddenGettingSpecialtiesWhenNoToken() throws Exception {
+    mockMvc.perform(get("/api/cct/specialties"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$").doesNotExist());
+  }
+
+  @Test
+  void shouldBeForbiddenGettingSpecialtiesWhenNoTraineeId() throws Exception {
+    String token = TestJwtUtil.generateToken("{}");
+    mockMvc.perform(get("/api/cct/specialties")
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$").doesNotExist());
+  }
+
+  @Test
+  void shouldGetSpecialties() throws Exception {
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(get("/api/cct/specialties")
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$", hasSize(175)))
+        .andExpect(jsonPath("$[0].name", is("ACCS anaesthetics")))
+        .andExpect(jsonPath("$[0].lengthMonths", is(48)))
+        .andExpect(jsonPath("$[0].entryGrade", is("CT1")));
+  }
+
+  private static ObjectNode calculateJson(String changes) throws IOException {
+    ObjectMapper mapper = new ObjectMapper();
+    ObjectNode json = (ObjectNode) mapper.readTree("""
+        {
+          "programmeDetails": {
+            "specialty": "Paediatrics",
+            "startDate": "2023-08-02",
+            "lengthMonths": 84,
+            "startGrade": "ST1",
+            "startGradeOverrideNotes": "",
+            "additionalMonths": 0,
+            "additionalMonthsNotes": "",
+            "acceleratedMonths": 0,
+            "acceleratedMonthsNotes": "",
+            "eighteenMonthFinalGrade": null,
+            "eighteenMonthFinalGradeNotes": "",
+            "skippedGrade": null,
+            "skippedGradeNotes": ""
+          }
+        }
+        """);
+    json.set("changes", mapper.readTree(changes));
+    return json;
   }
 }
