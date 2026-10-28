@@ -22,6 +22,9 @@
 package uk.nhs.hee.trainee.details.service;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.mock;
@@ -731,6 +734,106 @@ class FeatureServiceTest {
 
     assertThat("Unexpected LTFT programme count.",
         features.forms().ltft().qualifyingProgrammes().size(), is(0));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"North West London", "Wessex", "Yorkshire and the Humber"})
+  void shouldNotIncludeFoundationProgrammesNotInEnabledDeaneryWhenOtherInEnabledDeanery(
+      String otherDeanery) {
+    ProgrammeMembership enabledPm = createProgrammeMembership("MEDICAL_CURRICULUM", "Foundation",
+        "South West", LocalDate.now().plusDays(1));
+    ProgrammeMembership otherPm = createProgrammeMembership("MEDICAL_CURRICULUM", "Foundation",
+        otherDeanery, LocalDate.now().plusDays(1));
+
+    TraineeProfile profile = new TraineeProfile();
+    profile.setTraineeTisId(TRAINEE_ID);
+    profile.setProgrammeMemberships(List.of(enabledPm, otherPm));
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(true));
+    assertThat("Unexpected qualifying programmes.",
+        features.forms().ltft().qualifyingProgrammes(), contains(enabledPm.getTisId()));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"North West London", "Wessex", "Yorkshire and the Humber"})
+  void shouldDisableLtftWhenOnlyPastFoundationProgrammeInEnabledDeanery(String otherDeanery) {
+    ProgrammeMembership pastEnabledPm = createProgrammeMembership("MEDICAL_CURRICULUM",
+        "Foundation", "South West", LocalDate.now().minusDays(1));
+    ProgrammeMembership currentOtherPm = createProgrammeMembership("MEDICAL_CURRICULUM",
+        "Foundation", otherDeanery, LocalDate.now().plusDays(1));
+
+    TraineeProfile profile = new TraineeProfile();
+    profile.setTraineeTisId(TRAINEE_ID);
+    profile.setProgrammeMemberships(List.of(pastEnabledPm, currentOtherPm));
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(false));
+    assertThat("Unexpected qualifying programmes.",
+        features.forms().ltft().qualifyingProgrammes(), empty());
+  }
+
+  @Test
+  void shouldNotIncludeNonSpecialtyNonFoundationProgrammesForFoundationTrainee() {
+    ProgrammeMembership foundationPm = createProgrammeMembership("MEDICAL_CURRICULUM",
+        "Foundation", "South West", LocalDate.now().plusDays(1));
+    ProgrammeMembership nonFoundationPm = createProgrammeMembership("UNKNOWN",
+        "Some specialty", "South West", LocalDate.now().plusDays(1));
+
+    TraineeProfile profile = new TraineeProfile();
+    profile.setTraineeTisId(TRAINEE_ID);
+    profile.setProgrammeMemberships(List.of(foundationPm, nonFoundationPm));
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(true));
+    assertThat("Unexpected qualifying programmes.",
+        features.forms().ltft().qualifyingProgrammes(), contains(foundationPm.getTisId()));
+  }
+
+  @Test
+  void shouldNotIncludeFoundationProgrammesWithNoDeaneryWhenOtherInEnabledDeanery() {
+    ProgrammeMembership enabledPm = createProgrammeMembership("MEDICAL_CURRICULUM", "Foundation",
+        "South West", LocalDate.now().plusDays(1));
+    ProgrammeMembership noDeaneryPm = createProgrammeMembership("MEDICAL_CURRICULUM",
+        "Foundation", null, LocalDate.now().plusDays(1));
+
+    TraineeProfile profile = new TraineeProfile();
+    profile.setTraineeTisId(TRAINEE_ID);
+    profile.setProgrammeMemberships(List.of(enabledPm, noDeaneryPm));
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected qualifying programmes.",
+        features.forms().ltft().qualifyingProgrammes(), contains(enabledPm.getTisId()));
+  }
+
+  @Test
+  void shouldIncludeAllCurrentFoundationProgrammesInEnabledDeanery() {
+    ProgrammeMembership currentPm = createProgrammeMembership("MEDICAL_CURRICULUM", "Foundation",
+        "South West", LocalDate.now().plusDays(1));
+    ProgrammeMembership futurePm = createProgrammeMembership("AFT", null, "South West",
+        LocalDate.now().plusYears(2));
+    ProgrammeMembership pastPm = createProgrammeMembership("MEDICAL_CURRICULUM", "Foundation",
+        "South West", LocalDate.now().minusDays(1));
+
+    TraineeProfile profile = new TraineeProfile();
+    profile.setTraineeTisId(TRAINEE_ID);
+    profile.setProgrammeMemberships(List.of(currentPm, futurePm, pastPm));
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(true));
+    assertThat("Unexpected qualifying programmes.",
+        features.forms().ltft().qualifyingProgrammes(),
+        containsInAnyOrder(currentPm.getTisId(), futurePm.getTisId()));
   }
 
   @ParameterizedTest
