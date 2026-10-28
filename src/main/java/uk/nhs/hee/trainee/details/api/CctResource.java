@@ -47,7 +47,6 @@ import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationSaveRequestDto;
 import uk.nhs.hee.trainee.details.dto.CctSpecialtyDto;
 import uk.nhs.hee.trainee.details.dto.validation.Create;
-import uk.nhs.hee.trainee.details.service.CctEngine;
 import uk.nhs.hee.trainee.details.service.CctService;
 import uk.nhs.hee.trainee.details.service.CctSpecialtyService;
 
@@ -61,19 +60,16 @@ import uk.nhs.hee.trainee.details.service.CctSpecialtyService;
 public class CctResource {
 
   private final CctService service;
-  private final CctEngine engine;
   private final CctSpecialtyService specialtyService;
 
   /**
    * Construct a REST controller for CCT related endpoints.
    *
    * @param service          A service providing CCT functionality.
-   * @param engine           A calculator for CCT dates.
    * @param specialtyService A service providing the specialties for CCT calculations.
    */
-  public CctResource(CctService service, CctEngine engine, CctSpecialtyService specialtyService) {
+  public CctResource(CctService service, CctSpecialtyService specialtyService) {
     this.service = service;
-    this.engine = engine;
     this.specialtyService = specialtyService;
   }
 
@@ -172,13 +168,13 @@ public class CctResource {
    * Calculate a CCT date for the given programme details and changes.
    *
    * @param request The programme details and changes to calculate the CCT date for.
-   * @return The changes, with the months they credit, and the CCT date calculated from them.
+   * @return The calculation, with any errors that would stop it being saved.
    */
   @PostMapping("/calculate")
   public ResponseEntity<CctCalculateResponseDto> calculate(
       @Validated @RequestBody CctCalculateRequestDto request) {
     log.info("Request to calculate a CCT date");
-    return ResponseEntity.ok(engine.calculate(request.programmeDetails(), request.changes()));
+    return ResponseEntity.ok(service.calculate(request));
   }
 
   /**

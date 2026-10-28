@@ -29,7 +29,6 @@ import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST1;
 
 import jakarta.validation.Validation;
 import java.time.LocalDate;
-import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -135,12 +134,7 @@ class CctCalculationSaveRequestDtoTest {
     validator.validate(request, result, groups);
 
     assertThat("Unexpected global errors.", result.getGlobalErrors(), is(empty()));
-    return result.getFieldErrors().stream()
-        .map(fieldError -> error("#/" + fieldError.getField().replace('.', '/'),
-            fieldError.getDefaultMessage()))
-        .sorted(Comparator.comparing(BodyValidationError::pointer)
-            .thenComparing(BodyValidationError::detail))
-        .toList();
+    return BodyValidationError.fromFieldErrors(result.getFieldErrors());
   }
 
   private static CctCalculationSaveRequestDtoBuilder request() {
@@ -171,9 +165,5 @@ class CctCalculationSaveRequestDtoTest {
 
   private static BodyValidationError error(String pointer, String detail) {
     return new BodyValidationError(pointer, detail);
-  }
-
-  record BodyValidationError(String pointer, String detail) {
-
   }
 }

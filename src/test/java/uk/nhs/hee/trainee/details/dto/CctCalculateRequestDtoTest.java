@@ -36,7 +36,6 @@ import jakarta.validation.Validation;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -288,12 +287,7 @@ class CctCalculateRequestDtoTest {
     validator.validate(request, result);
 
     assertThat("Unexpected global errors.", result.getGlobalErrors(), is(empty()));
-    return result.getFieldErrors().stream()
-        .map(fieldError -> error("#/" + fieldError.getField().replace('.', '/'),
-            fieldError.getDefaultMessage()))
-        .sorted(Comparator.comparing(BodyValidationError::pointer)
-            .thenComparing(BodyValidationError::detail))
-        .toList();
+    return BodyValidationError.fromFieldErrors(result.getFieldErrors());
   }
 
   private static CctProgrammeDetailsDtoBuilder programme() {
@@ -343,9 +337,5 @@ class CctCalculateRequestDtoTest {
 
   private static BodyValidationError error(String pointer, String detail) {
     return new BodyValidationError(pointer, detail);
-  }
-
-  record BodyValidationError(String pointer, String detail) {
-
   }
 }

@@ -58,7 +58,6 @@ import uk.nhs.hee.trainee.details.dto.CctChangeDto;
 import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto;
 import uk.nhs.hee.trainee.details.dto.CctResultDto;
 import uk.nhs.hee.trainee.details.dto.CctSpecialtyDto;
-import uk.nhs.hee.trainee.details.service.CctEngine;
 import uk.nhs.hee.trainee.details.service.CctService;
 import uk.nhs.hee.trainee.details.service.CctSpecialtyService;
 
@@ -66,15 +65,13 @@ class CctResourceTest {
 
   private CctResource controller;
   private CctService service;
-  private CctEngine engine;
   private CctSpecialtyService specialtyService;
 
   @BeforeEach
   void setUp() {
     service = mock(CctService.class);
-    engine = mock(CctEngine.class);
     specialtyService = mock(CctSpecialtyService.class);
-    controller = new CctResource(service, engine, specialtyService);
+    controller = new CctResource(service, specialtyService);
   }
 
   @Test
@@ -359,15 +356,15 @@ class CctResourceTest {
         .lengthMonths(84)
         .build();
     List<CctChangeDto> changes = List.of();
+    CctCalculateRequestDto request = new CctCalculateRequestDto(programmeDetails, changes);
     CctCalculateResponseDto result = CctCalculateResponseDto.builder()
         .result(CctResultDto.builder()
             .cctDate(LocalDate.of(2030, 7, 29))
             .build())
         .build();
-    when(engine.calculate(programmeDetails, changes)).thenReturn(result);
+    when(service.calculate(request)).thenReturn(result);
 
-    ResponseEntity<CctCalculateResponseDto> response = controller.calculate(
-        new CctCalculateRequestDto(programmeDetails, changes));
+    ResponseEntity<CctCalculateResponseDto> response = controller.calculate(request);
 
     assertThat("Unexpected response code.", response.getStatusCode(), is(OK));
     assertThat("Unexpected response body.", response.getBody(), sameInstance(result));

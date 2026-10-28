@@ -954,7 +954,8 @@ class CctResourceIntegrationTest {
                   "calendarMonths": 84,
                   "wteMonths": 84
                 }
-              }
+              },
+              "errors": []
             }
             """, JsonCompareMode.STRICT));
   }
@@ -1014,7 +1015,8 @@ class CctResourceIntegrationTest {
                   "calendarMonths": 74.37,
                   "wteMonths": 74.37
                 }
-              }
+              },
+              "errors": []
             }
             """, JsonCompareMode.STRICT));
   }
@@ -1074,9 +1076,96 @@ class CctResourceIntegrationTest {
                   "calendarMonths": 109.91666666666667,
                   "wteMonths": 65.95
                 }
-              }
+              },
+              "errors": []
             }
             """, JsonCompareMode.STRICT));
+  }
+
+  @Test
+  void shouldCalculateWithSaveErrorsWhenChangeStartsBeforeProgramme() throws Exception {
+    ObjectNode request = calculateJson("""
+        [
+          {
+            "type": "LTFT",
+            "startDate": "2023-08-01",
+            "endDate": "2024-07-31",
+            "wte": 0.5,
+            "countsTowardsCompletion": true,
+            "notes": ""
+          }
+        ]
+        """);
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    String calculated = mockMvc.perform(post("/api/cct/calculate")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(request.toString()))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.result.cctDate", is("2031-01-27")))
+        .andExpect(jsonPath("$.errors", hasSize(1)))
+        .andReturn().getResponse().getContentAsString();
+
+    request.put("name", "Test Calculation");
+    String saved = mockMvc.perform(post("/api/cct/calculation")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(request.toString()))
+        .andExpect(status().isBadRequest())
+        .andReturn().getResponse().getContentAsString();
+
+    ObjectMapper mapper = new ObjectMapper();
+    assertThat("Unexpected errors.", mapper.readTree(calculated).get("errors"),
+        is(mapper.readTree(saved).get("errors")));
+  }
+
+  @Test
+  void shouldCalculateWithSaveErrorsWhenChangeStartsOrEndsAfterCctDate() throws Exception {
+    ObjectNode request = calculateJson("""
+        [
+          {
+            "type": "LTFT",
+            "startDate": "2030-01-01",
+            "endDate": "2032-12-31",
+            "wte": 0.5,
+            "countsTowardsCompletion": true,
+            "notes": ""
+          },
+          {
+            "type": "LTFT",
+            "startDate": "2033-01-01",
+            "endDate": null,
+            "wte": 0.5,
+            "countsTowardsCompletion": true,
+            "notes": ""
+          }
+        ]
+        """);
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    String calculated = mockMvc.perform(post("/api/cct/calculate")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(request.toString()))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.result.cctDate", is("2031-02-26")))
+        .andExpect(jsonPath("$.errors", hasSize(2)))
+        .andReturn().getResponse().getContentAsString();
+
+    request.put("name", "Test Calculation");
+    String saved = mockMvc.perform(post("/api/cct/calculation")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(request.toString()))
+        .andExpect(status().isBadRequest())
+        .andReturn().getResponse().getContentAsString();
+
+    ObjectMapper mapper = new ObjectMapper();
+    assertThat("Unexpected errors.", mapper.readTree(calculated).get("errors"),
+        is(mapper.readTree(saved).get("errors")));
   }
 
   @Test
