@@ -23,6 +23,7 @@ package uk.nhs.hee.trainee.details.service;
 
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
@@ -31,6 +32,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.LTFT;
@@ -47,6 +49,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import uk.nhs.hee.trainee.details.dto.BodyValidationError;
+import uk.nhs.hee.trainee.details.dto.CctCalculateRequestDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculateResponseDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculatedChangeDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
@@ -499,6 +503,63 @@ class CctServiceTest {
     verify(calculationRepository).findById(id);
     verify(calculationRepository).deleteById(id);
     verifyNoMoreInteractions(calculationRepository);
+  }
+
+  @Test
+  void shouldCalculateWithoutErrorsWhenChangeDatesValid() {
+    CctCalculateRequestDto request = new CctCalculateRequestDto(programmeDetails(),
+        List.of(datedLtft()));
+
+    CctCalculateResponseDto response = service.calculate(request);
+
+    CctCalculateResponseDto calculation = engine.calculate(request.programmeDetails(),
+        request.changes());
+    assertThat("Unexpected changes.", response.changes(), is(calculation.changes()));
+    assertThat("Unexpected result.", response.result(), is(calculation.result()));
+    assertThat("Unexpected errors.", response.errors(), is(empty()));
+
+    verifyNoInteractions(calculationRepository);
+  }
+
+  @Test
+  void shouldCalculateWithErrorsWhenChangeStartsBeforeProgramme() {
+    CctCalculateRequestDto request = new CctCalculateRequestDto(programmeDetails(),
+        List.of(CctChangeDto.builder()
+            .type(LTFT)
+            .startDate(LocalDate.of(2023, 8, 1))
+            .endDate(LocalDate.of(2024, 7, 31))
+            .wte(0.5)
+            .countsTowardsCompletion(true)
+            .build()));
+
+    CctCalculateResponseDto response = service.calculate(request);
+
+    assertThat("Unexpected errors.", response.errors(), is(List.of(
+        new BodyValidationError("#/changes[0]/startDate",
+            "Start date cannot be before programme start (02/08/2023)."))));
+  }
+
+  @Test
+  void shouldCalculateWithErrorsWhenChangeStartsOrEndsAfterCctDate() {
+    CctCalculateRequestDto request = new CctCalculateRequestDto(programmeDetails(), List.of(
+        overrunningLtft(),
+        CctChangeDto.builder()
+            .type(LTFT)
+            .startDate(LocalDate.of(2033, 1, 1))
+            .wte(0.5)
+            .countsTowardsCompletion(true)
+            .build()));
+
+    CctCalculateResponseDto response = service.calculate(request);
+
+    assertThat("Unexpected CCT date.", response.result().cctDate(),
+        is(LocalDate.of(2031, 2, 26)));
+
+    String cctDateLimit = "cannot be after the current projected Completion of Training Date "
+        + "(26/02/2031).";
+    assertThat("Unexpected errors.", response.errors(), is(List.of(
+        new BodyValidationError("#/changes[0]/endDate", "End date " + cctDateLimit),
+        new BodyValidationError("#/changes[1]/startDate", "Start date " + cctDateLimit))));
   }
 
   @Test

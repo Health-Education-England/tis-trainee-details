@@ -21,7 +21,6 @@
 
 package uk.nhs.hee.trainee.details.api;
 
-import com.fasterxml.jackson.core.JsonPointer;
 import java.util.Comparator;
 import java.util.List;
 import org.springframework.http.HttpHeaders;
@@ -36,6 +35,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import uk.nhs.hee.trainee.details.dto.BodyValidationError;
 import uk.nhs.hee.trainee.details.exception.EmailAlreadyInUseException;
 
 /**
@@ -52,16 +52,8 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
       HttpHeaders headers, HttpStatusCode status, WebRequest request) {
 
     BindingResult result = ex.getBindingResult();
-    List<BodyValidationError> errors = result.getFieldErrors().stream()
-        .map(fe -> {
-          String pointer = "#/" + fe.getField().replace('.', JsonPointer.SEPARATOR);
-          return new BodyValidationError(pointer, fe.getDefaultMessage());
-        })
-        .sorted(
-            Comparator.comparing(BodyValidationError::pointer)
-                .thenComparing(BodyValidationError::detail)
-        )
-        .toList();
+    List<BodyValidationError> errors = BodyValidationError.fromFieldErrors(
+        result.getFieldErrors());
 
     ProblemDetail problemDetail = ProblemDetail.forStatus(status);
     problemDetail.setTitle(TITLE_VALIDATION_FAILURE);
@@ -116,16 +108,6 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
    * @param detail    The validation failure detail.
    */
   record ParameterValidationError(String parameter, String detail) {
-
-  }
-
-  /**
-   * A detailed request body validation error.
-   *
-   * @param pointer The JSON pointer for the body's field.
-   * @param detail  The validation failure detail.
-   */
-  record BodyValidationError(String pointer, String detail) {
 
   }
 }

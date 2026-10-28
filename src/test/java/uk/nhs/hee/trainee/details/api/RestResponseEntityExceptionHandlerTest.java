@@ -54,8 +54,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
-import uk.nhs.hee.trainee.details.api.RestResponseEntityExceptionHandler.BodyValidationError;
 import uk.nhs.hee.trainee.details.api.RestResponseEntityExceptionHandler.ParameterValidationError;
+import uk.nhs.hee.trainee.details.dto.BodyValidationError;
 import uk.nhs.hee.trainee.details.exception.EmailAlreadyInUseException;
 
 class RestResponseEntityExceptionHandlerTest {

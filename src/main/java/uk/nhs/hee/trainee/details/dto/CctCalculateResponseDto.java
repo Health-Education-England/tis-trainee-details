@@ -23,18 +23,23 @@ package uk.nhs.hee.trainee.details.dto;
 
 import java.util.List;
 import lombok.Builder;
+import lombok.With;
 
 /**
  * The response to a request to calculate a CCT date.
  *
  * @param changes The changes to the programme, in request order, with the months they credit.
  * @param result  The result of the calculation.
+ * @param errors  The errors that would stop the calculation being saved, or empty if none.
  */
 @Builder
 public record CctCalculateResponseDto(
 
     List<CctCalculatedChangeDto> changes,
 
-    CctResultDto result) {
+    CctResultDto result,
+
+    @With
+    List<BodyValidationError> errors) {
 
 }
