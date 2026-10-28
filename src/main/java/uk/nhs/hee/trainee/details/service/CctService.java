@@ -35,8 +35,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import uk.nhs.hee.trainee.details.dto.BodyValidationError;
+import uk.nhs.hee.trainee.details.dto.CctCalculateRequestDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculateResponseDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
+import uk.nhs.hee.trainee.details.dto.CctCalculationInput;
 import uk.nhs.hee.trainee.details.dto.CctCalculationSaveRequestDto;
 import uk.nhs.hee.trainee.details.dto.CctChangeDto;
 import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
@@ -68,7 +71,7 @@ public class CctService {
   static {
     try {
       CALCULATE_METHOD = CctService.class.getDeclaredMethod(
-          "calculate", CctCalculationSaveRequestDto.class);
+          "calculateForSave", CctCalculationSaveRequestDto.class);
       CALCULATE_METHOD_PARAMETER = new MethodParameter(CALCULATE_METHOD, 0);
     } catch (NoSuchMethodException e) {
       throw new IllegalStateException("Unable to reflect calculate method.", e);
@@ -142,7 +145,7 @@ public class CctService {
   public CctCalculationDetailDto createCalculation(CctCalculationSaveRequestDto dto)
       throws MethodArgumentNotValidException {
     log.info("Creating CCT calculation [{}]", dto.name());
-    CctCalculateResponseDto calculation = calculate(dto);
+    CctCalculateResponseDto calculation = calculateForSave(dto);
     CctCalculation entity = mapper.toEntity(dto, calculation, traineeIdentity.getTraineeId());
     entity = calculationRepository.insert(entity);
 
@@ -166,7 +169,7 @@ public class CctService {
 
     Optional<CctCalculationDetailDto> existingCalc = getCalculation(id);
     if (existingCalc.isPresent()) {
-      CctCalculateResponseDto calculation = calculate(dto);
+      CctCalculateResponseDto calculation = calculateForSave(dto);
       CctCalculation entity = mapper.toEntity(dto, calculation, traineeIdentity.getTraineeId())
           .withCreated(existingCalc.get().created());
       entity = calculationRepository.save(entity);
@@ -200,6 +203,22 @@ public class CctService {
   }
 
   /**
+   * Calculate the CCT date for a programme and its changes, and validate the changes against it.
+   *
+   * @param request The programme details and changes to calculate the CCT date for.
+   * @return The calculation, with any errors that would stop it being saved.
+   */
+  public CctCalculateResponseDto calculate(CctCalculateRequestDto request) {
+    CctCalculateResponseDto calculation = engine.calculate(request.programmeDetails(),
+        request.changes());
+
+    BeanPropertyBindingResult validationResult = validateChangeDates(request,
+        calculation.result().cctDate());
+    return calculation.withErrors(
+        BodyValidationError.fromFieldErrors(validationResult.getFieldErrors()));
+  }
+
+  /**
    * Calculate the CCT date for a CCT calculation being saved, and validate its changes against it.
    *
    * @param dto The detail of the CCT calculation.
@@ -207,7 +226,7 @@ public class CctService {
    * @throws MethodArgumentNotValidException If a change starts before the programme, or starts or
    *                                         ends after the calculated CCT date.
    */
-  private CctCalculateResponseDto calculate(CctCalculationSaveRequestDto dto)
+  private CctCalculateResponseDto calculateForSave(CctCalculationSaveRequestDto dto)
       throws MethodArgumentNotValidException {
     CctCalculateResponseDto calculation = engine.calculate(dto.programmeDetails(), dto.changes());
 
@@ -224,11 +243,11 @@ public class CctService {
   /**
    * Validate the {@link CctChangeDto} dates against the programme start and the CCT date.
    *
-   * @param dto     The CCT calculation being saved.
-   * @param cctDate The CCT date calculated for it.
+   * @param dto     The programme details and changes the CCT date was calculated from.
+   * @param cctDate The CCT date calculated from them.
    * @return The validation result.
    */
-  private BeanPropertyBindingResult validateChangeDates(CctCalculationSaveRequestDto dto,
+  private BeanPropertyBindingResult validateChangeDates(CctCalculationInput dto,
       LocalDate cctDate) {
     BeanPropertyBindingResult result = new BeanPropertyBindingResult(dto, "dto");
     LocalDate programmeStartDate = dto.programmeDetails().startDate();
