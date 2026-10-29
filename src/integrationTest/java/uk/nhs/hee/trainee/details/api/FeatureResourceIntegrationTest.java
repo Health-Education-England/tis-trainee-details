@@ -559,4 +559,78 @@ class FeatureResourceIntegrationTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.forms.ltft.enabled", is(false)));
   }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"Kent, Surrey and Sussex", "North West London",
+      "North Central and East London", "South London", "South West"})
+  void shouldOnlyIncludeEnabledDeaneryProgrammeForFoundationTraineeWhenMixedDeaneries(
+      String deanery) throws Exception {
+    TraineeProfile profile = new TraineeProfile();
+    profile.setTraineeTisId(TRAINEE_ID);
+
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSpecialty("FOUNDATION");
+    curriculum.setCurriculumSubType("MEDICAL_CURRICULUM");
+
+    String enabledPmId = UUID.randomUUID().toString();
+    ProgrammeMembership enabledPm = new ProgrammeMembership();
+    enabledPm.setCurricula(List.of(curriculum));
+    enabledPm.setTisId(enabledPmId);
+    enabledPm.setManagingDeanery(deanery);
+    enabledPm.setEndDate(LocalDate.now().plusDays(1));
+
+    ProgrammeMembership otherPm = new ProgrammeMembership();
+    otherPm.setCurricula(List.of(curriculum));
+    otherPm.setTisId(UUID.randomUUID().toString());
+    otherPm.setManagingDeanery("Wessex");
+    otherPm.setEndDate(LocalDate.now().plusDays(1));
+
+    profile.setProgrammeMemberships(List.of(enabledPm, otherPm));
+
+    template.save(profile);
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(get("/api/features")
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.forms.ltft.enabled", is(true)))
+        .andExpect(jsonPath("$.forms.ltft.qualifyingProgrammes", hasSize(1)))
+        .andExpect(jsonPath("$.forms.ltft.qualifyingProgrammes[0]", is(enabledPmId)));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"Kent, Surrey and Sussex", "North West London",
+      "North Central and East London", "South London", "South West"})
+  void shouldDisableLtftForFoundationTraineeWhenOnlyEnabledDeaneryProgrammeHasEnded(
+      String deanery) throws Exception {
+    TraineeProfile profile = new TraineeProfile();
+    profile.setTraineeTisId(TRAINEE_ID);
+
+    Curriculum curriculum = new Curriculum();
+    curriculum.setCurriculumSpecialty("FOUNDATION");
+    curriculum.setCurriculumSubType("MEDICAL_CURRICULUM");
+
+    ProgrammeMembership pastEnabledPm = new ProgrammeMembership();
+    pastEnabledPm.setCurricula(List.of(curriculum));
+    pastEnabledPm.setTisId(UUID.randomUUID().toString());
+    pastEnabledPm.setManagingDeanery(deanery);
+    pastEnabledPm.setEndDate(LocalDate.now().minusDays(1));
+
+    ProgrammeMembership currentOtherPm = new ProgrammeMembership();
+    currentOtherPm.setCurricula(List.of(curriculum));
+    currentOtherPm.setTisId(UUID.randomUUID().toString());
+    currentOtherPm.setManagingDeanery("Wessex");
+    currentOtherPm.setEndDate(LocalDate.now().plusDays(1));
+
+    profile.setProgrammeMemberships(List.of(pastEnabledPm, currentOtherPm));
+
+    template.save(profile);
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(get("/api/features")
+            .header(HttpHeaders.AUTHORIZATION, token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.forms.ltft.enabled", is(false)))
+        .andExpect(jsonPath("$.forms.ltft.qualifyingProgrammes", hasSize(0)));
+  }
 }

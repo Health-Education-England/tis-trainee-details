@@ -121,15 +121,13 @@ public class FeatureService {
 
     // Foundation
     if (isFoundationTrainee(profile)) {
-      List<String> ltftProgrammes = List.of();
+      List<String> ltftProgrammes = getLtftEnabledFoundationProgrammes(profile);
 
-      if (isFoundationInEnabledDeanery(profile)) {
-        ltftProgrammes = getCurrentProgrammes(profile);
+      if (!ltftProgrammes.isEmpty()) {
         log.debug("{} is a Foundation trainee in enabled Deanery, enabling all features except "
                 + "Form Rs, CoJ.",
             profile.getTraineeTisId());
-      }
-      else {
+      } else {
         log.debug("{} is a Foundation trainee, enabling all features except Form Rs, LTFT, CoJ.",
             profile.getTraineeTisId());
       }
@@ -187,22 +185,6 @@ public class FeatureService {
   }
 
   /**
-   *  Return true if any programme membership is both a Foundation programme
-   *  and managed by enabled deanery.
-   *
-   * @param profile The trainee profile to check.
-   * @return Whether the trainee has a foundation programme South West.
-   */
-  private boolean isFoundationInEnabledDeanery(TraineeProfile profile) {
-    Set<String> foundationDeaneries = featuresProperties.foundationDeaneries();
-
-    return profile.getProgrammeMemberships().stream()
-        .anyMatch(pm -> ProgrammeMembershipService.isFoundationProgramme(pm)
-            && pm.getManagingDeanery() != null
-            && foundationDeaneries.contains(pm.getManagingDeanery()));
-  }
-
-  /**
    * Whether the given profile is allowed access to Less Than Full Time functionality.
    *
    * @param profile        The trainee profile to check.
@@ -253,21 +235,30 @@ public class FeatureService {
   }
 
   /**
-   * Get the list of current programmes for the given profile.
+   * Get the list of LTFT-enabled Foundation programmes for the given profile. Only current (not
+   * ended) Foundation programmes managed by an enabled Foundation deanery qualify.
    *
    * @param profile The trainee profile to check.
-   * @return The list of current programmes, or an empty list if no programme.
+   * @return The list of LTFT-enabled Foundation programmes, or an empty list if none qualify.
    */
-  private List<String> getCurrentProgrammes(TraineeProfile profile) {
+  private List<String> getLtftEnabledFoundationProgrammes(TraineeProfile profile) {
     LocalDate now = LocalDate.now(timezone);
+    Set<String> foundationDeaneries = featuresProperties.foundationDeaneries();
+
+    if (foundationDeaneries == null || foundationDeaneries.isEmpty()) {
+      return List.of();
+    }
 
     List<String> pmIds = profile.getProgrammeMemberships().stream()
+        .filter(ProgrammeMembershipService::isFoundationProgramme)
+        .filter(pm -> pm.getManagingDeanery() != null
+            && foundationDeaneries.contains(pm.getManagingDeanery()))
         // Past programmes are not valid for LTFT.
         .filter(pm -> pm.getEndDate() != null && pm.getEndDate().isAfter(now))
         .map(ProgrammeMembership::getTisId)
         .toList();
 
-    log.info("Current programme memberships for trainee {}: {}",
+    log.info("LTFT enabled Foundation programme memberships for trainee {}: {}",
         profile.getTraineeTisId(), pmIds);
 
     return pmIds;
