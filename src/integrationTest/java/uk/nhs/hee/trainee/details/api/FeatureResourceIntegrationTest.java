@@ -55,7 +55,7 @@ import uk.nhs.hee.trainee.details.model.Curriculum;
 import uk.nhs.hee.trainee.details.model.ProgrammeMembership;
 import uk.nhs.hee.trainee.details.model.TraineeProfile;
 
-@SpringBootTest(properties = "application.features.ltft.pilot.start-date=1970-01-01")
+@SpringBootTest
 @ActiveProfiles("test")
 @Testcontainers(disabledWithoutDocker = true)
 @AutoConfigureMockMvc
@@ -143,7 +143,8 @@ class FeatureResourceIntegrationTest {
 
   @ParameterizedTest
   @ValueSource(strings = {"Kent, Surrey and Sussex", "North West London",
-      "North Central and East London", "South London", "South West"})
+      "North Central and East London", "South London", "South West", "East of England",
+      "East Midlands", "West Midlands", "Wessex", "Thames Valley", "North East"})
   void shouldEnableLtftAndSetLtftProgrammesWhenQualifyingProgrammeExists(String deanery)
       throws Exception {
     TraineeProfile profile = new TraineeProfile();
@@ -175,7 +176,8 @@ class FeatureResourceIntegrationTest {
 
   @ParameterizedTest
   @ValueSource(strings = {"Kent, Surrey and Sussex", "North West London",
-      "North Central and East London", "South London", "South West"})
+      "North Central and East London", "South London", "South West", "East of England",
+      "East Midlands", "West Midlands", "Wessex", "Thames Valley", "North East"})
   void shouldNotEnableLtftWhenQualifyingDeaneryProgrammeHasEnded(String deanery)
       throws Exception {
     TraineeProfile profile = new TraineeProfile();
@@ -203,8 +205,8 @@ class FeatureResourceIntegrationTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"Kent", "Surrey and Sussex", "Kent, Surrey & Sussex", "Wessex",
-      "Thames Valley", "Yorkshire and the Humber"})
+  @ValueSource(strings = {"Kent", "Surrey and Sussex", "Kent, Surrey & Sussex", "North West",
+      "Yorkshire and the Humber", "London LETBs"})
   void shouldNotEnableLtftWhenProgrammeNotInQualifyingDeanery(String deanery)
       throws Exception {
     TraineeProfile profile = new TraineeProfile();
@@ -251,7 +253,7 @@ class FeatureResourceIntegrationTest {
     ProgrammeMembership otherPm = new ProgrammeMembership();
     otherPm.setCurricula(List.of(curriculum));
     otherPm.setTisId(UUID.randomUUID().toString());
-    otherPm.setManagingDeanery("Wessex");
+    otherPm.setManagingDeanery("North West");
     otherPm.setEndDate(LocalDate.now().plusDays(1));
 
     profile.setProgrammeMemberships(List.of(kssPm, otherPm));
@@ -269,7 +271,8 @@ class FeatureResourceIntegrationTest {
 
   @ParameterizedTest
   @ValueSource(strings = {"Kent, Surrey and Sussex", "North West London",
-      "North Central and East London", "South London", "South West"})
+      "North Central and East London", "South London", "South West", "East of England",
+      "East Midlands", "West Midlands", "Wessex", "Thames Valley"})
   void shouldEnableLtftForPublicHealthTraineeInQualifyingDeanery(String deanery)
       throws Exception {
     TraineeProfile profile = new TraineeProfile();
@@ -303,7 +306,8 @@ class FeatureResourceIntegrationTest {
 
   @ParameterizedTest
   @ValueSource(strings = {"Kent, Surrey and Sussex", "North West London",
-      "North Central and East London", "South London", "South West"})
+      "North Central and East London", "South London", "South West", "East of England",
+      "East Midlands", "West Midlands", "Wessex", "Thames Valley"})
   void shouldNotEnableLtftForPublicHealthTraineeWhenQualifyingDeaneryProgrammeHasEnded(
       String deanery) throws Exception {
     TraineeProfile profile = new TraineeProfile();
@@ -331,8 +335,8 @@ class FeatureResourceIntegrationTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"Kent", "Surrey and Sussex", "Kent, Surrey & Sussex", "Wessex",
-      "Thames Valley", "Yorkshire and the Humber"})
+  @ValueSource(strings = {"Kent", "Surrey and Sussex", "Kent, Surrey & Sussex", "North East",
+      "North West", "Yorkshire and the Humber", "London LETBs"})
   void shouldNotEnableLtftForPublicHealthTraineeNotInQualifyingDeanery(String deanery)
       throws Exception {
     TraineeProfile profile = new TraineeProfile();
@@ -380,7 +384,7 @@ class FeatureResourceIntegrationTest {
     ProgrammeMembership otherPm = new ProgrammeMembership();
     otherPm.setCurricula(List.of(curriculum));
     otherPm.setTisId(UUID.randomUUID().toString());
-    otherPm.setManagingDeanery("Wessex");
+    otherPm.setManagingDeanery("North East");
     otherPm.setEndDate(LocalDate.now().plusDays(1));
 
     profile.setProgrammeMemberships(List.of(pilotPm, otherPm));
@@ -397,8 +401,8 @@ class FeatureResourceIntegrationTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"Kent", "Surrey and Sussex", "Kent, Surrey & Sussex", "Wessex",
-      "Thames Valley", "Yorkshire and the Humber"})
+  @ValueSource(strings = {"Kent", "Surrey and Sussex", "Kent, Surrey & Sussex", "North East",
+      "North West", "Yorkshire and the Humber", "London LETBs"})
   void shouldNotEnableLtftForFoundationTraineeNotInEnabledDeanery(String deanery)
       throws Exception {
     TraineeProfile profile = new TraineeProfile();
@@ -471,7 +475,8 @@ class FeatureResourceIntegrationTest {
 
   @ParameterizedTest
   @ValueSource(strings = {"Kent, Surrey and Sussex", "North West London",
-      "North Central and East London", "South London", "South West"})
+      "North Central and East London", "South London", "South West", "East of England",
+      "East Midlands", "West Midlands", "Wessex", "Thames Valley"})
   void shouldEnableLtftForFoundationTraineeInEnabledDeanery(String deanery) throws Exception {
     TraineeProfile profile = new TraineeProfile();
     profile.setTraineeTisId(TRAINEE_ID);
@@ -504,7 +509,8 @@ class FeatureResourceIntegrationTest {
 
   @ParameterizedTest
   @ValueSource(strings = {"Kent, Surrey and Sussex", "North West London",
-      "North Central and East London", "South London", "South West"})
+      "North Central and East London", "South London", "South West", "East of England",
+      "East Midlands", "West Midlands", "Wessex", "Thames Valley"})
   void shouldDisableLtftForFoundationTraineeInEnabledDeaneryIfNoCurrentProgramme(String deanery)
       throws Exception {
     TraineeProfile profile = new TraineeProfile();
@@ -562,7 +568,8 @@ class FeatureResourceIntegrationTest {
 
   @ParameterizedTest
   @ValueSource(strings = {"Kent, Surrey and Sussex", "North West London",
-      "North Central and East London", "South London", "South West"})
+      "North Central and East London", "South London", "South West", "East of England",
+      "East Midlands", "West Midlands", "Wessex", "Thames Valley"})
   void shouldOnlyIncludeEnabledDeaneryProgrammeForFoundationTraineeWhenMixedDeaneries(
       String deanery) throws Exception {
     TraineeProfile profile = new TraineeProfile();
@@ -582,7 +589,7 @@ class FeatureResourceIntegrationTest {
     ProgrammeMembership otherPm = new ProgrammeMembership();
     otherPm.setCurricula(List.of(curriculum));
     otherPm.setTisId(UUID.randomUUID().toString());
-    otherPm.setManagingDeanery("Wessex");
+    otherPm.setManagingDeanery("North East");
     otherPm.setEndDate(LocalDate.now().plusDays(1));
 
     profile.setProgrammeMemberships(List.of(enabledPm, otherPm));
@@ -600,7 +607,8 @@ class FeatureResourceIntegrationTest {
 
   @ParameterizedTest
   @ValueSource(strings = {"Kent, Surrey and Sussex", "North West London",
-      "North Central and East London", "South London", "South West"})
+      "North Central and East London", "South London", "South West", "East of England",
+      "East Midlands", "West Midlands", "Wessex", "Thames Valley"})
   void shouldDisableLtftForFoundationTraineeWhenOnlyEnabledDeaneryProgrammeHasEnded(
       String deanery) throws Exception {
     TraineeProfile profile = new TraineeProfile();
@@ -619,7 +627,7 @@ class FeatureResourceIntegrationTest {
     ProgrammeMembership currentOtherPm = new ProgrammeMembership();
     currentOtherPm.setCurricula(List.of(curriculum));
     currentOtherPm.setTisId(UUID.randomUUID().toString());
-    currentOtherPm.setManagingDeanery("Wessex");
+    currentOtherPm.setManagingDeanery("North East");
     currentOtherPm.setEndDate(LocalDate.now().plusDays(1));
 
     profile.setProgrammeMemberships(List.of(pastEnabledPm, currentOtherPm));

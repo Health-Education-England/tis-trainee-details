@@ -33,7 +33,6 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,9 +41,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.test.util.ReflectionTestUtils;
 import uk.nhs.hee.trainee.details.config.FeaturesProperties;
-import uk.nhs.hee.trainee.details.config.FeaturesProperties.Tranche;
 import uk.nhs.hee.trainee.details.dto.FeaturesDto;
 import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
 import uk.nhs.hee.trainee.details.model.Curriculum;
@@ -66,10 +63,8 @@ class FeatureServiceTest {
     profileService = mock(TraineeProfileService.class);
     FeaturesProperties featuresProperties = FeaturesProperties.builder()
         .foundationDeaneries(Set.of("South West"))
-        .ltft(Map.of("pilot", Tranche.builder()
-            .startDate(LocalDate.EPOCH)
-            .deaneries(Set.of("test 1", "test 2", "test 3"))
-            .build()))
+        .publicHealthDeaneries(Set.of("test 1", "test 2", "test 3"))
+        .specialtyDeaneries(Set.of("test 1", "test 2", "test 3", "specialty only"))
         .build();
 
     service = new FeatureService(traineeIdentity, profileService, featuresProperties,
@@ -604,8 +599,8 @@ class FeatureServiceTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"test 1", "test 2", "test 3"})
-  void shouldDisableLtftWhenNoTranchesStarted(String deanery) {
+  @NullAndEmptySource
+  void shouldDisableLtftWhenNoSpecialtyDeaneriesConfigured(Set<String> specialtyDeaneries) {
     TraineeProfile profile = new TraineeProfile();
     profile.setTraineeTisId(TRAINEE_ID);
 
@@ -615,7 +610,7 @@ class FeatureServiceTest {
 
     ProgrammeMembership pm = new ProgrammeMembership();
     pm.setCurricula(List.of(curriculum));
-    pm.setManagingDeanery(deanery);
+    pm.setManagingDeanery("test 1");
     pm.setEndDate(LocalDate.now().plusDays(1));
     profile.setProgrammeMemberships(List.of(pm));
     when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
@@ -624,10 +619,9 @@ class FeatureServiceTest {
     traineeIdentity.setTraineeId(TRAINEE_ID);
 
     FeaturesProperties featuresProperties = FeaturesProperties.builder()
-        .ltft(Map.of("pilot", Tranche.builder()
-            .startDate(LocalDate.MAX)
-            .deaneries(Set.of("test 1", "test 2", "test 3"))
-            .build()))
+        .publicHealthDeaneries(Set.of("test 1"))
+        .foundationDeaneries(Set.of("test 1"))
+        .specialtyDeaneries(specialtyDeaneries)
         .build();
 
     service = new FeatureService(traineeIdentity, profileService, featuresProperties,
@@ -636,6 +630,8 @@ class FeatureServiceTest {
     FeaturesDto features = service.getFeatures();
 
     assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(false));
+    assertThat("Unexpected qualifying programmes.",
+        features.forms().ltft().qualifyingProgrammes(), empty());
   }
 
   @ParameterizedTest
@@ -855,10 +851,8 @@ class FeatureServiceTest {
 
     FeaturesProperties featuresProperties = FeaturesProperties.builder()
         .foundationDeaneries(foundationDeaneries)
-        .ltft(Map.of("pilot", Tranche.builder()
-            .startDate(LocalDate.EPOCH)
-            .deaneries(Set.of("South West"))
-            .build()))
+        .publicHealthDeaneries(Set.of("South West"))
+        .specialtyDeaneries(Set.of("South West"))
         .build();
 
     service = new FeatureService(traineeIdentity, profileService, featuresProperties,
@@ -871,15 +865,6 @@ class FeatureServiceTest {
         features.forms().ltft().qualifyingProgrammes(), empty());
     assertThat("Unexpected features.", features,
         is(FeaturesDto.enableForFoundation(List.of())));
-  }
-
-  @Test
-  void shouldReturnNoLtftEnabledProgrammesWhenProfileNull() {
-    // Not reachable via getFeatures(), which returns early for a null profile.
-    List<String> ltftProgrammes = ReflectionTestUtils.invokeMethod(service,
-        "getLtftEnabledProgrammes", (TraineeProfile) null);
-
-    assertThat("Unexpected LTFT programmes.", ltftProgrammes, empty());
   }
 
   @ParameterizedTest
@@ -906,89 +891,8 @@ class FeatureServiceTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"test 1", "test 2", "test 3"})
-  void shouldCombineStartedLtftTranches(String deanery) {
-    TraineeProfile profile = new TraineeProfile();
-    profile.setTraineeTisId(TRAINEE_ID);
-
-    Curriculum curriculum = new Curriculum();
-    curriculum.setCurriculumSubType("MEDICAL_SPR");
-    curriculum.setCurriculumSpecialty("General Practice");
-
-    ProgrammeMembership pm = new ProgrammeMembership();
-    pm.setCurricula(List.of(curriculum));
-    pm.setTisId(UUID.randomUUID().toString());
-    pm.setManagingDeanery(deanery);
-    pm.setEndDate(LocalDate.now().plusDays(1));
-    profile.setProgrammeMemberships(List.of(pm));
-    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
-
-    TraineeIdentity traineeIdentity = new TraineeIdentity();
-    traineeIdentity.setTraineeId(TRAINEE_ID);
-
-    FeaturesProperties featuresProperties = FeaturesProperties.builder()
-        .ltft(Map.of(
-            "tranche1", Tranche.builder()
-                .startDate(LocalDate.EPOCH)
-                .deaneries(Set.of("test 1", "test 2"))
-                .build(),
-            "tranche2", Tranche.builder()
-                .startDate(LocalDate.now())
-                .deaneries(Set.of("test 3"))
-                .build()))
-        .build();
-
-    service = new FeatureService(traineeIdentity, profileService, featuresProperties,
-        ZoneId.of("UTC"));
-
-    FeaturesDto features = service.getFeatures();
-
-    assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(true));
-  }
-
-  @ParameterizedTest
-  @ValueSource(strings = {"future 1", "future 2", "future 3"})
-  void shouldNotCombineNotStartedLtftTranches(String deanery) {
-    TraineeProfile profile = new TraineeProfile();
-    profile.setTraineeTisId(TRAINEE_ID);
-
-    Curriculum curriculum = new Curriculum();
-    curriculum.setCurriculumSubType("MEDICAL_SPR");
-    curriculum.setCurriculumSpecialty("General Practice");
-
-    ProgrammeMembership pm = new ProgrammeMembership();
-    pm.setCurricula(List.of(curriculum));
-    pm.setManagingDeanery(deanery);
-    pm.setEndDate(LocalDate.now().plusDays(1));
-    profile.setProgrammeMemberships(List.of(pm));
-    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
-
-    TraineeIdentity traineeIdentity = new TraineeIdentity();
-    traineeIdentity.setTraineeId(TRAINEE_ID);
-
-    FeaturesProperties featuresProperties = FeaturesProperties.builder()
-        .ltft(Map.of(
-            "tranche1", Tranche.builder()
-                .startDate(LocalDate.EPOCH)
-                .deaneries(Set.of("test 1", "test 2", "test 3"))
-                .build(),
-            "tranche2", Tranche.builder()
-                .startDate(LocalDate.MAX)
-                .deaneries(Set.of("future 1", "future 2", "future 3"))
-                .build()))
-        .build();
-
-    service = new FeatureService(traineeIdentity, profileService, featuresProperties,
-        ZoneId.of("UTC"));
-
-    FeaturesDto features = service.getFeatures();
-
-    assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(false));
-  }
-
-  @ParameterizedTest
-  @ValueSource(strings = {"test 1", "test 2", "test 3"})
-  void shouldEnableLtftWhenNoTranchesStartedAndBetaUser(String deanery) {
+  @ValueSource(strings = {"None Qualifying", "North West", "Yorkshire and the Humber"})
+  void shouldEnableLtftWhenSpecialtyNotInEnabledDeaneryAndBetaUser(String deanery) {
     TraineeProfile profile = new TraineeProfile();
     profile.setTraineeTisId(TRAINEE_ID);
 
@@ -1008,10 +912,7 @@ class FeatureServiceTest {
     traineeIdentity.setGroups(Set.of("beta-participant"));
 
     FeaturesProperties featuresProperties = FeaturesProperties.builder()
-        .ltft(Map.of("pilot", Tranche.builder()
-            .startDate(LocalDate.MAX)
-            .deaneries(Set.of("test 1", "test 2", "test 3"))
-            .build()))
+        .specialtyDeaneries(Set.of("test 1", "test 2", "test 3"))
         .build();
 
     service = new FeatureService(traineeIdentity, profileService, featuresProperties,
@@ -1020,6 +921,8 @@ class FeatureServiceTest {
     FeaturesDto features = service.getFeatures();
 
     assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(true));
+    assertThat("Unexpected qualifying programmes.",
+        features.forms().ltft().qualifyingProgrammes(), empty());
   }
 
   @Test
@@ -1156,10 +1059,11 @@ class FeatureServiceTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"test 1", "test 2", "test 3"})
-  void shouldDisableLtftWhenPublicHealthAndNoProgrammesStarted(String deanery) {
+  @NullAndEmptySource
+  void shouldDisableLtftWhenPublicHealthAndNoPublicHealthDeaneriesConfigured(
+      Set<String> publicHealthDeaneries) {
     ProgrammeMembership pm = createProgrammeMembership("MEDICAL_CURRICULUM",
-        "Public Health Medicine", deanery, LocalDate.now().plusDays(1));
+        "Public Health Medicine", "test 1", LocalDate.now().plusDays(1));
 
     TraineeProfile profile = new TraineeProfile();
     profile.setTraineeTisId(TRAINEE_ID);
@@ -1170,10 +1074,8 @@ class FeatureServiceTest {
     traineeIdentity.setTraineeId(TRAINEE_ID);
 
     FeaturesProperties featuresProperties = FeaturesProperties.builder()
-        .ltft(Map.of("pilot", Tranche.builder()
-            .startDate(LocalDate.MAX)
-            .deaneries(Set.of("test 1", "test 2", "test 3"))
-            .build()))
+        .publicHealthDeaneries(publicHealthDeaneries)
+        .specialtyDeaneries(Set.of("test 1"))
         .build();
 
     service = new FeatureService(traineeIdentity, profileService, featuresProperties,
@@ -1182,11 +1084,13 @@ class FeatureServiceTest {
     FeaturesDto features = service.getFeatures();
 
     assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(false));
+    assertThat("Unexpected qualifying programmes.",
+        features.forms().ltft().qualifyingProgrammes(), empty());
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"test 1", "test 2", "test 3"})
-  void shouldEnableLtftWhenPublicHealthAndNoProgrammesStartedAndBetaUser(String deanery) {
+  @ValueSource(strings = {"specialty only", "None Qualifying"})
+  void shouldEnableLtftWhenPublicHealthNotInEnabledDeaneryAndBetaUser(String deanery) {
     ProgrammeMembership pm = createProgrammeMembership("MEDICAL_CURRICULUM",
         "Public Health Medicine", deanery, LocalDate.now().plusDays(1));
 
@@ -1200,10 +1104,8 @@ class FeatureServiceTest {
     traineeIdentity.setGroups(Set.of("beta-participant"));
 
     FeaturesProperties featuresProperties = FeaturesProperties.builder()
-        .ltft(Map.of("pilot", Tranche.builder()
-            .startDate(LocalDate.MAX)
-            .deaneries(Set.of("test 1", "test 2", "test 3"))
-            .build()))
+        .publicHealthDeaneries(Set.of("test 1"))
+        .specialtyDeaneries(Set.of("specialty only"))
         .build();
 
     service = new FeatureService(traineeIdentity, profileService, featuresProperties,
@@ -1212,6 +1114,76 @@ class FeatureServiceTest {
     FeaturesDto features = service.getFeatures();
 
     assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(true));
+  }
+
+  @Test
+  void shouldDisableLtftWhenPublicHealthProgrammeInSpecialtyOnlyDeanery() {
+    ProgrammeMembership pm = createProgrammeMembership("MEDICAL_CURRICULUM",
+        "Public Health Medicine", "specialty only", LocalDate.now().plusDays(1));
+
+    TraineeProfile profile = new TraineeProfile();
+    profile.setTraineeTisId(TRAINEE_ID);
+    profile.setProgrammeMemberships(List.of(pm));
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(false));
+    assertThat("Unexpected qualifying programmes.",
+        features.forms().ltft().qualifyingProgrammes(), empty());
+    assertThat("Unexpected FormR flag.", features.forms().formr().enabled(), is(true));
+  }
+
+  @Test
+  void shouldEnableLtftWhenSpecialtyProgrammeInSpecialtyOnlyDeanery() {
+    ProgrammeMembership pm = createProgrammeMembership("MEDICAL_SPR", "General Practice",
+        "specialty only", LocalDate.now().plusDays(1));
+
+    TraineeProfile profile = new TraineeProfile();
+    profile.setTraineeTisId(TRAINEE_ID);
+    profile.setProgrammeMemberships(List.of(pm));
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(true));
+    assertThat("Unexpected qualifying programmes.",
+        features.forms().ltft().qualifyingProgrammes(), contains(pm.getTisId()));
+  }
+
+  @Test
+  void shouldDisableLtftWhenFoundationProgrammeInSpecialtyOnlyDeanery() {
+    ProgrammeMembership pm = createProgrammeMembership("MEDICAL_CURRICULUM", "Foundation",
+        "specialty only", LocalDate.now().plusDays(1));
+
+    TraineeProfile profile = new TraineeProfile();
+    profile.setTraineeTisId(TRAINEE_ID);
+    profile.setProgrammeMemberships(List.of(pm));
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected LTFT flag.", features.forms().ltft().enabled(), is(false));
+    assertThat("Unexpected qualifying programmes.",
+        features.forms().ltft().qualifyingProgrammes(), empty());
+  }
+
+  @Test
+  void shouldNotIncludePublicHealthProgrammesWithNoDeanery() {
+    ProgrammeMembership enabledPm = createProgrammeMembership("MEDICAL_CURRICULUM",
+        "Public Health Medicine", "test 1", LocalDate.now().plusDays(1));
+    ProgrammeMembership noDeaneryPm = createProgrammeMembership("MEDICAL_CURRICULUM",
+        "Public Health Medicine", null, LocalDate.now().plusDays(1));
+
+    TraineeProfile profile = new TraineeProfile();
+    profile.setTraineeTisId(TRAINEE_ID);
+    profile.setProgrammeMemberships(List.of(enabledPm, noDeaneryPm));
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
+
+    FeaturesDto features = service.getFeatures();
+
+    assertThat("Unexpected qualifying programmes.",
+        features.forms().ltft().qualifyingProgrammes(), contains(enabledPm.getTisId()));
   }
 
   @Test
