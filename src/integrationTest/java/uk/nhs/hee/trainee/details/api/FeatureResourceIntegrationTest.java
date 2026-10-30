@@ -365,7 +365,7 @@ class FeatureResourceIntegrationTest {
   }
 
   @Test
-  void shouldOnlyIncludePilotDeaneryProgrammeForPublicHealthTraineeWhenMixedDeaneries()
+  void shouldOnlyIncludeEnabledDeaneryProgrammeForPublicHealthTraineeWhenMixedDeaneries()
       throws Exception {
     TraineeProfile profile = new TraineeProfile();
     profile.setTraineeTisId(TRAINEE_ID);
@@ -374,12 +374,12 @@ class FeatureResourceIntegrationTest {
     curriculum.setCurriculumSubType("MEDICAL_CURRICULUM");
     curriculum.setCurriculumSpecialty("Public Health Medicine");
 
-    String pilotPmId = UUID.randomUUID().toString();
-    ProgrammeMembership pilotPm = new ProgrammeMembership();
-    pilotPm.setCurricula(List.of(curriculum));
-    pilotPm.setTisId(pilotPmId);
-    pilotPm.setManagingDeanery("South London");
-    pilotPm.setEndDate(LocalDate.now().plusDays(1));
+    String enabledPmId = UUID.randomUUID().toString();
+    ProgrammeMembership enabledPm = new ProgrammeMembership();
+    enabledPm.setCurricula(List.of(curriculum));
+    enabledPm.setTisId(enabledPmId);
+    enabledPm.setManagingDeanery("South London");
+    enabledPm.setEndDate(LocalDate.now().plusDays(1));
 
     ProgrammeMembership otherPm = new ProgrammeMembership();
     otherPm.setCurricula(List.of(curriculum));
@@ -387,7 +387,7 @@ class FeatureResourceIntegrationTest {
     otherPm.setManagingDeanery("North East");
     otherPm.setEndDate(LocalDate.now().plusDays(1));
 
-    profile.setProgrammeMemberships(List.of(pilotPm, otherPm));
+    profile.setProgrammeMemberships(List.of(enabledPm, otherPm));
 
     template.save(profile);
 
@@ -397,7 +397,7 @@ class FeatureResourceIntegrationTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.forms.ltft.enabled", is(true)))
         .andExpect(jsonPath("$.forms.ltft.qualifyingProgrammes", hasSize(1)))
-        .andExpect(jsonPath("$.forms.ltft.qualifyingProgrammes[0]", is(pilotPmId)));
+        .andExpect(jsonPath("$.forms.ltft.qualifyingProgrammes[0]", is(enabledPmId)));
   }
 
   @ParameterizedTest

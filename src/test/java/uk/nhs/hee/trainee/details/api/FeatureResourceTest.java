@@ -48,7 +48,7 @@ class FeatureResourceTest {
 
   @Test
   void shouldReturnFeatures() {
-    FeaturesDto features = FeaturesDto.enableWithLtftPilot(List.of("1", "2", "3"));
+    FeaturesDto features = FeaturesDto.enableWithLtft(List.of("1", "2", "3"));
 
     when(service.getFeatures()).thenReturn(features);
 

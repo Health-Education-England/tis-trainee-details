@@ -94,26 +94,25 @@ public class FeatureService {
       List<String> ltftProgrammes = getLtftEnabledSpecialtyProgrammes(profile);
 
       if (isLtftEnabled(profile, ltftProgrammes)) {
-        log.debug("Trainee is in LTFT pilot, enabling all features including LTFT pilot access.");
-        return FeaturesDto.enableWithLtftPilot(ltftProgrammes);
+        log.debug("LTFT is enabled for trainee, enabling all features including LTFT.");
+        return FeaturesDto.enableWithLtft(ltftProgrammes);
       }
 
-      log.debug("Enabling all released features.");
+      log.debug("LTFT is not enabled for trainee, enabling all features except LTFT.");
       return FeaturesDto.enable();
     }
 
     // Public Health
     if (isPublicHealthTrainee(profile)) {
       log.debug("{} is a Public Health trainee.", profile.getTraineeTisId());
-      // Public Health trainees have their own set of LTFT-enabled deaneries.
       List<String> ltftProgrammes = getLtftEnabledPublicHealthProgrammes(profile);
 
       if (isLtftEnabled(profile, ltftProgrammes)) {
-        log.debug("Trainee is in LTFT pilot, enabling all features including LTFT pilot access.");
-        return FeaturesDto.enableWithLtftPilot(ltftProgrammes);
+        log.debug("LTFT is enabled for trainee, enabling all features including LTFT.");
+        return FeaturesDto.enableWithLtft(ltftProgrammes);
       }
 
-      log.debug("Enabling all released features.");
+      log.debug("LTFT is not enabled for trainee, enabling all features except LTFT.");
       return FeaturesDto.enable();
     }
 
