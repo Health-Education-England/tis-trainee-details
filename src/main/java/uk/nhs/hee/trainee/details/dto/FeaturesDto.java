@@ -39,7 +39,7 @@ public record FeaturesDto(
     Feature news) {
 
   /**
-   * Create a set of feature flags with all features enabled, excluding any pilot features.
+   * Create a set of feature flags with all features enabled, excluding LTFT.
    *
    * @return The created set of feature flags.
    */
@@ -55,14 +55,14 @@ public record FeaturesDto(
   }
 
   /**
-   * Create a set of feature flags with all features enabled, as well as LTFT pilot features.
+   * Create a set of feature flags with all features enabled, including LTFT.
    *
    * @param ltftProgrammeIds A list of IDs for LTFT qualifying programmes.
    * @return The created set of feature flags.
    */
-  public static FeaturesDto enableWithLtftPilot(List<String> ltftProgrammeIds) {
+  public static FeaturesDto enableWithLtft(List<String> ltftProgrammeIds) {
     return enable()
-        .withForms(FormFeatures.enableWithLtftPilot(ltftProgrammeIds));
+        .withForms(FormFeatures.enableWithLtft(ltftProgrammeIds));
   }
 
   /**
@@ -161,8 +161,7 @@ public record FeaturesDto(
       ProgrammeFeatures programmes) {
 
     /**
-     * Create a set of Details feature flags with all features enabled, excluding any pilot
-     * features.
+     * Create a set of Details feature flags with all features enabled.
      *
      * @return The created set of feature flags.
      */
@@ -217,8 +216,7 @@ public record FeaturesDto(
         Feature gmcUpdate) {
 
       /**
-       * Create a set of Profile feature flags with all features enabled, excluding any pilot
-       * features.
+       * Create a set of Profile feature flags with all features enabled.
        *
        * @return The created set of feature flags.
        */
@@ -272,8 +270,7 @@ public record FeaturesDto(
         Feature confirmation) {
 
       /**
-       * Create a set of Programme feature flags with all features enabled, excluding any pilot
-       * features.
+       * Create a set of Programme feature flags with all features enabled.
        *
        * @return The created set of feature flags.
        */
@@ -328,7 +325,7 @@ public record FeaturesDto(
       LtftFeatures ltft) {
 
     /**
-     * Create a set of Form feature flags with all features enabled, excluding any pilot features.
+     * Create a set of Form feature flags with all features enabled, excluding LTFT.
      *
      * @return The created set of feature flags.
      */
@@ -341,13 +338,12 @@ public record FeaturesDto(
     }
 
     /**
-     * Create a set of Form feature flags with all features enabled, as well as LTFT pilot
-     * features.
+     * Create a set of Form feature flags with all features enabled, including LTFT.
      *
      * @param ltftProgrammeIds A list of IDs for LTFT qualifying programmes.
      * @return The created set of feature flags.
      */
-    private static FormFeatures enableWithLtftPilot(Collection<String> ltftProgrammeIds) {
+    private static FormFeatures enableWithLtft(Collection<String> ltftProgrammeIds) {
       return enable()
           .withLtft(LtftFeatures.enable(ltftProgrammeIds));
     }

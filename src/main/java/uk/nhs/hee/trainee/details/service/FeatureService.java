@@ -25,7 +25,6 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -92,30 +91,28 @@ public class FeatureService {
     // Specialty
     if (isSpecialtyTrainee(profile)) {
       log.debug("{} is a specialty trainee.", profile.getTraineeTisId());
-      // Check whether LTFT pilot participation should be enabled.
-      List<String> ltftProgrammes = getLtftEnabledProgrammes(profile);
+      List<String> ltftProgrammes = getLtftEnabledSpecialtyProgrammes(profile);
 
       if (isLtftEnabled(profile, ltftProgrammes)) {
-        log.debug("Trainee is in LTFT pilot, enabling all features including LTFT pilot access.");
-        return FeaturesDto.enableWithLtftPilot(ltftProgrammes);
+        log.debug("LTFT is enabled for trainee, enabling all features including LTFT.");
+        return FeaturesDto.enableWithLtft(ltftProgrammes);
       }
 
-      log.debug("Enabling all released features.");
+      log.debug("LTFT is not enabled for trainee, enabling all features except LTFT.");
       return FeaturesDto.enable();
     }
 
     // Public Health
     if (isPublicHealthTrainee(profile)) {
       log.debug("{} is a Public Health trainee.", profile.getTraineeTisId());
-      // Public Health trainees follow the same LTFT pilot rules as specialty trainees.
-      List<String> ltftProgrammes = getLtftEnabledProgrammes(profile);
+      List<String> ltftProgrammes = getLtftEnabledPublicHealthProgrammes(profile);
 
       if (isLtftEnabled(profile, ltftProgrammes)) {
-        log.debug("Trainee is in LTFT pilot, enabling all features including LTFT pilot access.");
-        return FeaturesDto.enableWithLtftPilot(ltftProgrammes);
+        log.debug("LTFT is enabled for trainee, enabling all features including LTFT.");
+        return FeaturesDto.enableWithLtft(ltftProgrammes);
       }
 
-      log.debug("Enabling all released features.");
+      log.debug("LTFT is not enabled for trainee, enabling all features except LTFT.");
       return FeaturesDto.enable();
     }
 
@@ -203,35 +200,61 @@ public class FeatureService {
   }
 
   /**
-   * Get the list of LTFT-enabled programmes for the given profile.
+   * Get the list of LTFT-enabled programmes for the given Specialty trainee profile. Only current
+   * (not ended) programmes managed by an enabled Specialty deanery qualify.
    *
    * @param profile The trainee profile to check.
-   * @return The list of LTFT-enabled programmes, or an empty list if LTFT is not enabled.
+   * @return The list of LTFT-enabled programmes, or an empty list if none qualify.
    */
-  private List<String> getLtftEnabledProgrammes(TraineeProfile profile) {
-    if (profile == null) {
+  private List<String> getLtftEnabledSpecialtyProgrammes(TraineeProfile profile) {
+    List<String> pmIds = getCurrentProgrammesInDeaneries(profile,
+        featuresProperties.specialtyDeaneries());
+
+    log.info("LTFT enabled Specialty programme memberships for trainee {}: {}",
+        profile.getTraineeTisId(), pmIds);
+
+    return pmIds;
+  }
+
+  /**
+   * Get the list of LTFT-enabled programmes for the given Public Health trainee profile. Only
+   * current (not ended) programmes managed by an enabled Public Health deanery qualify.
+   *
+   * @param profile The trainee profile to check.
+   * @return The list of LTFT-enabled programmes, or an empty list if none qualify.
+   */
+  private List<String> getLtftEnabledPublicHealthProgrammes(TraineeProfile profile) {
+    List<String> pmIds = getCurrentProgrammesInDeaneries(profile,
+        featuresProperties.publicHealthDeaneries());
+
+    log.info("LTFT enabled Public Health programme memberships for trainee {}: {}",
+        profile.getTraineeTisId(), pmIds);
+
+    return pmIds;
+  }
+
+  /**
+   * Get the IDs of current (not ended) programmes managed by any of the given deaneries.
+   *
+   * @param profile   The trainee profile to check.
+   * @param deaneries The managing deaneries to match, may be null or empty.
+   * @return The list of matching programme IDs, or an empty list if no deaneries are given.
+   */
+  private List<String> getCurrentProgrammesInDeaneries(TraineeProfile profile,
+      Set<String> deaneries) {
+    if (deaneries == null || deaneries.isEmpty()) {
       return List.of();
     }
 
     LocalDate now = LocalDate.now(timezone);
 
-    Set<String> enabledDeaneries = featuresProperties.ltft().entrySet().stream()
-        .filter(tranche -> !tranche.getValue().startDate().isAfter(now))
-        .peek(tranche -> log.debug("LTFT tranche enabled: {}", tranche.getKey()))
-        .flatMap(tranche -> tranche.getValue().deaneries().stream())
-        .collect(Collectors.toSet());
-
-    List<String> ltftPmIds = profile.getProgrammeMemberships().stream()
+    return profile.getProgrammeMemberships().stream()
         // Past programmes are not valid for LTFT.
-        .filter(pm -> pm.getEndDate() != null && pm.getEndDate().isAfter(now)
-            && enabledDeaneries.contains(pm.getManagingDeanery()))
+        .filter(pm -> pm.getEndDate() != null && pm.getEndDate().isAfter(now))
+        .filter(pm -> pm.getManagingDeanery() != null
+            && deaneries.contains(pm.getManagingDeanery()))
         .map(ProgrammeMembership::getTisId)
         .toList();
-
-    log.info("LTFT enabled programme memberships for trainee {}: {}",
-        profile.getTraineeTisId(), ltftPmIds);
-
-    return ltftPmIds;
   }
 
   /**

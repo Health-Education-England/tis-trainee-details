@@ -45,21 +45,43 @@ application:
       profile-move: ${PROFILE_MOVE_QUEUE_URL:}
   environment: ${ENVIRONMENT:local}
   features:
+    # Managing deaneries with LTFT enabled for Foundation trainees.
     foundation-deaneries:
       - Kent, Surrey and Sussex
       - North West London
       - North Central and East London
       - South London
       - South West
-    ltft:
-      pilot:
-        start-date: 2025-04-28
-        deaneries:
-          - Kent, Surrey and Sussex
-          - North West London
-          - North Central and East London
-          - South London
-          - South West
+      - East of England
+      - East Midlands
+      - West Midlands
+      - Wessex
+      - Thames Valley
+    # Managing deaneries with LTFT enabled for Public Health trainees.
+    public-health-deaneries:
+      - Kent, Surrey and Sussex
+      - North West London
+      - North Central and East London
+      - South London
+      - South West
+      - East of England
+      - East Midlands
+      - West Midlands
+      - Wessex
+      - Thames Valley
+    # Managing deaneries with LTFT enabled for Specialty trainees.
+    specialty-deaneries:
+      - Kent, Surrey and Sussex
+      - North West London
+      - North Central and East London
+      - South London
+      - South West
+      - East of England
+      - East Midlands
+      - West Midlands
+      - Wessex
+      - Thames Valley
+      - North East
   signature:
     secret-key: ${SIGNATURE_SECRET_KEY}
     expire-after:  # Minutes

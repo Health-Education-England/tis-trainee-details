@@ -21,27 +21,22 @@
 
 package uk.nhs.hee.trainee.details.config;
 
-import java.time.LocalDate;
-import java.util.Map;
 import java.util.Set;
 import lombok.Builder;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
  * Feature flag application properties.
+ *
+ * @param foundationDeaneries   The managing deaneries with LTFT enabled for Foundation trainees.
+ * @param publicHealthDeaneries The managing deaneries with LTFT enabled for Public Health
+ *                              trainees.
+ * @param specialtyDeaneries    The managing deaneries with LTFT enabled for Specialty trainees.
  */
 @Builder
 @ConfigurationProperties(prefix = "application.features")
-public record FeaturesProperties(Set<String> foundationDeaneries, Map<String, Tranche> ltft) {
+public record FeaturesProperties(Set<String> foundationDeaneries,
+                                 Set<String> publicHealthDeaneries,
+                                 Set<String> specialtyDeaneries) {
 
-  /**
-   * A tranche of deaneries for feature rollout.
-   *
-   * @param startDate The start date of the tranche.
-   * @param deaneries The managing deaneries in the tranche.
-   */
-  @Builder
-  public record Tranche(LocalDate startDate, Set<String> deaneries) {
-
-  }
 }
