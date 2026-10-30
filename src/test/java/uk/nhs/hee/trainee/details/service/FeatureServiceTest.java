@@ -1168,6 +1168,57 @@ class FeatureServiceTest {
         features.forms().ltft().qualifyingProgrammes(), empty());
   }
 
+  /**
+   * Pins current behaviour: a trainee with any specialty programme (past, current or future) is
+   * classified as a Specialty trainee, and every not-ended programme in a Specialty-enabled deanery
+   * qualifies, regardless of programme type. So Public Health and Foundation programmes in a
+   * Specialty-only deanery (e.g. North East) qualify for these trainees.
+   */
+  @ParameterizedTest
+  @CsvSource(delimiter = '|', textBlock = """
+      Public Health Medicine | -365
+      Public Health Medicine | 365
+      Foundation             | -365
+      Foundation             | 365
+      """)
+  void shouldIncludeNonSpecialtyProgrammeInSpecialtyOnlyDeaneryWhenSpecialtyTrainee(
+      String otherSpecialty, int specialtyEndOffsetDays) {
+    // A Public Health / Foundation programme in a Specialty-only deanery.
+    ProgrammeMembership otherPm = createProgrammeMembership("MEDICAL_CURRICULUM", otherSpecialty,
+        "specialty only", LocalDate.now().plusDays(1));
+
+    TraineeProfile profile = new TraineeProfile();
+    profile.setTraineeTisId(TRAINEE_ID);
+    when(profileService.getTraineeProfileByTraineeTisId(TRAINEE_ID)).thenReturn(profile);
+
+    // Without the Specialty programme: a Public Health / Foundation trainee, other PM excluded.
+    profile.setProgrammeMemberships(List.of(otherPm));
+    FeaturesDto withoutSpecialtyPm = service.getFeatures();
+
+    assertThat("Unexpected LTFT flag without specialty programme.",
+        withoutSpecialtyPm.forms().ltft().enabled(), is(false));
+    assertThat("Unexpected qualifying programmes without specialty programme.",
+        withoutSpecialtyPm.forms().ltft().qualifyingProgrammes(), empty());
+
+    // A Specialty programme in a deanery with no LTFT at all, so it can never qualify itself. Its
+    // only effect is to make the trainee a Specialty trainee.
+    ProgrammeMembership specialtyPm = createProgrammeMembership("MEDICAL_SPR", "General Practice",
+        "no LTFT", LocalDate.now().plusDays(specialtyEndOffsetDays));
+
+    // With the Specialty programme: a Specialty trainee, other PM now included.
+    profile.setProgrammeMemberships(List.of(specialtyPm, otherPm));
+    FeaturesDto withSpecialtyPm = service.getFeatures();
+
+    assertThat("Unexpected LTFT flag with specialty programme.",
+        withSpecialtyPm.forms().ltft().enabled(), is(true));
+    assertThat("Unexpected qualifying programmes with specialty programme.",
+        withSpecialtyPm.forms().ltft().qualifyingProgrammes(), contains(otherPm.getTisId()));
+    assertThat("Unexpected FormR flag with specialty programme.",
+        withSpecialtyPm.forms().formr().enabled(), is(true));
+    assertThat("Unexpected COJ flag with specialty programme.",
+        withSpecialtyPm.details().programmes().conditionsOfJoining().enabled(), is(true));
+  }
+
   @Test
   void shouldNotIncludePublicHealthProgrammesWithNoDeanery() {
     ProgrammeMembership enabledPm = createProgrammeMembership("MEDICAL_CURRICULUM",
