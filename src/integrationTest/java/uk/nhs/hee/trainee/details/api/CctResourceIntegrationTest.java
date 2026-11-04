@@ -273,6 +273,7 @@ class CctResourceIntegrationTest {
                 "specialty": "Paediatrics",
                 "startDate": "2023-08-02",
                 "lengthMonths": 84,
+                "lengthOverrideNotes": "Agreed with local office",
                 "startGrade": "ST1",
                 "startGradeOverrideNotes": null,
                 "additionalMonths": 0,
@@ -564,6 +565,7 @@ class CctResourceIntegrationTest {
             "specialty": "Paediatrics",
             "startDate": "2023-08-02",
             "lengthMonths": 84,
+            "lengthOverrideNotes": "Agreed with local office",
             "startGrade": "ST1",
             "startGradeOverrideNotes": "",
             "additionalMonths": 0,
@@ -1341,6 +1343,7 @@ class CctResourceIntegrationTest {
             .specialty("Paediatrics")
             .startDate(LocalDate.of(2023, 8, 2))
             .lengthMonths(84)
+            .lengthOverrideNotes("Agreed with local office")
             .startGrade(ST1)
             .additionalMonths(0)
             .acceleratedMonths(0)
@@ -1384,6 +1387,7 @@ class CctResourceIntegrationTest {
             "specialty": "Paediatrics",
             "startDate": "2023-08-02",
             "lengthMonths": 84,
+            "lengthOverrideNotes": "Agreed with local office",
             "startGrade": "ST1",
             "startGradeOverrideNotes": "",
             "additionalMonths": 0,

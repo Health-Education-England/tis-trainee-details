@@ -36,6 +36,7 @@ import uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade;
  * @param specialty                    The name of the programme's specialty.
  * @param startDate                    The start date of the programme.
  * @param lengthMonths                 The length of the programme, in months.
+ * @param lengthOverrideNotes          The reason the length differs from the specialty's.
  * @param startGrade                   The grade the programme starts at.
  * @param startGradeOverrideNotes      The reason the start grade differs from the specialty's.
  * @param additionalMonths             The additional training time, in months.
@@ -61,6 +62,8 @@ public record CctProgrammeDetailsDto(
         message = "Programme length must be a whole number of months between 1 and 120.")
     @JsonDeserialize(using = WholeNumberDeserializer.class)
     Integer lengthMonths,
+
+    String lengthOverrideNotes,
 
     @NotNull(message = "Please choose a start grade.")
     CctTrainingGrade startGrade,
