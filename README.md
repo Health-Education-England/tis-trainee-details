@@ -10,6 +10,9 @@ This is a Spring Boot microservice which provides a REST API for retrieving and
 managing trainee details data, such as Personal details, Placements and Programmes, 
 to be used in the Profile page.
 
+It also calculates Completion of Training (CCT) dates, as explained in the
+[CCT Calculator Engine README](README-CCT-CALCULATOR.md).
+
 ## Developing
 
 ### Running
