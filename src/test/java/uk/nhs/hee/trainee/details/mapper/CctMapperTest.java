@@ -141,6 +141,7 @@ class CctMapperTest {
             .specialty("Paediatrics")
             .startDate(LocalDate.of(2023, 8, 2))
             .lengthMonths(84)
+            .lengthOverrideNotes("Agreed with local office")
             .startGrade(ST1)
             .additionalMonths(0)
             .acceleratedMonths(0)

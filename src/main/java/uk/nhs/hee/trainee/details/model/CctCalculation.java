@@ -75,6 +75,7 @@ public record CctCalculation(
    * @param specialty                    The name of the programme's specialty.
    * @param startDate                    The start date of the programme.
    * @param lengthMonths                 The length of the programme, in months.
+   * @param lengthOverrideNotes          The reason the length differs from the specialty's.
    * @param startGrade                   The grade the programme starts at.
    * @param startGradeOverrideNotes      The reason the start grade differs from the specialty's.
    * @param additionalMonths             The additional training time, in months.
@@ -91,6 +92,7 @@ public record CctCalculation(
       String specialty,
       LocalDate startDate,
       Integer lengthMonths,
+      String lengthOverrideNotes,
       CctTrainingGrade startGrade,
       String startGradeOverrideNotes,
       Integer additionalMonths,
