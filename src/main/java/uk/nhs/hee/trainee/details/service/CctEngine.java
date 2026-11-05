@@ -48,8 +48,8 @@ import uk.nhs.hee.trainee.details.dto.CctResultDto;
 @XRayEnabled
 public class CctEngine {
 
-  private static final double DAYS_PER_MONTH = 30.4;
-  private static final double COMPLETED_PERIOD_DAYS_PER_MONTH = 365.0 / 12;
+  private static final double PROJECTED_DAYS_PER_MONTH = 30.4;
+  private static final double RECORDED_DAYS_PER_MONTH = 365.0 / 12;
   private static final double FLOOR_TOLERANCE_DAYS = 1e-9;
 
   /**
@@ -66,24 +66,20 @@ public class CctEngine {
         .filter(change -> !isOpenLtftChange(change))
         .toList();
     Projection projection = deriveProjection(programmeStartDate, changes, datedChanges);
-    double calendarMonthsBeforeProjection =
-        DAYS.between(programmeStartDate, projection.startDate()) / COMPLETED_PERIOD_DAYS_PER_MONTH;
+    List<CctAssumedFullTimePeriodDto> assumedPeriods =
+        deriveAssumedPeriods(programmeStartDate, datedChanges, projection.startDate());
 
-    double changesCalendarMonths = 0;
-    double changesWteMonths = 0;
+    double totalWteMonthsCompleted = 0;
     for (CctChangeDto change : datedChanges) {
-      changesCalendarMonths += calendarMonths(change);
-      changesWteMonths += wteMonths(change);
+      totalWteMonthsCompleted += wteMonths(change);
     }
-    double gapCalendarMonths = Math.max(0, calendarMonthsBeforeProjection - changesCalendarMonths);
-    double totalWteMonthsCompleted = changesWteMonths + gapCalendarMonths;
+    for (CctAssumedFullTimePeriodDto period : assumedPeriods) {
+      totalWteMonthsCompleted += period.months();
+    }
 
     int adjustedLengthMonths = programmeDetails.lengthMonths()
         + programmeDetails.additionalMonths() - programmeDetails.acceleratedMonths();
     double monthsRemaining = roundToTwoDecimals(adjustedLengthMonths - totalWteMonthsCompleted);
-
-    List<CctAssumedFullTimePeriodDto> assumedPeriods =
-        deriveAssumedPeriods(programmeStartDate, datedChanges, projection.startDate());
 
     double calendarMonthsToCompletion = monthsRemaining / projection.wte();
     LocalDate cctDate = findCompletionDate(adjustedLengthMonths, datedChanges, assumedPeriods)
@@ -142,16 +138,8 @@ public class CctEngine {
     LocalDate cursor = programmeStartDate;
 
     for (CctChangeDto change : sortedChanges) {
-      if (!cursor.isBefore(projectionStartDate)) {
-        break;
-      }
-
       if (change.startDate().isAfter(cursor)) {
-        LocalDate dayBeforeChange = change.startDate().minusDays(1);
-        LocalDate gapEnd = dayBeforeChange.isBefore(projectionStartDate)
-            ? dayBeforeChange
-            : projectionStartDate.minusDays(1);
-        periods.add(assumedPeriod(cursor, gapEnd));
+        periods.add(assumedPeriod(cursor, change.startDate().minusDays(1)));
       }
 
       LocalDate dayAfterChange = change.endDate().plusDays(1);
@@ -185,7 +173,7 @@ public class CctEngine {
     return CctAssumedFullTimePeriodDto.builder()
         .startDate(startDate)
         .endDate(endDate)
-        .months(completedMonths(startDate, endDate))
+        .months(recordedMonths(startDate, endDate))
         .build();
   }
 
@@ -218,7 +206,7 @@ public class CctEngine {
   }
 
   private static double calendarMonths(CctChangeDto change) {
-    return completedMonths(change.startDate(), change.endDate());
+    return recordedMonths(change.startDate(), change.endDate());
   }
 
   private static double wteMonths(CctChangeDto change) {
@@ -232,8 +220,8 @@ public class CctEngine {
     return change.type() == OOPT ? 1 : change.wte();
   }
 
-  private static double completedMonths(LocalDate startDate, LocalDate endDate) {
-    return inclusiveDays(startDate, endDate) / COMPLETED_PERIOD_DAYS_PER_MONTH;
+  private static double recordedMonths(LocalDate startDate, LocalDate endDate) {
+    return inclusiveDays(startDate, endDate) / RECORDED_DAYS_PER_MONTH;
   }
 
   private static long inclusiveDays(LocalDate startDate, LocalDate endDate) {
@@ -241,7 +229,8 @@ public class CctEngine {
   }
 
   private static LocalDate dateAfterMonths(LocalDate startDate, double months) {
-    return startDate.plusDays((long) Math.floor(months * DAYS_PER_MONTH + FLOOR_TOLERANCE_DAYS));
+    return startDate.plusDays(
+        (long) Math.floor(months * PROJECTED_DAYS_PER_MONTH + FLOOR_TOLERANCE_DAYS));
   }
 
   private static double roundToTwoDecimals(double months) {
