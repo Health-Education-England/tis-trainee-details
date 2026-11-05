@@ -52,6 +52,11 @@ import uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType;
 
 class CctCalculateRequestDtoTest {
 
+  private static final LocalDate EARLIEST_DATE = LocalDate.of(1970, 1, 1);
+  private static final LocalDate LATEST_DATE = LocalDate.now().plusYears(50);
+  private static final String DATE_LIMITS_ERROR =
+      "Date must be between 01/01/1970 and 50 years from today.";
+
   private SpringValidatorAdapter validator;
 
   @BeforeEach
@@ -134,6 +139,15 @@ class CctCalculateRequestDtoTest {
     assertThat("Unexpected errors.", errors, is(empty()));
   }
 
+  @Test
+  void shouldAcceptDatesOnTheLimits() {
+    List<BodyValidationError> errors = validate(programme().startDate(EARLIEST_DATE),
+        List.of(ltft().startDate(EARLIEST_DATE).build(),
+            ltft().startDate(LATEST_DATE).endDate(LATEST_DATE).build()));
+
+    assertThat("Unexpected errors.", errors, is(empty()));
+  }
+
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("listInvalidRequests")
   void shouldRejectInvalidRequest(String description, CctProgrammeDetailsDtoBuilder programme,
@@ -150,6 +164,31 @@ class CctCalculateRequestDtoTest {
         Arguments.of("a missing programme start date", programme().startDate(null), List.of(),
             List.of(error("#/programmeDetails/startDate",
                 "Please enter a programme start date."))),
+        Arguments.of("a programme start date before the earliest date",
+            programme().startDate(EARLIEST_DATE.minusDays(1)), List.of(),
+            List.of(error("#/programmeDetails/startDate", DATE_LIMITS_ERROR))),
+        Arguments.of("a programme start date after the latest date",
+            programme().startDate(LATEST_DATE.plusDays(1)), List.of(),
+            List.of(error("#/programmeDetails/startDate", DATE_LIMITS_ERROR))),
+        Arguments.of("a change start date before the earliest date", programme(),
+            List.of(ltft().startDate(EARLIEST_DATE.minusDays(1)).build()),
+            List.of(error("#/changes[0]/startDate", DATE_LIMITS_ERROR))),
+        Arguments.of("an open LTFT start date after the latest date", programme(),
+            List.of(ltft().startDate(LATEST_DATE.plusDays(1)).endDate(null).build()),
+            List.of(error("#/changes[0]/startDate", DATE_LIMITS_ERROR))),
+        Arguments.of("a change end date after the latest date", programme(),
+            List.of(ltft().endDate(LATEST_DATE.plusDays(1)).build()),
+            List.of(error("#/changes[0]/endDate", DATE_LIMITS_ERROR))),
+        Arguments.of("a change entirely before the earliest date", programme(),
+            List.of(ltft().startDate(EARLIEST_DATE.minusDays(2))
+                .endDate(EARLIEST_DATE.minusDays(1)).build()),
+            List.of(error("#/changes[0]/endDate", DATE_LIMITS_ERROR),
+                error("#/changes[0]/startDate", DATE_LIMITS_ERROR))),
+        Arguments.of("a counted OOPT in the last year of the date range", programme(),
+            List.of(CctChangeDto.builder().type(OOPT).startDate(LocalDate.MAX)
+                .endDate(LocalDate.MAX).countsTowardsCompletion(true).build()),
+            List.of(error("#/changes[0]/endDate", DATE_LIMITS_ERROR),
+                error("#/changes[0]/startDate", DATE_LIMITS_ERROR))),
         Arguments.of("a missing start grade", programme().startGrade(null), List.of(),
             List.of(error("#/programmeDetails/startGrade", "Please choose a start grade."))),
         Arguments.of("a missing programme length", programme().lengthMonths(null), List.of(),

@@ -93,6 +93,8 @@ import uk.nhs.hee.trainee.details.model.TraineeProfile;
 class CctResourceIntegrationTest {
 
   private static final String TRAINEE_ID = UUID.randomUUID().toString();
+  private static final String DATE_LIMITS_ERROR =
+      "Date must be between 01/01/1970 and 50 years from today.";
 
   @Container
   @ServiceConnection
@@ -373,6 +375,22 @@ class CctResourceIntegrationTest {
         .andExpect(jsonPath("$.errors", hasSize(202)))
         .andExpect(jsonPath("$.errors[0].pointer", is("#/changes")))
         .andExpect(jsonPath("$.errors[0].detail", is("size must be between 0 and 200")));
+  }
+
+  @Test
+  void shouldNotCreateCalculationWhenDateOutsideLimits() throws Exception {
+    ObjectNode request = calculateJson(changeEndingOutsideDateLimits());
+    request.put("name", "Test Calculation");
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculation")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(request.toString()))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errors", hasSize(1)))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/changes[0]/endDate")))
+        .andExpect(jsonPath("$.errors[0].detail", is(DATE_LIMITS_ERROR)));
   }
 
   @Test
@@ -828,6 +846,24 @@ class CctResourceIntegrationTest {
     assertThat("Unexpected saved entity name.", savedEntity.name(), is("Test Calculation"));
   }
 
+  @Test
+  void shouldNotUpdateCalculationWhenDateOutsideLimits() throws Exception {
+    UUID id = UUID.randomUUID();
+    ObjectNode request = calculateJson(changeEndingOutsideDateLimits());
+    request.put("id", id.toString());
+    request.put("name", "Test Calculation");
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(put("/api/cct/calculation/" + id)
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(request.toString()))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errors", hasSize(1)))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/changes[0]/endDate")))
+        .andExpect(jsonPath("$.errors[0].detail", is(DATE_LIMITS_ERROR)));
+  }
+
   @ParameterizedTest
   @ValueSource(strings = {"{}", "null"})
   void shouldNotValidateAllChangesWhenUpdatingTooManyChanges(String change) throws Exception {
@@ -1275,6 +1311,78 @@ class CctResourceIntegrationTest {
         .andExpect(jsonPath("$.errors[0].detail", is("size must be between 0 and 200")));
   }
 
+  @ParameterizedTest
+  @ValueSource(strings = {"-999999999-01-01", "1969-12-31", "+999999999-12-31"})
+  void shouldNotCalculateWhenProgrammeStartOutsideDateLimits(String startDate) throws Exception {
+    ObjectNode request = calculateJson("""
+        [
+          {
+            "type": "LTFT",
+            "startDate": "2024-01-01",
+            "wte": 0.01,
+            "countsTowardsCompletion": true
+          }
+        ]
+        """);
+    ((ObjectNode) request.get("programmeDetails")).put("startDate", startDate);
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculate")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(request.toString()))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errors", hasSize(1)))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/programmeDetails/startDate")))
+        .andExpect(jsonPath("$.errors[0].detail", is(DATE_LIMITS_ERROR)));
+  }
+
+  @Test
+  void shouldNotCalculateWhenChangeStartsBeforeEarliestDate() throws Exception {
+    ObjectNode request = calculateJson("""
+        [
+          {
+            "type": "LTFT",
+            "startDate": "-999999999-01-01",
+            "endDate": "2023-12-31",
+            "wte": 0.99,
+            "countsTowardsCompletion": true
+          },
+          {
+            "type": "LTFT",
+            "startDate": "2024-01-01",
+            "wte": 0.01,
+            "countsTowardsCompletion": true
+          }
+        ]
+        """);
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculate")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(request.toString()))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errors", hasSize(1)))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/changes[0]/startDate")))
+        .andExpect(jsonPath("$.errors[0].detail", is(DATE_LIMITS_ERROR)));
+  }
+
+  @Test
+  void shouldNotCalculateWhenChangeEndsAfterLatestDate() throws Exception {
+    ObjectNode request = calculateJson(changeEndingOutsideDateLimits());
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculate")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(request.toString()))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errors", hasSize(1)))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/changes[0]/endDate")))
+        .andExpect(jsonPath("$.errors[0].detail", is(DATE_LIMITS_ERROR)));
+  }
+
   @Test
   void shouldNotCalculateWhenProgrammeDetailsAndChangesMissing() throws Exception {
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
@@ -1430,6 +1538,19 @@ class CctResourceIntegrationTest {
                 .build())
             .build())
         .build();
+  }
+
+  private static String changeEndingOutsideDateLimits() {
+    return """
+        [
+          {
+            "type": "PARENTAL",
+            "startDate": "2024-01-01",
+            "endDate": "+999999998-12-31",
+            "countsTowardsCompletion": false
+          }
+        ]
+        """;
   }
 
   private static String tooManyChanges(String change) {
