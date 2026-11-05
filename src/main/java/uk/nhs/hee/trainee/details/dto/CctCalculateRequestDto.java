@@ -21,11 +21,13 @@
 
 package uk.nhs.hee.trainee.details.dto;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.util.List;
 import lombok.Builder;
+import uk.nhs.hee.trainee.details.dto.deserializer.CctChangesConverter;
 import uk.nhs.hee.trainee.details.dto.validation.CctCalculateRequestValidation;
 
 /**
@@ -43,8 +45,9 @@ public record CctCalculateRequestDto(
     CctProgrammeDetailsDto programmeDetails,
 
     @NotNull
-    @Size(max = 200)
+    @Size(max = CctCalculationInput.MAX_CHANGES)
     @Valid
+    @JsonDeserialize(converter = CctChangesConverter.class)
     List<@NotNull CctChangeDto> changes) implements CctCalculationInput {
 
 }

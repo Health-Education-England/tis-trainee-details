@@ -49,6 +49,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
@@ -355,6 +356,23 @@ class CctResourceIntegrationTest {
         .andExpect(jsonPath("$.instance", is("/api/cct/calculation")))
         .andExpect(jsonPath("$.errors").isArray())
         .andExpect(jsonPath("$.errors", hasSize(3)));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"{}", "null"})
+  void shouldNotValidateAllChangesWhenCreatingTooManyChanges(String change) throws Exception {
+    ObjectNode request = calculateJson(tooManyChanges(change));
+    request.put("name", "Test Calculation");
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculation")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(request.toString()))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errors", hasSize(202)))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/changes")))
+        .andExpect(jsonPath("$.errors[0].detail", is("size must be between 0 and 200")));
   }
 
   @Test
@@ -810,6 +828,25 @@ class CctResourceIntegrationTest {
     assertThat("Unexpected saved entity name.", savedEntity.name(), is("Test Calculation"));
   }
 
+  @ParameterizedTest
+  @ValueSource(strings = {"{}", "null"})
+  void shouldNotValidateAllChangesWhenUpdatingTooManyChanges(String change) throws Exception {
+    UUID id = UUID.randomUUID();
+    ObjectNode request = calculateJson(tooManyChanges(change));
+    request.put("id", id.toString());
+    request.put("name", "Test Calculation");
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(put("/api/cct/calculation/" + id)
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(request.toString()))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errors", hasSize(202)))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/changes")))
+        .andExpect(jsonPath("$.errors[0].detail", is("size must be between 0 and 200")));
+  }
+
   @Test
   void shouldUpdateCalculation() throws Exception {
     CctCalculation entity = template.insert(savedCalculation(TRAINEE_ID));
@@ -1222,6 +1259,22 @@ class CctResourceIntegrationTest {
             """, JsonCompareMode.STRICT));
   }
 
+  @ParameterizedTest
+  @ValueSource(strings = {"{}", "null"})
+  void shouldNotValidateAllChangesWhenCalculatingTooManyChanges(String change) throws Exception {
+    ObjectNode request = calculateJson(tooManyChanges(change));
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculate")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(request.toString()))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errors", hasSize(202)))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/changes")))
+        .andExpect(jsonPath("$.errors[0].detail", is("size must be between 0 and 200")));
+  }
+
   @Test
   void shouldNotCalculateWhenProgrammeDetailsAndChangesMissing() throws Exception {
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
@@ -1377,6 +1430,10 @@ class CctResourceIntegrationTest {
                 .build())
             .build())
         .build();
+  }
+
+  private static String tooManyChanges(String change) {
+    return "[" + String.join(",", Collections.nCopies(1000, change)) + "]";
   }
 
   private static ObjectNode calculateJson(String changes) throws IOException {
