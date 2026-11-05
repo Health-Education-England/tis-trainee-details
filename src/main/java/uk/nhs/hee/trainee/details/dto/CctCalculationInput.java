@@ -29,6 +29,11 @@ import java.util.List;
 public interface CctCalculationInput {
 
   /**
+   * The most changes a calculation can have.
+   */
+  int MAX_CHANGES = 200;
+
+  /**
    * Get the details of the programme.
    *
    * @return The programme details.
