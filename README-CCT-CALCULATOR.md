@@ -349,15 +349,11 @@ the rule for something harder to follow.
 | 1    | Months needed             | `calculate`                                   | I13                                |
 | 2    | Projection start and WTE  | `deriveProjection`                            | I47                                |
 | 3    | Assumed full-time periods | `deriveAssumedPeriods`                        | None: typed in by hand             |
-| 4    | Credited months           | `completedMonths`, `wteMonths`, `wteFraction` | F24:G46, G47                       |
+| 4    | Credited months           | `recordedMonths`, `wteMonths`, `wteFraction`  | F24:G46, G47                       |
 | 5    | Months remaining          | `roundToTwoDecimals`                          | I15                                |
 | 6    | Date from the projection  | `dateAfterMonths`                             | I47, B13                           |
 | 6    | Day training completes    | `findCompletionDate`                          | None: B13 uses the latest end date |
 | 7    | Programme end dates       | `dateAfterMonths`                             | None                               |
-
-In step 4, the Java gets the assumed full-time total by subtraction today: the
-time before the projection, less the time in changes. On anything saveable it
-gives the same figure as adding up the rows, as the pseudo code does.
 
 In step 6, the Java always runs the day-by-day search first, and uses the
 projection if the search finds no day. On anything saveable it gives the same

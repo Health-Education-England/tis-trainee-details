@@ -26,6 +26,7 @@ import static org.hamcrest.Matchers.closeTo;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.LTFT;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.OOPC;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.OOPR;
@@ -33,6 +34,7 @@ import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.OOPT;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.PARENTAL;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST1;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
@@ -375,6 +377,18 @@ class CctEngineTest {
   }
 
   @Test
+  void shouldTotalAssumedPeriodsWhenChangeStartsBeforeProgramme() {
+    CctResultDto result = engine.calculate(programme("2024-03-01", 84), List.of(
+        change(PARENTAL, "2024-02-01", "2024-08-01", null, false),
+        change(PARENTAL, "2025-02-01", "2025-08-01", null, false))).result();
+    List<CctAssumedFullTimePeriodDto> assumedPeriods = result.assumedFullTimePeriods();
+
+    assertThat("Unexpected assumed period count.", assumedPeriods, hasSize(1));
+    assertThat("Unexpected total WTE months completed.", result.totalWteMonthsCompleted(),
+        is(assumedPeriods.get(0).months()));
+  }
+
+  @Test
   void shouldCalculateWhenChangeEndsBeforeProgramme() {
     CctResultDto result = engine.calculate(programme("2024-09-01", 84),
         List.of(change(LTFT, "2024-02-01", "2024-08-01", 0.5, true))).result();
@@ -382,6 +396,13 @@ class CctEngineTest {
     assertThat("Unexpected assumed periods.", result.assumedFullTimePeriods(), empty());
     assertThat("Unexpected months remaining.", result.monthsRemaining(), is(80.99));
     assertThat("Unexpected CCT date.", result.cctDate(), is(date("2031-04-30")));
+  }
+
+  @Test
+  void shouldNotWalkDaysThatCreditNothing() {
+    assertTimeoutPreemptively(Duration.ofSeconds(5), () -> engine.calculate(
+        programme(PAEDIATRICS_START, 84),
+        List.of(change(PARENTAL, "2024-01-01", "+99999999-12-31", null, false))));
   }
 
   @Test
