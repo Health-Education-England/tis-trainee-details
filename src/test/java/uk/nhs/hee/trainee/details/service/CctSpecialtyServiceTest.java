@@ -36,6 +36,8 @@ import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST4;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -86,7 +88,24 @@ class CctSpecialtyServiceTest {
         .collect(groupingBy(CctSpecialtyDto::entryGrade, counting()));
 
     assertThat("Unexpected entry grade counts.", entryGrades,
-        is(Map.of(ST4, 67L, ST3, 61L, ST1, 35L, CT1, 10L, F1, 1L, DFT, 1L)));
+        is(Map.of(ST4, 63L, ST3, 64L, ST1, 36L, CT1, 10L, F1, 1L, DFT, 1L)));
+  }
+
+  @Test
+  void shouldGetSpecialtiesListedInSourcesTable() throws IOException {
+    List<CctSpecialtyDto> tableSpecialties;
+    try (InputStream table = CctSpecialtyServiceTest.class.getResourceAsStream(
+        "/cct/specialties-sources.md")) {
+      tableSpecialties = new String(table.readAllBytes(), StandardCharsets.UTF_8).lines()
+          .filter(line -> line.startsWith("|"))
+          .skip(2)
+          .map(line -> line.split("\\|"))
+          .map(cells -> new CctSpecialtyDto(cells[1].strip(), Integer.parseInt(cells[2].strip()),
+              CctTrainingGrade.valueOf(cells[3].strip())))
+          .toList();
+    }
+
+    assertThat("Unexpected specialties.", service.getSpecialties(), is(tableSpecialties));
   }
 
   @Test
