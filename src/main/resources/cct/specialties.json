@@ -39,7 +39,7 @@
   {"name": "Core psychiatry training", "lengthMonths": 36, "entryGrade": "CT1"},
   {"name": "Core surgical training", "lengthMonths": 24, "entryGrade": "CT1"},
   {"name": "Dental and maxillo-facial radiology", "lengthMonths": 48, "entryGrade": "ST1"},
-  {"name": "Dental core training", "lengthMonths": 12, "entryGrade": "CT1"},
+  {"name": "Dental core training", "lengthMonths": 12, "entryGrade": "DCT1"},
   {"name": "Dental foundation training", "lengthMonths": 12, "entryGrade": "DFT"},
   {"name": "Dental public health", "lengthMonths": 48, "entryGrade": "ST1"},
   {"name": "Dermatology", "lengthMonths": 48, "entryGrade": "ST3"},
