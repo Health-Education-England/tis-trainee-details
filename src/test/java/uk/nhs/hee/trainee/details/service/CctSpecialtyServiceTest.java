@@ -28,6 +28,7 @@ import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.CT1;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.DCT1;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.DFT;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.F1;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST1;
@@ -88,7 +89,7 @@ class CctSpecialtyServiceTest {
         .collect(groupingBy(CctSpecialtyDto::entryGrade, counting()));
 
     assertThat("Unexpected entry grade counts.", entryGrades,
-        is(Map.of(ST4, 63L, ST3, 64L, ST1, 36L, CT1, 10L, F1, 1L, DFT, 1L)));
+        is(Map.of(ST4, 63L, ST3, 64L, ST1, 36L, CT1, 9L, F1, 1L, DFT, 1L, DCT1, 1L)));
   }
 
   @Test

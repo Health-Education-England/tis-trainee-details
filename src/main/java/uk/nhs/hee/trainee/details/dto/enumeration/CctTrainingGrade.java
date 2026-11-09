@@ -40,5 +40,8 @@ public enum CctTrainingGrade {
   ST7,
   ST8,
   ST9,
-  DFT
+  DFT,
+  DCT1,
+  DCT2,
+  DCT3
 }
