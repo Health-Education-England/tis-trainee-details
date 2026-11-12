@@ -204,6 +204,7 @@ class CctServiceTest {
             .cctDate(LocalDate.of(2099, 1, 1))
             .originalProgrammeEndDate(LocalDate.of(2030, 7, 29))
             .adjustedProgrammeEndDate(LocalDate.of(2030, 7, 29))
+            .totalCalendarMonthsCompleted(12.0)
             .totalWteMonthsCompleted(9.6)
             .monthsRemaining(74.4)
             .assumedFullTimePeriods(List.of(CctAssumedFullTimePeriod.builder()
@@ -254,6 +255,8 @@ class CctServiceTest {
         is(LocalDate.of(2030, 7, 29)));
     assertThat("Unexpected adjusted end date.", calculationResult.adjustedProgrammeEndDate(),
         is(LocalDate.of(2030, 7, 29)));
+    assertThat("Unexpected calendar months completed.",
+        calculationResult.totalCalendarMonthsCompleted(), is(12.0));
     assertThat("Unexpected months completed.", calculationResult.totalWteMonthsCompleted(),
         is(9.6));
     assertThat("Unexpected months remaining.", calculationResult.monthsRemaining(), is(74.4));
