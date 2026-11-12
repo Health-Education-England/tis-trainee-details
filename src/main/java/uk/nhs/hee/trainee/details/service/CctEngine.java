@@ -69,11 +69,14 @@ public class CctEngine {
     List<CctAssumedFullTimePeriodDto> assumedPeriods =
         deriveAssumedPeriods(programmeStartDate, datedChanges, projection.startDate());
 
+    double totalCalendarMonthsCompleted = 0;
     double totalWteMonthsCompleted = 0;
     for (CctChangeDto change : datedChanges) {
+      totalCalendarMonthsCompleted += calendarMonths(change);
       totalWteMonthsCompleted += wteMonths(change);
     }
     for (CctAssumedFullTimePeriodDto period : assumedPeriods) {
+      totalCalendarMonthsCompleted += period.months();
       totalWteMonthsCompleted += period.months();
     }
 
@@ -90,6 +93,7 @@ public class CctEngine {
         .originalProgrammeEndDate(
             dateAfterMonths(programmeStartDate, programmeDetails.lengthMonths()))
         .adjustedProgrammeEndDate(dateAfterMonths(programmeStartDate, adjustedLengthMonths))
+        .totalCalendarMonthsCompleted(totalCalendarMonthsCompleted)
         .totalWteMonthsCompleted(totalWteMonthsCompleted)
         .monthsRemaining(monthsRemaining)
         .assumedFullTimePeriods(assumedPeriods)

@@ -304,6 +304,7 @@ class CctResourceIntegrationTest {
                 "cctDate": "2099-01-01",
                 "originalProgrammeEndDate": "2030-07-29",
                 "adjustedProgrammeEndDate": "2030-07-29",
+                "totalCalendarMonthsCompleted": 12.0,
                 "totalWteMonthsCompleted": 9.6,
                 "monthsRemaining": 74.4,
                 "assumedFullTimePeriods": [
@@ -629,6 +630,7 @@ class CctResourceIntegrationTest {
             "cctDate": "2030-10-10",
             "originalProgrammeEndDate": "2030-07-29",
             "adjustedProgrammeEndDate": "2030-07-29",
+            "totalCalendarMonthsCompleted": 12.032876712328766,
             "totalWteMonthsCompleted": 9.626301369863013,
             "monthsRemaining": 74.37,
             "assumedFullTimePeriods": [
@@ -1020,6 +1022,7 @@ class CctResourceIntegrationTest {
                 "cctDate": "2030-07-29",
                 "originalProgrammeEndDate": "2030-07-29",
                 "adjustedProgrammeEndDate": "2030-07-29",
+                "totalCalendarMonthsCompleted": 0,
                 "totalWteMonthsCompleted": 0,
                 "monthsRemaining": 84,
                 "assumedFullTimePeriods": [],
@@ -1075,6 +1078,7 @@ class CctResourceIntegrationTest {
                 "cctDate": "2030-10-10",
                 "originalProgrammeEndDate": "2030-07-29",
                 "adjustedProgrammeEndDate": "2030-07-29",
+                "totalCalendarMonthsCompleted": 12.032876712328766,
                 "totalWteMonthsCompleted": 9.626301369863013,
                 "monthsRemaining": 74.37,
                 "assumedFullTimePeriods": [
@@ -1136,6 +1140,7 @@ class CctResourceIntegrationTest {
                 "cctDate": "2034-03-27",
                 "originalProgrammeEndDate": "2030-07-29",
                 "adjustedProgrammeEndDate": "2030-07-29",
+                "totalCalendarMonthsCompleted": 18.04931506849315,
                 "totalWteMonthsCompleted": 18.04931506849315,
                 "monthsRemaining": 65.95,
                 "assumedFullTimePeriods": [
@@ -1523,6 +1528,7 @@ class CctResourceIntegrationTest {
             .cctDate(LocalDate.of(2099, 1, 1))
             .originalProgrammeEndDate(LocalDate.of(2030, 7, 29))
             .adjustedProgrammeEndDate(LocalDate.of(2030, 7, 29))
+            .totalCalendarMonthsCompleted(12.0)
             .totalWteMonthsCompleted(9.6)
             .monthsRemaining(74.4)
             .assumedFullTimePeriods(List.of(CctAssumedFullTimePeriod.builder()

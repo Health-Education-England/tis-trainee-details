@@ -84,6 +84,8 @@ class CctEngineTest {
         change(OOPC, "2020-01-01", "2022-12-31", null, false),
         change(LTFT, "2024-01-01", null, 0.5, true))).result();
 
+    assertThat("Unexpected total calendar months completed.",
+        result.totalCalendarMonthsCompleted(), closeTo(72.0328767123, 1e-9));
     assertThat("Unexpected total WTE months completed.", result.totalWteMonthsCompleted(),
         closeTo(36, 1e-9));
     assertThat("Unexpected CCT date.", result.cctDate(), is(date("2037-12-25")));
@@ -261,6 +263,7 @@ class CctEngineTest {
             .cctDate(date("2030-07-29"))
             .originalProgrammeEndDate(date("2030-07-29"))
             .adjustedProgrammeEndDate(date("2030-07-29"))
+            .totalCalendarMonthsCompleted(0)
             .totalWteMonthsCompleted(0)
             .monthsRemaining(84)
             .assumedFullTimePeriods(List.of())
@@ -283,6 +286,7 @@ class CctEngineTest {
             .cctDate(date("2030-10-10"))
             .originalProgrammeEndDate(date("2030-07-29"))
             .adjustedProgrammeEndDate(date("2030-07-29"))
+            .totalCalendarMonthsCompleted(12.032876712328766)
             .totalWteMonthsCompleted(9.626301369863013)
             .monthsRemaining(74.37)
             .assumedFullTimePeriods(List.of(
@@ -306,6 +310,7 @@ class CctEngineTest {
             .cctDate(date("2034-03-27"))
             .originalProgrammeEndDate(date("2030-07-29"))
             .adjustedProgrammeEndDate(date("2030-07-29"))
+            .totalCalendarMonthsCompleted(18.04931506849315)
             .totalWteMonthsCompleted(18.04931506849315)
             .monthsRemaining(65.95)
             .assumedFullTimePeriods(List.of(
