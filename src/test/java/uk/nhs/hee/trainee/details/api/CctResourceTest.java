@@ -35,9 +35,11 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST1;
 
 import java.net.URI;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -48,18 +50,28 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.server.ResponseStatusException;
+import uk.nhs.hee.trainee.details.dto.CctCalculateRequestDto;
+import uk.nhs.hee.trainee.details.dto.CctCalculateResponseDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
+import uk.nhs.hee.trainee.details.dto.CctCalculationSaveRequestDto;
+import uk.nhs.hee.trainee.details.dto.CctChangeDto;
+import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto;
+import uk.nhs.hee.trainee.details.dto.CctResultDto;
+import uk.nhs.hee.trainee.details.dto.CctSpecialtyDto;
 import uk.nhs.hee.trainee.details.service.CctService;
+import uk.nhs.hee.trainee.details.service.CctSpecialtyService;
 
 class CctResourceTest {
 
   private CctResource controller;
   private CctService service;
+  private CctSpecialtyService specialtyService;
 
   @BeforeEach
   void setUp() {
     service = mock(CctService.class);
-    controller = new CctResource(service);
+    specialtyService = mock(CctSpecialtyService.class);
+    controller = new CctResource(service, specialtyService);
   }
 
   @Test
@@ -130,14 +142,14 @@ class CctResourceTest {
   }
 
   @Test
-  void shouldReturnCreatedCalculation() {
-    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
+  void shouldReturnCreatedCalculation() throws MethodArgumentNotValidException {
+    CctCalculationSaveRequestDto dto = CctCalculationSaveRequestDto.builder()
         .name("Test Calculation")
         .build();
 
     UUID id = UUID.randomUUID();
     when(service.createCalculation(any())).thenAnswer(inv -> {
-      CctCalculationDetailDto arg = inv.getArgument(0);
+      CctCalculationSaveRequestDto arg = inv.getArgument(0);
       return CctCalculationDetailDto.builder()
           .id(id)
           .name(arg.name())
@@ -157,14 +169,14 @@ class CctResourceTest {
   }
 
   @Test
-  void shouldReturnCreatedCalculationLocation() {
-    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
+  void shouldReturnCreatedCalculationLocation() throws MethodArgumentNotValidException {
+    CctCalculationSaveRequestDto dto = CctCalculationSaveRequestDto.builder()
         .name("Test Calculation")
         .build();
 
     UUID id = UUID.randomUUID();
     when(service.createCalculation(any())).thenAnswer(inv -> {
-      CctCalculationDetailDto arg = inv.getArgument(0);
+      CctCalculationSaveRequestDto arg = inv.getArgument(0);
       return CctCalculationDetailDto.builder()
           .id(id)
           .name(arg.name())
@@ -179,23 +191,33 @@ class CctResourceTest {
   }
 
   @Test
+  void shouldNotCatchValidationErrorWhenCreateCalculationValidationFails()
+      throws MethodArgumentNotValidException {
+    CctCalculationSaveRequestDto dto = CctCalculationSaveRequestDto.builder()
+        .name("Test Calculation")
+        .build();
+
+    when(service.createCalculation(any())).thenThrow(MethodArgumentNotValidException.class);
+
+    assertThrows(MethodArgumentNotValidException.class, () -> controller.createCalculation(dto));
+  }
+
+  @Test
   void shouldReturnUpdatedCalculation() throws MethodArgumentNotValidException {
     UUID id = UUID.randomUUID();
     Instant created = Instant.now();
-    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
+    CctCalculationSaveRequestDto dto = CctCalculationSaveRequestDto.builder()
         .id(id)
         .name("Test Calculation")
-        .created(created)
-        .lastModified(created)
         .build();
 
     Instant modified = created.plusSeconds(1);
     when(service.updateCalculation(any(), any())).thenAnswer(inv -> {
-      CctCalculationDetailDto arg = inv.getArgument(1);
+      CctCalculationSaveRequestDto arg = inv.getArgument(1);
       return Optional.of(CctCalculationDetailDto.builder()
           .id(arg.id())
           .name(arg.name())
-          .created(arg.created())
+          .created(created)
           .lastModified(modified)
           .build());
     });
@@ -216,7 +238,7 @@ class CctResourceTest {
   void shouldReturnBadRequestWhenUpdateIsInconsistent() throws MethodArgumentNotValidException {
     UUID id1 = UUID.randomUUID();
     UUID id2 = UUID.randomUUID();
-    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
+    CctCalculationSaveRequestDto dto = CctCalculationSaveRequestDto.builder()
         .id(id2)
         .name("Test Calculation")
         .build();
@@ -233,7 +255,7 @@ class CctResourceTest {
   @Test
   void shouldReturnBadRequestWhenUpdateHasNoEntityId() throws MethodArgumentNotValidException {
     UUID id = UUID.randomUUID();
-    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
+    CctCalculationSaveRequestDto dto = CctCalculationSaveRequestDto.builder()
         .name("Test Calculation")
         .build();
 
@@ -248,12 +270,9 @@ class CctResourceTest {
   @Test
   void shouldReturnNotFoundWhenCalculationCannotBeUpdated() throws MethodArgumentNotValidException {
     UUID id = UUID.randomUUID();
-    Instant created = Instant.now();
-    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
+    CctCalculationSaveRequestDto dto = CctCalculationSaveRequestDto.builder()
         .id(id)
         .name("Test Calculation")
-        .created(created)
-        .lastModified(created)
         .build();
 
     //e.g. because not owned by the user, or non-existent
@@ -271,12 +290,9 @@ class CctResourceTest {
   void shouldNotCatchValidationErrorWhenUpdateCalculationValidationFails()
       throws MethodArgumentNotValidException {
     UUID id = UUID.randomUUID();
-    Instant created = Instant.now();
-    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
+    CctCalculationSaveRequestDto dto = CctCalculationSaveRequestDto.builder()
         .id(id)
         .name("Test Calculation")
-        .created(created)
-        .lastModified(created)
         .build();
 
     when(service.updateCalculation(any(), any())).thenThrow(MethodArgumentNotValidException.class);
@@ -331,5 +347,37 @@ class CctResourceTest {
     ResponseStatusException exception = assertThrows(ResponseStatusException.class,
         () -> controller.deleteCalculation(id));
     assertThat("Unexpected status code.", exception.getStatusCode(), is(NOT_FOUND));
+  }
+
+  @Test
+  void shouldReturnCalculatedResult() {
+    CctProgrammeDetailsDto programmeDetails = CctProgrammeDetailsDto.builder()
+        .startDate(LocalDate.of(2023, 8, 2))
+        .lengthMonths(84)
+        .build();
+    List<CctChangeDto> changes = List.of();
+    CctCalculateRequestDto request = new CctCalculateRequestDto(programmeDetails, changes);
+    CctCalculateResponseDto result = CctCalculateResponseDto.builder()
+        .result(CctResultDto.builder()
+            .cctDate(LocalDate.of(2030, 7, 29))
+            .build())
+        .build();
+    when(service.calculate(request)).thenReturn(result);
+
+    ResponseEntity<CctCalculateResponseDto> response = controller.calculate(request);
+
+    assertThat("Unexpected response code.", response.getStatusCode(), is(OK));
+    assertThat("Unexpected response body.", response.getBody(), sameInstance(result));
+  }
+
+  @Test
+  void shouldGetSpecialties() {
+    List<CctSpecialtyDto> specialties = List.of(new CctSpecialtyDto("Paediatrics", 84, ST1));
+    when(specialtyService.getSpecialties()).thenReturn(specialties);
+
+    ResponseEntity<List<CctSpecialtyDto>> response = controller.getSpecialties();
+
+    assertThat("Unexpected response code.", response.getStatusCode(), is(OK));
+    assertThat("Unexpected response body.", response.getBody(), is(specialties));
   }
 }

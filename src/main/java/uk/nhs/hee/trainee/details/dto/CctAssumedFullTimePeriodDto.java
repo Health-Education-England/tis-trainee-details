@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright 2024 Crown Copyright (Health Education England)
+ * Copyright 2026 Crown Copyright (Health Education England)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -21,24 +21,24 @@
 
 package uk.nhs.hee.trainee.details.dto;
 
-import java.time.Instant;
-import java.util.UUID;
+import java.time.LocalDate;
 import lombok.Builder;
 
 /**
- * A summary of a CCT calculation.
+ * A period of training that no change covers, assumed to be full time, in a CCT calculation
+ * result.
  *
- * @param id                    The ID of the calculation.
- * @param name                  The name of the calculation.
- * @param programmeMembershipId The ID of the associated programme membership.
+ * @param startDate The start date of the period.
+ * @param endDate   The end date of the period, inclusive.
+ * @param months    The months in the period, both calendar and whole time equivalent.
  */
 @Builder
-public record CctCalculationSummaryDto(
+public record CctAssumedFullTimePeriodDto(
 
-    UUID id,
-    String name,
-    UUID programmeMembershipId,
-    Instant created,
-    Instant lastModified) {
+    LocalDate startDate,
+
+    LocalDate endDate,
+
+    double months) {
 
 }

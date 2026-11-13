@@ -41,9 +41,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import uk.nhs.hee.trainee.details.dto.CctCalculateRequestDto;
+import uk.nhs.hee.trainee.details.dto.CctCalculateResponseDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
+import uk.nhs.hee.trainee.details.dto.CctCalculationSaveRequestDto;
+import uk.nhs.hee.trainee.details.dto.CctSpecialtyDto;
 import uk.nhs.hee.trainee.details.dto.validation.Create;
 import uk.nhs.hee.trainee.details.service.CctService;
+import uk.nhs.hee.trainee.details.service.CctSpecialtyService;
 
 /**
  * A REST controller for CCT related endpoints.
@@ -55,14 +60,17 @@ import uk.nhs.hee.trainee.details.service.CctService;
 public class CctResource {
 
   private final CctService service;
+  private final CctSpecialtyService specialtyService;
 
   /**
    * Construct a REST controller for CCT related endpoints.
    *
-   * @param service               A service providing CCT functionality.
+   * @param service          A service providing CCT functionality.
+   * @param specialtyService A service providing the specialties for CCT calculations.
    */
-  public CctResource(CctService service) {
+  public CctResource(CctService service, CctSpecialtyService specialtyService) {
     this.service = service;
+    this.specialtyService = specialtyService;
   }
 
   /**
@@ -98,7 +106,7 @@ public class CctResource {
    */
   @PutMapping("/calculation/{id}")
   public ResponseEntity<CctCalculationDetailDto> updateCalculationDetails(@PathVariable UUID id,
-      @Validated @RequestBody CctCalculationDetailDto calculation)
+      @Validated @RequestBody CctCalculationSaveRequestDto calculation)
       throws MethodArgumentNotValidException {
     log.info("Request to update CCT calculation[{}]", id);
     Optional<CctCalculationDetailDto> savedCalculation;
@@ -145,7 +153,8 @@ public class CctResource {
    */
   @PostMapping("/calculation")
   public ResponseEntity<CctCalculationDetailDto> createCalculation(
-      @Validated(Create.class) @RequestBody CctCalculationDetailDto calculation) {
+      @Validated(Create.class) @RequestBody CctCalculationSaveRequestDto calculation)
+      throws MethodArgumentNotValidException {
     log.info("Request to create CCT calculation [{}]", calculation.name());
     CctCalculationDetailDto savedCalculation = service.createCalculation(calculation);
 
@@ -153,5 +162,29 @@ public class CctResource {
         savedCalculation.id());
     return ResponseEntity.created(URI.create("/api/cct/calculation/" + savedCalculation.id()))
         .body(savedCalculation);
+  }
+
+  /**
+   * Calculate a CCT date for the given programme details and changes.
+   *
+   * @param request The programme details and changes to calculate the CCT date for.
+   * @return The calculation, with any errors that would stop it being saved.
+   */
+  @PostMapping("/calculate")
+  public ResponseEntity<CctCalculateResponseDto> calculate(
+      @Validated @RequestBody CctCalculateRequestDto request) {
+    log.info("Request to calculate a CCT date");
+    return ResponseEntity.ok(service.calculate(request));
+  }
+
+  /**
+   * Get the specialties that CCT dates can be calculated for.
+   *
+   * @return The specialties.
+   */
+  @GetMapping("/specialties")
+  public ResponseEntity<List<CctSpecialtyDto>> getSpecialties() {
+    log.info("Request to get CCT specialties");
+    return ResponseEntity.ok(specialtyService.getSpecialties());
   }
 }
