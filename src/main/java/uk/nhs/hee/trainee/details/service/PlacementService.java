@@ -21,7 +21,6 @@
 
 package uk.nhs.hee.trainee.details.service;
 
-import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.List;
@@ -36,7 +35,6 @@ import uk.nhs.hee.trainee.details.model.TraineeProfile;
 import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 
 @Service
-@XRayEnabled
 @Slf4j
 public class PlacementService {
 

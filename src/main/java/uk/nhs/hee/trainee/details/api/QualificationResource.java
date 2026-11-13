@@ -21,7 +21,6 @@
 
 package uk.nhs.hee.trainee.details.api;
 
-import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -42,7 +41,6 @@ import uk.nhs.hee.trainee.details.service.QualificationService;
 @Slf4j
 @RestController
 @RequestMapping("/api/qualification")
-@XRayEnabled
 public class QualificationResource {
 
   private final QualificationService service;

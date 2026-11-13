@@ -27,7 +27,6 @@ import static uk.nhs.hee.trainee.details.model.HrefType.PROTOCOL_EMAIL;
 import static uk.nhs.hee.trainee.details.service.FeatureService.FOUNDATION_CURRICULUM_SUBTYPE;
 import static uk.nhs.hee.trainee.details.service.FeatureService.FOUNDATION_SPECIALTY;
 
-import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -64,7 +63,6 @@ import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
  * Programme Membership Service.
  */
 @Service
-@XRayEnabled
 @Slf4j
 public class ProgrammeMembershipService {
 

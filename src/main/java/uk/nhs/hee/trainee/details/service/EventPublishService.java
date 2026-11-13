@@ -21,7 +21,6 @@
 
 package uk.nhs.hee.trainee.details.service;
 
-import com.amazonaws.xray.spring.aop.XRayEnabled;
 import io.awspring.cloud.sns.core.SnsNotification;
 import io.awspring.cloud.sns.core.SnsTemplate;
 import io.awspring.cloud.sqs.operations.SqsTemplate;
@@ -43,7 +42,6 @@ import uk.nhs.hee.trainee.details.model.TraineeProfile;
  */
 @Slf4j
 @Service
-@XRayEnabled
 public class EventPublishService {
 
   private final SnsTemplate snsTemplate;

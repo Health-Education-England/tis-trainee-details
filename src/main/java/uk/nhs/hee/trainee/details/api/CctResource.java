@@ -21,7 +21,6 @@
 
 package uk.nhs.hee.trainee.details.api;
 
-import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
@@ -51,7 +50,6 @@ import uk.nhs.hee.trainee.details.service.CctService;
 @Slf4j
 @RestController
 @RequestMapping("/api/cct")
-@XRayEnabled
 public class CctResource {
 
   private final CctService service;

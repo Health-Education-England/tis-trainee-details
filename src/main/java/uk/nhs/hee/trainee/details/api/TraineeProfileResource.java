@@ -21,7 +21,6 @@
 
 package uk.nhs.hee.trainee.details.api;
 
-import com.amazonaws.xray.spring.aop.XRayEnabled;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.util.List;
@@ -49,7 +48,6 @@ import uk.nhs.hee.trainee.details.service.TraineeProfileService;
 @Slf4j
 @RestController
 @RequestMapping("/api/trainee-profile")
-@XRayEnabled
 public class TraineeProfileResource {
 
   private final TraineeProfileService service;

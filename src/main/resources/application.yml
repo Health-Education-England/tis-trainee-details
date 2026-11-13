@@ -92,12 +92,6 @@ application:
     programme-confirmation: v1.0.0
   timezone: Europe/London
 
-com:
-  amazonaws:
-    xray:
-      emitters:
-        daemon-address: ${AWS_XRAY_DAEMON_ADDRESS:}
-
 mongock:
   migration-scan-package: uk.nhs.hee.trainee.details.migration
 
