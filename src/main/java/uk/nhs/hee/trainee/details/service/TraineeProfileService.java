@@ -21,7 +21,6 @@
 
 package uk.nhs.hee.trainee.details.service;
 
-import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Comparator;
@@ -49,7 +48,6 @@ import uk.nhs.hee.trainee.details.repository.TraineeProfileRepository;
 
 @Slf4j
 @Service
-@XRayEnabled
 public class TraineeProfileService {
 
   private final TraineeProfileRepository repository;

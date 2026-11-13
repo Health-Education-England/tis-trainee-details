@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "uk.nhs.hee.trainee.details"
-version = "2.11.0"
+version = "2.12.0"
 
 configurations {
   compileOnly {
@@ -55,7 +55,6 @@ dependencies {
   // Amazon AWS
   implementation("io.awspring.cloud:spring-cloud-aws-starter-sqs")
   implementation("io.awspring.cloud:spring-cloud-aws-starter-sns")
-  implementation(libs.aws.xray.spring)
 
   // TODO: added to avoid refactoring after transitive dependency removed.
   implementation("commons-codec:commons-codec:1.22.0")

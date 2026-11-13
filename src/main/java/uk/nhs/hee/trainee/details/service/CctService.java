@@ -21,7 +21,6 @@
 
 package uk.nhs.hee.trainee.details.service;
 
-import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.lang.reflect.Method;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -54,7 +53,6 @@ import uk.nhs.hee.trainee.details.repository.CctCalculationRepository;
  */
 @Slf4j
 @Service
-@XRayEnabled
 public class CctService {
 
   protected static final double WTE_EPSILON = 0.01; //minimum WTE value

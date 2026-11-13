@@ -21,7 +21,6 @@
 
 package uk.nhs.hee.trainee.details.api;
 
-import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -45,7 +44,6 @@ import uk.nhs.hee.trainee.details.service.PersonalDetailsService;
 @Slf4j
 @RestController
 @RequestMapping("/api/basic-details")
-@XRayEnabled
 public class BasicDetailsResource {
 
   private final PersonalDetailsService service;

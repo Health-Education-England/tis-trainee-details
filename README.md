@@ -56,7 +56,6 @@ gradlew bootRun
 | TOPIC_ARN_COJ_SIGNED                  | The SNS topic for sending CoJ signing events.              |           |
 | TOPIC_ARN_GMC_DETAILS_PROVIDED        | The SNS topic for GMC detail provided event messages.      |           |
 | **Others:**                           |                                                            |           |
-| AWS_XRAY_DAEMON_ADDRESS               | The AWS XRay daemon host.                                  |           |
 | ENVIRONMENT                           | The environment to log events against.                     | local     |
 | SENTRY_DSN                            | A Sentry error monitoring Data Source Name.                |           |
 | SIGNATURE_SECRET_KEY                  | The signature secret key.                                  |           |

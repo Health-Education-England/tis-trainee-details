@@ -21,7 +21,6 @@
 
 package uk.nhs.hee.trainee.details.api;
 
-import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.io.IOException;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +51,6 @@ import uk.nhs.hee.trainee.details.service.ProgrammeMembershipService;
 @Slf4j
 @RestController
 @RequestMapping("/api/programme-membership")
-@XRayEnabled
 public class ProgrammeMembershipResource {
 
   private final ProgrammeMembershipService service;
