@@ -24,6 +24,7 @@ package uk.nhs.hee.trainee.details.dto.deserializer;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -57,7 +58,11 @@ public class CctChangesDeserializer extends StdDeserializer<List<CctChangeDto>> 
       } else if (token == JsonToken.VALUE_NULL) {
         changes.add(null);
       } else {
-        changes.add(context.readValue(parser, CctChangeDto.class));
+        try {
+          changes.add(context.readValue(parser, CctChangeDto.class));
+        } catch (JsonMappingException e) {
+          throw JsonMappingException.wrapWithPath(e, changes, changes.size());
+        }
       }
     }
     return changes;

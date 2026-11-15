@@ -22,8 +22,10 @@
 package uk.nhs.hee.trainee.details.dto;
 
 import com.fasterxml.jackson.core.JsonPointer;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.validation.FieldError;
 
 /**
@@ -51,5 +53,20 @@ public record BodyValidationError(String pointer, String detail) {
                 .thenComparing(BodyValidationError::detail)
         )
         .toList();
+  }
+
+  /**
+   * Convert a mapping exception to a body validation error for the field that could not be read.
+   *
+   * @param exception The mapping exception to convert.
+   * @return The equivalent body validation error.
+   */
+  public static BodyValidationError fromMappingException(JsonMappingException exception) {
+    String pointer = exception.getPath().stream()
+        .map(reference -> reference.getFieldName() == null
+            ? "[" + reference.getIndex() + "]"
+            : JsonPointer.SEPARATOR + reference.getFieldName())
+        .collect(Collectors.joining("", "#", ""));
+    return new BodyValidationError(pointer, "Invalid value.");
   }
 }

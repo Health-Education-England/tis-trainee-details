@@ -107,6 +107,20 @@ class CctChangesDeserializerTest {
     assertThrows(MismatchedInputException.class, () -> mapper.readValue(content, Request.class));
   }
 
+  @Test
+  void shouldIncludeIndexInPathWhenItemUnreadable() {
+    String content = requestJson(changesJson(2) + ",{\"type\":\"NOPE\"}");
+
+    MismatchedInputException exception = assertThrows(MismatchedInputException.class,
+        () -> mapper.readValue(content, Request.class));
+
+    List<String> path = exception.getPath().stream()
+        .map(reference -> reference.getFieldName() == null
+            ? String.valueOf(reference.getIndex()) : reference.getFieldName())
+        .toList();
+    assertThat("Unexpected path.", path, contains("changes", "2", "type"));
+  }
+
   @ParameterizedTest
   @ValueSource(strings = {"{}", "\"x\"", "\"\"", "5", "true"})
   void shouldRejectValueThatIsNotList(String value) {

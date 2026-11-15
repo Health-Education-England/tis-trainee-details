@@ -26,9 +26,13 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.LinkedHashMap;
@@ -38,13 +42,18 @@ import java.util.Random;
 import java.util.function.BiFunction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.context.MessageSourceResolvable;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpInputMessage;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
@@ -124,6 +133,71 @@ class RestResponseEntityExceptionHandlerTest {
     error = errorsList.get(3);
     assertThat("Unexpected error pointer.", error.pointer(), is("#/field2"));
     assertThat("Unexpected error detail.", error.detail(), is("detail3"));
+  }
+
+  @Test
+  void shouldHandleMessageNotReadableWhenFieldNotReadable() {
+    MismatchedInputException cause = assertThrows(MismatchedInputException.class,
+        () -> new ObjectMapper().readValue("{\"items\":[{\"count\":1},{\"count\":\"x\"}]}",
+            UnreadableBody.class));
+    HttpMessageNotReadableException exception = new HttpMessageNotReadableException("message",
+        cause, mock(HttpInputMessage.class));
+
+    HttpHeaders headers = HttpHeaders.EMPTY;
+    WebRequest request = new ServletWebRequest(new MockHttpServletRequest());
+
+    ResponseEntity<Object> response = handler.handleHttpMessageNotReadable(exception, headers,
+        STATUS_CODE, request);
+
+    assertThat("Unexpected response.", response, notNullValue());
+    assertThat("Unexpected headers.", response.getHeaders(), is(headers));
+    assertThat("Unexpected response code.", response.getStatusCode(), is(STATUS_CODE));
+    assertThat("Unexpected response type.", response.getBody(), instanceOf(ProblemDetail.class));
+
+    ProblemDetail problem = (ProblemDetail) response.getBody();
+    assertThat("Unexpected problem.", problem, notNullValue());
+    assertThat("Unexpected problem title.", problem.getTitle(), is("Validation failure"));
+    assertThat("Unexpected problem status.", problem.getStatus(), is(STATUS_CODE.value()));
+    assertThat("Unexpected problem detail.", problem.getDetail(), nullValue());
+
+    Map<String, Object> problemProperties = problem.getProperties();
+    assertThat("Unexpected problem properties.", problemProperties, notNullValue());
+    assertThat("Unexpected property count.", problemProperties.size(), is(1));
+
+    Object errors = problemProperties.get("errors");
+    assertThat("Unexpected errors type.", errors, instanceOf(List.class));
+
+    List<BodyValidationError> errorsList = (List<BodyValidationError>) errors;
+    assertThat("Unexpected errors count.", errorsList.size(), is(1));
+
+    BodyValidationError error = errorsList.get(0);
+    assertThat("Unexpected error pointer.", error.pointer(), is("#/items[1]/count"));
+    assertThat("Unexpected error detail.", error.detail(), is("Invalid value."));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"{\"items\":[{\"count\":1},", "\"x\""})
+  void shouldNotAddErrorsWhenMessageNotReadableWithoutUnreadableField(String content) {
+    JsonProcessingException cause = assertThrows(JsonProcessingException.class,
+        () -> new ObjectMapper().readValue(content, UnreadableBody.class));
+    HttpMessageNotReadableException exception = new HttpMessageNotReadableException("message",
+        cause, mock(HttpInputMessage.class));
+
+    HttpHeaders headers = HttpHeaders.EMPTY;
+    WebRequest request = new ServletWebRequest(new MockHttpServletRequest());
+
+    ResponseEntity<Object> response = handler.handleHttpMessageNotReadable(exception, headers,
+        HttpStatus.BAD_REQUEST, request);
+
+    assertThat("Unexpected response.", response, notNullValue());
+    assertThat("Unexpected response code.", response.getStatusCode(), is(HttpStatus.BAD_REQUEST));
+    assertThat("Unexpected response type.", response.getBody(), instanceOf(ProblemDetail.class));
+
+    ProblemDetail problem = (ProblemDetail) response.getBody();
+    assertThat("Unexpected problem.", problem, notNullValue());
+    assertThat("Unexpected problem title.", problem.getTitle(), is("Bad Request"));
+    assertThat("Unexpected problem detail.", problem.getDetail(), is("Failed to read request"));
+    assertThat("Unexpected problem properties.", problem.getProperties(), nullValue());
   }
 
   @Test
@@ -209,6 +283,14 @@ class RestResponseEntityExceptionHandlerTest {
     ParameterValidationError error = errorsList.get(0);
     assertThat("Unexpected error parameter.", error.parameter(), is("email"));
     assertThat("Unexpected error detail.", error.detail(), is(errorMsg));
+  }
+
+  record UnreadableBody(List<UnreadableItem> items) {
+
+  }
+
+  record UnreadableItem(Integer count) {
+
   }
 
   /**

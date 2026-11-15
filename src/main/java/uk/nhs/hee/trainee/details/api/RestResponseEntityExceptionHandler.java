@@ -21,6 +21,7 @@
 
 package uk.nhs.hee.trainee.details.api;
 
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import java.util.Comparator;
 import java.util.List;
 import org.springframework.http.HttpHeaders;
@@ -28,6 +29,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -59,6 +61,22 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
     problemDetail.setTitle(TITLE_VALIDATION_FAILURE);
     problemDetail.setProperty(ERRORS_PROPERTY, errors);
     return handleExceptionInternal(ex, problemDetail, headers, status, request);
+  }
+
+  @Override
+  protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex,
+      HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+
+    if (ex.getCause() instanceof MismatchedInputException cause && !cause.getPath().isEmpty()) {
+      List<BodyValidationError> errors = List.of(BodyValidationError.fromMappingException(cause));
+
+      ProblemDetail problemDetail = ProblemDetail.forStatus(status);
+      problemDetail.setTitle(TITLE_VALIDATION_FAILURE);
+      problemDetail.setProperty(ERRORS_PROPERTY, errors);
+      return handleExceptionInternal(ex, problemDetail, headers, status, request);
+    }
+
+    return super.handleHttpMessageNotReadable(ex, headers, status, request);
   }
 
   @Override

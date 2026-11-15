@@ -1440,10 +1440,11 @@ class CctResourceIntegrationTest {
             .content(request.toString()))
         .andExpect(status().isBadRequest())
         .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
-        .andExpect(jsonPath("$.title", is("Bad Request")))
-        .andExpect(jsonPath("$.detail", is("Failed to read request")))
+        .andExpect(jsonPath("$.title", is("Validation failure")))
         .andExpect(jsonPath("$.instance", is("/api/cct/calculate")))
-        .andExpect(jsonPath("$.errors").doesNotExist());
+        .andExpect(jsonPath("$.errors", hasSize(1)))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/programmeDetails/" + field)))
+        .andExpect(jsonPath("$.errors[0].detail", is("Invalid value.")));
   }
 
   @Test
@@ -1467,9 +1468,10 @@ class CctResourceIntegrationTest {
             .content(request.toString()))
         .andExpect(status().isBadRequest())
         .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
-        .andExpect(jsonPath("$.title", is("Bad Request")))
-        .andExpect(jsonPath("$.detail", is("Failed to read request")))
-        .andExpect(jsonPath("$.errors").doesNotExist());
+        .andExpect(jsonPath("$.title", is("Validation failure")))
+        .andExpect(jsonPath("$.errors", hasSize(1)))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/changes[0]/type")))
+        .andExpect(jsonPath("$.errors[0].detail", is("Invalid value.")));
   }
 
   @Test
