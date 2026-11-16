@@ -24,6 +24,7 @@ package uk.nhs.hee.trainee.details.dto;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 import lombok.Builder;
+import lombok.With;
 import uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType;
 
 /**
@@ -40,6 +41,7 @@ import uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType;
  *                                whitespace.
  */
 @Builder
+@With
 public record CctChangeDto(
 
     @NotNull(message = "Please choose a change type.")

@@ -153,6 +153,10 @@ A few details behind those steps:
   the engine adds 0.000000001 of a day first.
 - **The engine trusts its input.** Validation runs first and rejects, for
   example, overlapping changes or a second open-ended LTFT.
+- **Only time in the programme counts.** A change that starts before the
+  programme is counted from the programme start, in every step above. One that
+  ends before the programme counts for nothing. The change is still shown as
+  entered, with the months it credits from the programme start.
 - **Two rules are checked after calculating.** A change can't start before the
   programme, or start or end after the CCT date. A preview reports these as
   errors and still shows figures, so the trainee can see what to fix. Saving

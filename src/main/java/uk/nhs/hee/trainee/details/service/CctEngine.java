@@ -60,10 +60,13 @@ public class CctEngine {
   public CctCalculateResponseDto calculate(CctProgrammeDetailsDto programmeDetails,
       List<CctChangeDto> changes) {
     LocalDate programmeStartDate = programmeDetails.startDate();
-    List<CctChangeDto> datedChanges = changes.stream()
+    List<CctChangeDto> countedChanges = changes.stream()
+        .flatMap(change -> countedChange(change, programmeStartDate).stream())
+        .toList();
+    List<CctChangeDto> datedChanges = countedChanges.stream()
         .filter(change -> !isOpenLtftChange(change))
         .toList();
-    Projection projection = deriveProjection(programmeStartDate, changes, datedChanges);
+    Projection projection = deriveProjection(programmeStartDate, countedChanges, datedChanges);
     List<CctAssumedFullTimePeriodDto> assumedPeriods =
         deriveAssumedPeriods(programmeStartDate, datedChanges, projection.startDate());
 
@@ -104,9 +107,22 @@ public class CctEngine {
         .build();
 
     return CctCalculateResponseDto.builder()
-        .changes(changes.stream().map(CctEngine::calculatedChange).toList())
+        .changes(changes.stream()
+            .map(change -> calculatedChange(change, programmeStartDate))
+            .toList())
         .result(result)
         .build();
+  }
+
+  private static Optional<CctChangeDto> countedChange(CctChangeDto change,
+      LocalDate programmeStartDate) {
+    if (!change.startDate().isBefore(programmeStartDate)) {
+      return Optional.of(change);
+    }
+    if (change.endDate() != null && change.endDate().isBefore(programmeStartDate)) {
+      return Optional.empty();
+    }
+    return Optional.of(change.withStartDate(programmeStartDate));
   }
 
   private static boolean isOpenLtftChange(CctChangeDto change) {
@@ -156,17 +172,19 @@ public class CctEngine {
     return periods;
   }
 
-  private static CctCalculatedChangeDto calculatedChange(CctChangeDto change) {
+  private static CctCalculatedChangeDto calculatedChange(CctChangeDto change,
+      LocalDate programmeStartDate) {
     if (isOpenLtftChange(change)) {
       return CctCalculatedChangeDto.builder()
           .change(change)
           .build();
     }
 
+    Optional<CctChangeDto> countedChange = countedChange(change, programmeStartDate);
     return CctCalculatedChangeDto.builder()
         .change(change)
-        .calendarMonths(calendarMonths(change))
-        .wteMonths(wteMonths(change))
+        .calendarMonths(countedChange.map(CctEngine::calendarMonths).orElse(0.0))
+        .wteMonths(countedChange.map(CctEngine::wteMonths).orElse(0.0))
         .build();
   }
 

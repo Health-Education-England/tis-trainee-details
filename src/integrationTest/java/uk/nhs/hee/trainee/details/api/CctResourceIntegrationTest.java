@@ -1261,7 +1261,7 @@ class CctResourceIntegrationTest {
             .content(request.toString()))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.result.cctDate", is("2031-01-27")))
+        .andExpect(jsonPath("$.result.cctDate", is("2031-01-28")))
         .andExpect(jsonPath("$.errors", hasSize(1)))
         .andReturn().getResponse().getContentAsString();
 

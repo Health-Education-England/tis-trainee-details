@@ -399,8 +399,49 @@ class CctEngineTest {
         List.of(change(LTFT, "2024-02-01", "2024-08-01", 0.5, true))).result();
 
     assertThat("Unexpected assumed periods.", result.assumedFullTimePeriods(), empty());
-    assertThat("Unexpected months remaining.", result.monthsRemaining(), is(80.99));
-    assertThat("Unexpected CCT date.", result.cctDate(), is(date("2031-04-30")));
+    assertThat("Unexpected months remaining.", result.monthsRemaining(), is(84.0));
+    assertThat("Unexpected CCT date.", result.cctDate(), is(date("2031-08-29")));
+  }
+
+  @ParameterizedTest
+  @MethodSource("listChangesBeforeProgrammeWithTrimmedChanges")
+  void shouldCountChangesFromProgrammeStart(List<CctChangeDto> changes,
+      List<CctChangeDto> trimmedChanges) {
+    CctResultDto result = engine.calculate(programme(PAEDIATRICS_START, 84), changes).result();
+    CctResultDto trimmedResult = engine.calculate(programme(PAEDIATRICS_START, 84),
+        trimmedChanges).result();
+
+    assertThat("Unexpected result.", result, is(trimmedResult));
+  }
+
+  static Stream<Arguments> listChangesBeforeProgrammeWithTrimmedChanges() {
+    return Stream.of(
+        Arguments.of(
+            List.of(change(LTFT, "2023-06-01", "2024-01-31", 0.5, true)),
+            List.of(change(LTFT, PAEDIATRICS_START, "2024-01-31", 0.5, true))),
+        Arguments.of(
+            List.of(
+                change(LTFT, "2023-01-01", "2023-08-01", 0.5, true),
+                change(OOPT, "2024-01-01", "2024-06-30", null, true)),
+            List.of(change(OOPT, "2024-01-01", "2024-06-30", null, true))),
+        Arguments.of(
+            List.of(change(LTFT, "2023-05-01", null, 0.6, true)),
+            List.of(change(LTFT, PAEDIATRICS_START, null, 0.6, true)))
+    );
+  }
+
+  @Test
+  void shouldShowChangesAsEnteredWithMonthsCountedFromProgrammeStart() {
+    CctChangeDto straddling = change(LTFT, "2023-06-01", "2024-01-31", 0.5, true);
+    CctChangeDto endsBefore = change(LTFT, "2023-01-01", "2023-08-01", 0.5, true);
+    CctCalculateResponseDto response = engine.calculate(programme(PAEDIATRICS_START, 84),
+        List.of(straddling, endsBefore));
+    CctCalculatedChangeDto trimmed = engine.calculate(programme(PAEDIATRICS_START, 84),
+        List.of(straddling.withStartDate(date(PAEDIATRICS_START)))).changes().get(0);
+
+    assertThat("Unexpected changes.", response.changes(), is(List.of(
+        calculatedChange(straddling, trimmed.calendarMonths(), trimmed.wteMonths()),
+        calculatedChange(endsBefore, 0.0, 0.0))));
   }
 
   @Test
