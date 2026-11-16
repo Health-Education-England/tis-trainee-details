@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.MethodParameter;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -41,6 +42,8 @@ import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationInput;
 import uk.nhs.hee.trainee.details.dto.CctCalculationSaveRequestDto;
 import uk.nhs.hee.trainee.details.dto.CctChangeDto;
+import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto;
+import uk.nhs.hee.trainee.details.dto.CctSpecialtyDto;
 import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
 import uk.nhs.hee.trainee.details.exception.NotRecordOwnerException;
 import uk.nhs.hee.trainee.details.mapper.CctMapper;
@@ -62,6 +65,7 @@ public class CctService {
   private final CctCalculationRepository calculationRepository;
   private final CctMapper mapper;
   private final CctEngine engine;
+  private final CctSpecialtyService specialtyService;
 
   private static final Method CALCULATE_METHOD;
   private static final MethodParameter CALCULATE_METHOD_PARAMETER;
@@ -83,13 +87,15 @@ public class CctService {
    * @param calculationRepository The repository for CCT calculations.
    * @param mapper                A mapper to convert between CCT data types.
    * @param engine                A calculator for CCT dates.
+   * @param specialtyService      A service providing the CCT specialties.
    */
   public CctService(TraineeIdentity traineeIdentity, CctCalculationRepository calculationRepository,
-      CctMapper mapper, CctEngine engine) {
+      CctMapper mapper, CctEngine engine, CctSpecialtyService specialtyService) {
     this.traineeIdentity = traineeIdentity;
     this.calculationRepository = calculationRepository;
     this.mapper = mapper;
     this.engine = engine;
+    this.specialtyService = specialtyService;
   }
 
   /**
@@ -138,7 +144,9 @@ public class CctService {
    * @param dto The detail of the CCT calculation.
    * @return The created CCT calculation.
    * @throws MethodArgumentNotValidException If a change starts before the programme, or starts or
-   *                                         ends after the calculated CCT date.
+   *                                         ends after the calculated CCT date, or the specialty is
+   *                                         not listed, or its length or start grade is overridden
+   *                                         without notes.
    */
   public CctCalculationDetailDto createCalculation(CctCalculationSaveRequestDto dto)
       throws MethodArgumentNotValidException {
@@ -159,7 +167,9 @@ public class CctService {
    * @param dto The detail of the CCT calculation.
    * @return The updated CCT calculation, or optional empty if not found.
    * @throws MethodArgumentNotValidException If a change starts before the programme, or starts or
-   *                                         ends after the calculated CCT date.
+   *                                         ends after the calculated CCT date, or the specialty is
+   *                                         not listed, or its length or start grade is overridden
+   *                                         without notes.
    */
   public Optional<CctCalculationDetailDto> updateCalculation(UUID id,
       CctCalculationSaveRequestDto dto) throws MethodArgumentNotValidException {
@@ -217,12 +227,15 @@ public class CctService {
   }
 
   /**
-   * Calculate the CCT date for a CCT calculation being saved, and validate its changes against it.
+   * Calculate the CCT date for a CCT calculation being saved, and validate its changes against it
+   * and its programme details against the specialty.
    *
    * @param dto The detail of the CCT calculation.
    * @return The changes, with the months they credit, and the CCT date calculated from them.
    * @throws MethodArgumentNotValidException If a change starts before the programme, or starts or
-   *                                         ends after the calculated CCT date.
+   *                                         ends after the calculated CCT date, or the specialty is
+   *                                         not listed, or its length or start grade is overridden
+   *                                         without notes.
    */
   private CctCalculateResponseDto calculateForSave(CctCalculationSaveRequestDto dto)
       throws MethodArgumentNotValidException {
@@ -230,8 +243,10 @@ public class CctService {
 
     BeanPropertyBindingResult validationResult = validateChangeDates(dto,
         calculation.result().cctDate());
+    validateSpecialty(dto.programmeDetails(), validationResult);
     if (validationResult.hasErrors()) {
-      log.warn("CCT calculation [{}] cannot be saved: invalid change dates.", dto.name());
+      log.warn("CCT calculation [{}] cannot be saved: invalid change dates or specialty.",
+          dto.name());
       throw new MethodArgumentNotValidException(CALCULATE_METHOD_PARAMETER, validationResult);
     }
 
@@ -270,6 +285,49 @@ public class CctService {
     }
 
     return result;
+  }
+
+  /**
+   * Validate the programme details against the specialty they name: it must be listed, and a length
+   * or start grade that differs from the specialty's must have notes.
+   *
+   * @param details The programme details.
+   * @param result  The validation result to add any errors to.
+   */
+  private void validateSpecialty(CctProgrammeDetailsDto details,
+      BeanPropertyBindingResult result) {
+    Optional<CctSpecialtyDto> listed = specialtyService.getSpecialties().stream()
+        .filter(specialty -> specialty.name().equals(details.specialty()))
+        .findFirst();
+
+    if (listed.isEmpty()) {
+      addProgrammeDetailsError(result, "specialty", "Please choose a specialty from the list.");
+      return;
+    }
+
+    CctSpecialtyDto specialty = listed.get();
+    if (details.lengthMonths() != specialty.lengthMonths()
+        && !StringUtils.hasText(details.lengthOverrideNotes())) {
+      addProgrammeDetailsError(result, "lengthOverrideNotes",
+          "Please enter a reason for a different programme length.");
+    }
+    if (details.startGrade() != specialty.entryGrade()
+        && !StringUtils.hasText(details.startGradeOverrideNotes())) {
+      addProgrammeDetailsError(result, "startGradeOverrideNotes",
+          "Please enter a reason for overriding the default start grade.");
+    }
+  }
+
+  /**
+   * Add an error for a {@link CctProgrammeDetailsDto} field to a validation result.
+   *
+   * @param result  The validation result.
+   * @param field   The name of the field.
+   * @param message The error message.
+   */
+  private static void addProgrammeDetailsError(BeanPropertyBindingResult result, String field,
+      String message) {
+    result.addError(new FieldError("CctProgrammeDetailsDto", "programmeDetails." + field, message));
   }
 
   /**

@@ -395,6 +395,62 @@ class CctResourceIntegrationTest {
   }
 
   @Test
+  void shouldNotCreateCalculationWhenSpecialtyNotListed() throws Exception {
+    ObjectNode programmeDetails = (ObjectNode) calculationJson.get("programmeDetails");
+    programmeDetails.put("specialty", "Not listed");
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculation")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(calculationJson.toString()))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errors", hasSize(1)))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/programmeDetails/specialty")))
+        .andExpect(jsonPath("$.errors[0].detail", is("Please choose a specialty from the list.")));
+  }
+
+  @Test
+  void shouldNotCreateCalculationWhenOverridesHaveNoNotes() throws Exception {
+    ObjectNode programmeDetails = (ObjectNode) calculationJson.get("programmeDetails");
+    programmeDetails.put("lengthMonths", 85);
+    programmeDetails.put("lengthOverrideNotes", "");
+    programmeDetails.put("startGrade", "ST2");
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculation")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(calculationJson.toString()))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errors", hasSize(2)))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/programmeDetails/lengthOverrideNotes")))
+        .andExpect(jsonPath("$.errors[0].detail",
+            is("Please enter a reason for a different programme length.")))
+        .andExpect(
+            jsonPath("$.errors[1].pointer", is("#/programmeDetails/startGradeOverrideNotes")))
+        .andExpect(jsonPath("$.errors[1].detail",
+            is("Please enter a reason for overriding the default start grade.")));
+  }
+
+  @Test
+  void shouldCalculateWhenOverridesHaveNoNotes() throws Exception {
+    ObjectNode programmeDetails = (ObjectNode) calculationJson.get("programmeDetails");
+    programmeDetails.put("specialty", "Not listed");
+    programmeDetails.put("lengthMonths", 85);
+    programmeDetails.put("lengthOverrideNotes", "");
+    programmeDetails.put("startGrade", "ST2");
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculate")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(calculationJson.toString()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.errors", hasSize(0)));
+  }
+
+  @Test
   void shouldFailCreateCalculationValidationWhenIdPopulated() throws Exception {
     calculationJson.set("id", TextNode.valueOf(UUID.randomUUID().toString()));
 

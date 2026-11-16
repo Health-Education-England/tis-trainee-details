@@ -37,6 +37,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.LTFT;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST1;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST2;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -46,6 +47,9 @@ import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -57,7 +61,9 @@ import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationSaveRequestDto;
 import uk.nhs.hee.trainee.details.dto.CctChangeDto;
 import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto;
+import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto.CctProgrammeDetailsDtoBuilder;
 import uk.nhs.hee.trainee.details.dto.CctResultDto;
+import uk.nhs.hee.trainee.details.dto.CctSpecialtyDto;
 import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
 import uk.nhs.hee.trainee.details.exception.NotRecordOwnerException;
 import uk.nhs.hee.trainee.details.mapper.CctMapperImpl;
@@ -76,6 +82,7 @@ class CctServiceTest {
   private CctService service;
   private CctCalculationRepository calculationRepository;
   private CctEngine engine;
+  private CctSpecialtyService specialtyService;
 
   @BeforeEach
   void setUp() {
@@ -84,9 +91,12 @@ class CctServiceTest {
 
     calculationRepository = mock(CctCalculationRepository.class);
     engine = new CctEngine();
+    specialtyService = mock(CctSpecialtyService.class);
+    when(specialtyService.getSpecialties()).thenReturn(
+        List.of(new CctSpecialtyDto("Paediatrics", 84, ST1)));
 
     service = new CctService(traineeIdentity, calculationRepository, new CctMapperImpl(),
-        engine);
+        engine, specialtyService);
   }
 
   @Test
@@ -376,6 +386,83 @@ class CctServiceTest {
   }
 
   @Test
+  void shouldNotCreateCalculationWhenSpecialtyNotListed() {
+    CctCalculationSaveRequestDto dto = request(
+        programme().specialty("paediatrics").lengthMonths(85).startGrade(ST2));
+
+    MethodArgumentNotValidException exception = assertThrows(MethodArgumentNotValidException.class,
+        () -> service.createCalculation(dto));
+
+    assertThat("Unexpected errors.",
+        BodyValidationError.fromFieldErrors(exception.getFieldErrors()), is(List.of(
+            new BodyValidationError("#/programmeDetails/specialty",
+                "Please choose a specialty from the list."))));
+
+    verify(calculationRepository, never()).insert(any(CctCalculation.class));
+  }
+
+  @ParameterizedTest
+  @NullSource
+  @ValueSource(strings = {"", " "})
+  void shouldNotCreateCalculationWhenOverridesHaveNoNotes(String notes) {
+    CctCalculationSaveRequestDto dto = request(programme()
+        .lengthMonths(85)
+        .lengthOverrideNotes(notes)
+        .startGrade(ST2)
+        .startGradeOverrideNotes(notes));
+
+    MethodArgumentNotValidException exception = assertThrows(MethodArgumentNotValidException.class,
+        () -> service.createCalculation(dto));
+
+    assertThat("Unexpected errors.",
+        BodyValidationError.fromFieldErrors(exception.getFieldErrors()), is(List.of(
+            new BodyValidationError("#/programmeDetails/lengthOverrideNotes",
+                "Please enter a reason for a different programme length."),
+            new BodyValidationError("#/programmeDetails/startGradeOverrideNotes",
+                "Please enter a reason for overriding the default start grade."))));
+
+    verify(calculationRepository, never()).insert(any(CctCalculation.class));
+  }
+
+  @Test
+  void shouldCreateCalculationWhenOverridesHaveNotes() throws MethodArgumentNotValidException {
+    CctCalculationSaveRequestDto dto = request(programme()
+        .lengthMonths(85)
+        .lengthOverrideNotes("Agreed with local office")
+        .startGrade(ST2)
+        .startGradeOverrideNotes("Entered at ST2"));
+    when(calculationRepository.insert(any(CctCalculation.class))).thenAnswer(
+        invocation -> invocation.getArgument(0));
+
+    CctCalculationDetailDto created = service.createCalculation(dto);
+
+    assertThat("Unexpected programme details.", created.programmeDetails(),
+        is(dto.programmeDetails()));
+  }
+
+  @Test
+  void shouldNotUpdateExistingCalculationWhenSpecialtyNotListed() {
+    UUID id = UUID.randomUUID();
+    CctCalculation existingCalc = CctCalculation.builder()
+        .id(id)
+        .traineeId(TRAINEE_ID)
+        .build();
+    when(calculationRepository.findById(id)).thenReturn(Optional.of(existingCalc));
+
+    CctCalculationSaveRequestDto dto = request(programme().specialty("Not listed"));
+
+    MethodArgumentNotValidException exception = assertThrows(MethodArgumentNotValidException.class,
+        () -> service.updateCalculation(id, dto));
+
+    List<FieldError> fieldErrors = exception.getFieldErrors();
+    assertThat("Unexpected error count.", fieldErrors, hasSize(1));
+    assertThat("Unexpected error field.", fieldErrors.get(0).getField(),
+        is("programmeDetails.specialty"));
+
+    verify(calculationRepository, never()).save(any());
+  }
+
+  @Test
   void shouldUpdateExistingCalculationKeepingCreatedWhenOwnedByUser()
       throws MethodArgumentNotValidException {
     UUID id = UUID.randomUUID();
@@ -524,6 +611,19 @@ class CctServiceTest {
     verifyNoInteractions(calculationRepository);
   }
 
+  @ParameterizedTest
+  @ValueSource(strings = {"Paediatrics", "Not listed"})
+  void shouldCalculateWithoutCheckingSpecialty(String specialty) {
+    CctCalculateRequestDto request = new CctCalculateRequestDto(
+        programme().specialty(specialty).lengthMonths(85).startGrade(ST2).build(), List.of());
+
+    CctCalculateResponseDto response = service.calculate(request);
+
+    assertThat("Unexpected errors.", response.errors(), is(empty()));
+
+    verifyNoInteractions(specialtyService);
+  }
+
   @Test
   void shouldCalculateWithErrorsWhenChangeStartsBeforeProgramme() {
     CctCalculateRequestDto request = new CctCalculateRequestDto(programmeDetails(),
@@ -614,15 +714,26 @@ class CctServiceTest {
         .build();
   }
 
+  private static CctCalculationSaveRequestDto request(CctProgrammeDetailsDtoBuilder programme) {
+    return CctCalculationSaveRequestDto.builder()
+        .name("Test Calculation")
+        .programmeDetails(programme.build())
+        .changes(List.of())
+        .build();
+  }
+
   private static CctProgrammeDetailsDto programmeDetails() {
+    return programme().build();
+  }
+
+  private static CctProgrammeDetailsDtoBuilder programme() {
     return CctProgrammeDetailsDto.builder()
         .specialty("Paediatrics")
         .startDate(LocalDate.of(2023, 8, 2))
         .lengthMonths(84)
         .startGrade(ST1)
         .additionalMonths(0)
-        .acceleratedMonths(0)
-        .build();
+        .acceleratedMonths(0);
   }
 
   private static CctChangeDto datedLtft() {

@@ -34,6 +34,11 @@ public interface CctCalculationInput {
   int MAX_CHANGES = 200;
 
   /**
+   * The most characters a name or a programme details note can have.
+   */
+  int MAX_TEXT_LENGTH = 4096;
+
+  /**
    * Get the details of the programme.
    *
    * @return The programme details.

@@ -93,6 +93,21 @@ class CctCalculationSaveRequestDtoTest {
   }
 
   @Test
+  void shouldAcceptNameOfMaximumLength() {
+    List<BodyValidationError> errors = validate(request().name("x".repeat(4096)).build());
+
+    assertThat("Unexpected errors.", errors, is(empty()));
+  }
+
+  @Test
+  void shouldRejectNameOverMaximumLength() {
+    List<BodyValidationError> errors = validate(request().name("x".repeat(4097)).build());
+
+    assertThat("Unexpected errors.", errors, is(List.of(
+        error("#/name", "Name must be 4096 characters or less"))));
+  }
+
+  @Test
   void shouldRejectMissingProgrammeDetailsAndChanges() {
     List<BodyValidationError> errors = validate(CctCalculationSaveRequestDto.builder()
         .name("Test Calculation")

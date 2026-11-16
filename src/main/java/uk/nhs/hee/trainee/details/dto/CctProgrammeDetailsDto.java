@@ -24,6 +24,7 @@ package uk.nhs.hee.trainee.details.dto;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import lombok.Builder;
 import org.hibernate.validator.constraints.Range;
@@ -63,11 +64,15 @@ public record CctProgrammeDetailsDto(
     @JsonDeserialize(using = WholeNumberDeserializer.class)
     Integer lengthMonths,
 
+    @Size(max = CctCalculationInput.MAX_TEXT_LENGTH,
+        message = "Notes must be {max} characters or less")
     String lengthOverrideNotes,
 
     @NotNull(message = "Please choose a start grade.")
     CctTrainingGrade startGrade,
 
+    @Size(max = CctCalculationInput.MAX_TEXT_LENGTH,
+        message = "Notes must be {max} characters or less")
     String startGradeOverrideNotes,
 
     @NotNull(message =
@@ -77,6 +82,8 @@ public record CctProgrammeDetailsDto(
     @JsonDeserialize(using = WholeNumberDeserializer.class)
     Integer additionalMonths,
 
+    @Size(max = CctCalculationInput.MAX_TEXT_LENGTH,
+        message = "Notes must be {max} characters or less")
     String additionalMonthsNotes,
 
     @NotNull(message =
@@ -86,14 +93,20 @@ public record CctProgrammeDetailsDto(
     @JsonDeserialize(using = WholeNumberDeserializer.class)
     Integer acceleratedMonths,
 
+    @Size(max = CctCalculationInput.MAX_TEXT_LENGTH,
+        message = "Notes must be {max} characters or less")
     String acceleratedMonthsNotes,
 
     CctTrainingGrade eighteenMonthFinalGrade,
 
+    @Size(max = CctCalculationInput.MAX_TEXT_LENGTH,
+        message = "Notes must be {max} characters or less")
     String eighteenMonthFinalGradeNotes,
 
     CctTrainingGrade skippedGrade,
 
+    @Size(max = CctCalculationInput.MAX_TEXT_LENGTH,
+        message = "Notes must be {max} characters or less")
     String skippedGradeNotes) {
 
 }

@@ -50,6 +50,8 @@ public record CctCalculationSaveRequestDto(
     UUID id,
 
     @NotBlank
+    @Size(max = CctCalculationInput.MAX_TEXT_LENGTH,
+        message = "Name must be {max} characters or less")
     String name,
 
     @NotNull

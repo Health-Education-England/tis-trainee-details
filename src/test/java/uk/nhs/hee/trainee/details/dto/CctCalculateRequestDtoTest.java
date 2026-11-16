@@ -148,6 +148,41 @@ class CctCalculateRequestDtoTest {
     assertThat("Unexpected errors.", errors, is(empty()));
   }
 
+  @Test
+  void shouldAcceptProgrammeNotesOfMaximumLength() {
+    String notes = "x".repeat(4096);
+    List<BodyValidationError> errors = validate(programme()
+        .lengthOverrideNotes(notes)
+        .startGradeOverrideNotes(notes)
+        .additionalMonthsNotes(notes)
+        .acceleratedMonthsNotes(notes)
+        .eighteenMonthFinalGradeNotes(notes)
+        .skippedGradeNotes(notes), List.of());
+
+    assertThat("Unexpected errors.", errors, is(empty()));
+  }
+
+  @Test
+  void shouldRejectProgrammeNotesOverMaximumLength() {
+    String notes = "x".repeat(4097);
+    List<BodyValidationError> errors = validate(programme()
+        .lengthOverrideNotes(notes)
+        .startGradeOverrideNotes(notes)
+        .additionalMonthsNotes(notes)
+        .acceleratedMonthsNotes(notes)
+        .eighteenMonthFinalGradeNotes(notes)
+        .skippedGradeNotes(notes), List.of());
+
+    String detail = "Notes must be 4096 characters or less";
+    assertThat("Unexpected errors.", errors, is(List.of(
+        error("#/programmeDetails/acceleratedMonthsNotes", detail),
+        error("#/programmeDetails/additionalMonthsNotes", detail),
+        error("#/programmeDetails/eighteenMonthFinalGradeNotes", detail),
+        error("#/programmeDetails/lengthOverrideNotes", detail),
+        error("#/programmeDetails/skippedGradeNotes", detail),
+        error("#/programmeDetails/startGradeOverrideNotes", detail))));
+  }
+
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("listInvalidRequests")
   void shouldRejectInvalidRequest(String description, CctProgrammeDetailsDtoBuilder programme,
