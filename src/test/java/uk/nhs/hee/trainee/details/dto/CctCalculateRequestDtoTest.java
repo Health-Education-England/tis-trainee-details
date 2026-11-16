@@ -133,6 +133,14 @@ class CctCalculateRequestDtoTest {
   }
 
   @Test
+  void shouldAcceptChangeNotesOfMaximumLengthWithSurroundingWhitespace() {
+    List<BodyValidationError> errors = validate(programme(),
+        List.of(parental().notes("  " + "x".repeat(1000) + "\n").build()));
+
+    assertThat("Unexpected errors.", errors, is(empty()));
+  }
+
+  @Test
   void shouldAcceptMaximumNumberOfChanges() {
     List<BodyValidationError> errors = validate(programme(), oneDayChanges(200));
 

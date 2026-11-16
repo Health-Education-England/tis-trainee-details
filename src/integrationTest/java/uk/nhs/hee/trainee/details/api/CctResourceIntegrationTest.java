@@ -732,6 +732,27 @@ class CctResourceIntegrationTest {
   }
 
   @Test
+  void shouldSaveChangeNotesStrippedOfSurroundingWhitespace() throws Exception {
+    String notes = "x".repeat(1000);
+    ObjectNode change = (ObjectNode) calculationJson.get("changes").get(0);
+    change.put("notes", "  " + notes + "\n");
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    String response = mockMvc.perform(post("/api/cct/calculation")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(calculationJson.toString()))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.changes[0].notes", is(notes)))
+        .andReturn().getResponse().getContentAsString();
+
+    UUID id = UUID.fromString(JsonPath.read(response, "$.id"));
+    CctCalculation savedEntity = template.findById(id, CctCalculation.class);
+    assertThat("Unexpected missing saved entity.", savedEntity, notNullValue());
+    assertThat("Unexpected saved notes.", savedEntity.changes().get(0).notes(), is(notes));
+  }
+
+  @Test
   void shouldSaveAndGetChangesAndResultAsCalculated() throws Exception {
     ObjectNode request = calculateJson("""
         [

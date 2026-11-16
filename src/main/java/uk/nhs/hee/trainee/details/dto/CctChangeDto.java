@@ -36,7 +36,8 @@ import uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType;
  * @param wte                     The whole time equivalent of an LTFT change, or the approved
  *                                credit for an OOPR, as a fraction of full time.
  * @param countsTowardsCompletion Whether the change counts towards completion of training.
- * @param notes                   Notes about the change.
+ * @param notes                   Notes about the change, stripped of leading and trailing
+ *                                whitespace.
  */
 @Builder
 public record CctChangeDto(
@@ -54,4 +55,7 @@ public record CctChangeDto(
 
     String notes) {
 
+  public CctChangeDto {
+    notes = notes == null ? null : notes.strip();
+  }
 }

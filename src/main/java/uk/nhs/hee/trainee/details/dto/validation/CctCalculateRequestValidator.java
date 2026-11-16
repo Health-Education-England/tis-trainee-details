@@ -175,7 +175,7 @@ public class CctCalculateRequestValidator implements
   private static void validateChangeNotes(CctChangeDto change, int index,
       Violations violations) {
     String notes = change.notes();
-    if (notes != null && notes.strip().length() > NOTES_MAX_LENGTH) {
+    if (notes != null && notes.length() > NOTES_MAX_LENGTH) {
       violations.onChange(index, "notes",
           "Notes must be " + NOTES_MAX_LENGTH + " characters or less");
     }
