@@ -21,7 +21,6 @@
 
 package uk.nhs.hee.trainee.details.service;
 
-import com.amazonaws.xray.spring.aop.XRayEnabled;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,7 +34,6 @@ import uk.nhs.hee.trainee.details.dto.CctSpecialtyDto;
  */
 @Slf4j
 @Service
-@XRayEnabled
 public class CctSpecialtyService {
 
   private static final String SPECIALTIES_PATH = "/cct/specialties.json";

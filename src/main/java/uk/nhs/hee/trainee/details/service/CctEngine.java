@@ -25,7 +25,6 @@ import static java.time.temporal.ChronoUnit.DAYS;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.LTFT;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.OOPT;
 
-import com.amazonaws.xray.spring.aop.XRayEnabled;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -45,7 +44,6 @@ import uk.nhs.hee.trainee.details.dto.CctResultDto;
  * A calculator for CCT dates.
  */
 @Service
-@XRayEnabled
 public class CctEngine {
 
   private static final double PROJECTED_DAYS_PER_MONTH = 30.4;
