@@ -142,7 +142,7 @@ class CctCalculateRequestDtoTest {
 
   @Test
   void shouldAcceptMaximumNumberOfChanges() {
-    List<BodyValidationError> errors = validate(programme(), oneDayChanges(200));
+    List<BodyValidationError> errors = validate(programme(), oneDayChanges(50));
 
     assertThat("Unexpected errors.", errors, is(empty()));
   }
@@ -332,8 +332,8 @@ class CctCalculateRequestDtoTest {
                 "Projected change must begin after all other completed changes."))),
         Arguments.of("a missing change", programme(), Arrays.asList((CctChangeDto) null),
             List.of(error("#/changes[0]", "must not be null"))),
-        Arguments.of("more than 200 changes", programme(), oneDayChanges(201),
-            List.of(error("#/changes", "size must be between 0 and 200")))
+        Arguments.of("more than 50 changes", programme(), oneDayChanges(51),
+            List.of(error("#/changes", "size must be between 0 and 50")))
     );
   }
 

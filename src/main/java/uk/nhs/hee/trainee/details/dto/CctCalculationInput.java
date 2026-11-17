@@ -31,7 +31,7 @@ public interface CctCalculationInput {
   /**
    * The most changes a calculation can have.
    */
-  int MAX_CHANGES = 200;
+  int MAX_CHANGES = 50;
 
   /**
    * The most characters a name or a programme details note can have.

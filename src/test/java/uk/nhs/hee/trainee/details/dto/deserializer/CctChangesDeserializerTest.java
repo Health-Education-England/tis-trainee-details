@@ -53,7 +53,7 @@ class CctChangesDeserializerTest {
   }
 
   @ParameterizedTest
-  @ValueSource(ints = {0, 1, 200})
+  @ValueSource(ints = {0, 1, 50})
   void shouldKeepAllChangesWhenWithinLimit(int count) throws IOException {
     Request request = mapper.readValue(requestJson(changesJson(count)), Request.class);
 
@@ -62,11 +62,11 @@ class CctChangesDeserializerTest {
   }
 
   @ParameterizedTest
-  @ValueSource(ints = {201, 202, 1000})
+  @ValueSource(ints = {51, 52, 1000})
   void shouldKeepOneChangePastLimitWhenOverLimit(int count) throws IOException {
     Request request = mapper.readValue(requestJson(changesJson(count)), Request.class);
 
-    assertThat("Unexpected changes.", request.changes(), is(changes(201)));
+    assertThat("Unexpected changes.", request.changes(), is(changes(51)));
     assertThat("Unexpected name.", request.name(), is("After"));
   }
 
@@ -74,11 +74,11 @@ class CctChangesDeserializerTest {
   @ValueSource(strings = {"{\"type\":\"NOPE\"}", "{\"a\":{\"b\":[1]}}", "[1,[2]]", "\"x\"", "5",
       "true", "null"})
   void shouldSkipItemsPastLimitWithoutReadingThem(String item) throws IOException {
-    String json = changesJson(201) + "," + item + "," + item;
+    String json = changesJson(51) + "," + item + "," + item;
 
     Request request = mapper.readValue(requestJson(json), Request.class);
 
-    assertThat("Unexpected changes.", request.changes(), is(changes(201)));
+    assertThat("Unexpected changes.", request.changes(), is(changes(51)));
     assertThat("Unexpected name.", request.name(), is("After"));
   }
 
@@ -102,7 +102,7 @@ class CctChangesDeserializerTest {
   @ParameterizedTest
   @ValueSource(strings = {"{\"type\":\"NOPE\"}", "[]", "\"x\"", "5", "true"})
   void shouldRejectUnreadableItemWithinLimit(String item) {
-    String content = requestJson(changesJson(200) + "," + item);
+    String content = requestJson(changesJson(50) + "," + item);
 
     assertThrows(MismatchedInputException.class, () -> mapper.readValue(content, Request.class));
   }

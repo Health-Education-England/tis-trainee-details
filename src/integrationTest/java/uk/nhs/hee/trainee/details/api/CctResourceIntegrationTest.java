@@ -373,9 +373,9 @@ class CctResourceIntegrationTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(request.toString()))
         .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.errors", hasSize(202)))
+        .andExpect(jsonPath("$.errors", hasSize(52)))
         .andExpect(jsonPath("$.errors[0].pointer", is("#/changes")))
-        .andExpect(jsonPath("$.errors[0].detail", is("size must be between 0 and 200")));
+        .andExpect(jsonPath("$.errors[0].detail", is("size must be between 0 and 50")));
   }
 
   @Test
@@ -957,9 +957,9 @@ class CctResourceIntegrationTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(request.toString()))
         .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.errors", hasSize(202)))
+        .andExpect(jsonPath("$.errors", hasSize(52)))
         .andExpect(jsonPath("$.errors[0].pointer", is("#/changes")))
-        .andExpect(jsonPath("$.errors[0].detail", is("size must be between 0 and 200")));
+        .andExpect(jsonPath("$.errors[0].detail", is("size must be between 0 and 50")));
   }
 
   @Test
@@ -1388,9 +1388,9 @@ class CctResourceIntegrationTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(request.toString()))
         .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.errors", hasSize(202)))
+        .andExpect(jsonPath("$.errors", hasSize(52)))
         .andExpect(jsonPath("$.errors[0].pointer", is("#/changes")))
-        .andExpect(jsonPath("$.errors[0].detail", is("size must be between 0 and 200")));
+        .andExpect(jsonPath("$.errors[0].detail", is("size must be between 0 and 50")));
   }
 
   @ParameterizedTest
