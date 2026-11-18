@@ -78,10 +78,8 @@ public record CctCalculation(
    * @param lengthOverrideNotes          The reason the length differs from the specialty's.
    * @param startGrade                   The grade the programme starts at.
    * @param startGradeOverrideNotes      The reason the start grade differs from the specialty's.
-   * @param additionalMonths             The additional training time, in months.
-   * @param additionalMonthsNotes        The reason for the additional training time.
-   * @param acceleratedMonths            The accelerated training time, in months.
-   * @param acceleratedMonthsNotes       The reason for the accelerated training time.
+   * @param additionalTrainingTime       The additional training time in each grade.
+   * @param acceleratedTrainingTime      The accelerated training time in each grade.
    * @param eighteenMonthFinalGrade      The grade with an 18-month final year, if any.
    * @param eighteenMonthFinalGradeNotes The reason for the 18-month final year.
    * @param skippedGrade                 The grade year that is skipped, if any.
@@ -95,14 +93,27 @@ public record CctCalculation(
       String lengthOverrideNotes,
       CctTrainingGrade startGrade,
       String startGradeOverrideNotes,
-      Integer additionalMonths,
-      String additionalMonthsNotes,
-      Integer acceleratedMonths,
-      String acceleratedMonthsNotes,
+      List<CctTrainingTime> additionalTrainingTime,
+      List<CctTrainingTime> acceleratedTrainingTime,
       CctTrainingGrade eighteenMonthFinalGrade,
       String eighteenMonthFinalGradeNotes,
       CctTrainingGrade skippedGrade,
       String skippedGradeNotes) {
+
+  }
+
+  /**
+   * Additional or accelerated training time in one grade.
+   *
+   * @param grade  The grade the training time applies to.
+   * @param months The training time, in months.
+   * @param notes  The reason for the training time.
+   */
+  @Builder
+  public record CctTrainingTime(
+      CctTrainingGrade grade,
+      Integer months,
+      String notes) {
 
   }
 

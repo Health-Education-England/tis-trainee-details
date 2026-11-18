@@ -279,10 +279,8 @@ class CctResourceIntegrationTest {
                 "lengthOverrideNotes": "Agreed with local office",
                 "startGrade": "ST1",
                 "startGradeOverrideNotes": null,
-                "additionalMonths": 0,
-                "additionalMonthsNotes": null,
-                "acceleratedMonths": 0,
-                "acceleratedMonthsNotes": null,
+                "additionalTrainingTime": [],
+                "acceleratedTrainingTime": [],
                 "eighteenMonthFinalGrade": null,
                 "eighteenMonthFinalGradeNotes": null,
                 "skippedGrade": null,
@@ -661,10 +659,8 @@ class CctResourceIntegrationTest {
             "lengthOverrideNotes": "Agreed with local office",
             "startGrade": "ST1",
             "startGradeOverrideNotes": "",
-            "additionalMonths": 0,
-            "additionalMonthsNotes": "",
-            "acceleratedMonths": 0,
-            "acceleratedMonthsNotes": "",
+            "additionalTrainingTime": [],
+            "acceleratedTrainingTime": [],
             "eighteenMonthFinalGrade": null,
             "eighteenMonthFinalGradeNotes": "",
             "skippedGrade": null,
@@ -783,8 +779,12 @@ class CctResourceIntegrationTest {
         ]
         """);
     ObjectNode programmeDetails = (ObjectNode) request.get("programmeDetails");
-    programmeDetails.put("additionalMonths", 6);
-    programmeDetails.put("additionalMonthsNotes", "ARCP outcome");
+    programmeDetails.set("additionalTrainingTime", new ObjectMapper().readTree("""
+        [
+          { "grade": "ST1", "months": 4, "notes": "ARCP outcome 3" },
+          { "grade": "ST2", "months": 2, "notes": "ARCP outcome 3" }
+        ]
+        """));
 
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
     String calculated = mockMvc.perform(post("/api/cct/calculate")
@@ -812,6 +812,8 @@ class CctResourceIntegrationTest {
     JsonNode expected = mapper.readTree(calculated);
     for (String body : List.of(saved, loaded)) {
       JsonNode actual = mapper.readTree(body);
+      assertThat("Unexpected programme details.", actual.get("programmeDetails"),
+          is(programmeDetails));
       assertThat("Unexpected changes.", actual.get("changes"), is(expected.get("changes")));
       assertThat("Unexpected result.", actual.get("result"), is(expected.get("result")));
     }
@@ -1499,16 +1501,12 @@ class CctResourceIntegrationTest {
       startDate         | '"2023-02-30"'
       startGrade        | '"ST99"'
       lengthMonths      | 84.5
-      additionalMonths  | 2.5
-      acceleratedMonths | 2.5
       """)
   void shouldNotCalculateWhenProgrammeDetailsNotReadable(String field, String value)
       throws Exception {
     ObjectNode request = calculateJson("[]");
     ObjectNode programmeDetails = (ObjectNode) request.get("programmeDetails");
     programmeDetails.set(field, new ObjectMapper().readTree(value));
-    programmeDetails.put("additionalMonthsNotes", "why");
-    programmeDetails.put("acceleratedMonthsNotes", "why");
 
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
     mockMvc.perform(post("/api/cct/calculate")
@@ -1521,6 +1519,31 @@ class CctResourceIntegrationTest {
         .andExpect(jsonPath("$.instance", is("/api/cct/calculate")))
         .andExpect(jsonPath("$.errors", hasSize(1)))
         .andExpect(jsonPath("$.errors[0].pointer", is("#/programmeDetails/" + field)))
+        .andExpect(jsonPath("$.errors[0].detail", is("Invalid value.")));
+  }
+
+  @ParameterizedTest
+  @CsvSource(delimiter = '|', textBlock = """
+      additionalTrainingTime  | '{"grade": "ST1", "months": 2.5, "notes": "why"}' | months
+      acceleratedTrainingTime | '{"grade": "ST99", "months": 2, "notes": "why"}'  | grade
+      """)
+  void shouldNotCalculateWhenTrainingTimeNotReadable(String list, String entry, String field)
+      throws Exception {
+    ObjectNode request = calculateJson("[]");
+    ((ObjectNode) request.get("programmeDetails")).set(list, new ObjectMapper().readTree(
+        "[{\"grade\": \"ST1\", \"months\": 1, \"notes\": \"why\"}, " + entry + "]"));
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculate")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(request.toString()))
+        .andExpect(status().isBadRequest())
+        .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+        .andExpect(jsonPath("$.title", is("Validation failure")))
+        .andExpect(jsonPath("$.errors", hasSize(1)))
+        .andExpect(jsonPath("$.errors[0].pointer",
+            is("#/programmeDetails/" + list + "[1]/" + field)))
         .andExpect(jsonPath("$.errors[0].detail", is("Invalid value.")));
   }
 
@@ -1590,8 +1613,8 @@ class CctResourceIntegrationTest {
             .lengthMonths(84)
             .lengthOverrideNotes("Agreed with local office")
             .startGrade(ST1)
-            .additionalMonths(0)
-            .acceleratedMonths(0)
+            .additionalTrainingTime(List.of())
+            .acceleratedTrainingTime(List.of())
             .build())
         .changes(List.of(CctChange.builder()
             .type(LTFT)
@@ -1653,10 +1676,8 @@ class CctResourceIntegrationTest {
             "lengthOverrideNotes": "Agreed with local office",
             "startGrade": "ST1",
             "startGradeOverrideNotes": "",
-            "additionalMonths": 0,
-            "additionalMonthsNotes": "",
-            "acceleratedMonths": 0,
-            "acceleratedMonthsNotes": "",
+            "additionalTrainingTime": [],
+            "acceleratedTrainingTime": [],
             "eighteenMonthFinalGrade": null,
             "eighteenMonthFinalGradeNotes": "",
             "skippedGrade": null,

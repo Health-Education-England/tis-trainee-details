@@ -22,12 +22,15 @@
 package uk.nhs.hee.trainee.details.dto;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
+import java.util.List;
 import lombok.Builder;
 import org.hibernate.validator.constraints.Range;
+import uk.nhs.hee.trainee.details.dto.deserializer.CctTrainingTimeDeserializer;
 import uk.nhs.hee.trainee.details.dto.deserializer.WholeNumberDeserializer;
 import uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade;
 
@@ -40,10 +43,8 @@ import uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade;
  * @param lengthOverrideNotes          The reason the length differs from the specialty's.
  * @param startGrade                   The grade the programme starts at.
  * @param startGradeOverrideNotes      The reason the start grade differs from the specialty's.
- * @param additionalMonths             The additional training time, in months.
- * @param additionalMonthsNotes        The reason for the additional training time.
- * @param acceleratedMonths            The accelerated training time, in months.
- * @param acceleratedMonthsNotes       The reason for the accelerated training time.
+ * @param additionalTrainingTime       The additional training time in each grade.
+ * @param acceleratedTrainingTime      The accelerated training time in each grade.
  * @param eighteenMonthFinalGrade      The grade with an 18-month final year, if any.
  * @param eighteenMonthFinalGradeNotes The reason for the 18-month final year.
  * @param skippedGrade                 The grade year that is skipped, if any.
@@ -75,27 +76,19 @@ public record CctProgrammeDetailsDto(
         message = "Notes must be {max} characters or less")
     String startGradeOverrideNotes,
 
-    @NotNull(message =
-        "Additional training time must be a whole number of months between 0 and 24.")
-    @Range(min = 0, max = 24,
-        message = "Additional training time must be a whole number of months between 0 and 24.")
-    @JsonDeserialize(using = WholeNumberDeserializer.class)
-    Integer additionalMonths,
+    @NotNull
+    @Size(max = CctCalculationInput.MAX_TRAINING_TIME_ENTRIES,
+        message = "You cannot add more than {max} additional training time entries.")
+    @Valid
+    @JsonDeserialize(using = CctTrainingTimeDeserializer.class)
+    List<@NotNull CctTrainingTimeDto> additionalTrainingTime,
 
-    @Size(max = CctCalculationInput.MAX_TEXT_LENGTH,
-        message = "Notes must be {max} characters or less")
-    String additionalMonthsNotes,
-
-    @NotNull(message =
-        "Accelerated training time must be a whole number of months between 0 and 12.")
-    @Range(min = 0, max = 12,
-        message = "Accelerated training time must be a whole number of months between 0 and 12.")
-    @JsonDeserialize(using = WholeNumberDeserializer.class)
-    Integer acceleratedMonths,
-
-    @Size(max = CctCalculationInput.MAX_TEXT_LENGTH,
-        message = "Notes must be {max} characters or less")
-    String acceleratedMonthsNotes,
+    @NotNull
+    @Size(max = CctCalculationInput.MAX_TRAINING_TIME_ENTRIES,
+        message = "You cannot add more than {max} accelerated training time entries.")
+    @Valid
+    @JsonDeserialize(using = CctTrainingTimeDeserializer.class)
+    List<@NotNull CctTrainingTimeDto> acceleratedTrainingTime,
 
     CctTrainingGrade eighteenMonthFinalGrade,
 

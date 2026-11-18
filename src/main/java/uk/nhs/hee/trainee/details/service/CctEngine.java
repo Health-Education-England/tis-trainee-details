@@ -39,6 +39,7 @@ import uk.nhs.hee.trainee.details.dto.CctChangeDto;
 import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto;
 import uk.nhs.hee.trainee.details.dto.CctProjectionDto;
 import uk.nhs.hee.trainee.details.dto.CctResultDto;
+import uk.nhs.hee.trainee.details.dto.CctTrainingTimeDto;
 
 /**
  * A calculator for CCT dates.
@@ -82,7 +83,8 @@ public class CctEngine {
     }
 
     int adjustedLengthMonths = programmeDetails.lengthMonths()
-        + programmeDetails.additionalMonths() - programmeDetails.acceleratedMonths();
+        + totalMonths(programmeDetails.additionalTrainingTime())
+        - totalMonths(programmeDetails.acceleratedTrainingTime());
     double monthsRemaining = roundToTwoDecimals(adjustedLengthMonths - totalWteMonthsCompleted);
 
     double calendarMonthsToCompletion = monthsRemaining / projection.wte();
@@ -112,6 +114,12 @@ public class CctEngine {
             .toList())
         .result(result)
         .build();
+  }
+
+  private static int totalMonths(List<CctTrainingTimeDto> entries) {
+    return entries.stream()
+        .mapToInt(CctTrainingTimeDto::months)
+        .sum();
   }
 
   private static Optional<CctChangeDto> countedChange(CctChangeDto change,

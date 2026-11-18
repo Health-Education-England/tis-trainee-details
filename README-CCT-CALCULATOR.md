@@ -18,7 +18,8 @@ adds up the months a trainee has been credited with, works out what's left, and
 turns that into a date.
 
 1. **Months needed** are the programme length, plus any additional months, less
-   any accelerated months.
+   any accelerated months. Both are recorded per grade, and only their totals
+   are used here.
 2. **Months completed** are the credit from each change the trainee has entered,
    plus full credit for the time around those changes.
 3. **Months remaining** are months needed less months completed, rounded to 2
@@ -99,7 +100,8 @@ The calculator receives the programme details and the list of changes.
 
 ```text
 STEP 1  Work out the months needed
-  months needed = programme length + additional months - accelerated months
+  months needed = programme length + total additional months
+                  - total accelerated months
 
 STEP 2  Work out where the projection starts:
   a. if there is an open-ended LTFT change,
