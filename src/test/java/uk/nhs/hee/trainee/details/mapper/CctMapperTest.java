@@ -45,6 +45,7 @@ import uk.nhs.hee.trainee.details.dto.CctTrainingTimeDto;
 import uk.nhs.hee.trainee.details.model.CctCalculation;
 import uk.nhs.hee.trainee.details.model.CctCalculation.CctChange;
 import uk.nhs.hee.trainee.details.service.CctEngine;
+import uk.nhs.hee.trainee.details.service.CctGradeProgression;
 
 @ExtendWith(MockitoExtension.class)
 class CctMapperTest {
@@ -180,6 +181,7 @@ class CctMapperTest {
   }
 
   private static CctCalculateResponseDto calculate(CctCalculationSaveRequestDto dto) {
-    return new CctEngine().calculate(dto.programmeDetails(), dto.changes());
+    return new CctEngine(new CctGradeProgression()).calculate(dto.programmeDetails(),
+        dto.changes());
   }
 }

@@ -40,6 +40,7 @@ import lombok.Builder;
  * @param assumedFullTimePeriods   The periods before the projection that no change covers, in
  *                                 start date order.
  * @param projection               The projection of the remaining training to the CCT date.
+ * @param gradeProgression         The grade for each year of the programme, and when it ends.
  */
 @Builder
 public record CctResultDto(
@@ -58,6 +59,8 @@ public record CctResultDto(
 
     List<CctAssumedFullTimePeriodDto> assumedFullTimePeriods,
 
-    CctProjectionDto projection) {
+    CctProjectionDto projection,
+
+    List<CctGradeYearDto> gradeProgression) {
 
 }
