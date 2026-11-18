@@ -32,14 +32,20 @@ import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.OOPC;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.OOPR;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.OOPT;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.PARENTAL;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.DFT;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST1;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST2;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST3;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST4;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST5;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST6;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST7;
 
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,6 +60,7 @@ import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto;
 import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto.CctTrainingTimeDto;
 import uk.nhs.hee.trainee.details.dto.CctResultDto;
 import uk.nhs.hee.trainee.details.dto.CctResultDto.CctAssumedFullTimePeriodDto;
+import uk.nhs.hee.trainee.details.dto.CctResultDto.CctGradeYearDto;
 import uk.nhs.hee.trainee.details.dto.CctResultDto.CctProjectionDto;
 import uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType;
 import uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade;
@@ -67,7 +74,7 @@ class CctCalculatorTest {
 
   @BeforeEach
   void setUp() {
-    calculator = new CctCalculator();
+    calculator = new CctCalculator(new CctGradeProgression());
   }
 
   @Test
@@ -271,9 +278,96 @@ class CctCalculatorTest {
 
     CctResultDto expected = calculator.calculate(
         programme(PAEDIATRICS_START, 84, 9, 3), List.of()).result();
-    assertThat("Unexpected result.", result, is(expected));
+    assertThat("Unexpected CCT date.", result.cctDate(), is(expected.cctDate()));
+    assertThat("Unexpected months remaining.", result.monthsRemaining(),
+        is(expected.monthsRemaining()));
     assertThat("Unexpected adjusted programme end date.", result.adjustedProgrammeEndDate(),
         is(date("2031-01-28")));
+  }
+
+  @Test
+  void shouldMoveEachGradeAndLaterGradesByItsTrainingTime() {
+    List<CctTrainingTimeDto> additional = Stream.of(
+            trainingTime(ST1, 3), trainingTime(ST2, 2), trainingTime(ST3, 4))
+        .flatMap(List::stream)
+        .toList();
+    List<CctTrainingTimeDto> accelerated = Stream.of(trainingTime(ST1, 1), trainingTime(ST2, 2))
+        .flatMap(List::stream)
+        .toList();
+
+    CctResultDto result = calculator.calculate(
+        programme(PAEDIATRICS_START, 84, additional, accelerated), List.of()).result();
+
+    assertThat("Unexpected grade progression.", result.gradeProgression(), is(List.of(
+        gradeYear(1, ST1, "2024-09-30").additionalMonths(3).acceleratedMonths(1).build(),
+        gradeYear(2, ST2, "2025-09-30").additionalMonths(2).acceleratedMonths(2).build(),
+        gradeYear(3, ST3, "2027-01-29").additionalMonths(4).build(),
+        gradeYear(4, ST4, "2028-01-29").build(),
+        gradeYear(5, ST5, "2029-01-28").build(),
+        gradeYear(6, ST6, "2030-01-28").build(),
+        gradeYear(7, ST7, "2031-01-28").build())));
+  }
+
+  @Test
+  void shouldExtendEighteenMonthFinalGradeAndDropFollowingGrade() {
+    CctProgrammeDetailsDto programme = programmeBuilder("Paediatrics", 66, ST1)
+        .eighteenMonthFinalGrade(ST5)
+        .eighteenMonthFinalGradeNotes("Dual CCT")
+        .build();
+
+    CctResultDto result = calculator.calculate(programme, List.of()).result();
+
+    assertThat("Unexpected grade progression.", result.gradeProgression(), is(List.of(
+        gradeYear(1, ST1, "2024-07-31").build(),
+        gradeYear(2, ST2, "2025-07-31").build(),
+        gradeYear(3, ST3, "2026-07-31").build(),
+        gradeYear(4, ST4, "2027-07-31").build(),
+        gradeYear(5, ST5, "2029-01-28").extendedToEighteenMonths(true).build())));
+    assertThat("Unexpected CCT date.", result.cctDate(), is(date("2029-01-28")));
+  }
+
+  @Test
+  void shouldMoveLaterGradesOnAfterSkippedGradeWithoutChangingDates() {
+    CctProgrammeDetailsDto programme = programmeBuilder("Paediatrics", 36, ST1)
+        .skippedGrade(ST2)
+        .skippedGradeNotes("Core competencies")
+        .build();
+
+    CctResultDto result = calculator.calculate(programme, List.of()).result();
+
+    assertThat("Unexpected grade progression.", result.gradeProgression(), is(List.of(
+        gradeYear(1, ST1, "2024-07-31").build(),
+        gradeYear(2, ST3, "2025-07-31").skippedGradeBeforeThisRow(ST2).build(),
+        gradeYear(3, ST4, "2026-07-31").build())));
+  }
+
+  @ParameterizedTest
+  @CsvSource({"ST8, 36, ST9", "CT3, 36, CT4", "DCT2, 36, DCT3", "F1, 36, F2"})
+  void shouldNotNameGradesPastHighestKnownGrade(CctTrainingGrade startGrade, int lengthMonths,
+      CctTrainingGrade highestGrade) {
+    CctProgrammeDetailsDto programme = programmeBuilder("Paediatrics", lengthMonths, startGrade)
+        .build();
+
+    List<CctGradeYearDto> years = calculator.calculate(programme, List.of()).result()
+        .gradeProgression();
+
+    assertThat("Unexpected grade progression.", years, is(List.of(
+        gradeYear(1, startGrade, "2024-07-31").build(),
+        gradeYear(2, highestGrade, "2025-07-31").build(),
+        gradeYear(3, null, "2026-07-31").exceedsKnownTrainingGrade(true).build())));
+  }
+
+  @Test
+  void shouldKeepUnnumberedGradeEachYear() {
+    CctProgrammeDetailsDto programme = programmeBuilder("Dental foundation training", 24, DFT)
+        .build();
+
+    List<CctGradeYearDto> years = calculator.calculate(programme, List.of()).result()
+        .gradeProgression();
+
+    assertThat("Unexpected grade progression.", years, is(List.of(
+        gradeYear(1, DFT, "2024-07-31").build(),
+        gradeYear(2, DFT, "2025-07-31").build())));
   }
 
   @Test
@@ -292,6 +386,8 @@ class CctCalculatorTest {
             .monthsRemaining(84)
             .assumedFullTimePeriods(List.of())
             .projection(projection("2023-08-02", 1, 84, 84))
+            .gradeProgression(gradeYears("2024-07-31", "2025-07-31", "2026-07-31", "2027-07-31",
+                "2028-07-30", "2029-07-29", "2030-07-29"))
             .build())
         .build();
     assertThat("Unexpected response.", response, is(expected));
@@ -316,6 +412,8 @@ class CctCalculatorTest {
             .assumedFullTimePeriods(List.of(
                 assumedPeriod("2023-08-02", "2024-01-31", 6.016438356164383)))
             .projection(projection("2024-08-02", 1, 74.37, 74.37))
+            .gradeProgression(gradeYears("2024-10-13", "2025-10-12", "2026-10-12", "2027-10-12",
+                "2028-10-11", "2029-10-11", "2030-10-10"))
             .build())
         .build();
     assertThat("Unexpected response.", response, is(expected));
@@ -340,6 +438,8 @@ class CctCalculatorTest {
             .assumedFullTimePeriods(List.of(
                 assumedPeriod("2023-08-02", "2025-01-31", 18.04931506849315)))
             .projection(projection("2025-02-01", 0.6, 109.91666666666667, 65.95))
+            .gradeProgression(gradeYears("2024-07-31", "2025-11-29", "2027-07-30", "2029-03-29",
+                "2030-11-27", "2032-07-27", "2034-03-27"))
             .build())
         .build();
     assertThat("Unexpected response.", response, is(expected));
@@ -548,6 +648,32 @@ class CctCalculatorTest {
         .additionalTrainingTime(additionalTrainingTime)
         .acceleratedTrainingTime(acceleratedTrainingTime)
         .build();
+  }
+
+  private static CctProgrammeDetailsDto.CctProgrammeDetailsDtoBuilder programmeBuilder(
+      String specialty, int lengthMonths, CctTrainingGrade startGrade) {
+    return CctProgrammeDetailsDto.builder()
+        .specialty(specialty)
+        .startDate(date(PAEDIATRICS_START))
+        .lengthMonths(lengthMonths)
+        .startGrade(startGrade)
+        .additionalTrainingTime(List.of())
+        .acceleratedTrainingTime(List.of());
+  }
+
+  private static CctGradeYearDto.CctGradeYearDtoBuilder gradeYear(int yearNumber,
+      CctTrainingGrade grade, String endDate) {
+    return CctGradeYearDto.builder()
+        .yearNumber(yearNumber)
+        .grade(grade)
+        .endDate(date(endDate));
+  }
+
+  private static List<CctGradeYearDto> gradeYears(String... endDates) {
+    return IntStream.range(0, endDates.length)
+        .mapToObj(index -> gradeYear(index + 1, CctTrainingGrade.valueOf("ST" + (index + 1)),
+            endDates[index]).build())
+        .toList();
   }
 
   private static List<CctTrainingTimeDto> trainingTime(CctTrainingGrade grade, int months) {

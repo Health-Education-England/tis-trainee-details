@@ -39,6 +39,7 @@ import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto;
 import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto.CctTrainingTimeDto;
 import uk.nhs.hee.trainee.details.dto.CctResultDto;
 import uk.nhs.hee.trainee.details.dto.CctResultDto.CctAssumedFullTimePeriodDto;
+import uk.nhs.hee.trainee.details.dto.CctResultDto.CctGradeYearDto;
 import uk.nhs.hee.trainee.details.dto.CctResultDto.CctProjectionDto;
 
 /**
@@ -50,6 +51,17 @@ public class CctCalculator {
   private static final double PROJECTED_DAYS_PER_MONTH = 30.4;
   private static final double RECORDED_DAYS_PER_MONTH = 365.0 / 12;
   private static final double FLOOR_TOLERANCE_DAYS = 1e-9;
+
+  private final CctGradeProgression gradeProgression;
+
+  /**
+   * Create a calculator for CCT dates.
+   *
+   * @param gradeProgression The grade progression for CCT programmes.
+   */
+  public CctCalculator(CctGradeProgression gradeProgression) {
+    this.gradeProgression = gradeProgression;
+  }
 
   /**
    * Calculate the CCT date for a programme and its changes.
@@ -88,8 +100,8 @@ public class CctCalculator {
     double monthsRemaining = roundToTwoDecimals(adjustedLengthMonths - totalWteMonthsCompleted);
 
     double calendarMonthsToCompletion = monthsRemaining / projection.wte();
-    LocalDate cctDate = findCompletionDate(adjustedLengthMonths, datedChanges, assumedPeriods)
-        .orElse(dateAfterMonths(projection.startDate(), calendarMonthsToCompletion));
+    LocalDate cctDate = dateWhenCompleted(adjustedLengthMonths, datedChanges, assumedPeriods,
+        projection, totalWteMonthsCompleted);
 
     CctResultDto result = CctResultDto.builder()
         .cctDate(cctDate)
@@ -106,6 +118,8 @@ public class CctCalculator {
             .calendarMonths(calendarMonthsToCompletion)
             .wteMonths(monthsRemaining)
             .build())
+        .gradeProgression(gradeYears(programmeDetails, datedChanges, assumedPeriods, projection,
+            totalWteMonthsCompleted))
         .build();
 
     return CctCalculateResponseDto.builder()
@@ -252,6 +266,52 @@ public class CctCalculator {
         .endDate(endDate)
         .months(recordedMonths(startDate, endDate))
         .build();
+  }
+
+  /**
+   * Build the grade progression, with the date each year of the programme ends.
+   *
+   * @param programmeDetails        The programme details.
+   * @param datedChanges            Counted changes with an end date.
+   * @param assumedPeriods          Periods assumed to have been completed full time.
+   * @param projection              The projection after the recorded periods.
+   * @param totalWteMonthsCompleted The WTE months completed before the projection.
+   * @return The grade for each year of the programme.
+   */
+  private List<CctGradeYearDto> gradeYears(CctProgrammeDetailsDto programmeDetails,
+      List<CctChangeDto> datedChanges, List<CctAssumedFullTimePeriodDto> assumedPeriods,
+      Projection projection, double totalWteMonthsCompleted) {
+    return gradeProgression.years(programmeDetails).stream()
+        .map(year -> CctGradeYearDto.builder()
+            .yearNumber(year.yearNumber())
+            .grade(year.grade())
+            .endDate(dateWhenCompleted(year.targetMonths(), datedChanges, assumedPeriods,
+                projection, totalWteMonthsCompleted))
+            .skippedGradeBeforeThisRow(year.skippedGradeBeforeThisRow())
+            .extendedToEighteenMonths(year.extendedToEighteenMonths())
+            .exceedsKnownTrainingGrade(year.exceedsKnownTrainingGrade())
+            .additionalMonths(year.additionalMonths())
+            .acceleratedMonths(year.acceleratedMonths())
+            .build())
+        .toList();
+  }
+
+  /**
+   * Find the date on which a number of months of training is completed.
+   *
+   * @param lengthMonths            The months of training to complete.
+   * @param datedChanges            Counted changes with an end date.
+   * @param assumedPeriods          Periods assumed to have been completed full time.
+   * @param projection              The projection after the recorded periods.
+   * @param totalWteMonthsCompleted The WTE months completed before the projection.
+   * @return The completion date, within the recorded periods or projected after them.
+   */
+  private static LocalDate dateWhenCompleted(int lengthMonths, List<CctChangeDto> datedChanges,
+      List<CctAssumedFullTimePeriodDto> assumedPeriods, Projection projection,
+      double totalWteMonthsCompleted) {
+    double monthsRemaining = roundToTwoDecimals(lengthMonths - totalWteMonthsCompleted);
+    return findCompletionDate(lengthMonths, datedChanges, assumedPeriods)
+        .orElse(dateAfterMonths(projection.startDate(), monthsRemaining / projection.wte()));
   }
 
   /**

@@ -24,6 +24,7 @@ package uk.nhs.hee.trainee.details.dto;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.Builder;
+import uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade;
 
 /**
  * The result of a CCT calculation.
@@ -41,6 +42,7 @@ import lombok.Builder;
  * @param assumedFullTimePeriods       The periods before the projection that no change covers, in
  *                                     start date order.
  * @param projection                   The projection of the remaining training to the CCT date.
+ * @param gradeProgression             The grade for each year of the programme, and when it ends.
  */
 @Builder
 public record CctResultDto(
@@ -59,7 +61,9 @@ public record CctResultDto(
 
     List<CctAssumedFullTimePeriodDto> assumedFullTimePeriods,
 
-    CctProjectionDto projection) {
+    CctProjectionDto projection,
+
+    List<CctGradeYearDto> gradeProgression) {
 
   /**
    * A period of training that no change covers, assumed to be full time.
@@ -98,6 +102,40 @@ public record CctResultDto(
       double calendarMonths,
 
       double wteMonths) {
+
+  }
+
+  /**
+   * A year of the grade progression.
+   *
+   * @param yearNumber                The year of the programme, from 1.
+   * @param grade                     The grade for the year, or null when it would be past the
+   *                                  highest known grade.
+   * @param endDate                   The date the grade ends.
+   * @param skippedGradeBeforeThisRow The grade skipped just before this year, if any.
+   * @param extendedToEighteenMonths  Whether the grade is an 18-month final year.
+   * @param exceedsKnownTrainingGrade Whether the year is past the highest known grade.
+   * @param additionalMonths          The additional training time in the grade, in months.
+   * @param acceleratedMonths         The accelerated training time in the grade, in months.
+   */
+  @Builder
+  public record CctGradeYearDto(
+
+      int yearNumber,
+
+      CctTrainingGrade grade,
+
+      LocalDate endDate,
+
+      CctTrainingGrade skippedGradeBeforeThisRow,
+
+      boolean extendedToEighteenMonths,
+
+      boolean exceedsKnownTrainingGrade,
+
+      int additionalMonths,
+
+      int acceleratedMonths) {
 
   }
 }

@@ -39,6 +39,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static uk.nhs.hee.trainee.details.dto.CctCalculationInput.MAX_CHANGES;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.LTFT;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST1;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST2;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST3;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -84,6 +86,7 @@ import uk.nhs.hee.trainee.details.TestJwtUtil;
 import uk.nhs.hee.trainee.details.model.CctCalculation;
 import uk.nhs.hee.trainee.details.model.CctCalculation.CctAssumedFullTimePeriod;
 import uk.nhs.hee.trainee.details.model.CctCalculation.CctChange;
+import uk.nhs.hee.trainee.details.model.CctCalculation.CctGradeYear;
 import uk.nhs.hee.trainee.details.model.CctCalculation.CctProgrammeDetails;
 import uk.nhs.hee.trainee.details.model.CctCalculation.CctProjection;
 import uk.nhs.hee.trainee.details.model.CctCalculation.CctResult;
@@ -319,7 +322,39 @@ class CctResourceIntegrationTest {
                   "wte": 1.0,
                   "calendarMonths": 74.4,
                   "wteMonths": 74.4
-                }
+                },
+                "gradeProgression": [
+                  {
+                    "yearNumber": 1,
+                    "grade": "ST1",
+                    "endDate": "2024-09-30",
+                    "skippedGradeBeforeThisRow": null,
+                    "extendedToEighteenMonths": false,
+                    "exceedsKnownTrainingGrade": false,
+                    "additionalMonths": 3,
+                    "acceleratedMonths": 1
+                  },
+                  {
+                    "yearNumber": 2,
+                    "grade": "ST3",
+                    "endDate": "2026-03-31",
+                    "skippedGradeBeforeThisRow": "ST2",
+                    "extendedToEighteenMonths": true,
+                    "exceedsKnownTrainingGrade": false,
+                    "additionalMonths": 0,
+                    "acceleratedMonths": 0
+                  },
+                  {
+                    "yearNumber": 3,
+                    "grade": null,
+                    "endDate": "2099-01-01",
+                    "skippedGradeBeforeThisRow": null,
+                    "extendedToEighteenMonths": false,
+                    "exceedsKnownTrainingGrade": true,
+                    "additionalMonths": 0,
+                    "acceleratedMonths": 0
+                  }
+                ]
               },
               "created": "%s",
               "lastModified": "%s"
@@ -407,6 +442,48 @@ class CctResourceIntegrationTest {
         .andExpect(jsonPath("$.errors", hasSize(1)))
         .andExpect(jsonPath("$.errors[0].pointer", is("#/programmeDetails/specialty")))
         .andExpect(jsonPath("$.errors[0].detail", is("Please choose a specialty from the list.")));
+  }
+
+  @Test
+  void shouldNotCreateCalculationWhenGradeNotInProgression() throws Exception {
+    ObjectNode programmeDetails = (ObjectNode) calculationJson.get("programmeDetails");
+    programmeDetails.set("additionalTrainingTime", new ObjectMapper().readTree("""
+        [{ "grade": "ST8", "months": 2, "notes": "ARCP outcome 3" }]
+        """));
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculation")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(calculationJson.toString()))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errors", hasSize(1)))
+        .andExpect(jsonPath("$.errors[0].pointer",
+            is("#/programmeDetails/additionalTrainingTime/0/grade")))
+        .andExpect(jsonPath("$.errors[0].detail",
+            is("ST8 is not part of this programme's grade progression.")));
+  }
+
+  @Test
+  void shouldCalculateWithSaveErrorsWhenGradeNotInProgression() throws Exception {
+    ObjectNode request = calculateJson("[]");
+    ObjectNode programmeDetails = (ObjectNode) request.get("programmeDetails");
+    programmeDetails.set("additionalTrainingTime", new ObjectMapper().readTree("""
+        [{ "grade": "ST8", "months": 2, "notes": "ARCP outcome 3" }]
+        """));
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculate")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(request.toString()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.result.gradeProgression", hasSize(7)))
+        .andExpect(jsonPath("$.errors", hasSize(1)))
+        .andExpect(jsonPath("$.errors[0].pointer",
+            is("#/programmeDetails/additionalTrainingTime/0/grade")))
+        .andExpect(jsonPath("$.errors[0].detail",
+            is("ST8 is not part of this programme's grade progression.")));
   }
 
   @Test
@@ -698,12 +775,15 @@ class CctResourceIntegrationTest {
               "wte": 1,
               "calendarMonths": 74.37,
               "wteMonths": 74.37
-            }
+            },
+            "gradeProgression": %s
           },
           "created": "%s",
           "lastModified": "%s"
         }
-        """.formatted(id, created, lastModified), JsonCompareMode.STRICT));
+        """.formatted(id, gradeProgressionJson("2024-10-13", "2025-10-12", "2026-10-12",
+            "2027-10-12", "2028-10-11", "2029-10-11", "2030-10-10"), created, lastModified),
+        JsonCompareMode.STRICT));
   }
 
   @Test
@@ -1110,11 +1190,14 @@ class CctResourceIntegrationTest {
                   "wte": 1,
                   "calendarMonths": 84,
                   "wteMonths": 84
-                }
+                },
+                "gradeProgression": %s
               },
               "errors": []
             }
-            """, JsonCompareMode.STRICT));
+            """.formatted(gradeProgressionJson("2024-07-31", "2025-07-31", "2026-07-31",
+                "2027-07-31", "2028-07-30", "2029-07-29", "2030-07-29")),
+            JsonCompareMode.STRICT));
   }
 
   @Test
@@ -1172,11 +1255,14 @@ class CctResourceIntegrationTest {
                   "wte": 1,
                   "calendarMonths": 74.37,
                   "wteMonths": 74.37
-                }
+                },
+                "gradeProgression": %s
               },
               "errors": []
             }
-            """, JsonCompareMode.STRICT));
+            """.formatted(gradeProgressionJson("2024-10-13", "2025-10-12", "2026-10-12",
+                "2027-10-12", "2028-10-11", "2029-10-11", "2030-10-10")),
+            JsonCompareMode.STRICT));
   }
 
   @Test
@@ -1234,11 +1320,14 @@ class CctResourceIntegrationTest {
                   "wte": 0.6,
                   "calendarMonths": 109.91666666666667,
                   "wteMonths": 65.95
-                }
+                },
+                "gradeProgression": %s
               },
               "errors": []
             }
-            """, JsonCompareMode.STRICT));
+            """.formatted(gradeProgressionJson("2024-07-31", "2025-11-29", "2027-07-30",
+                "2029-03-29", "2030-11-27", "2032-07-27", "2034-03-27")),
+            JsonCompareMode.STRICT));
   }
 
   @Test
@@ -1643,8 +1732,44 @@ class CctResourceIntegrationTest {
                 .calendarMonths(74.4)
                 .wteMonths(74.4)
                 .build())
+            .gradeProgression(List.of(
+                CctGradeYear.builder()
+                    .yearNumber(1)
+                    .grade(ST1)
+                    .endDate(LocalDate.of(2024, 9, 30))
+                    .additionalMonths(3)
+                    .acceleratedMonths(1)
+                    .build(),
+                CctGradeYear.builder()
+                    .yearNumber(2)
+                    .grade(ST3)
+                    .endDate(LocalDate.of(2026, 3, 31))
+                    .skippedGradeBeforeThisRow(ST2)
+                    .extendedToEighteenMonths(true)
+                    .build(),
+                CctGradeYear.builder()
+                    .yearNumber(3)
+                    .endDate(LocalDate.of(2099, 1, 1))
+                    .exceedsKnownTrainingGrade(true)
+                    .build()))
             .build())
         .build();
+  }
+
+  private static String gradeProgressionJson(String... endDates) {
+    return IntStream.range(0, endDates.length)
+        .mapToObj(index -> """
+            {
+              "yearNumber": %d,
+              "grade": "ST%d",
+              "endDate": "%s",
+              "skippedGradeBeforeThisRow": null,
+              "extendedToEighteenMonths": false,
+              "exceedsKnownTrainingGrade": false,
+              "additionalMonths": 0,
+              "acceleratedMonths": 0
+            }""".formatted(index + 1, index + 1, endDates[index]))
+        .collect(Collectors.joining(",", "[", "]"));
   }
 
   private static String changeEndingOutsideDateLimits() {
