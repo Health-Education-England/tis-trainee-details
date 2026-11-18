@@ -33,6 +33,8 @@ import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.OOPR;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.OOPT;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.PARENTAL;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST1;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST2;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST3;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -49,10 +51,12 @@ import uk.nhs.hee.trainee.details.dto.CctCalculateResponseDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculatedChangeDto;
 import uk.nhs.hee.trainee.details.dto.CctChangeDto;
 import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto;
+import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto.CctTrainingTimeDto;
 import uk.nhs.hee.trainee.details.dto.CctResultDto;
 import uk.nhs.hee.trainee.details.dto.CctResultDto.CctAssumedFullTimePeriodDto;
 import uk.nhs.hee.trainee.details.dto.CctResultDto.CctProjectionDto;
 import uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType;
+import uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade;
 
 class CctCalculatorTest {
 
@@ -250,6 +254,26 @@ class CctCalculatorTest {
     assertThat("Unexpected adjusted programme end date.", result.adjustedProgrammeEndDate(),
         is(date(adjustedProgrammeEndDate)));
     assertThat("Unexpected CCT date.", result.cctDate(), is(date(adjustedProgrammeEndDate)));
+  }
+
+  @Test
+  void shouldAddUpTrainingTimeAcrossGrades() {
+    List<CctTrainingTimeDto> additional = Stream.of(
+            trainingTime(ST1, 3), trainingTime(ST2, 2), trainingTime(ST3, 4))
+        .flatMap(List::stream)
+        .toList();
+    List<CctTrainingTimeDto> accelerated = Stream.of(trainingTime(ST1, 1), trainingTime(ST2, 2))
+        .flatMap(List::stream)
+        .toList();
+
+    CctResultDto result = calculator.calculate(
+        programme(PAEDIATRICS_START, 84, additional, accelerated), List.of()).result();
+
+    CctResultDto expected = calculator.calculate(
+        programme(PAEDIATRICS_START, 84, 9, 3), List.of()).result();
+    assertThat("Unexpected result.", result, is(expected));
+    assertThat("Unexpected adjusted programme end date.", result.adjustedProgrammeEndDate(),
+        is(date("2031-01-28")));
   }
 
   @Test
@@ -509,14 +533,28 @@ class CctCalculatorTest {
 
   private static CctProgrammeDetailsDto programme(String startDate, int lengthMonths,
       int additionalMonths, int acceleratedMonths) {
+    return programme(startDate, lengthMonths, trainingTime(ST1, additionalMonths),
+        trainingTime(ST1, acceleratedMonths));
+  }
+
+  private static CctProgrammeDetailsDto programme(String startDate, int lengthMonths,
+      List<CctTrainingTimeDto> additionalTrainingTime,
+      List<CctTrainingTimeDto> acceleratedTrainingTime) {
     return CctProgrammeDetailsDto.builder()
         .specialty("Paediatrics")
         .startDate(date(startDate))
         .lengthMonths(lengthMonths)
         .startGrade(ST1)
-        .additionalMonths(additionalMonths)
-        .acceleratedMonths(acceleratedMonths)
+        .additionalTrainingTime(additionalTrainingTime)
+        .acceleratedTrainingTime(acceleratedTrainingTime)
         .build();
+  }
+
+  private static List<CctTrainingTimeDto> trainingTime(CctTrainingGrade grade, int months) {
+    if (months == 0) {
+      return List.of();
+    }
+    return List.of(CctTrainingTimeDto.builder().grade(grade).months(months).notes("why").build());
   }
 
   private static CctChangeDto change(CctChangeType type, String startDate, String endDate,

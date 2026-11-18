@@ -57,7 +57,8 @@ public record CctChangeDto(
 
     boolean countsTowardsCompletion,
 
-    @Size(max = 1000, message = "Notes must be {max} characters or less")
+    @Size(max = CctCalculationInput.MAX_NOTES_LENGTH,
+        message = "Notes must be {max} characters or less")
     String notes) {
 
   public CctChangeDto {

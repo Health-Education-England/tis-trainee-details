@@ -36,6 +36,7 @@ import uk.nhs.hee.trainee.details.dto.CctCalculateResponseDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculatedChangeDto;
 import uk.nhs.hee.trainee.details.dto.CctChangeDto;
 import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto;
+import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto.CctTrainingTimeDto;
 import uk.nhs.hee.trainee.details.dto.CctResultDto;
 import uk.nhs.hee.trainee.details.dto.CctResultDto.CctAssumedFullTimePeriodDto;
 import uk.nhs.hee.trainee.details.dto.CctResultDto.CctProjectionDto;
@@ -82,7 +83,8 @@ public class CctCalculator {
     }
 
     int adjustedLengthMonths = programmeDetails.lengthMonths()
-        + programmeDetails.additionalMonths() - programmeDetails.acceleratedMonths();
+        + totalMonths(programmeDetails.additionalTrainingTime())
+        - totalMonths(programmeDetails.acceleratedTrainingTime());
     double monthsRemaining = roundToTwoDecimals(adjustedLengthMonths - totalWteMonthsCompleted);
 
     double calendarMonthsToCompletion = monthsRemaining / projection.wte();
@@ -112,6 +114,18 @@ public class CctCalculator {
             .toList())
         .result(result)
         .build();
+  }
+
+  /**
+   * Total the months of training time across all grades.
+   *
+   * @param entries The training time in each grade.
+   * @return The total months.
+   */
+  private static int totalMonths(List<CctTrainingTimeDto> entries) {
+    return entries.stream()
+        .mapToInt(CctTrainingTimeDto::months)
+        .sum();
   }
 
   /**

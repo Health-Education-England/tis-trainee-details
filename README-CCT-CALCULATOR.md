@@ -12,7 +12,8 @@ time, and the details of the projection used.
 ## Summary
 
 1. **Months required** are the programme length plus additional months, less
-   accelerated months.
+   accelerated months. Both are recorded per grade, and only their totals are
+   used here.
 2. **Months completed** are the credit from each recorded change plus full-time
    credit for gaps between changes.
 3. **Months remaining** are months required less months completed, rounded to
@@ -176,7 +177,8 @@ without changing the calculated completion date.
 The main calculation follows these steps:
 
 ```text
-months required = programme length + additional months - accelerated months
+months required = programme length + total additional months
+                  - total accelerated months
 
 1. Trim changes to the programme period for calculation.
 2. Identify the projection start date and WTE.

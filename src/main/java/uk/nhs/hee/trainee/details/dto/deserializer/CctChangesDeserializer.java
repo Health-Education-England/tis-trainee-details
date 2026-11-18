@@ -21,14 +21,6 @@
 
 package uk.nhs.hee.trainee.details.dto.deserializer;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import uk.nhs.hee.trainee.details.dto.CctCalculationInput;
 import uk.nhs.hee.trainee.details.dto.CctChangeDto;
 
@@ -36,35 +28,9 @@ import uk.nhs.hee.trainee.details.dto.CctChangeDto;
  * A deserializer that reads one change past the limit and skips the rest, so an oversized list
  * fails its size check without every change being built.
  */
-public class CctChangesDeserializer extends StdDeserializer<List<CctChangeDto>> {
+public class CctChangesDeserializer extends CappedListDeserializer<CctChangeDto> {
 
   public CctChangesDeserializer() {
-    super(List.class);
-  }
-
-  @Override
-  public List<CctChangeDto> deserialize(JsonParser parser, DeserializationContext context)
-      throws IOException {
-    if (!parser.isExpectedStartArrayToken()) {
-      throw context.wrongTokenException(parser, List.class, JsonToken.START_ARRAY, null);
-    }
-
-    List<CctChangeDto> changes = new ArrayList<>();
-    JsonToken token;
-
-    while ((token = parser.nextToken()) != JsonToken.END_ARRAY) {
-      if (changes.size() > CctCalculationInput.MAX_CHANGES) {
-        parser.skipChildren();
-      } else if (token == JsonToken.VALUE_NULL) {
-        changes.add(null);
-      } else {
-        try {
-          changes.add(context.readValue(parser, CctChangeDto.class));
-        } catch (JsonMappingException e) {
-          throw JsonMappingException.wrapWithPath(e, changes, changes.size());
-        }
-      }
-    }
-    return changes;
+    super(CctChangeDto.class, CctCalculationInput.MAX_CHANGES);
   }
 }

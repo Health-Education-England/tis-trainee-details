@@ -26,6 +26,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.LTFT;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST1;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST2;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -40,6 +41,7 @@ import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationSaveRequestDto;
 import uk.nhs.hee.trainee.details.dto.CctChangeDto;
 import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto;
+import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto.CctTrainingTimeDto;
 import uk.nhs.hee.trainee.details.model.CctCalculation;
 import uk.nhs.hee.trainee.details.model.CctCalculation.CctChange;
 import uk.nhs.hee.trainee.details.service.CctCalculator;
@@ -143,8 +145,16 @@ class CctMapperTest {
             .lengthMonths(84)
             .lengthOverrideNotes("Agreed with local office")
             .startGrade(ST1)
-            .additionalMonths(0)
-            .acceleratedMonths(0)
+            .additionalTrainingTime(List.of(CctTrainingTimeDto.builder()
+                .grade(ST1)
+                .months(6)
+                .notes("ARCP outcome 3")
+                .build()))
+            .acceleratedTrainingTime(List.of(CctTrainingTimeDto.builder()
+                .grade(ST2)
+                .months(3)
+                .notes("Prior learning")
+                .build()))
             .build())
         .changes(List.of(
             datedLtft(),

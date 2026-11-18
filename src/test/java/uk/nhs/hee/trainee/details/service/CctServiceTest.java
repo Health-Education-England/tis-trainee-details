@@ -732,8 +732,8 @@ class CctServiceTest {
         .startDate(LocalDate.of(2023, 8, 2))
         .lengthMonths(84)
         .startGrade(ST1)
-        .additionalMonths(0)
-        .acceleratedMonths(0);
+        .additionalTrainingTime(List.of())
+        .acceleratedTrainingTime(List.of());
   }
 
   private static CctChangeDto datedLtft() {
