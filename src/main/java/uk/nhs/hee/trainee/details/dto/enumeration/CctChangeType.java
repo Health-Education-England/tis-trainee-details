@@ -25,5 +25,15 @@ package uk.nhs.hee.trainee.details.dto.enumeration;
  * Supported CCT Change types.
  */
 public enum CctChangeType {
-  LTFT
+  LTFT,
+  OOPC,
+  OOPE,
+  OOPP,
+  OOPR,
+  OOPT,
+  PARENTAL,
+  PHASED,
+  SHIELDING,
+  SICKNESS,
+  ACCRUED_LEAVE
 }

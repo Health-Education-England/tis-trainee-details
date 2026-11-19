@@ -21,110 +21,36 @@
 
 package uk.nhs.hee.trainee.details.dto;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Null;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import lombok.Builder;
-import org.hibernate.validator.constraints.Range;
-import uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType;
-import uk.nhs.hee.trainee.details.dto.validation.Create;
 
 /**
  * A representation of a CCT calculation's detail.
  *
- * @param id                  The ID of the calculation.
- * @param name                A name for the calculation.
- * @param programmeMembership The programme membership data for the calculation.
- * @param changes             The CCT changes to be calculated.
- * @param cctDate             The calculated CCT end date based on the changes.
- * @param created             When the calculation was created (auto-generated).
- * @param lastModified        When the calculation was last modified (auto-generated).
+ * @param id               The ID of the calculation.
+ * @param name             A name for the calculation.
+ * @param programmeDetails The details of the programme.
+ * @param changes          The changes to the programme, with the months they credit.
+ * @param result           The result of the calculation.
+ * @param created          When the calculation was created (auto-generated).
+ * @param lastModified     When the calculation was last modified (auto-generated).
  */
 @Builder
 public record CctCalculationDetailDto(
 
-    @Null(groups = Create.class)
     UUID id,
 
-    @NotBlank
     String name,
 
-    @NotNull
-    @Valid
-    CctProgrammeMembershipDto programmeMembership,
+    CctProgrammeDetailsDto programmeDetails,
 
-    @NotEmpty
-    @Valid
-    List<CctChangeDto> changes,
+    List<CctCalculatedChangeDto> changes,
 
-    LocalDate cctDate,
+    CctResultDto result,
 
     Instant created,
     Instant lastModified) {
 
-  /**
-   * Programme membership data for a calculation.
-   *
-   * @param id        The ID of the programme membership.
-   * @param name      The name of the programme.
-   * @param startDate The start date of the programme.
-   * @param endDate   The end date of the programme.
-   * @param wte       The whole time equivalent of the programme membership.
-   */
-  @Builder
-  public record CctProgrammeMembershipDto(
-
-      @NotNull
-      UUID id,
-
-      @NotBlank
-      String name,
-
-      @NotNull
-      LocalDate startDate,
-
-      @NotNull
-      LocalDate endDate,
-
-      @NotNull
-      @Range(min = 0, max = 1)
-      Double wte,
-
-      String designatedBodyCode,
-
-      String managingDeanery) {
-
-  }
-
-  /**
-   * A CCT changes associated with a calculation.
-   *
-   * @param id        The identifier of the CCT change.
-   * @param type      The type of CCT change.
-   * @param startDate The start date of the CCT change.
-   * @param wte       The new desired whole time equivalent.
-   */
-  @Builder
-  public record CctChangeDto(
-
-      @Null(groups = Create.class)
-      UUID id,
-
-      @NotNull
-      CctChangeType type,
-
-      @NotNull
-      LocalDate startDate,
-
-      @NotNull
-      @Range(min = 0, max = 1)
-      Double wte) {
-
-  }
 }
