@@ -39,6 +39,7 @@ import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.LTFT;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST1;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST2;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST3;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST7;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST8;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST9;
 
@@ -492,6 +493,43 @@ class CctServiceTest {
   }
 
   @ParameterizedTest
+  @CsvSource({"90, ST5", "90, ST8", "84, ST7"})
+  void shouldNotCreateCalculationWhenEighteenMonthGradeIsNotLastFullYearBeforeHalfYear(
+      int lengthMonths, CctTrainingGrade grade) {
+    CctCalculationSaveRequestDto dto = request(programme()
+        .lengthMonths(lengthMonths)
+        .lengthOverrideNotes("Agreed with local office")
+        .eighteenMonthFinalGrade(grade)
+        .eighteenMonthFinalGradeNotes("Dual CCT"));
+
+    MethodArgumentNotValidException exception = assertThrows(MethodArgumentNotValidException.class,
+        () -> service.createCalculation(dto));
+
+    assertThat("Unexpected errors.",
+        BodyValidationError.fromFieldErrors(exception.getFieldErrors()), is(List.of(
+            new BodyValidationError("#/programmeDetails/eighteenMonthFinalGrade",
+                "An 18-month final year must be the last full year of a programme length that "
+                    + "includes a half year, such as 66 months."))));
+  }
+
+  @Test
+  void shouldCreateCalculationWhenEighteenMonthGradeIsLastFullYearBeforeHalfYear()
+      throws MethodArgumentNotValidException {
+    CctCalculationSaveRequestDto dto = request(programme()
+        .lengthMonths(90)
+        .lengthOverrideNotes("Agreed with local office")
+        .eighteenMonthFinalGrade(ST7)
+        .eighteenMonthFinalGradeNotes("Dual CCT"));
+    when(calculationRepository.insert(any(CctCalculation.class))).thenAnswer(
+        invocation -> invocation.getArgument(0));
+
+    CctCalculationDetailDto created = service.createCalculation(dto);
+
+    assertThat("Unexpected programme details.", created.programmeDetails(),
+        is(dto.programmeDetails()));
+  }
+
+  @ParameterizedTest
   @CsvSource({"84, ST2, 12", "90, ST8, 6"})
   void shouldNotCreateCalculationWhenAcceleratedTimeFillsGrade(int lengthMonths,
       CctTrainingGrade grade, int gradeMonths) {
@@ -724,6 +762,20 @@ class CctServiceTest {
     assertThat("Unexpected errors.", response.errors(), is(List.of(
         new BodyValidationError("#/programmeDetails/additionalTrainingTime/0/grade",
             "ST8 is not part of this programme's grade progression."))));
+  }
+
+  @Test
+  void shouldCalculateWithErrorsWhenEighteenMonthGradeIsNotLastFullYearBeforeHalfYear() {
+    CctCalculateRequestDto request = new CctCalculateRequestDto(
+        programme().eighteenMonthFinalGrade(ST3).eighteenMonthFinalGradeNotes("Dual CCT").build(),
+        List.of());
+
+    CctCalculateResponseDto response = service.calculate(request);
+
+    assertThat("Unexpected errors.", response.errors(), is(List.of(
+        new BodyValidationError("#/programmeDetails/eighteenMonthFinalGrade",
+            "An 18-month final year must be the last full year of a programme length that "
+                + "includes a half year, such as 66 months."))));
   }
 
   @Test

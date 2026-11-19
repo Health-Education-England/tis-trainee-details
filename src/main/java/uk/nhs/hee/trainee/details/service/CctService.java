@@ -371,6 +371,10 @@ public class CctService {
         .contains(eighteenMonthFinalGrade)) {
       addProgrammeDetailsError(result, "eighteenMonthFinalGrade",
           notInProgression(eighteenMonthFinalGrade));
+    } else if (eighteenMonthFinalGrade != null && !endsInEighteenMonthYear(years)) {
+      addProgrammeDetailsError(result, "eighteenMonthFinalGrade",
+          "An 18-month final year must be the last full year of a programme length that includes "
+              + "a half year, such as 66 months.");
     }
 
     Map<CctTrainingGrade, Integer> gradeMonths = years.stream()
@@ -409,6 +413,11 @@ public class CctService {
             notInProgression(grade));
       }
     }
+  }
+
+  private static boolean endsInEighteenMonthYear(List<Year> years) {
+    Year last = years.get(years.size() - 1);
+    return last.extendedToEighteenMonths() && last.gradeMonths() == 18;
   }
 
   private static Set<CctTrainingGrade> gradesIn(List<Year> years) {

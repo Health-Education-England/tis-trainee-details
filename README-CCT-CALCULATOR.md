@@ -186,9 +186,10 @@ which that year ends. The rules are implemented in
   additional time and less the accelerated time recorded against that grade
   and every earlier grade. The date is found in the same way as the CCT date,
   so no row ends after it and the final row ends on it.
-- **18-month final year.** The chosen grade ends 6 months later. The following
-  year is removed if the programme length no longer reaches it. The CCT date is
-  unchanged.
+- **18-month final year.** This applies to a programme that ends in a half
+  year, such as 90 months. Without it, the final row is a 6-month grade. The
+  18-month grade is the last full year before it and includes those 6 months,
+  so the 6-month row is removed. The CCT date is unchanged.
 - **Skipped grade.** From the skipped grade onwards, each row shows the next
   grade up. The dates are unchanged; any reduction in training is recorded as
   accelerated time.
@@ -206,6 +207,9 @@ returns them in `errors` alongside the result.
 - Each grade with additional or accelerated time, the skipped grade and the
   18-month grade must be in the progression. The skipped grade is checked
   without the skip applied, and the 18-month grade cannot be the skipped grade.
+- The 18-month grade must end the progression and run for 18 months, so it
+  must be the last full year of a programme that ends in a half year (ST7 of a
+  90-month programme from ST1).
 - The accelerated time on a grade must be less than that grade's months (12,
   18, or fewer for a short final year) plus its additional time.
 
