@@ -121,15 +121,20 @@ class CctCalculationSaveRequestDtoTest {
   @Test
   void shouldApplyCalculationRulesWhenCreating() {
     List<BodyValidationError> errors = validate(request()
-            .programmeDetails(programme().additionalMonths(6).build())
+            .programmeDetails(programme()
+                .additionalTrainingTime(List.of(CctTrainingTimeDto.builder()
+                    .grade(ST1)
+                    .months(6)
+                    .build()))
+                .build())
             .changes(List.of(ltft().wte(1.0).build()))
             .build(),
         Create.class);
 
     assertThat("Unexpected errors.", errors, is(List.of(
         error("#/changes[0]/wte", "LTFT WTE must be a whole number between 1 and 99."),
-        error("#/programmeDetails/additionalMonthsNotes",
-            "Please enter a reason for additional training time."))));
+        error("#/programmeDetails/additionalTrainingTime[0]/notes",
+            "Please enter a reason for the training time."))));
   }
 
   @Test
@@ -165,8 +170,8 @@ class CctCalculationSaveRequestDtoTest {
         .startDate(LocalDate.of(2023, 8, 2))
         .lengthMonths(84)
         .startGrade(ST1)
-        .additionalMonths(0)
-        .acceleratedMonths(0);
+        .additionalTrainingTime(List.of())
+        .acceleratedTrainingTime(List.of());
   }
 
   private static CctChangeDtoBuilder ltft() {

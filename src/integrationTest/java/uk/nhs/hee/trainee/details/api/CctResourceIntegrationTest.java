@@ -38,6 +38,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.LTFT;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST1;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST2;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST3;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -52,6 +54,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -82,6 +86,7 @@ import uk.nhs.hee.trainee.details.TestJwtUtil;
 import uk.nhs.hee.trainee.details.model.CctCalculation;
 import uk.nhs.hee.trainee.details.model.CctCalculation.CctAssumedFullTimePeriod;
 import uk.nhs.hee.trainee.details.model.CctCalculation.CctChange;
+import uk.nhs.hee.trainee.details.model.CctCalculation.CctGradeYear;
 import uk.nhs.hee.trainee.details.model.CctCalculation.CctProgrammeDetails;
 import uk.nhs.hee.trainee.details.model.CctCalculation.CctProjection;
 import uk.nhs.hee.trainee.details.model.CctCalculation.CctResult;
@@ -279,10 +284,8 @@ class CctResourceIntegrationTest {
                 "lengthOverrideNotes": "Agreed with local office",
                 "startGrade": "ST1",
                 "startGradeOverrideNotes": null,
-                "additionalMonths": 0,
-                "additionalMonthsNotes": null,
-                "acceleratedMonths": 0,
-                "acceleratedMonthsNotes": null,
+                "additionalTrainingTime": [],
+                "acceleratedTrainingTime": [],
                 "eighteenMonthFinalGrade": null,
                 "eighteenMonthFinalGradeNotes": null,
                 "skippedGrade": null,
@@ -319,7 +322,39 @@ class CctResourceIntegrationTest {
                   "wte": 1.0,
                   "calendarMonths": 74.4,
                   "wteMonths": 74.4
-                }
+                },
+                "gradeProgression": [
+                  {
+                    "yearNumber": 1,
+                    "grade": "ST1",
+                    "endDate": "2024-09-30",
+                    "skippedGradeBeforeThisRow": null,
+                    "extendedToEighteenMonths": false,
+                    "exceedsKnownTrainingGrade": false,
+                    "additionalMonths": 3,
+                    "acceleratedMonths": 1
+                  },
+                  {
+                    "yearNumber": 2,
+                    "grade": "ST3",
+                    "endDate": "2026-03-31",
+                    "skippedGradeBeforeThisRow": "ST2",
+                    "extendedToEighteenMonths": true,
+                    "exceedsKnownTrainingGrade": false,
+                    "additionalMonths": 0,
+                    "acceleratedMonths": 0
+                  },
+                  {
+                    "yearNumber": 3,
+                    "grade": null,
+                    "endDate": "2099-01-01",
+                    "skippedGradeBeforeThisRow": null,
+                    "extendedToEighteenMonths": false,
+                    "exceedsKnownTrainingGrade": true,
+                    "additionalMonths": 0,
+                    "acceleratedMonths": 0
+                  }
+                ]
               },
               "created": "%s",
               "lastModified": "%s"
@@ -408,6 +443,48 @@ class CctResourceIntegrationTest {
         .andExpect(jsonPath("$.errors", hasSize(1)))
         .andExpect(jsonPath("$.errors[0].pointer", is("#/programmeDetails/specialty")))
         .andExpect(jsonPath("$.errors[0].detail", is("Please choose a specialty from the list.")));
+  }
+
+  @Test
+  void shouldNotCreateCalculationWhenGradeNotInProgression() throws Exception {
+    ObjectNode programmeDetails = (ObjectNode) calculationJson.get("programmeDetails");
+    programmeDetails.set("additionalTrainingTime", new ObjectMapper().readTree("""
+        [{ "grade": "ST8", "months": 2, "notes": "ARCP outcome 3" }]
+        """));
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculation")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(calculationJson.toString()))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errors", hasSize(1)))
+        .andExpect(jsonPath("$.errors[0].pointer",
+            is("#/programmeDetails/additionalTrainingTime[0]/grade")))
+        .andExpect(jsonPath("$.errors[0].detail",
+            is("ST8 is not part of this programme's grade progression.")));
+  }
+
+  @Test
+  void shouldCalculateWithSaveErrorsWhenGradeNotInProgression() throws Exception {
+    ObjectNode request = calculateJson("[]");
+    ObjectNode programmeDetails = (ObjectNode) request.get("programmeDetails");
+    programmeDetails.set("additionalTrainingTime", new ObjectMapper().readTree("""
+        [{ "grade": "ST8", "months": 2, "notes": "ARCP outcome 3" }]
+        """));
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculate")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(request.toString()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.result.gradeProgression", hasSize(7)))
+        .andExpect(jsonPath("$.errors", hasSize(1)))
+        .andExpect(jsonPath("$.errors[0].pointer",
+            is("#/programmeDetails/additionalTrainingTime[0]/grade")))
+        .andExpect(jsonPath("$.errors[0].detail",
+            is("ST8 is not part of this programme's grade progression.")));
   }
 
   @Test
@@ -661,10 +738,8 @@ class CctResourceIntegrationTest {
             "lengthOverrideNotes": "Agreed with local office",
             "startGrade": "ST1",
             "startGradeOverrideNotes": "",
-            "additionalMonths": 0,
-            "additionalMonthsNotes": "",
-            "acceleratedMonths": 0,
-            "acceleratedMonthsNotes": "",
+            "additionalTrainingTime": [],
+            "acceleratedTrainingTime": [],
             "eighteenMonthFinalGrade": null,
             "eighteenMonthFinalGradeNotes": "",
             "skippedGrade": null,
@@ -701,12 +776,15 @@ class CctResourceIntegrationTest {
               "wte": 1,
               "calendarMonths": 74.37,
               "wteMonths": 74.37
-            }
+            },
+            "gradeProgression": %s
           },
           "created": "%s",
           "lastModified": "%s"
         }
-        """.formatted(id, created, lastModified), JsonCompareMode.STRICT));
+        """.formatted(id, gradeProgressionJson("2024-10-13", "2025-10-12", "2026-10-12",
+            "2027-10-12", "2028-10-11", "2029-10-11", "2030-10-10"), created, lastModified),
+        JsonCompareMode.STRICT));
   }
 
   @Test
@@ -783,8 +861,12 @@ class CctResourceIntegrationTest {
         ]
         """);
     ObjectNode programmeDetails = (ObjectNode) request.get("programmeDetails");
-    programmeDetails.put("additionalMonths", 6);
-    programmeDetails.put("additionalMonthsNotes", "ARCP outcome");
+    programmeDetails.set("additionalTrainingTime", new ObjectMapper().readTree("""
+        [
+          { "grade": "ST1", "months": 4, "notes": "ARCP outcome 3" },
+          { "grade": "ST2", "months": 2, "notes": "ARCP outcome 3" }
+        ]
+        """));
 
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
     String calculated = mockMvc.perform(post("/api/cct/calculate")
@@ -812,6 +894,8 @@ class CctResourceIntegrationTest {
     JsonNode expected = mapper.readTree(calculated);
     for (String body : List.of(saved, loaded)) {
       JsonNode actual = mapper.readTree(body);
+      assertThat("Unexpected programme details.", actual.get("programmeDetails"),
+          is(programmeDetails));
       assertThat("Unexpected changes.", actual.get("changes"), is(expected.get("changes")));
       assertThat("Unexpected result.", actual.get("result"), is(expected.get("result")));
     }
@@ -1108,11 +1192,14 @@ class CctResourceIntegrationTest {
                   "wte": 1,
                   "calendarMonths": 84,
                   "wteMonths": 84
-                }
+                },
+                "gradeProgression": %s
               },
               "errors": []
             }
-            """, JsonCompareMode.STRICT));
+            """.formatted(gradeProgressionJson("2024-07-31", "2025-07-31", "2026-07-31",
+                "2027-07-31", "2028-07-30", "2029-07-29", "2030-07-29")),
+            JsonCompareMode.STRICT));
   }
 
   @Test
@@ -1170,11 +1257,14 @@ class CctResourceIntegrationTest {
                   "wte": 1,
                   "calendarMonths": 74.37,
                   "wteMonths": 74.37
-                }
+                },
+                "gradeProgression": %s
               },
               "errors": []
             }
-            """, JsonCompareMode.STRICT));
+            """.formatted(gradeProgressionJson("2024-10-13", "2025-10-12", "2026-10-12",
+                "2027-10-12", "2028-10-11", "2029-10-11", "2030-10-10")),
+            JsonCompareMode.STRICT));
   }
 
   @Test
@@ -1232,11 +1322,14 @@ class CctResourceIntegrationTest {
                   "wte": 0.6,
                   "calendarMonths": 109.91666666666667,
                   "wteMonths": 65.95
-                }
+                },
+                "gradeProgression": %s
               },
               "errors": []
             }
-            """, JsonCompareMode.STRICT));
+            """.formatted(gradeProgressionJson("2024-07-31", "2025-11-29", "2027-07-30",
+                "2029-03-29", "2030-11-27", "2032-07-27", "2034-03-27")),
+            JsonCompareMode.STRICT));
   }
 
   @Test
@@ -1499,16 +1592,12 @@ class CctResourceIntegrationTest {
       startDate         | '"2023-02-30"'
       startGrade        | '"ST99"'
       lengthMonths      | 84.5
-      additionalMonths  | 2.5
-      acceleratedMonths | 2.5
       """)
   void shouldNotCalculateWhenProgrammeDetailsNotReadable(String field, String value)
       throws Exception {
     ObjectNode request = calculateJson("[]");
     ObjectNode programmeDetails = (ObjectNode) request.get("programmeDetails");
     programmeDetails.set(field, new ObjectMapper().readTree(value));
-    programmeDetails.put("additionalMonthsNotes", "why");
-    programmeDetails.put("acceleratedMonthsNotes", "why");
 
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
     mockMvc.perform(post("/api/cct/calculate")
@@ -1521,6 +1610,31 @@ class CctResourceIntegrationTest {
         .andExpect(jsonPath("$.instance", is("/api/cct/calculate")))
         .andExpect(jsonPath("$.errors", hasSize(1)))
         .andExpect(jsonPath("$.errors[0].pointer", is("#/programmeDetails/" + field)))
+        .andExpect(jsonPath("$.errors[0].detail", is("Invalid value.")));
+  }
+
+  @ParameterizedTest
+  @CsvSource(delimiter = '|', textBlock = """
+      additionalTrainingTime  | '{"grade": "ST1", "months": 2.5, "notes": "why"}' | months
+      acceleratedTrainingTime | '{"grade": "ST99", "months": 2, "notes": "why"}'  | grade
+      """)
+  void shouldNotCalculateWhenTrainingTimeNotReadable(String list, String entry, String field)
+      throws Exception {
+    ObjectNode request = calculateJson("[]");
+    ((ObjectNode) request.get("programmeDetails")).set(list, new ObjectMapper().readTree(
+        "[{\"grade\": \"ST1\", \"months\": 1, \"notes\": \"why\"}, " + entry + "]"));
+
+    String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
+    mockMvc.perform(post("/api/cct/calculate")
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(request.toString()))
+        .andExpect(status().isBadRequest())
+        .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+        .andExpect(jsonPath("$.title", is("Validation failure")))
+        .andExpect(jsonPath("$.errors", hasSize(1)))
+        .andExpect(jsonPath("$.errors[0].pointer",
+            is("#/programmeDetails/" + list + "[1]/" + field)))
         .andExpect(jsonPath("$.errors[0].detail", is("Invalid value.")));
   }
 
@@ -1590,8 +1704,8 @@ class CctResourceIntegrationTest {
             .lengthMonths(84)
             .lengthOverrideNotes("Agreed with local office")
             .startGrade(ST1)
-            .additionalMonths(0)
-            .acceleratedMonths(0)
+            .additionalTrainingTime(List.of())
+            .acceleratedTrainingTime(List.of())
             .build())
         .changes(List.of(CctChange.builder()
             .type(LTFT)
@@ -1621,8 +1735,44 @@ class CctResourceIntegrationTest {
                 .calendarMonths(74.4)
                 .wteMonths(74.4)
                 .build())
+            .gradeProgression(List.of(
+                CctGradeYear.builder()
+                    .yearNumber(1)
+                    .grade(ST1)
+                    .endDate(LocalDate.of(2024, 9, 30))
+                    .additionalMonths(3)
+                    .acceleratedMonths(1)
+                    .build(),
+                CctGradeYear.builder()
+                    .yearNumber(2)
+                    .grade(ST3)
+                    .endDate(LocalDate.of(2026, 3, 31))
+                    .skippedGradeBeforeThisRow(ST2)
+                    .extendedToEighteenMonths(true)
+                    .build(),
+                CctGradeYear.builder()
+                    .yearNumber(3)
+                    .endDate(LocalDate.of(2099, 1, 1))
+                    .exceedsKnownTrainingGrade(true)
+                    .build()))
             .build())
         .build();
+  }
+
+  private static String gradeProgressionJson(String... endDates) {
+    return IntStream.range(0, endDates.length)
+        .mapToObj(index -> """
+            {
+              "yearNumber": %d,
+              "grade": "ST%d",
+              "endDate": "%s",
+              "skippedGradeBeforeThisRow": null,
+              "extendedToEighteenMonths": false,
+              "exceedsKnownTrainingGrade": false,
+              "additionalMonths": 0,
+              "acceleratedMonths": 0
+            }""".formatted(index + 1, index + 1, endDates[index]))
+        .collect(Collectors.joining(",", "[", "]"));
   }
 
   private static String changeEndingOutsideDateLimits() {
@@ -1653,10 +1803,8 @@ class CctResourceIntegrationTest {
             "lengthOverrideNotes": "Agreed with local office",
             "startGrade": "ST1",
             "startGradeOverrideNotes": "",
-            "additionalMonths": 0,
-            "additionalMonthsNotes": "",
-            "acceleratedMonths": 0,
-            "acceleratedMonthsNotes": "",
+            "additionalTrainingTime": [],
+            "acceleratedTrainingTime": [],
             "eighteenMonthFinalGrade": null,
             "eighteenMonthFinalGradeNotes": "",
             "skippedGrade": null,

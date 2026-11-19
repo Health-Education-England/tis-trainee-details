@@ -9,7 +9,8 @@ The basic logic comes from an examination of NHS Calculators (including North We
 
 The CCT Calculation engine code in [`CctEngine.java`](src/main/java/uk/nhs/hee/trainee/details/service/CctEngine.java) is itself a reimplemented the [`JS calculation code in the POC`](https://github.com/john12321/cct-calculator-app/blob/main/src/core/calculations.ts) which mapped the NW Excel calculation logic.
 
-Note: This file doesn't cover grade progression, which isn't built yet.
+The last part, [Grade progression](#grade-progression), covers the grade table
+that comes with the CCT date.
 
 ## The short version
 
@@ -18,7 +19,8 @@ adds up the months a trainee has been credited with, works out what's left, and
 turns that into a date.
 
 1. **Months needed** are the programme length, plus any additional months, less
-   any accelerated months.
+   any accelerated months. Both are recorded per grade, and only their totals
+   are used here.
 2. **Months completed** are the credit from each change the trainee has entered,
    plus full credit for the time around those changes.
 3. **Months remaining** are months needed less months completed, rounded to 2
@@ -99,7 +101,8 @@ The calculator receives the programme details and the list of changes.
 
 ```text
 STEP 1  Work out the months needed
-  months needed = programme length + additional months - accelerated months
+  months needed = programme length + total additional months
+                  - total accelerated months
 
 STEP 2  Work out where the projection starts:
   a. if there is an open-ended LTFT change,
@@ -270,6 +273,56 @@ CCT date           26/02/2031
   (26/02/2031)."
 - **One edit fixes it.** Ending the change on 26/02/2031 clears the error, and
   the CCT date stays the same.
+
+## Grade progression
+
+The result also lists the trainee's grade for each year of the programme and
+the date it ends. The rules follow the NW workbook's grade table (K9:L17), with
+the changes noted below. The code is in
+[`CctGradeProgression.java`](src/main/java/uk/nhs/hee/trainee/details/service/CctGradeProgression.java).
+
+1. **Which years appear.** One row per year of the programme length, before
+   additional and accelerated time: an 84-month programme has 7 rows. The grade
+   goes up by one each year from the start grade (ST1, ST2, ...). DFT stays
+   DFT.
+2. **When each grade ends.** Year N ends when the trainee has completed N × 12
+   months, plus the additional time and less the accelerated time recorded on
+   that grade and every earlier grade. So time on ST3 moves ST3 and every later
+   grade, but not ST1 or ST2. No row ends after the CCT date, and the date comes
+   from the same search and projection as the CCT date, so the last row always
+   ends on the CCT date.
+3. **18-month final year.** For a programme that ends in a half year, such as
+   90 months. Without it, the last row is a 6-month grade. The 18-month grade is
+   the last full year before it, and it takes in those 6 months, so the 6-month
+   row drops out. The CCT date doesn't change.
+4. **Skipped grade.** From the skipped grade on, every row shows the next grade
+   up. The dates don't change; any shorter training is entered as accelerated
+   time.
+5. **Past the highest grade.** A year past ST9, CT4, DCT3 or F2 has no grade and
+   is flagged, rather than showing an invented ST10.
+
+Example: example 1's programme with 3 months additional and 1 month accelerated
+on ST1. ST1 needs 12 + 3 − 1 = 14 months, so it ends on 30/09/2024. Every later
+grade moves 2 months, and ST7 ends on the new CCT date.
+
+**Checks before saving.** These grade checks block a save, and `/calculate`
+lists them in `errors` with its result:
+
+- Each grade named in additional or accelerated time, the skipped grade and the
+  18-month grade must be in the progression. The skipped grade is checked
+  without the skip, and the 18-month grade can't be the skipped grade.
+- The 18-month grade must end the progression and run 18 months, so it must be
+  the last full year of a programme that ends in a half year (ST7 of 90 months
+  from ST1).
+- The accelerated time on a grade must be less than that grade's months (12,
+  18, or less for a short final year) plus its additional time, so no grade
+  shrinks to nothing.
+
+**How it differs from the NW workbook.** The workbook puts all additional and
+accelerated time on the first year, and its rows can end after the CCT date.
+Its specialty list also has a "24 months" column (3 Emergency medicine DRE-EM
+rows) that makes ST3 last two years. That's not used here: it has no published
+source.
 
 ## Things that can surprise people
 

@@ -30,10 +30,12 @@ import jakarta.validation.ConstraintValidatorContext;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.IntStream;
 import uk.nhs.hee.trainee.details.dto.CctCalculationInput;
 import uk.nhs.hee.trainee.details.dto.CctChangeDto;
 import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto;
+import uk.nhs.hee.trainee.details.dto.CctTrainingTimeDto;
 import uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType;
 
 /**
@@ -42,7 +44,9 @@ import uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType;
 public class CctCalculateRequestValidator implements
     ConstraintValidator<CctCalculateRequestValidation, CctCalculationInput> {
 
-  private static final int NOTES_MAX_LENGTH = 1000;
+  private static final int NOTES_MAX_LENGTH = CctCalculationInput.MAX_NOTES_LENGTH;
+  private static final int MAX_ADDITIONAL_MONTHS = 24;
+  private static final int MAX_ACCELERATED_MONTHS = 12;
   private static final DateTimeFormatter MESSAGE_DATE_FORMAT =
       DateTimeFormatter.ofPattern("dd/MM/yyyy");
   private static final LocalDate EARLIEST_DATE = LocalDate.of(1970, 1, 1);
@@ -81,22 +85,26 @@ public class CctCalculateRequestValidator implements
       violations.onProgrammeDetails("startDate", DATE_LIMITS_MESSAGE);
     }
 
+    int additionalMonths = totalMonths(details.additionalTrainingTime());
+    int acceleratedMonths = totalMonths(details.acceleratedTrainingTime());
+    if (additionalMonths > MAX_ADDITIONAL_MONTHS) {
+      violations.onProgrammeDetails("additionalTrainingTime",
+          "Total additional training time cannot be more than " + MAX_ADDITIONAL_MONTHS
+              + " months.");
+    }
+    if (acceleratedMonths > MAX_ACCELERATED_MONTHS) {
+      violations.onProgrammeDetails("acceleratedTrainingTime",
+          "Total accelerated training time cannot be more than " + MAX_ACCELERATED_MONTHS
+              + " months.");
+    }
     if (isWholeNumberBetween(details.lengthMonths(), 1, 120)
-        && isWholeNumberBetween(details.additionalMonths(), 0, 24)
-        && isWholeNumberBetween(details.acceleratedMonths(), 0, 12)
-        && details.lengthMonths() + details.additionalMonths() - details.acceleratedMonths() <= 0) {
-      violations.onProgrammeDetails("acceleratedMonths",
+        && additionalMonths <= MAX_ADDITIONAL_MONTHS
+        && acceleratedMonths <= MAX_ACCELERATED_MONTHS
+        && details.lengthMonths() + additionalMonths - acceleratedMonths <= 0) {
+      violations.onProgrammeDetails("acceleratedTrainingTime",
           "Adjusted training duration must be greater than zero.");
     }
 
-    if (isPositive(details.additionalMonths()) && isBlank(details.additionalMonthsNotes())) {
-      violations.onProgrammeDetails("additionalMonthsNotes",
-          "Please enter a reason for additional training time.");
-    }
-    if (isPositive(details.acceleratedMonths()) && isBlank(details.acceleratedMonthsNotes())) {
-      violations.onProgrammeDetails("acceleratedMonthsNotes",
-          "Please enter a reason for accelerated training time.");
-    }
     if (details.eighteenMonthFinalGrade() != null
         && isBlank(details.eighteenMonthFinalGradeNotes())) {
       violations.onProgrammeDetails("eighteenMonthFinalGradeNotes",
@@ -229,8 +237,16 @@ public class CctCalculateRequestValidator implements
     return value != null && value >= min && value <= max;
   }
 
-  private static boolean isPositive(Integer value) {
-    return value != null && value > 0;
+  private static int totalMonths(List<CctTrainingTimeDto> entries) {
+    if (entries == null) {
+      return 0;
+    }
+    return entries.stream()
+        .filter(Objects::nonNull)
+        .map(CctTrainingTimeDto::months)
+        .filter(months -> isWholeNumberBetween(months, 1, 24))
+        .mapToInt(Integer::intValue)
+        .sum();
   }
 
   private static boolean isBlank(String value) {

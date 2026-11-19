@@ -34,9 +34,19 @@ public interface CctCalculationInput {
   int MAX_CHANGES = 50;
 
   /**
+   * The most entries each kind of training time can have.
+   */
+  int MAX_TRAINING_TIME_ENTRIES = 20;
+
+  /**
    * The most characters a name or a programme details note can have.
    */
   int MAX_TEXT_LENGTH = 4096;
+
+  /**
+   * The most characters a change or training time note can have.
+   */
+  int MAX_NOTES_LENGTH = 1000;
 
   /**
    * Get the details of the programme.

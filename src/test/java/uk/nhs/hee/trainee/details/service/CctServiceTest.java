@@ -38,6 +38,10 @@ import static org.mockito.Mockito.when;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.LTFT;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST1;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST2;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST3;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST7;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST8;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST9;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -48,6 +52,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
@@ -64,7 +69,9 @@ import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto;
 import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto.CctProgrammeDetailsDtoBuilder;
 import uk.nhs.hee.trainee.details.dto.CctResultDto;
 import uk.nhs.hee.trainee.details.dto.CctSpecialtyDto;
+import uk.nhs.hee.trainee.details.dto.CctTrainingTimeDto;
 import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
+import uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade;
 import uk.nhs.hee.trainee.details.exception.NotRecordOwnerException;
 import uk.nhs.hee.trainee.details.mapper.CctMapperImpl;
 import uk.nhs.hee.trainee.details.model.CctCalculation;
@@ -90,13 +97,14 @@ class CctServiceTest {
     traineeIdentity.setTraineeId(TRAINEE_ID);
 
     calculationRepository = mock(CctCalculationRepository.class);
-    engine = new CctEngine();
     specialtyService = mock(CctSpecialtyService.class);
     when(specialtyService.getSpecialties()).thenReturn(
         List.of(new CctSpecialtyDto("Paediatrics", 84, ST1)));
+    CctGradeProgression gradeProgression = new CctGradeProgression();
+    engine = new CctEngine(gradeProgression);
 
     service = new CctService(traineeIdentity, calculationRepository, new CctMapperImpl(),
-        engine, specialtyService);
+        engine, specialtyService, gradeProgression);
   }
 
   @Test
@@ -441,6 +449,124 @@ class CctServiceTest {
   }
 
   @Test
+  void shouldNotCreateCalculationWhenGradesNotInProgression() {
+    CctCalculationSaveRequestDto dto = request(programme()
+        .additionalTrainingTime(trainingTime(ST8, 2))
+        .acceleratedTrainingTime(trainingTime(ST9, 1))
+        .eighteenMonthFinalGrade(ST9)
+        .eighteenMonthFinalGradeNotes("Dual CCT")
+        .skippedGrade(ST8)
+        .skippedGradeNotes("Core competencies"));
+
+    MethodArgumentNotValidException exception = assertThrows(MethodArgumentNotValidException.class,
+        () -> service.createCalculation(dto));
+
+    assertThat("Unexpected errors.",
+        BodyValidationError.fromFieldErrors(exception.getFieldErrors()), is(List.of(
+            new BodyValidationError("#/programmeDetails/acceleratedTrainingTime[0]/grade",
+                "ST9 is not part of this programme's grade progression."),
+            new BodyValidationError("#/programmeDetails/additionalTrainingTime[0]/grade",
+                "ST8 is not part of this programme's grade progression."),
+            new BodyValidationError("#/programmeDetails/eighteenMonthFinalGrade",
+                "ST9 is not part of this programme's grade progression."),
+            new BodyValidationError("#/programmeDetails/skippedGrade",
+                "ST8 is not part of this programme's grade progression."))));
+
+    verify(calculationRepository, never()).insert(any(CctCalculation.class));
+  }
+
+  @Test
+  void shouldNotCreateCalculationWhenEighteenMonthFinalGradeIsSkipped() {
+    CctCalculationSaveRequestDto dto = request(programme()
+        .eighteenMonthFinalGrade(ST3)
+        .eighteenMonthFinalGradeNotes("Dual CCT")
+        .skippedGrade(ST3)
+        .skippedGradeNotes("Core competencies"));
+
+    MethodArgumentNotValidException exception = assertThrows(MethodArgumentNotValidException.class,
+        () -> service.createCalculation(dto));
+
+    assertThat("Unexpected errors.",
+        BodyValidationError.fromFieldErrors(exception.getFieldErrors()), is(List.of(
+            new BodyValidationError("#/programmeDetails/eighteenMonthFinalGrade",
+                "ST3 is not part of this programme's grade progression."))));
+  }
+
+  @ParameterizedTest
+  @CsvSource({"90, ST5", "90, ST8", "84, ST7"})
+  void shouldNotCreateCalculationWhenEighteenMonthGradeIsNotLastFullYearBeforeHalfYear(
+      int lengthMonths, CctTrainingGrade grade) {
+    CctCalculationSaveRequestDto dto = request(programme()
+        .lengthMonths(lengthMonths)
+        .lengthOverrideNotes("Agreed with local office")
+        .eighteenMonthFinalGrade(grade)
+        .eighteenMonthFinalGradeNotes("Dual CCT"));
+
+    MethodArgumentNotValidException exception = assertThrows(MethodArgumentNotValidException.class,
+        () -> service.createCalculation(dto));
+
+    assertThat("Unexpected errors.",
+        BodyValidationError.fromFieldErrors(exception.getFieldErrors()), is(List.of(
+            new BodyValidationError("#/programmeDetails/eighteenMonthFinalGrade",
+                "An 18-month final year must be the last full year of a programme length that "
+                    + "includes a half year, such as 66 months."))));
+  }
+
+  @Test
+  void shouldCreateCalculationWhenEighteenMonthGradeIsLastFullYearBeforeHalfYear()
+      throws MethodArgumentNotValidException {
+    CctCalculationSaveRequestDto dto = request(programme()
+        .lengthMonths(90)
+        .lengthOverrideNotes("Agreed with local office")
+        .eighteenMonthFinalGrade(ST7)
+        .eighteenMonthFinalGradeNotes("Dual CCT"));
+    when(calculationRepository.insert(any(CctCalculation.class))).thenAnswer(
+        invocation -> invocation.getArgument(0));
+
+    CctCalculationDetailDto created = service.createCalculation(dto);
+
+    assertThat("Unexpected programme details.", created.programmeDetails(),
+        is(dto.programmeDetails()));
+  }
+
+  @ParameterizedTest
+  @CsvSource({"84, ST2, 12", "90, ST8, 6"})
+  void shouldNotCreateCalculationWhenAcceleratedTimeFillsGrade(int lengthMonths,
+      CctTrainingGrade grade, int gradeMonths) {
+    List<CctTrainingTimeDto> accelerated = List.of(
+        trainingTime(grade, gradeMonths - 1).get(0),
+        trainingTime(grade, 1).get(0));
+    CctCalculationSaveRequestDto dto = request(programme()
+        .lengthMonths(lengthMonths)
+        .lengthOverrideNotes("Agreed with local office")
+        .acceleratedTrainingTime(accelerated));
+
+    MethodArgumentNotValidException exception = assertThrows(MethodArgumentNotValidException.class,
+        () -> service.createCalculation(dto));
+
+    assertThat("Unexpected errors.",
+        BodyValidationError.fromFieldErrors(exception.getFieldErrors()), is(List.of(
+            new BodyValidationError("#/programmeDetails/acceleratedTrainingTime[0]/months",
+                "Accelerated training time in " + grade + " must be less than " + gradeMonths
+                    + " months."))));
+  }
+
+  @Test
+  void shouldCreateCalculationWhenAcceleratedTimeLessThanGradeAndItsAdditionalTime()
+      throws MethodArgumentNotValidException {
+    CctCalculationSaveRequestDto dto = request(programme()
+        .additionalTrainingTime(trainingTime(ST2, 1))
+        .acceleratedTrainingTime(trainingTime(ST2, 12)));
+    when(calculationRepository.insert(any(CctCalculation.class))).thenAnswer(
+        invocation -> invocation.getArgument(0));
+
+    CctCalculationDetailDto created = service.createCalculation(dto);
+
+    assertThat("Unexpected programme details.", created.programmeDetails(),
+        is(dto.programmeDetails()));
+  }
+
+  @Test
   void shouldNotUpdateExistingCalculationWhenSpecialtyNotListed() {
     UUID id = UUID.randomUUID();
     CctCalculation existingCalc = CctCalculation.builder()
@@ -625,6 +751,34 @@ class CctServiceTest {
   }
 
   @Test
+  void shouldCalculateWithErrorsWhenGradeNotInProgression() {
+    CctCalculateRequestDto request = new CctCalculateRequestDto(
+        programme().additionalTrainingTime(trainingTime(ST8, 2)).build(), List.of());
+
+    CctCalculateResponseDto response = service.calculate(request);
+
+    assertThat("Unexpected CCT date.", response.result().cctDate(),
+        is(LocalDate.of(2030, 9, 28)));
+    assertThat("Unexpected errors.", response.errors(), is(List.of(
+        new BodyValidationError("#/programmeDetails/additionalTrainingTime[0]/grade",
+            "ST8 is not part of this programme's grade progression."))));
+  }
+
+  @Test
+  void shouldCalculateWithErrorsWhenEighteenMonthGradeIsNotLastFullYearBeforeHalfYear() {
+    CctCalculateRequestDto request = new CctCalculateRequestDto(
+        programme().eighteenMonthFinalGrade(ST3).eighteenMonthFinalGradeNotes("Dual CCT").build(),
+        List.of());
+
+    CctCalculateResponseDto response = service.calculate(request);
+
+    assertThat("Unexpected errors.", response.errors(), is(List.of(
+        new BodyValidationError("#/programmeDetails/eighteenMonthFinalGrade",
+            "An 18-month final year must be the last full year of a programme length that "
+                + "includes a half year, such as 66 months."))));
+  }
+
+  @Test
   void shouldCalculateWithErrorsWhenChangeStartsBeforeProgramme() {
     CctCalculateRequestDto request = new CctCalculateRequestDto(programmeDetails(),
         List.of(CctChangeDto.builder()
@@ -732,8 +886,12 @@ class CctServiceTest {
         .startDate(LocalDate.of(2023, 8, 2))
         .lengthMonths(84)
         .startGrade(ST1)
-        .additionalMonths(0)
-        .acceleratedMonths(0);
+        .additionalTrainingTime(List.of())
+        .acceleratedTrainingTime(List.of());
+  }
+
+  private static List<CctTrainingTimeDto> trainingTime(CctTrainingGrade grade, int months) {
+    return List.of(CctTrainingTimeDto.builder().grade(grade).months(months).notes("why").build());
   }
 
   private static CctChangeDto datedLtft() {
