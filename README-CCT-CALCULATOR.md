@@ -291,9 +291,10 @@ the changes noted below. The code is in
    grade, but not ST1 or ST2. No row ends after the CCT date, and the date comes
    from the same search and projection as the CCT date, so the last row always
    ends on the CCT date.
-3. **18-month final year.** The chosen grade ends 6 months later, and the next
-   year's row drops out if the programme length no longer reaches it. The CCT
-   date doesn't change.
+3. **18-month final year.** For a programme that ends in a half year, such as
+   90 months. Without it, the last row is a 6-month grade. The 18-month grade is
+   the last full year before it, and it takes in those 6 months, so the 6-month
+   row drops out. The CCT date doesn't change.
 4. **Skipped grade.** From the skipped grade on, every row shows the next grade
    up. The dates don't change; any shorter training is entered as accelerated
    time.
@@ -310,6 +311,9 @@ lists them in `errors` with its result:
 - Each grade named in additional or accelerated time, the skipped grade and the
   18-month grade must be in the progression. The skipped grade is checked
   without the skip, and the 18-month grade can't be the skipped grade.
+- The 18-month grade must end the progression and run 18 months, so it must be
+  the last full year of a programme that ends in a half year (ST7 of 90 months
+  from ST1).
 - The accelerated time on a grade must be less than that grade's months (12,
   18, or less for a short final year) plus its additional time, so no grade
   shrinks to nothing.
