@@ -36,6 +36,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static uk.nhs.hee.trainee.details.dto.CctCalculationInput.MAX_CHANGES;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.LTFT;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST1;
 
@@ -49,9 +50,10 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -361,10 +363,9 @@ class CctResourceIntegrationTest {
         .andExpect(jsonPath("$.errors", hasSize(3)));
   }
 
-  @ParameterizedTest
-  @ValueSource(strings = {"{}", "null"})
-  void shouldNotValidateAllChangesWhenCreatingTooManyChanges(String change) throws Exception {
-    ObjectNode request = calculateJson(tooManyChanges(change));
+  @Test
+  void shouldNotCreateCalculationWhenTooManyChanges() throws Exception {
+    ObjectNode request = calculateJson(tooManyChanges());
     request.put("name", "Test Calculation");
 
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
@@ -373,7 +374,7 @@ class CctResourceIntegrationTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(request.toString()))
         .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.errors", hasSize(52)))
+        .andExpect(jsonPath("$.errors", hasSize(1)))
         .andExpect(jsonPath("$.errors[0].pointer", is("#/changes")))
         .andExpect(jsonPath("$.errors[0].detail", is("size must be between 0 and 50")));
   }
@@ -943,11 +944,10 @@ class CctResourceIntegrationTest {
         .andExpect(jsonPath("$.errors[0].detail", is(DATE_LIMITS_ERROR)));
   }
 
-  @ParameterizedTest
-  @ValueSource(strings = {"{}", "null"})
-  void shouldNotValidateAllChangesWhenUpdatingTooManyChanges(String change) throws Exception {
+  @Test
+  void shouldNotUpdateCalculationWhenTooManyChanges() throws Exception {
     UUID id = UUID.randomUUID();
-    ObjectNode request = calculateJson(tooManyChanges(change));
+    ObjectNode request = calculateJson(tooManyChanges());
     request.put("id", id.toString());
     request.put("name", "Test Calculation");
 
@@ -957,7 +957,7 @@ class CctResourceIntegrationTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(request.toString()))
         .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.errors", hasSize(52)))
+        .andExpect(jsonPath("$.errors", hasSize(1)))
         .andExpect(jsonPath("$.errors[0].pointer", is("#/changes")))
         .andExpect(jsonPath("$.errors[0].detail", is("size must be between 0 and 50")));
   }
@@ -1377,10 +1377,9 @@ class CctResourceIntegrationTest {
             """, JsonCompareMode.STRICT));
   }
 
-  @ParameterizedTest
-  @ValueSource(strings = {"{}", "null"})
-  void shouldNotValidateAllChangesWhenCalculatingTooManyChanges(String change) throws Exception {
-    ObjectNode request = calculateJson(tooManyChanges(change));
+  @Test
+  void shouldNotCalculateWhenTooManyChanges() throws Exception {
+    ObjectNode request = calculateJson(tooManyChanges());
 
     String token = TestJwtUtil.generateTokenForTisId(TRAINEE_ID);
     mockMvc.perform(post("/api/cct/calculate")
@@ -1388,7 +1387,7 @@ class CctResourceIntegrationTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(request.toString()))
         .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.errors", hasSize(52)))
+        .andExpect(jsonPath("$.errors", hasSize(1)))
         .andExpect(jsonPath("$.errors[0].pointer", is("#/changes")))
         .andExpect(jsonPath("$.errors[0].detail", is("size must be between 0 and 50")));
   }
@@ -1638,8 +1637,21 @@ class CctResourceIntegrationTest {
         """;
   }
 
-  private static String tooManyChanges(String change) {
-    return "[" + String.join(",", Collections.nCopies(1000, change)) + "]";
+  private static String tooManyChanges() {
+    LocalDate firstDate = LocalDate.of(2024, 1, 1);
+    return IntStream.rangeClosed(0, MAX_CHANGES)
+        .mapToObj(index -> {
+          LocalDate date = firstDate.plusDays(index);
+          return """
+              {
+                "type": "PARENTAL",
+                "startDate": "%s",
+                "endDate": "%s",
+                "countsTowardsCompletion": false
+              }
+              """.formatted(date, date);
+        })
+        .collect(Collectors.joining(",", "[", "]"));
   }
 
   private static ObjectNode calculateJson(String changes) throws IOException {

@@ -22,24 +22,32 @@
 package uk.nhs.hee.trainee.details.dto;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.ACCRUED_LEAVE;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.LTFT;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.OOPC;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.OOPE;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.OOPP;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.OOPR;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.OOPT;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.PARENTAL;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.PHASED;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.SHIELDING;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.SICKNESS;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST1;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST2;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST3;
 
 import jakarta.validation.Validation;
+import jakarta.validation.ValidatorFactory;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -58,19 +66,25 @@ class CctCalculateRequestDtoTest {
   private static final String DATE_LIMITS_ERROR =
       "Date must be between 01/01/1970 and 50 years from today.";
 
-  private SpringValidatorAdapter validator;
+  private static ValidatorFactory validatorFactory;
+  private static SpringValidatorAdapter validator;
 
-  @BeforeEach
-  void setUp() {
-    validator = new SpringValidatorAdapter(
-        Validation.buildDefaultValidatorFactory().getValidator());
+  @BeforeAll
+  static void setUp() {
+    validatorFactory = Validation.buildDefaultValidatorFactory();
+    validator = new SpringValidatorAdapter(validatorFactory.getValidator());
+  }
+
+  @AfterAll
+  static void tearDown() {
+    validatorFactory.close();
   }
 
   @Test
   void shouldAcceptRequestWithNoChanges() {
     List<BodyValidationError> errors = validate(programme(), List.of());
 
-    assertThat("Unexpected errors.", errors, is(empty()));
+    assertThat("Unexpected errors.", errors, hasSize(0));
   }
 
   @Test
@@ -78,14 +92,14 @@ class CctCalculateRequestDtoTest {
     List<BodyValidationError> errors = validate(programme(),
         List.of(ltft().startDate(date("2030-01-01")).endDate(date("2032-12-31")).build()));
 
-    assertThat("Unexpected errors.", errors, is(empty()));
+    assertThat("Unexpected errors.", errors, hasSize(0));
   }
 
   @Test
   void shouldAcceptStartGradeWithoutNote() {
     List<BodyValidationError> errors = validate(programme().startGrade(ST2), List.of());
 
-    assertThat("Unexpected errors.", errors, is(empty()));
+    assertThat("Unexpected errors.", errors, hasSize(0));
   }
 
   @Test
@@ -93,44 +107,52 @@ class CctCalculateRequestDtoTest {
     List<BodyValidationError> errors = validate(programme(),
         List.of(ltft().startDate(date("2023-08-01")).build()));
 
-    assertThat("Unexpected errors.", errors, is(empty()));
+    assertThat("Unexpected errors.", errors, hasSize(0));
   }
 
-  @ParameterizedTest
-  @MethodSource("listChangesBuiltByFrontend")
-  void shouldAcceptChangesBuiltByFrontend(CctChangeDto change) {
+  @ParameterizedTest(name = "{0}")
+  @MethodSource("validChanges")
+  void shouldAcceptValidChange(String description, CctChangeDto change) {
     List<BodyValidationError> errors = validate(programme(), List.of(change));
 
-    assertThat("Unexpected errors.", errors, is(empty()));
+    assertThat("Unexpected errors.", errors, hasSize(0));
   }
 
-  static Stream<CctChangeDto> listChangesBuiltByFrontend() {
-    Stream<CctChangeDto> datedChanges = Arrays.stream(CctChangeType.values())
-        .flatMap(type -> Stream.of(false, true).map(counts -> {
-          boolean wteShown = type == LTFT || (type == OOPR && counts);
-          return CctChangeDto.builder()
-              .type(type)
-              .startDate(date("2024-01-01"))
-              .endDate(date("2024-06-30"))
-              .wte(wteShown ? 0.07 : null)
-              .countsTowardsCompletion((type == OOPT || type == OOPR) ? counts : type == LTFT)
-              .notes("a note")
-              .build();
-        }));
-    CctChangeDto openLtftChange = ltft()
-        .startDate(date("2025-01-01"))
-        .endDate(null)
-        .wte(0.2)
-        .notes("")
-        .build();
-    return Stream.concat(datedChanges, Stream.of(openLtftChange));
+  static Stream<Arguments> validChanges() {
+    return Stream.of(
+        Arguments.of("dated LTFT",
+            datedChange(LTFT).wte(0.07).countsTowardsCompletion(true).build()),
+        Arguments.of("open-ended LTFT",
+            ltft().startDate(date("2025-01-01")).endDate(null).wte(0.2).notes("").build()),
+        Arguments.of("counted OOPR",
+            datedChange(OOPR).wte(0.07).countsTowardsCompletion(true).build()),
+        Arguments.of("uncounted OOPR", datedChange(OOPR).build()),
+        Arguments.of("counted OOPT",
+            datedChange(OOPT).countsTowardsCompletion(true).build()),
+        Arguments.of("uncounted OOPT", datedChange(OOPT).build()),
+        Arguments.of("OOPC", datedChange(OOPC).build()),
+        Arguments.of("OOPE", datedChange(OOPE).build()),
+        Arguments.of("OOPP", datedChange(OOPP).build()),
+        Arguments.of("parental leave", datedChange(PARENTAL).build()),
+        Arguments.of("phased return", datedChange(PHASED).build()),
+        Arguments.of("shielding", datedChange(SHIELDING).build()),
+        Arguments.of("sickness", datedChange(SICKNESS).build()),
+        Arguments.of("accrued leave", datedChange(ACCRUED_LEAVE).build()));
+  }
+
+  private static CctChangeDtoBuilder datedChange(CctChangeType type) {
+    return CctChangeDto.builder()
+        .type(type)
+        .startDate(date("2024-01-01"))
+        .endDate(date("2024-06-30"))
+        .notes("a note");
   }
 
   @Test
   void shouldAcceptLtftWteOfWholePercent() {
     List<BodyValidationError> errors = validate(programme(), List.of(ltft().wte(0.12).build()));
 
-    assertThat("Unexpected errors.", errors, is(empty()));
+    assertThat("Unexpected errors.", errors, hasSize(0));
   }
 
   @Test
@@ -138,14 +160,14 @@ class CctCalculateRequestDtoTest {
     List<BodyValidationError> errors = validate(programme(),
         List.of(parental().notes("  " + "x".repeat(1000) + "\n").build()));
 
-    assertThat("Unexpected errors.", errors, is(empty()));
+    assertThat("Unexpected errors.", errors, hasSize(0));
   }
 
   @Test
   void shouldAcceptMaximumNumberOfChanges() {
     List<BodyValidationError> errors = validate(programme(), oneDayChanges(50));
 
-    assertThat("Unexpected errors.", errors, is(empty()));
+    assertThat("Unexpected errors.", errors, hasSize(0));
   }
 
   @Test
@@ -154,7 +176,7 @@ class CctCalculateRequestDtoTest {
         List.of(ltft().startDate(EARLIEST_DATE).build(),
             ltft().startDate(LATEST_DATE).endDate(LATEST_DATE).build()));
 
-    assertThat("Unexpected errors.", errors, is(empty()));
+    assertThat("Unexpected errors.", errors, hasSize(0));
   }
 
   @Test
@@ -168,7 +190,7 @@ class CctCalculateRequestDtoTest {
         .eighteenMonthFinalGradeNotes(notes)
         .skippedGradeNotes(notes), List.of());
 
-    assertThat("Unexpected errors.", errors, is(empty()));
+    assertThat("Unexpected errors.", errors, hasSize(0));
   }
 
   @Test
@@ -193,149 +215,164 @@ class CctCalculateRequestDtoTest {
   }
 
   @ParameterizedTest(name = "{index}: {0}")
-  @MethodSource("listInvalidRequests")
-  void shouldRejectInvalidRequest(String description, CctProgrammeDetailsDtoBuilder programme,
-      List<CctChangeDto> changes, List<BodyValidationError> expected) {
-    List<BodyValidationError> errors = validate(programme, changes);
+  @MethodSource("invalidProgrammeDetails")
+  void shouldRejectInvalidProgrammeDetails(String description,
+      CctProgrammeDetailsDtoBuilder programme, String field, String detail) {
+    List<BodyValidationError> errors = validate(programme, List.of());
 
-    assertThat("Unexpected errors.", errors, is(expected));
+    assertThat("Unexpected errors.", errors,
+        is(List.of(error("#/programmeDetails/" + field, detail))));
   }
 
-  static Stream<Arguments> listInvalidRequests() {
+  static Stream<Arguments> invalidProgrammeDetails() {
     return Stream.of(
-        Arguments.of("a missing specialty", programme().specialty(""), List.of(),
-            List.of(error("#/programmeDetails/specialty", "Please choose a specialty."))),
-        Arguments.of("a missing programme start date", programme().startDate(null), List.of(),
-            List.of(error("#/programmeDetails/startDate",
-                "Please enter a programme start date."))),
-        Arguments.of("a programme start date before the earliest date",
-            programme().startDate(EARLIEST_DATE.minusDays(1)), List.of(),
-            List.of(error("#/programmeDetails/startDate", DATE_LIMITS_ERROR))),
-        Arguments.of("a programme start date after the latest date",
-            programme().startDate(LATEST_DATE.plusDays(1)), List.of(),
-            List.of(error("#/programmeDetails/startDate", DATE_LIMITS_ERROR))),
-        Arguments.of("a change start date before the earliest date", programme(),
-            List.of(ltft().startDate(EARLIEST_DATE.minusDays(1)).build()),
-            List.of(error("#/changes[0]/startDate", DATE_LIMITS_ERROR))),
-        Arguments.of("an open LTFT start date after the latest date", programme(),
-            List.of(ltft().startDate(LATEST_DATE.plusDays(1)).endDate(null).build()),
-            List.of(error("#/changes[0]/startDate", DATE_LIMITS_ERROR))),
-        Arguments.of("a change end date after the latest date", programme(),
-            List.of(ltft().endDate(LATEST_DATE.plusDays(1)).build()),
-            List.of(error("#/changes[0]/endDate", DATE_LIMITS_ERROR))),
-        Arguments.of("a change entirely before the earliest date", programme(),
-            List.of(ltft().startDate(EARLIEST_DATE.minusDays(2))
-                .endDate(EARLIEST_DATE.minusDays(1)).build()),
-            List.of(error("#/changes[0]/endDate", DATE_LIMITS_ERROR),
-                error("#/changes[0]/startDate", DATE_LIMITS_ERROR))),
-        Arguments.of("a counted OOPT in the last year of the date range", programme(),
-            List.of(CctChangeDto.builder().type(OOPT).startDate(LocalDate.MAX)
-                .endDate(LocalDate.MAX).countsTowardsCompletion(true).build()),
-            List.of(error("#/changes[0]/endDate", DATE_LIMITS_ERROR),
-                error("#/changes[0]/startDate", DATE_LIMITS_ERROR))),
-        Arguments.of("a missing start grade", programme().startGrade(null), List.of(),
-            List.of(error("#/programmeDetails/startGrade", "Please choose a start grade."))),
-        Arguments.of("a missing programme length", programme().lengthMonths(null), List.of(),
-            List.of(error("#/programmeDetails/lengthMonths",
-                "Programme length must be a whole number of months between 1 and 120."))),
-        Arguments.of("a programme length over 120 months", programme().lengthMonths(121),
-            List.of(),
-            List.of(error("#/programmeDetails/lengthMonths",
-                "Programme length must be a whole number of months between 1 and 120."))),
+        Arguments.of("missing specialty", programme().specialty(""),
+            "specialty", "Please choose a specialty."),
+        Arguments.of("missing start date", programme().startDate(null),
+            "startDate", "Please enter a programme start date."),
+        Arguments.of("start date before the earliest date",
+            programme().startDate(EARLIEST_DATE.minusDays(1)), "startDate", DATE_LIMITS_ERROR),
+        Arguments.of("start date after the latest date",
+            programme().startDate(LATEST_DATE.plusDays(1)), "startDate", DATE_LIMITS_ERROR),
+        Arguments.of("missing start grade", programme().startGrade(null),
+            "startGrade", "Please choose a start grade."),
+        Arguments.of("missing programme length", programme().lengthMonths(null),
+            "lengthMonths", "Programme length must be a whole number of months between 1 and 120."),
+        Arguments.of("programme length over 120 months", programme().lengthMonths(121),
+            "lengthMonths", "Programme length must be a whole number of months between 1 and 120."),
         Arguments.of("additional months over 24",
-            programme().additionalMonths(25).additionalMonthsNotes("why"), List.of(),
-            List.of(error("#/programmeDetails/additionalMonths",
-                "Additional training time must be a whole number of months between 0 and 24."))),
+            programme().additionalMonths(25).additionalMonthsNotes("why"), "additionalMonths",
+            "Additional training time must be a whole number of months between 0 and 24."),
         Arguments.of("accelerated months over 12",
-            programme().acceleratedMonths(13).acceleratedMonthsNotes("why"), List.of(),
-            List.of(error("#/programmeDetails/acceleratedMonths",
-                "Accelerated training time must be a whole number of months between 0 and 12."))),
-        Arguments.of("an adjusted length of zero",
+            programme().acceleratedMonths(13).acceleratedMonthsNotes("why"), "acceleratedMonths",
+            "Accelerated training time must be a whole number of months between 0 and 12."),
+        Arguments.of("adjusted length of zero",
             programme().lengthMonths(12).acceleratedMonths(12).acceleratedMonthsNotes("why"),
-            List.of(),
-            List.of(error("#/programmeDetails/acceleratedMonths",
-                "Adjusted training duration must be greater than zero."))),
+            "acceleratedMonths", "Adjusted training duration must be greater than zero."),
         Arguments.of("additional months without a note",
-            programme().additionalMonths(3).additionalMonthsNotes("  "), List.of(),
-            List.of(error("#/programmeDetails/additionalMonthsNotes",
-                "Please enter a reason for additional training time."))),
+            programme().additionalMonths(3).additionalMonthsNotes("  "),
+            "additionalMonthsNotes", "Please enter a reason for additional training time."),
         Arguments.of("accelerated months without a note", programme().acceleratedMonths(3),
-            List.of(),
-            List.of(error("#/programmeDetails/acceleratedMonthsNotes",
-                "Please enter a reason for accelerated training time."))),
-        Arguments.of("an 18-month final grade without a note",
-            programme().eighteenMonthFinalGrade(ST3), List.of(),
-            List.of(error("#/programmeDetails/eighteenMonthFinalGradeNotes",
-                "Please enter a reason for the 18-month final year."))),
-        Arguments.of("a skipped grade without a note", programme().skippedGrade(ST2), List.of(),
-            List.of(error("#/programmeDetails/skippedGradeNotes",
-                "Please enter a reason for skipping a grade year."))),
-        Arguments.of("a change with no type", programme(),
-            List.of(ltft().type(null).startDate(null).wte(1.0).build()),
-            List.of(error("#/changes[0]/type", "Please choose a change type."))),
-        Arguments.of("a change with no start date", programme(),
-            List.of(ltft().startDate(null).build()),
-            List.of(error("#/changes[0]/startDate", "Please enter a start date."))),
-        Arguments.of("a change ending before it starts", programme(),
-            List.of(ltft().endDate(date("2023-12-31")).build()),
-            List.of(error("#/changes[0]/startDate", "Start date cannot be after end date."))),
-        Arguments.of("no end date on a change that isn't LTFT", programme(),
-            List.of(parental().endDate(null).build()),
-            List.of(error("#/changes[0]/endDate", "Please enter an end date."))),
-        Arguments.of("an LTFT WTE of 100%", programme(), List.of(ltft().wte(1.0).build()),
-            List.of(error("#/changes[0]/wte",
-                "LTFT WTE must be a whole number between 1 and 99."))),
-        Arguments.of("an LTFT WTE that isn't a whole percent", programme(),
-            List.of(ltft().wte(0.505).build()),
-            List.of(error("#/changes[0]/wte",
-                "LTFT WTE must be a whole number between 1 and 99."))),
-        Arguments.of("a counted OOPR credit of a fraction of a percent", programme(),
-            List.of(ltft().type(OOPR).wte(0.125).build()),
-            List.of(error("#/changes[0]/wte",
-                "Approved OOPR credit must be a whole number between 1 and 100."))),
-        Arguments.of("an LTFT change that doesn't count", programme(),
-            List.of(ltft().countsTowardsCompletion(false).build()),
-            List.of(error("#/changes[0]/countsTowardsCompletion",
-                "LTFT must count towards completion."))),
-        Arguments.of("a counted OOPR with no credit", programme(),
-            List.of(ltft().type(OOPR).wte(null).build()),
-            List.of(error("#/changes[0]/wte",
-                "Approved OOPR credit must be a whole number between 1 and 100."))),
-        Arguments.of("an uncounted OOPR with a credit", programme(),
-            List.of(ltft().type(OOPR).countsTowardsCompletion(false).build()),
-            List.of(error("#/changes[0]/wte",
-                "Only an OOPR counted as training can have a credit."))),
-        Arguments.of("an OOPT with a WTE", programme(), List.of(ltft().type(OOPT).build()),
-            List.of(error("#/changes[0]/wte", "OOPT cannot have a WTE."))),
-        Arguments.of("a counted OOPT over 12 months", programme(),
-            List.of(ltft().type(OOPT).wte(null).endDate(date("2025-01-01")).build()),
-            List.of(error("#/changes[0]/endDate",
-                "OOPT counted as training cannot be more than 12 months."))),
-        Arguments.of("a parental leave that counts", programme(),
-            List.of(parental().countsTowardsCompletion(true).build()),
-            List.of(error("#/changes[0]/countsTowardsCompletion",
-                "PARENTAL cannot count towards completion."))),
-        Arguments.of("notes over 1000 characters", programme(),
-            List.of(parental().notes("x".repeat(1001)).build()),
-            List.of(error("#/changes[0]/notes", "Notes must be 1000 characters or less"))),
-        Arguments.of("overlapping changes", programme(),
-            List.of(ltft().build(), parental().startDate(date("2024-12-31")).build()),
-            List.of(error("#/changes[1]/startDate",
-                "This change overlaps an existing change (01/01/2024 – 31/12/2024)."))),
-        Arguments.of("two open LTFT changes", programme(), List.of(
-                ltft().startDate(date("2030-01-01")).endDate(null).build(),
-                ltft().startDate(date("2031-01-01")).endDate(null).build()),
-            List.of(error("#/changes[1]/endDate",
-                "Only one LTFT change can project the remaining training time."))),
-        Arguments.of("an open LTFT change that starts before a dated change ends", programme(),
-            List.of(ltft().startDate(date("2024-12-31")).endDate(null).build(), ltft().build()),
-            List.of(error("#/changes[0]/startDate",
-                "Projected change must begin after all other completed changes."))),
-        Arguments.of("a missing change", programme(), Arrays.asList((CctChangeDto) null),
-            List.of(error("#/changes[0]", "must not be null"))),
-        Arguments.of("more than 50 changes", programme(), oneDayChanges(51),
-            List.of(error("#/changes", "size must be between 0 and 50")))
+            "acceleratedMonthsNotes", "Please enter a reason for accelerated training time."),
+        Arguments.of("18-month final grade without a note",
+            programme().eighteenMonthFinalGrade(ST3),
+            "eighteenMonthFinalGradeNotes", "Please enter a reason for the 18-month final year."),
+        Arguments.of("skipped grade without a note", programme().skippedGrade(ST2),
+            "skippedGradeNotes", "Please enter a reason for skipping a grade year.")
     );
+  }
+
+  @ParameterizedTest(name = "{index}: {0}")
+  @MethodSource("invalidChanges")
+  void shouldRejectInvalidChange(String description, CctChangeDto change, String field,
+      String detail) {
+    List<BodyValidationError> errors = validate(programme(), List.of(change));
+
+    assertThat("Unexpected errors.", errors, is(List.of(error("#/changes[0]/" + field, detail))));
+  }
+
+  static Stream<Arguments> invalidChanges() {
+    return Stream.of(
+        Arguments.of("start date before the earliest date",
+            ltft().startDate(EARLIEST_DATE.minusDays(1)).build(), "startDate", DATE_LIMITS_ERROR),
+        Arguments.of("open LTFT start date after the latest date",
+            ltft().startDate(LATEST_DATE.plusDays(1)).endDate(null).build(),
+            "startDate", DATE_LIMITS_ERROR),
+        Arguments.of("end date after the latest date",
+            ltft().endDate(LATEST_DATE.plusDays(1)).build(), "endDate", DATE_LIMITS_ERROR),
+        Arguments.of("missing type", ltft().type(null).wte(1.0).build(),
+            "type", "Please choose a change type."),
+        Arguments.of("missing start date", ltft().startDate(null).build(),
+            "startDate", "Please enter a start date."),
+        Arguments.of("end date before start date", ltft().endDate(date("2023-12-31")).build(),
+            "startDate", "Start date cannot be after end date."),
+        Arguments.of("missing end date on a non-LTFT change", parental().endDate(null).build(),
+            "endDate", "Please enter an end date."),
+        Arguments.of("LTFT WTE of 100%", ltft().wte(1.0).build(),
+            "wte", "LTFT WTE must be a whole number between 1 and 99."),
+        Arguments.of("LTFT WTE that isn't a whole percent", ltft().wte(0.505).build(),
+            "wte", "LTFT WTE must be a whole number between 1 and 99."),
+        Arguments.of("fractional OOPR credit", ltft().type(OOPR).wte(0.125).build(),
+            "wte", "Approved OOPR credit must be a whole number between 1 and 100."),
+        Arguments.of("LTFT that doesn't count", ltft().countsTowardsCompletion(false).build(),
+            "countsTowardsCompletion", "LTFT must count towards completion."),
+        Arguments.of("counted OOPR without credit", ltft().type(OOPR).wte(null).build(),
+            "wte", "Approved OOPR credit must be a whole number between 1 and 100."),
+        Arguments.of("uncounted OOPR with credit",
+            ltft().type(OOPR).countsTowardsCompletion(false).build(),
+            "wte", "Only an OOPR counted as training can have a credit."),
+        Arguments.of("OOPT with WTE", ltft().type(OOPT).build(),
+            "wte", "OOPT cannot have a WTE."),
+        Arguments.of("counted OOPT over 12 months",
+            ltft().type(OOPT).wte(null).endDate(date("2025-01-01")).build(),
+            "endDate", "OOPT counted as training cannot be more than 12 months."),
+        Arguments.of("parental leave that counts", parental().countsTowardsCompletion(true).build(),
+            "countsTowardsCompletion", "PARENTAL cannot count towards completion."),
+        Arguments.of("notes over 1000 characters", parental().notes("x".repeat(1001)).build(),
+            "notes", "Notes must be 1000 characters or less")
+    );
+  }
+
+  @ParameterizedTest
+  @MethodSource("changesWithBothDatesOutsideLimits")
+  void shouldReportBothOutOfRangeDates(CctChangeDto change) {
+    List<BodyValidationError> errors = validate(programme(), List.of(change));
+
+    assertThat("Unexpected errors.", errors, is(List.of(
+        error("#/changes[0]/endDate", DATE_LIMITS_ERROR),
+        error("#/changes[0]/startDate", DATE_LIMITS_ERROR))));
+  }
+
+  static Stream<CctChangeDto> changesWithBothDatesOutsideLimits() {
+    return Stream.of(
+        ltft().startDate(EARLIEST_DATE.minusDays(2)).endDate(EARLIEST_DATE.minusDays(1)).build(),
+        CctChangeDto.builder().type(OOPT).startDate(LocalDate.MAX)
+            .endDate(LocalDate.MAX).countsTowardsCompletion(true).build()
+    );
+  }
+
+  @Test
+  void shouldRejectOverlappingChanges() {
+    List<BodyValidationError> errors = validate(programme(),
+        List.of(ltft().build(), parental().startDate(date("2024-12-31")).build()));
+
+    assertThat("Unexpected errors.", errors, is(List.of(error("#/changes[1]/startDate",
+        "This change overlaps an existing change (01/01/2024 – 31/12/2024)."))));
+  }
+
+  @Test
+  void shouldRejectTwoOpenLtftChanges() {
+    List<BodyValidationError> errors = validate(programme(), List.of(
+        ltft().startDate(date("2030-01-01")).endDate(null).build(),
+        ltft().startDate(date("2031-01-01")).endDate(null).build()));
+
+    assertThat("Unexpected errors.", errors, is(List.of(error("#/changes[1]/endDate",
+        "Only one LTFT change can project the remaining training time."))));
+  }
+
+  @Test
+  void shouldRejectOpenLtftStartingBeforeDatedChangeEnds() {
+    List<BodyValidationError> errors = validate(programme(),
+        List.of(ltft().startDate(date("2024-12-31")).endDate(null).build(), ltft().build()));
+
+    assertThat("Unexpected errors.", errors, is(List.of(error("#/changes[0]/startDate",
+        "Projected change must begin after all other completed changes."))));
+  }
+
+  @Test
+  void shouldRejectMissingChange() {
+    List<BodyValidationError> errors = validate(programme(), Collections.singletonList(null));
+
+    assertThat("Unexpected errors.", errors,
+        is(List.of(error("#/changes[0]", "must not be null"))));
+  }
+
+  @Test
+  void shouldRejectTooManyChanges() {
+    List<BodyValidationError> errors = validate(programme(), oneDayChanges(51));
+
+    assertThat("Unexpected errors.", errors,
+        is(List.of(error("#/changes", "size must be between 0 and 50"))));
   }
 
   @Test
@@ -369,7 +406,7 @@ class CctCalculateRequestDtoTest {
     BeanPropertyBindingResult result = new BeanPropertyBindingResult(request, "request");
     validator.validate(request, result);
 
-    assertThat("Unexpected global errors.", result.getGlobalErrors(), is(empty()));
+    assertThat("Unexpected global errors.", result.getGlobalErrors(), hasSize(0));
     return BodyValidationError.fromFieldErrors(result.getFieldErrors());
   }
 
@@ -407,12 +444,12 @@ class CctCalculateRequestDtoTest {
   }
 
   private static List<CctChangeDto> oneDayChanges(int count) {
-    List<CctChangeDto> changes = new ArrayList<>();
-    IntStream.range(0, count).forEach(day -> changes.add(parental()
-        .startDate(date("2024-01-01").plusDays(day))
-        .endDate(date("2024-01-01").plusDays(day))
-        .build()));
-    return changes;
+    LocalDate baseDate = LocalDate.parse("2024-01-01");
+    return IntStream.range(0, count).mapToObj(day -> parental()
+            .startDate(baseDate.plusDays(day))
+            .endDate(baseDate.plusDays(day))
+            .build())
+        .toList();
   }
 
   private static LocalDate date(String date) {

@@ -23,6 +23,7 @@ package uk.nhs.hee.trainee.details.dto;
 
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import lombok.Builder;
 import lombok.With;
@@ -67,6 +68,7 @@ public record CctCalculatedChangeDto(
       @NotNull(message = "Please choose a change type.")
       CctChangeType type,
 
+      @NotNull(message = "Please enter a start date.")
       LocalDate startDate,
 
       LocalDate endDate,
@@ -75,6 +77,7 @@ public record CctCalculatedChangeDto(
 
       boolean countsTowardsCompletion,
 
+      @Size(max = 1000, message = "Notes must be {max} characters or less")
       String notes) {
 
     public CctChangeDto {

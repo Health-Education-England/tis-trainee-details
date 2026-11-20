@@ -42,7 +42,6 @@ import uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType;
 public class CctCalculateRequestValidator implements
     ConstraintValidator<CctCalculateRequestValidation, CctCalculationInput> {
 
-  private static final int NOTES_MAX_LENGTH = 1000;
   private static final DateTimeFormatter MESSAGE_DATE_FORMAT =
       DateTimeFormatter.ofPattern("dd/MM/yyyy");
   private static final LocalDate EARLIEST_DATE = LocalDate.of(1970, 1, 1);
@@ -66,7 +65,6 @@ public class CctCalculateRequestValidator implements
         if (change != null && change.type() != null) {
           validateChangeDates(change, index, violations);
           validateChangeCredit(change, index, violations);
-          validateChangeNotes(change, index, violations);
         }
       }
       validateAcrossChanges(changes, violations);
@@ -113,9 +111,6 @@ public class CctCalculateRequestValidator implements
     LocalDate startDate = change.startDate();
     LocalDate endDate = change.endDate();
 
-    if (startDate == null) {
-      violations.onChange(index, "startDate", "Please enter a start date.");
-    }
     if (endDate == null && change.type() != LTFT) {
       violations.onChange(index, "endDate", "Please enter an end date.");
     } else if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
@@ -169,15 +164,6 @@ public class CctCalculateRequestValidator implements
         && endDate.isAfter(startDate.plusMonths(12).minusDays(1))) {
       violations.onChange(index, "endDate",
           "OOPT counted as training cannot be more than 12 months.");
-    }
-  }
-
-  private static void validateChangeNotes(CctChangeDto change, int index,
-      Violations violations) {
-    String notes = change.notes();
-    if (notes != null && notes.length() > NOTES_MAX_LENGTH) {
-      violations.onChange(index, "notes",
-          "Notes must be " + NOTES_MAX_LENGTH + " characters or less");
     }
   }
 

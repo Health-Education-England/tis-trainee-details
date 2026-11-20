@@ -22,16 +22,18 @@
 package uk.nhs.hee.trainee.details.dto;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.LTFT;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST1;
 
 import jakarta.validation.Validation;
+import jakarta.validation.ValidatorFactory;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
@@ -46,19 +48,25 @@ import uk.nhs.hee.trainee.details.dto.validation.Create;
 
 class CctCalculationSaveRequestDtoTest {
 
-  private SpringValidatorAdapter validator;
+  private static ValidatorFactory validatorFactory;
+  private static SpringValidatorAdapter validator;
 
-  @BeforeEach
-  void setUp() {
-    validator = new SpringValidatorAdapter(
-        Validation.buildDefaultValidatorFactory().getValidator());
+  @BeforeAll
+  static void setUp() {
+    validatorFactory = Validation.buildDefaultValidatorFactory();
+    validator = new SpringValidatorAdapter(validatorFactory.getValidator());
+  }
+
+  @AfterAll
+  static void tearDown() {
+    validatorFactory.close();
   }
 
   @Test
   void shouldAcceptNewCalculation() {
     List<BodyValidationError> errors = validate(request().build(), Create.class);
 
-    assertThat("Unexpected errors.", errors, is(empty()));
+    assertThat("Unexpected errors.", errors, hasSize(0));
   }
 
   @Test
@@ -66,14 +74,14 @@ class CctCalculationSaveRequestDtoTest {
     List<BodyValidationError> errors = validate(request().changes(List.of()).build(),
         Create.class);
 
-    assertThat("Unexpected errors.", errors, is(empty()));
+    assertThat("Unexpected errors.", errors, hasSize(0));
   }
 
   @Test
   void shouldAcceptIdWhenNotCreating() {
     List<BodyValidationError> errors = validate(request().id(UUID.randomUUID()).build());
 
-    assertThat("Unexpected errors.", errors, is(empty()));
+    assertThat("Unexpected errors.", errors, hasSize(0));
   }
 
   @Test
@@ -97,7 +105,7 @@ class CctCalculationSaveRequestDtoTest {
   void shouldAcceptNameOfMaximumLength() {
     List<BodyValidationError> errors = validate(request().name("x".repeat(4096)).build());
 
-    assertThat("Unexpected errors.", errors, is(empty()));
+    assertThat("Unexpected errors.", errors, hasSize(0));
   }
 
   @Test
@@ -149,7 +157,7 @@ class CctCalculationSaveRequestDtoTest {
     BeanPropertyBindingResult result = new BeanPropertyBindingResult(request, "request");
     validator.validate(request, result, groups);
 
-    assertThat("Unexpected global errors.", result.getGlobalErrors(), is(empty()));
+    assertThat("Unexpected global errors.", result.getGlobalErrors(), hasSize(0));
     return BodyValidationError.fromFieldErrors(result.getFieldErrors());
   }
 
