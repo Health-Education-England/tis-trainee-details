@@ -22,7 +22,11 @@
 package uk.nhs.hee.trainee.details.dto;
 
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
+import jakarta.validation.constraints.NotNull;
+import java.time.LocalDate;
 import lombok.Builder;
+import lombok.With;
+import uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType;
 
 /**
  * A change to the programme, with the months it credits in a CCT calculation.
@@ -43,4 +47,38 @@ public record CctCalculatedChangeDto(
 
     Double wteMonths) {
 
+  /**
+   * A change to the programme a CCT date is calculated for.
+   *
+   * @param type                    The type of change.
+   * @param startDate               The start date of the change.
+   * @param endDate                 The end date of the change, inclusive, or null for an LTFT
+   *                                change that lasts for the rest of training.
+   * @param wte                     The whole time equivalent of an LTFT change, or the approved
+   *                                credit for an OOPR, as a fraction of full time.
+   * @param countsTowardsCompletion Whether the change counts towards completion of training.
+   * @param notes                   Notes about the change, stripped of leading and trailing
+   *                                whitespace.
+   */
+  @Builder
+  @With
+  public record CctChangeDto(
+
+      @NotNull(message = "Please choose a change type.")
+      CctChangeType type,
+
+      LocalDate startDate,
+
+      LocalDate endDate,
+
+      Double wte,
+
+      boolean countsTowardsCompletion,
+
+      String notes) {
+
+    public CctChangeDto {
+      notes = notes == null ? null : notes.strip();
+    }
+  }
 }

@@ -29,8 +29,8 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import uk.nhs.hee.trainee.details.dto.CctCalculatedChangeDto.CctChangeDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationInput;
-import uk.nhs.hee.trainee.details.dto.CctChangeDto;
 
 /**
  * A deserializer that reads one change past the limit and skips the rest, so an oversized list

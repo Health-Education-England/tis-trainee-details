@@ -32,13 +32,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 import org.springframework.stereotype.Service;
-import uk.nhs.hee.trainee.details.dto.CctAssumedFullTimePeriodDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculateResponseDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculatedChangeDto;
-import uk.nhs.hee.trainee.details.dto.CctChangeDto;
+import uk.nhs.hee.trainee.details.dto.CctCalculatedChangeDto.CctChangeDto;
 import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto;
-import uk.nhs.hee.trainee.details.dto.CctProjectionDto;
 import uk.nhs.hee.trainee.details.dto.CctResultDto;
+import uk.nhs.hee.trainee.details.dto.CctResultDto.CctAssumedFullTimePeriodDto;
+import uk.nhs.hee.trainee.details.dto.CctResultDto.CctProjectionDto;
 
 /**
  * A calculator for CCT dates.

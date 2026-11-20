@@ -45,13 +45,13 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
-import uk.nhs.hee.trainee.details.dto.CctAssumedFullTimePeriodDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculateResponseDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculatedChangeDto;
-import uk.nhs.hee.trainee.details.dto.CctChangeDto;
+import uk.nhs.hee.trainee.details.dto.CctCalculatedChangeDto.CctChangeDto;
 import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto;
-import uk.nhs.hee.trainee.details.dto.CctProjectionDto;
 import uk.nhs.hee.trainee.details.dto.CctResultDto;
+import uk.nhs.hee.trainee.details.dto.CctResultDto.CctAssumedFullTimePeriodDto;
+import uk.nhs.hee.trainee.details.dto.CctResultDto.CctProjectionDto;
 import uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType;
 
 class CctEngineTest {

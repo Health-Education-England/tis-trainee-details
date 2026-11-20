@@ -28,18 +28,19 @@ import lombok.Builder;
 /**
  * The result of a CCT calculation.
  *
- * @param cctDate                  The calculated CCT date.
- * @param originalProgrammeEndDate The end date of the programme, before additional and accelerated
- *                                 training time.
- * @param adjustedProgrammeEndDate The end date of the programme, after additional and accelerated
- *                                 training time.
+ * @param cctDate                      The calculated CCT date.
+ * @param originalProgrammeEndDate     The end date of the programme, before additional and
+ *                                     accelerated training time.
+ * @param adjustedProgrammeEndDate     The end date of the programme, after additional and
+ *                                     accelerated training time.
  * @param totalCalendarMonthsCompleted The calendar months completed before the projection.
- * @param totalWteMonthsCompleted  The whole time equivalent months completed before the
- *                                 projection.
- * @param monthsRemaining          The months of training remaining, rounded to two decimal places.
- * @param assumedFullTimePeriods   The periods before the projection that no change covers, in
- *                                 start date order.
- * @param projection               The projection of the remaining training to the CCT date.
+ * @param totalWteMonthsCompleted      The whole time equivalent months completed before the
+ *                                     projection.
+ * @param monthsRemaining              The months of training remaining, rounded to two decimal
+ *                                     places.
+ * @param assumedFullTimePeriods       The periods before the projection that no change covers, in
+ *                                     start date order.
+ * @param projection                   The projection of the remaining training to the CCT date.
  */
 @Builder
 public record CctResultDto(
@@ -60,4 +61,43 @@ public record CctResultDto(
 
     CctProjectionDto projection) {
 
+  /**
+   * A period of training that no change covers, assumed to be full time.
+   *
+   * @param startDate The start date of the period.
+   * @param endDate   The end date of the period, inclusive.
+   * @param months    The months in the period, both calendar and whole time equivalent.
+   */
+  @Builder
+  public record CctAssumedFullTimePeriodDto(
+
+      LocalDate startDate,
+
+      LocalDate endDate,
+
+      double months) {
+
+  }
+
+  /**
+   * The projection of the remaining training to the CCT date.
+   *
+   * @param startDate      The start date of the projection.
+   * @param wte            The whole time equivalent of the projection, as a fraction of full time.
+   * @param calendarMonths The calendar months the remaining training takes at that whole time
+   *                       equivalent.
+   * @param wteMonths      The months of training remaining, rounded to two decimal places.
+   */
+  @Builder
+  public record CctProjectionDto(
+
+      LocalDate startDate,
+
+      double wte,
+
+      double calendarMonths,
+
+      double wteMonths) {
+
+  }
 }

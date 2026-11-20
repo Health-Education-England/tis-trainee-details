@@ -22,6 +22,7 @@
 package uk.nhs.hee.trainee.details.dto;
 
 import java.util.List;
+import uk.nhs.hee.trainee.details.dto.CctCalculatedChangeDto.CctChangeDto;
 
 /**
  * The programme details and changes a CCT date is calculated from.

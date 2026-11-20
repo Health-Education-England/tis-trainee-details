@@ -31,8 +31,8 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.IntStream;
+import uk.nhs.hee.trainee.details.dto.CctCalculatedChangeDto.CctChangeDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationInput;
-import uk.nhs.hee.trainee.details.dto.CctChangeDto;
 import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto;
 import uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType;
 

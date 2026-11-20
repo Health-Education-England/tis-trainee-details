@@ -38,8 +38,9 @@ import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.beanvalidation.SpringValidatorAdapter;
+import uk.nhs.hee.trainee.details.dto.CctCalculatedChangeDto.CctChangeDto;
+import uk.nhs.hee.trainee.details.dto.CctCalculatedChangeDto.CctChangeDto.CctChangeDtoBuilder;
 import uk.nhs.hee.trainee.details.dto.CctCalculationSaveRequestDto.CctCalculationSaveRequestDtoBuilder;
-import uk.nhs.hee.trainee.details.dto.CctChangeDto.CctChangeDtoBuilder;
 import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto.CctProgrammeDetailsDtoBuilder;
 import uk.nhs.hee.trainee.details.dto.validation.Create;
 
