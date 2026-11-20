@@ -136,7 +136,7 @@ class CctCalculationSaveRequestDtoTest {
         Create.class);
 
     assertThat("Unexpected errors.", errors, is(List.of(
-        error("#/changes[0]/wte", "LTFT WTE must be a whole number between 1 and 99."),
+        error("#/changes/0/wte", "LTFT WTE must be a whole number between 1 and 99."),
         error("#/programmeDetails/additionalMonthsNotes",
             "Please enter a reason for additional training time."))));
   }
@@ -149,7 +149,7 @@ class CctCalculationSaveRequestDtoTest {
         .build());
 
     assertThat("Unexpected errors.", errors, is(List.of(
-        error("#/changes[0]/startDate", "Start date cannot be after end date."))));
+        error("#/changes/0/startDate", "Start date cannot be after end date."))));
   }
 
   private List<BodyValidationError> validate(CctCalculationSaveRequestDto request,

@@ -21,10 +21,11 @@
 
 package uk.nhs.hee.trainee.details.dto;
 
-import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.springframework.validation.FieldError;
 
@@ -36,6 +37,8 @@ import org.springframework.validation.FieldError;
  */
 public record BodyValidationError(String pointer, String detail) {
 
+  private static final Pattern ARRAY_INDEX = Pattern.compile("\\[(\\d+)]");
+
   /**
    * Convert field errors to body validation errors, sorted by pointer and then detail.
    *
@@ -45,7 +48,9 @@ public record BodyValidationError(String pointer, String detail) {
   public static List<BodyValidationError> fromFieldErrors(List<FieldError> fieldErrors) {
     return fieldErrors.stream()
         .map(fe -> {
-          String pointer = "#/" + fe.getField().replace('.', JsonPointer.SEPARATOR);
+          String field = ARRAY_INDEX.matcher(fe.getField()).replaceAll(".$1");
+          String pointer = Arrays.stream(field.split("\\."))
+              .collect(Collectors.joining("/", "#/", ""));
           return new BodyValidationError(pointer, fe.getDefaultMessage());
         })
         .sorted(
@@ -63,9 +68,9 @@ public record BodyValidationError(String pointer, String detail) {
    */
   public static BodyValidationError fromMappingException(JsonMappingException exception) {
     String pointer = exception.getPath().stream()
-        .map(reference -> reference.getFieldName() == null
-            ? "[" + reference.getIndex() + "]"
-            : JsonPointer.SEPARATOR + reference.getFieldName())
+        .map(reference -> "/" + (reference.getFieldName() == null
+            ? reference.getIndex()
+            : reference.getFieldName()))
         .collect(Collectors.joining("", "#", ""));
     return new BodyValidationError(pointer, "Invalid value.");
   }

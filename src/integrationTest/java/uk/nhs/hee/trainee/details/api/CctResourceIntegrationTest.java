@@ -391,7 +391,7 @@ class CctResourceIntegrationTest {
             .content(request.toString()))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.errors", hasSize(1)))
-        .andExpect(jsonPath("$.errors[0].pointer", is("#/changes[0]/endDate")))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/changes/0/endDate")))
         .andExpect(jsonPath("$.errors[0].detail", is(DATE_LIMITS_ERROR)));
   }
 
@@ -512,7 +512,7 @@ class CctResourceIntegrationTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(calculationJson.toString()))
         .andExpect(jsonPath("$.errors", hasSize(1)))
-        .andExpect(jsonPath("$.errors[0].pointer", is("#/changes[0]/" + propertyName)))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/changes/0/" + propertyName)))
         .andExpect(jsonPath("$.errors[0].detail", is(detail)));
   }
 
@@ -528,7 +528,7 @@ class CctResourceIntegrationTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(calculationJson.toString()))
         .andExpect(jsonPath("$.errors", hasSize(1)))
-        .andExpect(jsonPath("$.errors[0].pointer", is("#/changes[0]/wte")))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/changes/0/wte")))
         .andExpect(jsonPath("$.errors[0].detail",
             is("LTFT WTE must be a whole number between 1 and 99.")));
   }
@@ -564,7 +564,7 @@ class CctResourceIntegrationTest {
               "instance": "/api/cct/calculation",
               "errors": [
                 {
-                  "pointer": "#/changes[0]/startDate",
+                  "pointer": "#/changes/0/startDate",
                   "detail": "Start date cannot be before programme start (02/08/2023)."
                 }
               ]
@@ -616,11 +616,11 @@ class CctResourceIntegrationTest {
               "instance": "/api/cct/calculation",
               "errors": [
                 {
-                  "pointer": "#/changes[0]/endDate",
+                  "pointer": "#/changes/0/endDate",
                   "detail": "End date %s"
                 },
                 {
-                  "pointer": "#/changes[1]/startDate",
+                  "pointer": "#/changes/1/startDate",
                   "detail": "Start date %s"
                 }
               ]
@@ -916,7 +916,7 @@ class CctResourceIntegrationTest {
             .content(request.toString()))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.errors", hasSize(1)))
-        .andExpect(jsonPath("$.errors[0].pointer", is("#/changes[0]/endDate")))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/changes/0/endDate")))
         .andExpect(jsonPath("$.errors[0].detail", is(
             "End date cannot be after the current projected Completion of Training Date "
                 + "(26/02/2031).")));
@@ -940,7 +940,7 @@ class CctResourceIntegrationTest {
             .content(request.toString()))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.errors", hasSize(1)))
-        .andExpect(jsonPath("$.errors[0].pointer", is("#/changes[0]/endDate")))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/changes/0/endDate")))
         .andExpect(jsonPath("$.errors[0].detail", is(DATE_LIMITS_ERROR)));
   }
 
@@ -1357,11 +1357,11 @@ class CctResourceIntegrationTest {
               "instance": "/api/cct/calculate",
               "errors": [
                 {
-                  "pointer": "#/changes[0]/startDate",
+                  "pointer": "#/changes/0/startDate",
                   "detail": "Start date cannot be after end date."
                 },
                 {
-                  "pointer": "#/changes[0]/wte",
+                  "pointer": "#/changes/0/wte",
                   "detail": "LTFT WTE must be a whole number between 1 and 99."
                 },
                 {
@@ -1445,7 +1445,7 @@ class CctResourceIntegrationTest {
             .content(request.toString()))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.errors", hasSize(1)))
-        .andExpect(jsonPath("$.errors[0].pointer", is("#/changes[0]/startDate")))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/changes/0/startDate")))
         .andExpect(jsonPath("$.errors[0].detail", is(DATE_LIMITS_ERROR)));
   }
 
@@ -1460,7 +1460,7 @@ class CctResourceIntegrationTest {
             .content(request.toString()))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.errors", hasSize(1)))
-        .andExpect(jsonPath("$.errors[0].pointer", is("#/changes[0]/endDate")))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/changes/0/endDate")))
         .andExpect(jsonPath("$.errors[0].detail", is(DATE_LIMITS_ERROR)));
   }
 
@@ -1546,7 +1546,7 @@ class CctResourceIntegrationTest {
         .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
         .andExpect(jsonPath("$.title", is("Validation failure")))
         .andExpect(jsonPath("$.errors", hasSize(1)))
-        .andExpect(jsonPath("$.errors[0].pointer", is("#/changes[0]/type")))
+        .andExpect(jsonPath("$.errors[0].pointer", is("#/changes/0/type")))
         .andExpect(jsonPath("$.errors[0].detail", is("Invalid value.")));
   }
 

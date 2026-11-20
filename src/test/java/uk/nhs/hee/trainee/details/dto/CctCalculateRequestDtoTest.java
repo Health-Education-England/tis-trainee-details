@@ -268,7 +268,7 @@ class CctCalculateRequestDtoTest {
       String detail) {
     List<BodyValidationError> errors = validate(programme(), List.of(change));
 
-    assertThat("Unexpected errors.", errors, is(List.of(error("#/changes[0]/" + field, detail))));
+    assertThat("Unexpected errors.", errors, is(List.of(error("#/changes/0/" + field, detail))));
   }
 
   static Stream<Arguments> invalidChanges() {
@@ -319,8 +319,8 @@ class CctCalculateRequestDtoTest {
     List<BodyValidationError> errors = validate(programme(), List.of(change));
 
     assertThat("Unexpected errors.", errors, is(List.of(
-        error("#/changes[0]/endDate", DATE_LIMITS_ERROR),
-        error("#/changes[0]/startDate", DATE_LIMITS_ERROR))));
+        error("#/changes/0/endDate", DATE_LIMITS_ERROR),
+        error("#/changes/0/startDate", DATE_LIMITS_ERROR))));
   }
 
   static Stream<CctChangeDto> changesWithBothDatesOutsideLimits() {
@@ -336,7 +336,7 @@ class CctCalculateRequestDtoTest {
     List<BodyValidationError> errors = validate(programme(),
         List.of(ltft().build(), parental().startDate(date("2024-12-31")).build()));
 
-    assertThat("Unexpected errors.", errors, is(List.of(error("#/changes[1]/startDate",
+    assertThat("Unexpected errors.", errors, is(List.of(error("#/changes/1/startDate",
         "This change overlaps an existing change (01/01/2024 – 31/12/2024)."))));
   }
 
@@ -346,7 +346,7 @@ class CctCalculateRequestDtoTest {
         ltft().startDate(date("2030-01-01")).endDate(null).build(),
         ltft().startDate(date("2031-01-01")).endDate(null).build()));
 
-    assertThat("Unexpected errors.", errors, is(List.of(error("#/changes[1]/endDate",
+    assertThat("Unexpected errors.", errors, is(List.of(error("#/changes/1/endDate",
         "Only one LTFT change can project the remaining training time."))));
   }
 
@@ -355,7 +355,7 @@ class CctCalculateRequestDtoTest {
     List<BodyValidationError> errors = validate(programme(),
         List.of(ltft().startDate(date("2024-12-31")).endDate(null).build(), ltft().build()));
 
-    assertThat("Unexpected errors.", errors, is(List.of(error("#/changes[0]/startDate",
+    assertThat("Unexpected errors.", errors, is(List.of(error("#/changes/0/startDate",
         "Projected change must begin after all other completed changes."))));
   }
 
@@ -364,7 +364,7 @@ class CctCalculateRequestDtoTest {
     List<BodyValidationError> errors = validate(programme(), Collections.singletonList(null));
 
     assertThat("Unexpected errors.", errors,
-        is(List.of(error("#/changes[0]", "must not be null"))));
+        is(List.of(error("#/changes/0", "must not be null"))));
   }
 
   @Test
@@ -391,8 +391,8 @@ class CctCalculateRequestDtoTest {
 
     List<String> pointers = errors.stream().map(BodyValidationError::pointer).toList();
     assertThat("Unexpected error pointers.", pointers, is(List.of(
-        "#/changes[0]/startDate",
-        "#/changes[0]/wte",
+        "#/changes/0/startDate",
+        "#/changes/0/wte",
         "#/programmeDetails/lengthMonths",
         "#/programmeDetails/specialty")));
   }

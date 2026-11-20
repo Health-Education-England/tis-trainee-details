@@ -171,7 +171,7 @@ class RestResponseEntityExceptionHandlerTest {
     assertThat("Unexpected errors count.", errorsList.size(), is(1));
 
     BodyValidationError error = errorsList.get(0);
-    assertThat("Unexpected error pointer.", error.pointer(), is("#/items[1]/count"));
+    assertThat("Unexpected error pointer.", error.pointer(), is("#/items/1/count"));
     assertThat("Unexpected error detail.", error.detail(), is("Invalid value."));
   }
 

@@ -638,7 +638,7 @@ class CctServiceTest {
     CctCalculateResponseDto response = service.calculate(request);
 
     assertThat("Unexpected errors.", response.errors(), is(List.of(
-        new BodyValidationError("#/changes[0]/startDate",
+        new BodyValidationError("#/changes/0/startDate",
             "Start date cannot be before programme start (02/08/2023)."))));
   }
 
@@ -661,8 +661,8 @@ class CctServiceTest {
     String cctDateLimit = "cannot be after the current projected Completion of Training Date "
         + "(26/02/2031).";
     assertThat("Unexpected errors.", response.errors(), is(List.of(
-        new BodyValidationError("#/changes[0]/endDate", "End date " + cctDateLimit),
-        new BodyValidationError("#/changes[1]/startDate", "Start date " + cctDateLimit))));
+        new BodyValidationError("#/changes/0/endDate", "End date " + cctDateLimit),
+        new BodyValidationError("#/changes/1/startDate", "Start date " + cctDateLimit))));
   }
 
   @Test
