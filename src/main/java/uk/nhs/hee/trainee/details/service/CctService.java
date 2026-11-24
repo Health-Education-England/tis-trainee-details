@@ -64,7 +64,7 @@ public class CctService {
 
   private final CctCalculationRepository calculationRepository;
   private final CctMapper mapper;
-  private final CctEngine engine;
+  private final CctCalculator calculator;
   private final CctSpecialtyService specialtyService;
 
   private static final Method CALCULATE_METHOD;
@@ -86,15 +86,15 @@ public class CctService {
    * @param traineeIdentity       The identity of the current user.
    * @param calculationRepository The repository for CCT calculations.
    * @param mapper                A mapper to convert between CCT data types.
-   * @param engine                A calculator for CCT dates.
+   * @param calculator            A calculator for CCT dates.
    * @param specialtyService      A service providing the CCT specialties.
    */
   public CctService(TraineeIdentity traineeIdentity, CctCalculationRepository calculationRepository,
-      CctMapper mapper, CctEngine engine, CctSpecialtyService specialtyService) {
+      CctMapper mapper, CctCalculator calculator, CctSpecialtyService specialtyService) {
     this.traineeIdentity = traineeIdentity;
     this.calculationRepository = calculationRepository;
     this.mapper = mapper;
-    this.engine = engine;
+    this.calculator = calculator;
     this.specialtyService = specialtyService;
   }
 
@@ -192,7 +192,7 @@ public class CctService {
   /**
    * Delete a CCT calculation.
    *
-   * @param id  The ID of the CCT calculation to delete
+   * @param id The ID of the CCT calculation to delete
    * @return True if deleted, otherwise false.
    */
   public boolean deleteCalculation(UUID id) {
@@ -217,7 +217,7 @@ public class CctService {
    * @return The calculation, with any errors that would stop it being saved.
    */
   public CctCalculateResponseDto calculate(CctCalculateRequestDto request) {
-    CctCalculateResponseDto calculation = engine.calculate(request.programmeDetails(),
+    CctCalculateResponseDto calculation = calculator.calculate(request.programmeDetails(),
         request.changes());
 
     BeanPropertyBindingResult validationResult = validateChangeDates(request,
@@ -239,7 +239,8 @@ public class CctService {
    */
   private CctCalculateResponseDto calculateForSave(CctCalculationSaveRequestDto dto)
       throws MethodArgumentNotValidException {
-    CctCalculateResponseDto calculation = engine.calculate(dto.programmeDetails(), dto.changes());
+    CctCalculateResponseDto calculation = calculator.calculate(dto.programmeDetails(),
+        dto.changes());
 
     BeanPropertyBindingResult validationResult = validateChangeDates(dto,
         calculation.result().cctDate());

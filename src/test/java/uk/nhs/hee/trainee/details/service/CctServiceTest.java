@@ -81,7 +81,7 @@ class CctServiceTest {
 
   private CctService service;
   private CctCalculationRepository calculationRepository;
-  private CctEngine engine;
+  private CctCalculator calculator;
   private CctSpecialtyService specialtyService;
 
   @BeforeEach
@@ -90,13 +90,13 @@ class CctServiceTest {
     traineeIdentity.setTraineeId(TRAINEE_ID);
 
     calculationRepository = mock(CctCalculationRepository.class);
-    engine = new CctEngine();
+    calculator = new CctCalculator();
     specialtyService = mock(CctSpecialtyService.class);
     when(specialtyService.getSpecialties()).thenReturn(
         List.of(new CctSpecialtyDto("Paediatrics", 84, ST1)));
 
     service = new CctService(traineeIdentity, calculationRepository, new CctMapperImpl(),
-        engine, specialtyService);
+        calculator, specialtyService);
   }
 
   @Test
@@ -295,7 +295,7 @@ class CctServiceTest {
     assertThat("Unexpected programme details.", savedDto.programmeDetails(),
         is(dto.programmeDetails()));
 
-    CctCalculateResponseDto calculation = engine.calculate(dto.programmeDetails(),
+    CctCalculateResponseDto calculation = calculator.calculate(dto.programmeDetails(),
         dto.changes());
     assertThat("Unexpected changes.", savedDto.changes(), is(calculation.changes()));
     assertThat("Unexpected result.", savedDto.result(), is(calculation.result()));
@@ -507,7 +507,7 @@ class CctServiceTest {
     assertThat("Unexpected calculation last modified.", updatedDto.lastModified(),
         is(modified));
 
-    CctCalculateResponseDto calculation = engine.calculate(dto.programmeDetails(),
+    CctCalculateResponseDto calculation = calculator.calculate(dto.programmeDetails(),
         dto.changes());
     assertThat("Unexpected changes.", updatedDto.changes(), is(calculation.changes()));
     assertThat("Unexpected result.", updatedDto.result(), is(calculation.result()));
@@ -602,7 +602,7 @@ class CctServiceTest {
 
     CctCalculateResponseDto response = service.calculate(request);
 
-    CctCalculateResponseDto calculation = engine.calculate(request.programmeDetails(),
+    CctCalculateResponseDto calculation = calculator.calculate(request.programmeDetails(),
         request.changes());
     assertThat("Unexpected changes.", response.changes(), is(calculation.changes()));
     assertThat("Unexpected result.", response.result(), is(calculation.result()));

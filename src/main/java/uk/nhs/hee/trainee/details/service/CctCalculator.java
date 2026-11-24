@@ -44,7 +44,7 @@ import uk.nhs.hee.trainee.details.dto.CctResultDto.CctProjectionDto;
  * A calculator for CCT dates.
  */
 @Service
-public class CctEngine {
+public class CctCalculator {
 
   private static final double PROJECTED_DAYS_PER_MONTH = 30.4;
   private static final double RECORDED_DAYS_PER_MONTH = 365.0 / 12;
@@ -153,7 +153,7 @@ public class CctEngine {
   private static Projection deriveProjection(LocalDate programmeStartDate,
       List<CctChangeDto> changes, List<CctChangeDto> datedChanges) {
     Optional<CctChangeDto> openLtftChange = changes.stream()
-        .filter(CctEngine::isOpenLtftChange)
+        .filter(CctCalculator::isOpenLtftChange)
         .findFirst();
     if (openLtftChange.isPresent()) {
       return new Projection(openLtftChange.get().startDate(), openLtftChange.get().wte());
@@ -219,8 +219,8 @@ public class CctEngine {
     Optional<CctChangeDto> countedChange = countedChange(change, programmeStartDate);
     return CctCalculatedChangeDto.builder()
         .change(change)
-        .calendarMonths(countedChange.map(CctEngine::calendarMonths).orElse(0.0))
-        .wteMonths(countedChange.map(CctEngine::wteMonths).orElse(0.0))
+        .calendarMonths(countedChange.map(CctCalculator::calendarMonths).orElse(0.0))
+        .wteMonths(countedChange.map(CctCalculator::wteMonths).orElse(0.0))
         .build();
   }
 

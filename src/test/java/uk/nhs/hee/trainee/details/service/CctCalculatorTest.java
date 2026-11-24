@@ -54,21 +54,21 @@ import uk.nhs.hee.trainee.details.dto.CctResultDto.CctAssumedFullTimePeriodDto;
 import uk.nhs.hee.trainee.details.dto.CctResultDto.CctProjectionDto;
 import uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType;
 
-class CctEngineTest {
+class CctCalculatorTest {
 
   private static final String LONG_PROGRAMME_START = "2018-01-01";
   private static final String PAEDIATRICS_START = "2023-08-02";
 
-  private CctEngine engine;
+  private CctCalculator calculator;
 
   @BeforeEach
   void setUp() {
-    engine = new CctEngine();
+    calculator = new CctCalculator();
   }
 
   @Test
   void shouldProjectFullTimeFromDayAfterLastChangeEnds() {
-    CctResultDto result = engine.calculate(programme(LONG_PROGRAMME_START, 120),
+    CctResultDto result = calculator.calculate(programme(LONG_PROGRAMME_START, 120),
         List.of(change(LTFT, "2018-01-01", "2022-12-31", 0.5, true))).result();
 
     assertThat("Unexpected total WTE months completed.", result.totalWteMonthsCompleted(),
@@ -80,7 +80,7 @@ class CctEngineTest {
 
   @Test
   void shouldMatchPocWhenUncountedAbsenceThenOpenLtftChange() {
-    CctResultDto result = engine.calculate(programme(LONG_PROGRAMME_START, 120), List.of(
+    CctResultDto result = calculator.calculate(programme(LONG_PROGRAMME_START, 120), List.of(
         change(OOPC, "2020-01-01", "2022-12-31", null, false),
         change(LTFT, "2024-01-01", null, 0.5, true))).result();
 
@@ -93,9 +93,9 @@ class CctEngineTest {
 
   @Test
   void shouldCreditOoptAtFullTimeOnlyWhenCounted() {
-    CctCalculateResponseDto counted = engine.calculate(programme(LONG_PROGRAMME_START, 120),
+    CctCalculateResponseDto counted = calculator.calculate(programme(LONG_PROGRAMME_START, 120),
         List.of(change(OOPT, "2020-01-01", "2020-06-30", null, true)));
-    CctCalculateResponseDto uncounted = engine.calculate(programme(LONG_PROGRAMME_START, 120),
+    CctCalculateResponseDto uncounted = calculator.calculate(programme(LONG_PROGRAMME_START, 120),
         List.of(change(OOPT, "2020-01-01", "2020-06-30", null, false)));
 
     assertThat("Unexpected counted WTE months.", counted.changes().get(0).wteMonths(),
@@ -106,7 +106,7 @@ class CctEngineTest {
 
   @Test
   void shouldCreditCountedOoprAtApprovedWte() {
-    CctCalculateResponseDto response = engine.calculate(programme(LONG_PROGRAMME_START, 120),
+    CctCalculateResponseDto response = calculator.calculate(programme(LONG_PROGRAMME_START, 120),
         List.of(change(OOPR, "2020-01-01", "2020-06-30", 0.8, true)));
 
     assertThat("Unexpected WTE months.", response.changes().get(0).wteMonths(),
@@ -115,7 +115,7 @@ class CctEngineTest {
 
   @Test
   void shouldLeaveWholeAdjustedLengthRemainingWhenNoChanges() {
-    CctResultDto result = engine.calculate(programme(LONG_PROGRAMME_START, 120, 6, 3),
+    CctResultDto result = calculator.calculate(programme(LONG_PROGRAMME_START, 120, 6, 3),
         List.of()).result();
 
     assertThat("Unexpected total WTE months completed.", result.totalWteMonthsCompleted(),
@@ -127,7 +127,7 @@ class CctEngineTest {
 
   @Test
   void shouldBreakResultDownIntoPeriods() {
-    CctCalculateResponseDto response = engine.calculate(programme(PAEDIATRICS_START, 96),
+    CctCalculateResponseDto response = calculator.calculate(programme(PAEDIATRICS_START, 96),
         List.of(change(PARENTAL, "2024-02-01", "2024-08-01", null, false)));
     List<CctAssumedFullTimePeriodDto> assumedPeriods = response.result().assumedFullTimePeriods();
 
@@ -141,7 +141,7 @@ class CctEngineTest {
 
   @Test
   void shouldRoundMonthsRemainingBeforeProjecting() {
-    CctResultDto result = engine.calculate(programme(PAEDIATRICS_START, 84),
+    CctResultDto result = calculator.calculate(programme(PAEDIATRICS_START, 84),
         List.of(change(LTFT, "2023-11-21", "2025-11-09", 0.5, true))).result();
 
     assertThat("Unexpected months remaining.", result.monthsRemaining(), is(68.52));
@@ -151,7 +151,7 @@ class CctEngineTest {
 
   @Test
   void shouldProjectRoundedMonthsRemainingAtOpenLtftWte() {
-    CctResultDto result = engine.calculate(programme(PAEDIATRICS_START, 84),
+    CctResultDto result = calculator.calculate(programme(PAEDIATRICS_START, 84),
         List.of(change(LTFT, "2024-02-01", null, 0.6, true))).result();
 
     assertThat("Unexpected months remaining.", result.monthsRemaining(), is(77.98));
@@ -162,7 +162,7 @@ class CctEngineTest {
 
   @Test
   void shouldFloorWholeNumberOfDaysWhenFloatingPointNoiseLeavesItJustShort() {
-    CctResultDto result = engine.calculate(programme(PAEDIATRICS_START, 84),
+    CctResultDto result = calculator.calculate(programme(PAEDIATRICS_START, 84),
         List.of(change(LTFT, PAEDIATRICS_START, null, 0.56, true))).result();
 
     assertThat("Unexpected months remaining.", result.monthsRemaining(), is(84.0));
@@ -171,7 +171,7 @@ class CctEngineTest {
 
   @Test
   void shouldGiveDayTrainingCompletesWhenChangeRunsPastIt() {
-    CctResultDto result = engine.calculate(programme(PAEDIATRICS_START, 84),
+    CctResultDto result = calculator.calculate(programme(PAEDIATRICS_START, 84),
         List.of(change(LTFT, "2030-01-01", "2032-12-31", 0.5, true))).result();
 
     assertThat("Unexpected months remaining.", result.monthsRemaining(), is(-11.08));
@@ -190,7 +190,7 @@ class CctEngineTest {
       """)
   void shouldGiveDayTrainingCompletesWhenChangeEndsAroundIt(String endDate,
       double monthsRemaining, String projectionStartDate) {
-    CctResultDto result = engine.calculate(programme(PAEDIATRICS_START, 84),
+    CctResultDto result = calculator.calculate(programme(PAEDIATRICS_START, 84),
         List.of(change(LTFT, "2030-01-01", endDate, 0.5, true))).result();
 
     assertThat("Unexpected months remaining.", result.monthsRemaining(), is(monthsRemaining));
@@ -208,7 +208,7 @@ class CctEngineTest {
       """)
   void shouldAllowSmallNegativeMonthsRemainingWhenChangeCompletesTraining(String endDate,
       double monthsRemaining) {
-    CctResultDto result = engine.calculate(programme(PAEDIATRICS_START, 30),
+    CctResultDto result = calculator.calculate(programme(PAEDIATRICS_START, 30),
         List.of(change(OOPR, PAEDIATRICS_START, endDate, 1.0, true))).result();
 
     assertThat("Unexpected months remaining.", result.monthsRemaining(), is(monthsRemaining));
@@ -219,7 +219,7 @@ class CctEngineTest {
   @MethodSource("listCompletingChanges")
   void shouldGiveDayTrainingCompletesWhenChangesComplete(List<CctChangeDto> changes,
       String cctDate) {
-    CctResultDto result = engine.calculate(programme(PAEDIATRICS_START, 84), changes).result();
+    CctResultDto result = calculator.calculate(programme(PAEDIATRICS_START, 84), changes).result();
 
     assertThat("Unexpected CCT date.", result.cctDate(), is(date(cctDate)));
   }
@@ -242,7 +242,7 @@ class CctEngineTest {
       6 | 2031-01-28
       """)
   void shouldFloorProgrammeEndDates(int additionalMonths, String adjustedProgrammeEndDate) {
-    CctResultDto result = engine.calculate(
+    CctResultDto result = calculator.calculate(
         programme(PAEDIATRICS_START, 84, additionalMonths, 0), List.of()).result();
 
     assertThat("Unexpected original programme end date.", result.originalProgrammeEndDate(),
@@ -254,7 +254,7 @@ class CctEngineTest {
 
   @Test
   void shouldCalculateResultWhenNoChanges() {
-    CctCalculateResponseDto response = engine.calculate(programme(PAEDIATRICS_START, 84),
+    CctCalculateResponseDto response = calculator.calculate(programme(PAEDIATRICS_START, 84),
         List.of());
 
     CctCalculateResponseDto expected = CctCalculateResponseDto.builder()
@@ -276,7 +276,7 @@ class CctEngineTest {
   @Test
   void shouldCalculateResultWhenDatedLtftChange() {
     CctChangeDto change = change(LTFT, "2024-02-01", "2024-08-01", 0.6, true);
-    CctCalculateResponseDto response = engine.calculate(programme(PAEDIATRICS_START, 84),
+    CctCalculateResponseDto response = calculator.calculate(programme(PAEDIATRICS_START, 84),
         List.of(change));
 
     CctCalculateResponseDto expected = CctCalculateResponseDto.builder()
@@ -300,7 +300,7 @@ class CctEngineTest {
   @Test
   void shouldCalculateResultWhenOpenLtftChange() {
     CctChangeDto change = change(LTFT, "2025-02-01", null, 0.6, true);
-    CctCalculateResponseDto response = engine.calculate(programme(PAEDIATRICS_START, 84),
+    CctCalculateResponseDto response = calculator.calculate(programme(PAEDIATRICS_START, 84),
         List.of(change));
 
     CctCalculateResponseDto expected = CctCalculateResponseDto.builder()
@@ -323,7 +323,7 @@ class CctEngineTest {
 
   @Test
   void shouldProjectFromDayAfterLatestEndWhenOnlyDatedChanges() {
-    CctCalculateResponseDto response = engine.calculate(programme(PAEDIATRICS_START, 84),
+    CctCalculateResponseDto response = calculator.calculate(programme(PAEDIATRICS_START, 84),
         List.of(
             change(LTFT, "2025-01-01", "2025-06-30", 0.5, true),
             change(OOPC, "2024-01-01", "2024-03-31", null, false)));
@@ -341,7 +341,7 @@ class CctEngineTest {
 
   @Test
   void shouldProjectAtOpenLtftWteWhenItFollowsDatedChange() {
-    CctResultDto result = engine.calculate(programme(PAEDIATRICS_START, 84), List.of(
+    CctResultDto result = calculator.calculate(programme(PAEDIATRICS_START, 84), List.of(
         change(LTFT, "2024-02-01", "2024-08-01", 0.5, true),
         change(LTFT, "2024-08-02", null, 0.8, true))).result();
 
@@ -356,7 +356,7 @@ class CctEngineTest {
 
   @Test
   void shouldAssumeFullTimeBeforeOpenLtftChangeWhenItFollowsGap() {
-    CctResultDto result = engine.calculate(programme(PAEDIATRICS_START, 84), List.of(
+    CctResultDto result = calculator.calculate(programme(PAEDIATRICS_START, 84), List.of(
         change(LTFT, "2024-02-01", "2024-08-01", 0.5, true),
         change(LTFT, "2025-02-01", null, 0.8, true))).result();
     List<CctAssumedFullTimePeriodDto> assumedPeriods = result.assumedFullTimePeriods();
@@ -374,7 +374,7 @@ class CctEngineTest {
 
   @Test
   void shouldCalculateWhenChangeStartsBeforeProgramme() {
-    CctResultDto result = engine.calculate(programme("2024-03-01", 84),
+    CctResultDto result = calculator.calculate(programme("2024-03-01", 84),
         List.of(change(PARENTAL, "2024-02-01", "2024-08-01", null, false))).result();
 
     assertThat("Unexpected months remaining.", result.monthsRemaining(), is(84.0));
@@ -383,7 +383,7 @@ class CctEngineTest {
 
   @Test
   void shouldTotalAssumedPeriodsWhenChangeStartsBeforeProgramme() {
-    CctResultDto result = engine.calculate(programme("2024-03-01", 84), List.of(
+    CctResultDto result = calculator.calculate(programme("2024-03-01", 84), List.of(
         change(PARENTAL, "2024-02-01", "2024-08-01", null, false),
         change(PARENTAL, "2025-02-01", "2025-08-01", null, false))).result();
     List<CctAssumedFullTimePeriodDto> assumedPeriods = result.assumedFullTimePeriods();
@@ -395,7 +395,7 @@ class CctEngineTest {
 
   @Test
   void shouldCalculateWhenChangeEndsBeforeProgramme() {
-    CctResultDto result = engine.calculate(programme("2024-09-01", 84),
+    CctResultDto result = calculator.calculate(programme("2024-09-01", 84),
         List.of(change(LTFT, "2024-02-01", "2024-08-01", 0.5, true))).result();
 
     assertThat("Unexpected assumed periods.", result.assumedFullTimePeriods(), empty());
@@ -407,8 +407,8 @@ class CctEngineTest {
   @MethodSource("listChangesBeforeProgrammeWithTrimmedChanges")
   void shouldCountChangesFromProgrammeStart(List<CctChangeDto> changes,
       List<CctChangeDto> trimmedChanges) {
-    CctResultDto result = engine.calculate(programme(PAEDIATRICS_START, 84), changes).result();
-    CctResultDto trimmedResult = engine.calculate(programme(PAEDIATRICS_START, 84),
+    CctResultDto result = calculator.calculate(programme(PAEDIATRICS_START, 84), changes).result();
+    CctResultDto trimmedResult = calculator.calculate(programme(PAEDIATRICS_START, 84),
         trimmedChanges).result();
 
     assertThat("Unexpected result.", result, is(trimmedResult));
@@ -434,9 +434,9 @@ class CctEngineTest {
   void shouldShowChangesAsEnteredWithMonthsCountedFromProgrammeStart() {
     CctChangeDto straddling = change(LTFT, "2023-06-01", "2024-01-31", 0.5, true);
     CctChangeDto endsBefore = change(LTFT, "2023-01-01", "2023-08-01", 0.5, true);
-    CctCalculateResponseDto response = engine.calculate(programme(PAEDIATRICS_START, 84),
+    CctCalculateResponseDto response = calculator.calculate(programme(PAEDIATRICS_START, 84),
         List.of(straddling, endsBefore));
-    CctCalculatedChangeDto trimmed = engine.calculate(programme(PAEDIATRICS_START, 84),
+    CctCalculatedChangeDto trimmed = calculator.calculate(programme(PAEDIATRICS_START, 84),
         List.of(straddling.withStartDate(date(PAEDIATRICS_START)))).changes().get(0);
 
     assertThat("Unexpected changes.", response.changes(), is(List.of(
@@ -446,7 +446,7 @@ class CctEngineTest {
 
   @Test
   void shouldNotWalkDaysThatCreditNothing() {
-    assertTimeoutPreemptively(Duration.ofSeconds(5), () -> engine.calculate(
+    assertTimeoutPreemptively(Duration.ofSeconds(5), () -> calculator.calculate(
         programme(PAEDIATRICS_START, 84),
         List.of(change(PARENTAL, "2024-01-01", "+99999999-12-31", null, false))));
   }
@@ -457,7 +457,7 @@ class CctEngineTest {
       for (int additional = 0; additional <= 24; additional++) {
         for (int accelerated = 0; accelerated <= 12 && accelerated < length + additional;
             accelerated++) {
-          CctResultDto result = engine.calculate(
+          CctResultDto result = calculator.calculate(
               programme(PAEDIATRICS_START, length, additional, accelerated), List.of()).result();
 
           String months = length + " + " + additional + " - " + accelerated;
@@ -471,7 +471,7 @@ class CctEngineTest {
   @ParameterizedTest
   @MethodSource("listChangesWithinProgramme")
   void shouldCreditAdjustedLengthAcrossPeriods(List<CctChangeDto> changes) {
-    CctCalculateResponseDto response = engine.calculate(programme(PAEDIATRICS_START, 84, 6, 3),
+    CctCalculateResponseDto response = calculator.calculate(programme(PAEDIATRICS_START, 84, 6, 3),
         changes);
     CctResultDto result = response.result();
 
