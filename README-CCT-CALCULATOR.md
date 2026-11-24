@@ -1,8 +1,8 @@
-# CCT Calculator Engine
+# CCT Calculator
 
 This document describes how the application calculates a trainee's
 Completion of Training (CCT) date. The implementation is in
-[`CctEngine.java`](src/main/java/uk/nhs/hee/trainee/details/service/CctEngine.java).
+[`CctCalculator.java`](src/main/java/uk/nhs/hee/trainee/details/service/CctCalculator.java).
 
 The calculator works with a training programme, its planned duration, and any
 periods that change the amount of training credited. It returns the calculated
@@ -32,7 +32,7 @@ months lost
   an open-ended LTFT: months remaining × (1 ÷ WTE - 1)
 ```
 
-The approximation is for checking results only; the engine's full calculation
+The approximation is for checking results only; the calculator's full calculation
 also accounts for the order and exact dates of periods.
 
 ## Terms
@@ -62,7 +62,7 @@ calendar months = (end date - start date + 1) ÷ (365 ÷ 12)
 credited months = calendar months × credit rate
 ```
 
-For projected time, the engine uses 30.4 days per month:
+For projected time, the calculator uses 30.4 days per month:
 
 ```text
 projected days = months remaining ÷ projection WTE × 30.4
@@ -89,8 +89,8 @@ an assumed full-time period.
 ### Completion within recorded time
 
 When the recorded periods provide enough credit to complete training, the
-engine examines them in date order and calculates the first day on which the
-required credit is reached. This also produces a useful CCT date when a
+calculator examines them in date order and calculates the first day on which
+the required credit is reached. This also produces a useful CCT date when a
 recorded change extends beyond the point at which training completes.
 
 ### Changes before the programme
@@ -187,6 +187,6 @@ months required = programme length + additional months - accelerated months
 7. Calculate original and adjusted programme end dates.
 ```
 
-The engine is deliberately independent of persistence and user identity. The
-surrounding service handles request validation, saving, and presentation of
-calculation errors.
+The calculator is deliberately independent of persistence and user identity.
+The surrounding service handles request validation, saving, and presentation
+of calculation errors.

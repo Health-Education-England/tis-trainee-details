@@ -11,7 +11,7 @@ managing trainee details data, such as Personal details, Placements and Programm
 to be used in the Profile page.
 
 It also calculates Completion of Training (CCT) dates, as explained in the
-[CCT Calculator Engine README](README-CCT-CALCULATOR.md).
+[CCT Calculator README](README-CCT-CALCULATOR.md).
 
 ## Developing
 
