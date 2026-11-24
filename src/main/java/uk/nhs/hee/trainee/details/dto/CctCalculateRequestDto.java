@@ -27,7 +27,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.util.List;
 import lombok.Builder;
-import uk.nhs.hee.trainee.details.dto.CctCalculatedChangeDto.CctChangeDto;
 import uk.nhs.hee.trainee.details.dto.deserializer.CctChangesDeserializer;
 import uk.nhs.hee.trainee.details.dto.validation.CctCalculateRequestValidation;
 

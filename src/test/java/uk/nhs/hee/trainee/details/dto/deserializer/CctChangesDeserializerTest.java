@@ -41,7 +41,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import uk.nhs.hee.trainee.details.dto.CctCalculatedChangeDto.CctChangeDto;
+import uk.nhs.hee.trainee.details.dto.CctChangeDto;
 
 class CctChangesDeserializerTest {
 
