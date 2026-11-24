@@ -114,6 +114,13 @@ public class CctEngine {
         .build();
   }
 
+  /**
+   * Adjust a change to the programme start and discard changes completed before it.
+   *
+   * @param change             The change to count.
+   * @param programmeStartDate The programme start date.
+   * @return The change adjusted to the programme, or empty when it does not overlap it.
+   */
   private static Optional<CctChangeDto> countedChange(CctChangeDto change,
       LocalDate programmeStartDate) {
     if (!change.startDate().isBefore(programmeStartDate)) {
@@ -125,10 +132,24 @@ public class CctEngine {
     return Optional.of(change.withStartDate(programmeStartDate));
   }
 
+  /**
+   * Determine whether a change is an open-ended LTFT period.
+   *
+   * @param change The change to inspect.
+   * @return {@code true} when the change is an open-ended LTFT period.
+   */
   private static boolean isOpenLtftChange(CctChangeDto change) {
     return change.type() == LTFT && change.endDate() == null;
   }
 
+  /**
+   * Derive the projection used after the recorded training periods.
+   *
+   * @param programmeStartDate The programme start date.
+   * @param changes            All counted changes.
+   * @param datedChanges       Counted changes with an end date.
+   * @return The projection start date and WTE.
+   */
   private static Projection deriveProjection(LocalDate programmeStartDate,
       List<CctChangeDto> changes, List<CctChangeDto> datedChanges) {
     Optional<CctChangeDto> openLtftChange = changes.stream()
@@ -146,6 +167,14 @@ public class CctEngine {
     return new Projection(startDate, 1);
   }
 
+  /**
+   * Find periods that are assumed to have been completed full time between changes.
+   *
+   * @param programmeStartDate  The programme start date.
+   * @param datedChanges        Counted changes with an end date.
+   * @param projectionStartDate The start date of the projection.
+   * @return The assumed full-time periods.
+   */
   private static List<CctAssumedFullTimePeriodDto> deriveAssumedPeriods(
       LocalDate programmeStartDate, List<CctChangeDto> datedChanges,
       LocalDate projectionStartDate) {
@@ -172,6 +201,13 @@ public class CctEngine {
     return periods;
   }
 
+  /**
+   * Calculate the credited calendar and WTE months for a change.
+   *
+   * @param change             The change to calculate.
+   * @param programmeStartDate The programme start date.
+   * @return The calculated change.
+   */
   private static CctCalculatedChangeDto calculatedChange(CctChangeDto change,
       LocalDate programmeStartDate) {
     if (isOpenLtftChange(change)) {
@@ -188,6 +224,13 @@ public class CctEngine {
         .build();
   }
 
+  /**
+   * Create an assumed full-time period for a date range.
+   *
+   * @param startDate The period start date.
+   * @param endDate   The period end date.
+   * @return The assumed full-time period.
+   */
   private static CctAssumedFullTimePeriodDto assumedPeriod(LocalDate startDate,
       LocalDate endDate) {
     return CctAssumedFullTimePeriodDto.builder()
@@ -197,6 +240,14 @@ public class CctEngine {
         .build();
   }
 
+  /**
+   * Find the date on which the required programme length is completed.
+   *
+   * @param lengthMonths   The adjusted programme length in months.
+   * @param datedChanges   Counted changes with an end date.
+   * @param assumedPeriods Periods assumed to have been completed full time.
+   * @return The completion date, if it falls within the supplied periods.
+   */
   private static Optional<LocalDate> findCompletionDate(int lengthMonths,
       List<CctChangeDto> datedChanges, List<CctAssumedFullTimePeriodDto> assumedPeriods) {
     List<TrainingPeriod> sortedPeriods = Stream.concat(
@@ -225,14 +276,32 @@ public class CctEngine {
     return Optional.empty();
   }
 
+  /**
+   * Calculate the calendar months covered by a change.
+   *
+   * @param change The change to calculate.
+   * @return The calendar months covered by the change.
+   */
   private static double calendarMonths(CctChangeDto change) {
     return recordedMonths(change.startDate(), change.endDate());
   }
 
+  /**
+   * Calculate the WTE months credited by a change.
+   *
+   * @param change The change to calculate.
+   * @return The WTE months credited by the change.
+   */
   private static double wteMonths(CctChangeDto change) {
     return calendarMonths(change) * wteFraction(change);
   }
 
+  /**
+   * Determine the WTE fraction credited by a change.
+   *
+   * @param change The change to inspect.
+   * @return The credited WTE fraction.
+   */
   private static double wteFraction(CctChangeDto change) {
     if (!change.countsTowardsCompletion()) {
       return 0;
@@ -240,19 +309,46 @@ public class CctEngine {
     return change.type() == OOPT ? 1 : change.wte();
   }
 
+  /**
+   * Convert an inclusive date range to recorded months.
+   *
+   * @param startDate The range start date.
+   * @param endDate   The range end date.
+   * @return The number of recorded months.
+   */
   private static double recordedMonths(LocalDate startDate, LocalDate endDate) {
     return inclusiveDays(startDate, endDate) / RECORDED_DAYS_PER_MONTH;
   }
 
+  /**
+   * Count the days in an inclusive date range.
+   *
+   * @param startDate The range start date.
+   * @param endDate   The range end date.
+   * @return The number of days in the range.
+   */
   private static long inclusiveDays(LocalDate startDate, LocalDate endDate) {
     return DAYS.between(startDate, endDate) + 1;
   }
 
+  /**
+   * Calculate a projected date using the configured average days per month.
+   *
+   * @param startDate The projection start date.
+   * @param months    The number of months to add.
+   * @return The projected date.
+   */
   private static LocalDate dateAfterMonths(LocalDate startDate, double months) {
     return startDate.plusDays(
         (long) Math.floor(months * PROJECTED_DAYS_PER_MONTH + FLOOR_TOLERANCE_DAYS));
   }
 
+  /**
+   * Round a month value to two decimal places.
+   *
+   * @param months The value to round.
+   * @return The rounded value.
+   */
   private static double roundToTwoDecimals(double months) {
     return Math.round(months * 100) / 100.0;
   }
