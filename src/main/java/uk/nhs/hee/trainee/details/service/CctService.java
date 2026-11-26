@@ -345,8 +345,8 @@ public class CctService {
 
   /**
    * Validate the programme details against the grade progression: each grade they name must be in
-   * it, and the accelerated training time in a grade must be less than the grade's length plus its
-   * additional training time.
+   * it, the skipped grade cannot be the start grade, and the accelerated training time in a grade
+   * must be less than the grade's length plus its additional training time.
    *
    * @param details The programme details.
    * @param result  The validation result to add any errors to.
@@ -361,7 +361,9 @@ public class CctService {
         grades, result);
 
     CctTrainingGrade skippedGrade = details.skippedGrade();
-    if (skippedGrade != null
+    if (skippedGrade != null && skippedGrade == details.startGrade()) {
+      addProgrammeDetailsError(result, "skippedGrade", "The start grade cannot be skipped.");
+    } else if (skippedGrade != null
         && !gradesIn(gradeProgression.years(details, null, null)).contains(skippedGrade)) {
       addProgrammeDetailsError(result, "skippedGrade", notInProgression(skippedGrade));
     }

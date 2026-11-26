@@ -54,6 +54,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
@@ -491,6 +492,26 @@ class CctServiceTest {
         BodyValidationError.fromFieldErrors(exception.getFieldErrors()), is(List.of(
             new BodyValidationError("#/programmeDetails/eighteenMonthFinalGrade",
                 "ST3 is not part of this programme's grade progression."))));
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = CctTrainingGrade.class, names = {"ST1", "DFT"})
+  void shouldNotCreateCalculationWhenStartGradeIsSkipped(CctTrainingGrade grade) {
+    CctCalculationSaveRequestDto dto = request(programme()
+        .startGrade(grade)
+        .startGradeOverrideNotes("Entered at " + grade)
+        .skippedGrade(grade)
+        .skippedGradeNotes("Core competencies"));
+
+    MethodArgumentNotValidException exception = assertThrows(MethodArgumentNotValidException.class,
+        () -> service.createCalculation(dto));
+
+    assertThat("Unexpected errors.",
+        BodyValidationError.fromFieldErrors(exception.getFieldErrors()), is(List.of(
+            new BodyValidationError("#/programmeDetails/skippedGrade",
+                "The start grade cannot be skipped."))));
+
+    verify(calculationRepository, never()).insert(any(CctCalculation.class));
   }
 
   @ParameterizedTest

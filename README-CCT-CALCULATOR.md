@@ -208,6 +208,8 @@ returns them in `errors` alongside the result.
 - Each grade with additional or accelerated time, the skipped grade and the
   18-month grade must be in the progression. The skipped grade is checked
   without the skip applied, and the 18-month grade cannot be the skipped grade.
+- The skipped grade cannot be the start grade, so a programme with an
+  unnumbered grade (DFT) cannot skip it.
 - The 18-month grade must end the progression and run for 18 months, so it
   must be the last full year of a programme that ends in a half year (ST7 of a
   90-month programme from ST1).
