@@ -21,6 +21,9 @@
 
 package uk.nhs.hee.trainee.details.service;
 
+import static uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto.CctTrainingTimeDto.monthsIn;
+import static uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto.CctTrainingTimeDto.totalMonths;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -28,7 +31,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.springframework.stereotype.Service;
 import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto;
-import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto.CctTrainingTimeDto;
 import uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade;
 
 /**
@@ -136,19 +138,6 @@ public class CctGradeProgression {
         .filter(grade -> grade.name().equals(name))
         .findFirst()
         .orElse(null);
-  }
-
-  private static int monthsIn(List<CctTrainingTimeDto> entries, CctTrainingGrade grade) {
-    return entries.stream()
-        .filter(entry -> grade != null && entry.grade() == grade)
-        .mapToInt(CctTrainingTimeDto::months)
-        .sum();
-  }
-
-  private static int totalMonths(List<CctTrainingTimeDto> entries) {
-    return entries.stream()
-        .mapToInt(CctTrainingTimeDto::months)
-        .sum();
   }
 
   /**

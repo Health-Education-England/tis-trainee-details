@@ -22,6 +22,7 @@
 package uk.nhs.hee.trainee.details.service;
 
 import static java.time.temporal.ChronoUnit.DAYS;
+import static uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto.CctTrainingTimeDto.totalMonths;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.LTFT;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.OOPT;
 
@@ -36,7 +37,6 @@ import uk.nhs.hee.trainee.details.dto.CctCalculateResponseDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculatedChangeDto;
 import uk.nhs.hee.trainee.details.dto.CctChangeDto;
 import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto;
-import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto.CctTrainingTimeDto;
 import uk.nhs.hee.trainee.details.dto.CctResultDto;
 import uk.nhs.hee.trainee.details.dto.CctResultDto.CctAssumedFullTimePeriodDto;
 import uk.nhs.hee.trainee.details.dto.CctResultDto.CctGradeYearDto;
@@ -128,18 +128,6 @@ public class CctCalculator {
             .toList())
         .result(result)
         .build();
-  }
-
-  /**
-   * Total the months of training time across all grades.
-   *
-   * @param entries The training time in each grade.
-   * @return The total months.
-   */
-  private static int totalMonths(List<CctTrainingTimeDto> entries) {
-    return entries.stream()
-        .mapToInt(CctTrainingTimeDto::months)
-        .sum();
   }
 
   /**

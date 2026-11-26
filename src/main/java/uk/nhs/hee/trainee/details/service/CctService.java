@@ -24,6 +24,7 @@ package uk.nhs.hee.trainee.details.service;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.summingInt;
 import static java.util.stream.Collectors.toSet;
+import static uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto.CctTrainingTimeDto.monthsIn;
 
 import java.lang.reflect.Method;
 import java.time.LocalDate;
@@ -435,13 +436,6 @@ public class CctService {
         .map(Year::grade)
         .filter(Objects::nonNull)
         .collect(toSet());
-  }
-
-  private static int monthsIn(List<CctTrainingTimeDto> entries, CctTrainingGrade grade) {
-    return entries.stream()
-        .filter(entry -> entry.grade() == grade)
-        .mapToInt(CctTrainingTimeDto::months)
-        .sum();
   }
 
   private static String notInProgression(CctTrainingGrade grade) {

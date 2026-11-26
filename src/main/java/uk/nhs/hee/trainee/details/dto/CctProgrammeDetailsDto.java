@@ -126,5 +126,31 @@ public record CctProgrammeDetailsDto(
     public CctTrainingTimeDto {
       notes = notes == null ? null : notes.strip();
     }
+
+    /**
+     * Total the months of training time across all grades.
+     *
+     * @param entries The training time in each grade.
+     * @return The total months.
+     */
+    public static int totalMonths(List<CctTrainingTimeDto> entries) {
+      return entries.stream()
+          .mapToInt(CctTrainingTimeDto::months)
+          .sum();
+    }
+
+    /**
+     * Total the months of training time in one grade.
+     *
+     * @param entries The training time in each grade.
+     * @param grade   The grade to total, or null for none.
+     * @return The total months in the grade, or 0 when the grade is null.
+     */
+    public static int monthsIn(List<CctTrainingTimeDto> entries, CctTrainingGrade grade) {
+      return entries.stream()
+          .filter(entry -> grade != null && entry.grade() == grade)
+          .mapToInt(CctTrainingTimeDto::months)
+          .sum();
+    }
   }
 }
