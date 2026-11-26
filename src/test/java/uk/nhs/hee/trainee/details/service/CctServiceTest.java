@@ -36,6 +36,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.LTFT;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.DFT;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST1;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST2;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST3;
@@ -520,6 +521,25 @@ class CctServiceTest {
         .lengthOverrideNotes("Agreed with local office")
         .eighteenMonthFinalGrade(ST7)
         .eighteenMonthFinalGradeNotes("Dual CCT"));
+    when(calculationRepository.insert(any(CctCalculation.class))).thenAnswer(
+        invocation -> invocation.getArgument(0));
+
+    CctCalculationDetailDto created = service.createCalculation(dto);
+
+    assertThat("Unexpected programme details.", created.programmeDetails(),
+        is(dto.programmeDetails()));
+  }
+
+  @Test
+  void shouldCreateCalculationWhenEighteenMonthGradeIsUnnumberedFinalGrade()
+      throws MethodArgumentNotValidException {
+    CctCalculationSaveRequestDto dto = request(programme()
+        .lengthMonths(30)
+        .lengthOverrideNotes("Agreed with local office")
+        .startGrade(DFT)
+        .startGradeOverrideNotes("Dental")
+        .eighteenMonthFinalGrade(DFT)
+        .eighteenMonthFinalGradeNotes("Extended"));
     when(calculationRepository.insert(any(CctCalculation.class))).thenAnswer(
         invocation -> invocation.getArgument(0));
 

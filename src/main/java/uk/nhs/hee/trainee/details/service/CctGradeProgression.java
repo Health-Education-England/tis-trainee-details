@@ -72,6 +72,7 @@ public class CctGradeProgression {
     int carriedAcceleratedMonths = 0;
     int previousBaseMonths = 0;
     int skippedGradeOffset = 0;
+    boolean isUnnumbered = !isNumbered(details.startGrade());
 
     for (int yearNumber = 1; (yearNumber - 1) * MONTHS_PER_YEAR < lengthMonths; yearNumber++) {
       int gate = (yearNumber - 1) * MONTHS_PER_YEAR + 1 + previousEighteenMonthExtension;
@@ -81,7 +82,7 @@ public class CctGradeProgression {
       }
 
       boolean beginsAfterSkippedGrade = skippedGrade != null
-          && isNumbered(details.startGrade())
+          && !isUnnumbered
           && gradeAfter(details.startGrade(), yearNumber - 1) == skippedGrade;
       if (beginsAfterSkippedGrade) {
         skippedGradeOffset = 1;
@@ -89,14 +90,22 @@ public class CctGradeProgression {
       CctTrainingGrade grade = gradeAfter(details.startGrade(),
           yearNumber - 1 + skippedGradeOffset);
 
-      boolean isEighteenMonthFinalYear = grade != null && grade == eighteenMonthFinalGrade;
+      boolean isEighteenMonthFinalYear = grade != null && grade == eighteenMonthFinalGrade
+          && (!isUnnumbered
+          || lengthMonths <= yearNumber * MONTHS_PER_YEAR + EIGHTEEN_MONTH_EXTENSION);
       int finalYearExtension = isEighteenMonthFinalYear ? EIGHTEEN_MONTH_EXTENSION : 0;
-      int additionalMonths = monthsIn(details.additionalTrainingTime(), grade);
-      int acceleratedMonths = monthsIn(details.acceleratedTrainingTime(), grade);
+      int baseMonths = yearNumber * MONTHS_PER_YEAR + finalYearExtension;
+      boolean isLastYearOfGrade = !isUnnumbered || baseMonths >= lengthMonths;
+
+      int additionalMonths = 0;
+      int acceleratedMonths = 0;
+      if (isLastYearOfGrade) {
+        additionalMonths = monthsIn(details.additionalTrainingTime(), grade);
+        acceleratedMonths = monthsIn(details.acceleratedTrainingTime(), grade);
+      }
       carriedAdditionalMonths += additionalMonths;
       carriedAcceleratedMonths += acceleratedMonths;
 
-      int baseMonths = yearNumber * MONTHS_PER_YEAR + finalYearExtension;
       int targetMonths = Math.min(
           baseMonths + carriedAdditionalMonths - carriedAcceleratedMonths, adjustedLengthMonths);
       int gradeMonths = Math.min(baseMonths, lengthMonths) - previousBaseMonths;

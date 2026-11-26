@@ -140,6 +140,33 @@ class CctGradeProgressionTest {
   }
 
   @Test
+  void shouldCountUnnumberedGradeTrainingTimeOnlyOnItsLastYear() {
+    CctProgrammeDetailsDto programme = programmeBuilder(24, DFT)
+        .additionalTrainingTime(List.of(trainingTime(DFT, 1)))
+        .acceleratedTrainingTime(List.of(trainingTime(DFT, 3)))
+        .build();
+
+    List<Year> years = gradeProgression.years(programme);
+
+    assertThat("Unexpected years.", years, is(List.of(
+        year(1, DFT, 12, 12),
+        new Year(2, DFT, null, false, false, 1, 3, 12, 22))));
+  }
+
+  @Test
+  void shouldExtendOnlyLastYearOfUnnumberedEighteenMonthFinalGrade() {
+    CctProgrammeDetailsDto programme = programmeBuilder(30, DFT)
+        .eighteenMonthFinalGrade(DFT)
+        .build();
+
+    List<Year> years = gradeProgression.years(programme);
+
+    assertThat("Unexpected years.", years, is(List.of(
+        year(1, DFT, 12, 12),
+        new Year(2, DFT, null, true, false, 0, 0, 18, 30))));
+  }
+
+  @Test
   void shouldNotNameGradePastHighestKnownGrade() {
     CctProgrammeDetailsDto programme = programmeBuilder(36, ST8)
         .additionalTrainingTime(List.of(trainingTime(ST9, 1)))

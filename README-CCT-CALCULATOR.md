@@ -181,7 +181,8 @@ which that year ends. The rules are implemented in
 
 - **Years.** There is one row for each year of the programme length, before
   additional and accelerated time. The grade increases by one each year from
-  the start grade; DFT remains DFT.
+  the start grade; DFT remains DFT. A DFT programme's additional and
+  accelerated time, and its 18-month final year, apply only to its last row.
 - **End dates.** Year N ends when N × 12 months have been completed, plus the
   additional time and less the accelerated time recorded against that grade
   and every earlier grade. The date is found in the same way as the CCT date,
