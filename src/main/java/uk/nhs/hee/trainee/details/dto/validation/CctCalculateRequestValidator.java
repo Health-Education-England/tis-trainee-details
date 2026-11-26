@@ -103,11 +103,6 @@ public class CctCalculateRequestValidator implements
           "Adjusted training duration must be greater than zero.");
     }
 
-    if (details.eighteenMonthFinalGrade() != null
-        && isBlank(details.eighteenMonthFinalGradeNotes())) {
-      violations.onProgrammeDetails("eighteenMonthFinalGradeNotes",
-          "Please enter a reason for the 18-month final year.");
-    }
     if (details.skippedGrade() != null && isBlank(details.skippedGradeNotes())) {
       violations.onProgrammeDetails("skippedGradeNotes",
           "Please enter a reason for skipping a grade year.");

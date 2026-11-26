@@ -190,7 +190,10 @@ which that year ends. The rules are implemented in
 - **18-month final year.** This applies to a programme that ends in a half
   year, such as 90 months. Without it, the final row is a 6-month grade. The
   18-month grade is the last full year before it and includes those 6 months,
-  so the 6-month row is removed. The CCT date is unchanged.
+  so the 6-month row is removed. The CCT date is unchanged. The specialties
+  that run 6 months past ST9 have `eighteenMonthFinalYear` set, so the 18-month
+  ST9 is their default and needs no reason while their length and start grade
+  are unchanged.
 - **Skipped grade.** From the skipped grade onwards, each row shows the next
   grade up. The dates are unchanged; any reduction in training is recorded as
   accelerated time.

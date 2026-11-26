@@ -219,6 +219,14 @@ class CctCalculateRequestDtoTest {
   }
 
   @Test
+  void shouldAcceptEighteenMonthFinalGradeWithoutNotes() {
+    List<BodyValidationError> errors = validate(programme().eighteenMonthFinalGrade(ST3),
+        List.of());
+
+    assertThat("Unexpected errors.", errors, hasSize(0));
+  }
+
+  @Test
   void shouldRejectProgrammeNotesOverMaximumLength() {
     String notes = "x".repeat(4097);
     List<BodyValidationError> errors = validate(programme()
@@ -313,9 +321,6 @@ class CctCalculateRequestDtoTest {
                 .limit(21).toList()),
             "additionalTrainingTime",
             "You cannot add more than 20 additional training time entries."),
-        Arguments.of("18-month final grade without a note",
-            programme().eighteenMonthFinalGrade(ST3),
-            "eighteenMonthFinalGradeNotes", "Please enter a reason for the 18-month final year."),
         Arguments.of("skipped grade without a note", programme().skippedGrade(ST2),
             "skippedGradeNotes", "Please enter a reason for skipping a grade year.")
     );

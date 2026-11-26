@@ -87,6 +87,8 @@ import uk.nhs.hee.trainee.details.repository.CctCalculationRepository;
 class CctServiceTest {
 
   private static final String TRAINEE_ID = UUID.randomUUID().toString();
+  private static final String DUAL_CCT_SPECIALTY =
+      "Acute internal medicine with Intensive Care and GIM";
 
   private CctService service;
   private CctCalculationRepository calculationRepository;
@@ -100,8 +102,9 @@ class CctServiceTest {
 
     calculationRepository = mock(CctCalculationRepository.class);
     specialtyService = mock(CctSpecialtyService.class);
-    when(specialtyService.getSpecialties()).thenReturn(
-        List.of(new CctSpecialtyDto("Paediatrics", 84, ST1)));
+    when(specialtyService.getSpecialties()).thenReturn(List.of(
+        new CctSpecialtyDto("Paediatrics", 84, ST1, false),
+        new CctSpecialtyDto(DUAL_CCT_SPECIALTY, 90, ST3, true)));
     CctGradeProgression gradeProgression = new CctGradeProgression();
     calculator = new CctCalculator(gradeProgression);
 
@@ -448,6 +451,67 @@ class CctServiceTest {
 
     assertThat("Unexpected programme details.", created.programmeDetails(),
         is(dto.programmeDetails()));
+  }
+
+  @ParameterizedTest
+  @NullSource
+  @ValueSource(strings = {"", " "})
+  void shouldNotCreateCalculationWhenEighteenMonthFinalGradeHasNoNotes(String notes) {
+    CctCalculationSaveRequestDto dto = request(programme()
+        .lengthMonths(90)
+        .lengthOverrideNotes("Agreed with local office")
+        .eighteenMonthFinalGrade(ST7)
+        .eighteenMonthFinalGradeNotes(notes));
+
+    MethodArgumentNotValidException exception = assertThrows(MethodArgumentNotValidException.class,
+        () -> service.createCalculation(dto));
+
+    assertThat("Unexpected errors.",
+        BodyValidationError.fromFieldErrors(exception.getFieldErrors()), is(List.of(
+            new BodyValidationError("#/programmeDetails/eighteenMonthFinalGradeNotes",
+                "Please enter a reason for the 18-month final year."))));
+
+    verify(calculationRepository, never()).insert(any(CctCalculation.class));
+  }
+
+  @Test
+  void shouldCreateCalculationWhenEighteenMonthFinalGradeIsSpecialtyDefaultWithoutNotes()
+      throws MethodArgumentNotValidException {
+    CctCalculationSaveRequestDto dto = request(programme()
+        .specialty(DUAL_CCT_SPECIALTY)
+        .lengthMonths(90)
+        .startGrade(ST3)
+        .eighteenMonthFinalGrade(ST9));
+    when(calculationRepository.insert(any(CctCalculation.class))).thenAnswer(
+        invocation -> invocation.getArgument(0));
+
+    CctCalculationDetailDto created = service.createCalculation(dto);
+
+    assertThat("Unexpected programme details.", created.programmeDetails(),
+        is(dto.programmeDetails()));
+  }
+
+  @ParameterizedTest
+  @CsvSource({"78, ST3, ST8", "90, ST2, ST8"})
+  void shouldNotCreateCalculationWhenSpecialtyDefaultIsOverriddenAndEighteenMonthHasNoNotes(
+      int lengthMonths, CctTrainingGrade startGrade, CctTrainingGrade eighteenMonthFinalGrade) {
+    CctCalculationSaveRequestDto dto = request(programme()
+        .specialty(DUAL_CCT_SPECIALTY)
+        .lengthMonths(lengthMonths)
+        .lengthOverrideNotes("Agreed with local office")
+        .startGrade(startGrade)
+        .startGradeOverrideNotes("Entered at " + startGrade)
+        .eighteenMonthFinalGrade(eighteenMonthFinalGrade));
+
+    MethodArgumentNotValidException exception = assertThrows(MethodArgumentNotValidException.class,
+        () -> service.createCalculation(dto));
+
+    assertThat("Unexpected errors.",
+        BodyValidationError.fromFieldErrors(exception.getFieldErrors()), is(List.of(
+            new BodyValidationError("#/programmeDetails/eighteenMonthFinalGradeNotes",
+                "Please enter a reason for the 18-month final year."))));
+
+    verify(calculationRepository, never()).insert(any(CctCalculation.class));
   }
 
   @Test

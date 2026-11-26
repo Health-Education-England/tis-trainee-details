@@ -313,8 +313,9 @@ public class CctService {
   }
 
   /**
-   * Validate the programme details against the specialty they name: it must be listed, and a length
-   * or start grade that differs from the specialty's must have notes.
+   * Validate the programme details against the specialty they name: it must be listed, a length or
+   * start grade that differs from the specialty's must have notes, and so must an 18-month final
+   * year that is not the specialty's default.
    *
    * @param details The programme details.
    * @param result  The validation result to add any errors to.
@@ -331,15 +332,22 @@ public class CctService {
     }
 
     CctSpecialtyDto specialty = listed.get();
-    if (details.lengthMonths() != specialty.lengthMonths()
-        && !StringUtils.hasText(details.lengthOverrideNotes())) {
+    boolean isDefaultLength = details.lengthMonths() == specialty.lengthMonths();
+    boolean isDefaultStartGrade = details.startGrade() == specialty.entryGrade();
+    if (!isDefaultLength && !StringUtils.hasText(details.lengthOverrideNotes())) {
       addProgrammeDetailsError(result, "lengthOverrideNotes",
           "Please enter a reason for a different programme length.");
     }
-    if (details.startGrade() != specialty.entryGrade()
-        && !StringUtils.hasText(details.startGradeOverrideNotes())) {
+    if (!isDefaultStartGrade && !StringUtils.hasText(details.startGradeOverrideNotes())) {
       addProgrammeDetailsError(result, "startGradeOverrideNotes",
           "Please enter a reason for overriding the default start grade.");
+    }
+    boolean isDefaultEighteenMonthFinalYear = specialty.eighteenMonthFinalYear()
+        && isDefaultLength && isDefaultStartGrade;
+    if (details.eighteenMonthFinalGrade() != null && !isDefaultEighteenMonthFinalYear
+        && !StringUtils.hasText(details.eighteenMonthFinalGradeNotes())) {
+      addProgrammeDetailsError(result, "eighteenMonthFinalGradeNotes",
+          "Please enter a reason for the 18-month final year.");
     }
   }
 

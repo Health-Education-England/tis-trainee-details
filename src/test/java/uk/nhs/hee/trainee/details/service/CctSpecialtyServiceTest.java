@@ -43,8 +43,10 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto;
 import uk.nhs.hee.trainee.details.dto.CctSpecialtyDto;
 import uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade;
+import uk.nhs.hee.trainee.details.service.CctGradeProgression.Year;
 
 class CctSpecialtyServiceTest {
 
@@ -69,9 +71,9 @@ class CctSpecialtyServiceTest {
     List<CctSpecialtyDto> specialties = service.getSpecialties();
 
     assertThat("Unexpected first specialty.", specialties.get(0),
-        is(new CctSpecialtyDto("ACCS anaesthetics", 48, CT1)));
+        is(new CctSpecialtyDto("ACCS anaesthetics", 48, CT1, false)));
     assertThat("Unexpected last specialty.", specialties.get(specialties.size() - 1),
-        is(new CctSpecialtyDto("Vascular surgery (run-through)", 96, ST1)));
+        is(new CctSpecialtyDto("Vascular surgery (run-through)", 96, ST1, false)));
   }
 
   @Test
@@ -102,7 +104,7 @@ class CctSpecialtyServiceTest {
           .skip(2)
           .map(line -> line.split("\\|"))
           .map(cells -> new CctSpecialtyDto(cells[1].strip(), Integer.parseInt(cells[2].strip()),
-              CctTrainingGrade.valueOf(cells[3].strip())))
+              CctTrainingGrade.valueOf(cells[3].strip()), cells[4].strip().equals("Yes")))
           .toList();
     }
 
@@ -114,7 +116,27 @@ class CctSpecialtyServiceTest {
     List<CctSpecialtyDto> specialties = service.getSpecialties();
 
     assertThat("Unexpected radiology specialties.", specialties, hasItems(
-        new CctSpecialtyDto("Clinical radiology with Interventional radiology", 72, ST3),
-        new CctSpecialtyDto("Interventional radiology with Clinical radiology", 72, ST3)));
+        new CctSpecialtyDto("Clinical radiology with Interventional radiology", 72, ST3, false),
+        new CctSpecialtyDto("Interventional radiology with Clinical radiology", 72, ST3, false)));
+  }
+
+  @Test
+  void shouldGetEighteenMonthFinalYearForSpecialtiesEndingHalfYearPastHighestGrade() {
+    CctGradeProgression gradeProgression = new CctGradeProgression();
+
+    for (CctSpecialtyDto specialty : service.getSpecialties()) {
+      List<Year> years = gradeProgression.years(CctProgrammeDetailsDto.builder()
+          .lengthMonths(specialty.lengthMonths())
+          .startGrade(specialty.entryGrade())
+          .additionalTrainingTime(List.of())
+          .acceleratedTrainingTime(List.of())
+          .build());
+      Year last = years.get(years.size() - 1);
+      boolean endsHalfYearPastHighestGrade = last.exceedsKnownTrainingGrade()
+          && last.gradeMonths() == 6;
+
+      assertThat("Unexpected 18-month final year for " + specialty.name() + ".",
+          specialty.eighteenMonthFinalYear(), is(endsHalfYearPastHighestGrade));
+    }
   }
 }

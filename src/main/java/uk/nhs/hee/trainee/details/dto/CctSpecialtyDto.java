@@ -30,6 +30,8 @@ import uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade;
  * @param name         The name of the specialty.
  * @param lengthMonths The length of the specialty's programme, in months.
  * @param entryGrade   The grade the specialty's programme starts at.
+ * @param eighteenMonthFinalYear Whether the specialty's programme has an 18-month final year by
+ *                               default.
  */
 @Builder
 public record CctSpecialtyDto(
@@ -38,6 +40,8 @@ public record CctSpecialtyDto(
 
     int lengthMonths,
 
-    CctTrainingGrade entryGrade) {
+    CctTrainingGrade entryGrade,
+
+    boolean eighteenMonthFinalYear) {
 
 }

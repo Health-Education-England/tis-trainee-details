@@ -372,7 +372,7 @@ class CctResourceTest {
 
   @Test
   void shouldGetSpecialties() {
-    List<CctSpecialtyDto> specialties = List.of(new CctSpecialtyDto("Paediatrics", 84, ST1));
+    List<CctSpecialtyDto> specialties = List.of(new CctSpecialtyDto("Paediatrics", 84, ST1, false));
     when(specialtyService.getSpecialties()).thenReturn(specialties);
 
     ResponseEntity<List<CctSpecialtyDto>> response = controller.getSpecialties();
