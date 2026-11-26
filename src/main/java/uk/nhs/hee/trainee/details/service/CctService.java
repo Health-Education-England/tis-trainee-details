@@ -21,20 +21,11 @@
 
 package uk.nhs.hee.trainee.details.service;
 
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.summingInt;
-import static java.util.stream.Collectors.toSet;
-import static uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto.CctTrainingTimeDto.monthsIn;
-
 import java.lang.reflect.Method;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.extern.slf4j.Slf4j;
@@ -52,15 +43,12 @@ import uk.nhs.hee.trainee.details.dto.CctCalculationInput;
 import uk.nhs.hee.trainee.details.dto.CctCalculationSaveRequestDto;
 import uk.nhs.hee.trainee.details.dto.CctChangeDto;
 import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto;
-import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto.CctTrainingTimeDto;
 import uk.nhs.hee.trainee.details.dto.CctSpecialtyDto;
 import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
-import uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade;
 import uk.nhs.hee.trainee.details.exception.NotRecordOwnerException;
 import uk.nhs.hee.trainee.details.mapper.CctMapper;
 import uk.nhs.hee.trainee.details.model.CctCalculation;
 import uk.nhs.hee.trainee.details.repository.CctCalculationRepository;
-import uk.nhs.hee.trainee.details.service.CctGradeProgression.Year;
 
 /**
  * A service for CCT related functionality.
@@ -78,7 +66,7 @@ public class CctService {
   private final CctMapper mapper;
   private final CctCalculator calculator;
   private final CctSpecialtyService specialtyService;
-  private final CctGradeProgression gradeProgression;
+  private final CctGradeProgressionValidator gradeProgressionValidator;
 
   private static final Method CALCULATE_METHOD;
   private static final MethodParameter CALCULATE_METHOD_PARAMETER;
@@ -96,22 +84,22 @@ public class CctService {
   /**
    * Create a service for CCT functionality.
    *
-   * @param traineeIdentity       The identity of the current user.
-   * @param calculationRepository The repository for CCT calculations.
-   * @param mapper                A mapper to convert between CCT data types.
-   * @param calculator            A calculator for CCT dates.
-   * @param specialtyService      A service providing the CCT specialties.
-   * @param gradeProgression      The grade progression for CCT programmes.
+   * @param traineeIdentity           The identity of the current user.
+   * @param calculationRepository     The repository for CCT calculations.
+   * @param mapper                    A mapper to convert between CCT data types.
+   * @param calculator                A calculator for CCT dates.
+   * @param specialtyService          A service providing the CCT specialties.
+   * @param gradeProgressionValidator A validator for the grade progression of CCT programmes.
    */
   public CctService(TraineeIdentity traineeIdentity, CctCalculationRepository calculationRepository,
       CctMapper mapper, CctCalculator calculator, CctSpecialtyService specialtyService,
-      CctGradeProgression gradeProgression) {
+      CctGradeProgressionValidator gradeProgressionValidator) {
     this.traineeIdentity = traineeIdentity;
     this.calculationRepository = calculationRepository;
     this.mapper = mapper;
     this.calculator = calculator;
     this.specialtyService = specialtyService;
-    this.gradeProgression = gradeProgression;
+    this.gradeProgressionValidator = gradeProgressionValidator;
   }
 
   /**
@@ -243,7 +231,8 @@ public class CctService {
 
     BeanPropertyBindingResult validationResult = validateChangeDates(request,
         calculation.result().cctDate());
-    validateGradeProgression(request.programmeDetails(), validationResult);
+    gradeProgressionValidator.validate(request.programmeDetails())
+        .forEach(validationResult::addError);
     return calculation.withErrors(
         BodyValidationError.fromFieldErrors(validationResult.getFieldErrors()));
   }
@@ -269,7 +258,8 @@ public class CctService {
     BeanPropertyBindingResult validationResult = validateChangeDates(dto,
         calculation.result().cctDate());
     validateSpecialty(dto.programmeDetails(), validationResult);
-    validateGradeProgression(dto.programmeDetails(), validationResult);
+    gradeProgressionValidator.validate(dto.programmeDetails())
+        .forEach(validationResult::addError);
     if (validationResult.hasErrors()) {
       log.warn("CCT calculation [{}] cannot be saved: invalid change dates, specialty or grades.",
           dto.name());
@@ -350,96 +340,6 @@ public class CctService {
       addProgrammeDetailsError(result, "eighteenMonthFinalGradeNotes",
           "Please enter a reason for the 18-month final year.");
     }
-  }
-
-  /**
-   * Validate the programme details against the grade progression: each grade they name must be in
-   * it, the skipped grade cannot be the start grade, and the accelerated training time in a grade
-   * must be less than the grade's length plus its additional training time.
-   *
-   * @param details The programme details.
-   * @param result  The validation result to add any errors to.
-   */
-  private void validateGradeProgression(CctProgrammeDetailsDto details,
-      BeanPropertyBindingResult result) {
-    List<Year> years = gradeProgression.years(details);
-    Set<CctTrainingGrade> grades = gradesIn(years);
-    validateTrainingTimeGrades(details.additionalTrainingTime(), "additionalTrainingTime", grades,
-        result);
-    validateTrainingTimeGrades(details.acceleratedTrainingTime(), "acceleratedTrainingTime",
-        grades, result);
-
-    CctTrainingGrade skippedGrade = details.skippedGrade();
-    if (skippedGrade != null && skippedGrade == details.startGrade()) {
-      addProgrammeDetailsError(result, "skippedGrade", "The start grade cannot be skipped.");
-    } else if (skippedGrade != null
-        && !gradesIn(gradeProgression.years(details, null, null)).contains(skippedGrade)) {
-      addProgrammeDetailsError(result, "skippedGrade", notInProgression(skippedGrade));
-    }
-    CctTrainingGrade eighteenMonthFinalGrade = details.eighteenMonthFinalGrade();
-    if (eighteenMonthFinalGrade != null
-        && !gradesIn(gradeProgression.years(details, skippedGrade, null))
-        .contains(eighteenMonthFinalGrade)) {
-      addProgrammeDetailsError(result, "eighteenMonthFinalGrade",
-          notInProgression(eighteenMonthFinalGrade));
-    } else if (eighteenMonthFinalGrade != null && !endsInEighteenMonthYear(years)) {
-      addProgrammeDetailsError(result, "eighteenMonthFinalGrade",
-          "An 18-month final year must be the last full year of a programme length that includes "
-              + "a half year, such as 66 months.");
-    }
-
-    Map<CctTrainingGrade, Integer> gradeMonths = years.stream()
-        .filter(year -> year.grade() != null)
-        .collect(groupingBy(Year::grade, summingInt(Year::gradeMonths)));
-    List<CctTrainingTimeDto> accelerated = details.acceleratedTrainingTime();
-    Set<CctTrainingGrade> checked = new HashSet<>();
-    for (int index = 0; index < accelerated.size(); index++) {
-      CctTrainingGrade grade = accelerated.get(index).grade();
-      if (gradeMonths.containsKey(grade) && checked.add(grade)) {
-        int limit = gradeMonths.get(grade) + monthsIn(details.additionalTrainingTime(), grade);
-        if (monthsIn(accelerated, grade) >= limit) {
-          addProgrammeDetailsError(result,
-              "acceleratedTrainingTime[%d].months".formatted(index),
-              "Accelerated training time in %s must be less than %d months."
-                  .formatted(grade, limit));
-        }
-      }
-    }
-  }
-
-  /**
-   * Validate that each training time entry's grade is in the grade progression.
-   *
-   * @param entries The training time entries.
-   * @param field   The name of the programme details field holding them.
-   * @param grades  The grades in the grade progression.
-   * @param result  The validation result to add any errors to.
-   */
-  private static void validateTrainingTimeGrades(List<CctTrainingTimeDto> entries, String field,
-      Set<CctTrainingGrade> grades, BeanPropertyBindingResult result) {
-    for (int index = 0; index < entries.size(); index++) {
-      CctTrainingGrade grade = entries.get(index).grade();
-      if (!grades.contains(grade)) {
-        addProgrammeDetailsError(result, "%s[%d].grade".formatted(field, index),
-            notInProgression(grade));
-      }
-    }
-  }
-
-  private static boolean endsInEighteenMonthYear(List<Year> years) {
-    Year last = years.get(years.size() - 1);
-    return last.extendedToEighteenMonths() && last.gradeMonths() == 18;
-  }
-
-  private static Set<CctTrainingGrade> gradesIn(List<Year> years) {
-    return years.stream()
-        .map(Year::grade)
-        .filter(Objects::nonNull)
-        .collect(toSet());
-  }
-
-  private static String notInProgression(CctTrainingGrade grade) {
-    return grade + " is not part of this programme's grade progression.";
   }
 
   /**

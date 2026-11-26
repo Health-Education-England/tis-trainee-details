@@ -36,7 +36,6 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.LTFT;
-import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.DFT;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST1;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST2;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST3;
@@ -54,7 +53,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
@@ -109,7 +107,7 @@ class CctServiceTest {
     calculator = new CctCalculator(gradeProgression);
 
     service = new CctService(traineeIdentity, calculationRepository, new CctMapperImpl(),
-        calculator, specialtyService, gradeProgression);
+        calculator, specialtyService, new CctGradeProgressionValidator(gradeProgression));
   }
 
   @Test
@@ -542,136 +540,6 @@ class CctServiceTest {
   }
 
   @Test
-  void shouldNotCreateCalculationWhenEighteenMonthFinalGradeIsSkipped() {
-    CctCalculationSaveRequestDto dto = request(programme()
-        .eighteenMonthFinalGrade(ST3)
-        .eighteenMonthFinalGradeNotes("Dual CCT")
-        .skippedGrade(ST3)
-        .skippedGradeNotes("Core competencies"));
-
-    MethodArgumentNotValidException exception = assertThrows(MethodArgumentNotValidException.class,
-        () -> service.createCalculation(dto));
-
-    assertThat("Unexpected errors.",
-        BodyValidationError.fromFieldErrors(exception.getFieldErrors()), is(List.of(
-            new BodyValidationError("#/programmeDetails/eighteenMonthFinalGrade",
-                "ST3 is not part of this programme's grade progression."))));
-  }
-
-  @ParameterizedTest
-  @EnumSource(value = CctTrainingGrade.class, names = {"ST1", "DFT"})
-  void shouldNotCreateCalculationWhenStartGradeIsSkipped(CctTrainingGrade grade) {
-    CctCalculationSaveRequestDto dto = request(programme()
-        .startGrade(grade)
-        .startGradeOverrideNotes("Entered at " + grade)
-        .skippedGrade(grade)
-        .skippedGradeNotes("Core competencies"));
-
-    MethodArgumentNotValidException exception = assertThrows(MethodArgumentNotValidException.class,
-        () -> service.createCalculation(dto));
-
-    assertThat("Unexpected errors.",
-        BodyValidationError.fromFieldErrors(exception.getFieldErrors()), is(List.of(
-            new BodyValidationError("#/programmeDetails/skippedGrade",
-                "The start grade cannot be skipped."))));
-
-    verify(calculationRepository, never()).insert(any(CctCalculation.class));
-  }
-
-  @ParameterizedTest
-  @CsvSource({"90, ST5", "90, ST8", "84, ST7"})
-  void shouldNotCreateCalculationWhenEighteenMonthGradeIsNotLastFullYearBeforeHalfYear(
-      int lengthMonths, CctTrainingGrade grade) {
-    CctCalculationSaveRequestDto dto = request(programme()
-        .lengthMonths(lengthMonths)
-        .lengthOverrideNotes("Agreed with local office")
-        .eighteenMonthFinalGrade(grade)
-        .eighteenMonthFinalGradeNotes("Dual CCT"));
-
-    MethodArgumentNotValidException exception = assertThrows(MethodArgumentNotValidException.class,
-        () -> service.createCalculation(dto));
-
-    assertThat("Unexpected errors.",
-        BodyValidationError.fromFieldErrors(exception.getFieldErrors()), is(List.of(
-            new BodyValidationError("#/programmeDetails/eighteenMonthFinalGrade",
-                "An 18-month final year must be the last full year of a programme length that "
-                    + "includes a half year, such as 66 months."))));
-  }
-
-  @Test
-  void shouldCreateCalculationWhenEighteenMonthGradeIsLastFullYearBeforeHalfYear()
-      throws MethodArgumentNotValidException {
-    CctCalculationSaveRequestDto dto = request(programme()
-        .lengthMonths(90)
-        .lengthOverrideNotes("Agreed with local office")
-        .eighteenMonthFinalGrade(ST7)
-        .eighteenMonthFinalGradeNotes("Dual CCT"));
-    when(calculationRepository.insert(any(CctCalculation.class))).thenAnswer(
-        invocation -> invocation.getArgument(0));
-
-    CctCalculationDetailDto created = service.createCalculation(dto);
-
-    assertThat("Unexpected programme details.", created.programmeDetails(),
-        is(dto.programmeDetails()));
-  }
-
-  @Test
-  void shouldCreateCalculationWhenEighteenMonthGradeIsUnnumberedFinalGrade()
-      throws MethodArgumentNotValidException {
-    CctCalculationSaveRequestDto dto = request(programme()
-        .lengthMonths(30)
-        .lengthOverrideNotes("Agreed with local office")
-        .startGrade(DFT)
-        .startGradeOverrideNotes("Dental")
-        .eighteenMonthFinalGrade(DFT)
-        .eighteenMonthFinalGradeNotes("Extended"));
-    when(calculationRepository.insert(any(CctCalculation.class))).thenAnswer(
-        invocation -> invocation.getArgument(0));
-
-    CctCalculationDetailDto created = service.createCalculation(dto);
-
-    assertThat("Unexpected programme details.", created.programmeDetails(),
-        is(dto.programmeDetails()));
-  }
-
-  @ParameterizedTest
-  @CsvSource({"84, ST2, 12", "90, ST8, 6"})
-  void shouldNotCreateCalculationWhenAcceleratedTimeFillsGrade(int lengthMonths,
-      CctTrainingGrade grade, int gradeMonths) {
-    List<CctTrainingTimeDto> accelerated = List.of(
-        trainingTime(grade, gradeMonths - 1).get(0),
-        trainingTime(grade, 1).get(0));
-    CctCalculationSaveRequestDto dto = request(programme()
-        .lengthMonths(lengthMonths)
-        .lengthOverrideNotes("Agreed with local office")
-        .acceleratedTrainingTime(accelerated));
-
-    MethodArgumentNotValidException exception = assertThrows(MethodArgumentNotValidException.class,
-        () -> service.createCalculation(dto));
-
-    assertThat("Unexpected errors.",
-        BodyValidationError.fromFieldErrors(exception.getFieldErrors()), is(List.of(
-            new BodyValidationError("#/programmeDetails/acceleratedTrainingTime/0/months",
-                "Accelerated training time in " + grade + " must be less than " + gradeMonths
-                    + " months."))));
-  }
-
-  @Test
-  void shouldCreateCalculationWhenAcceleratedTimeLessThanGradeAndItsAdditionalTime()
-      throws MethodArgumentNotValidException {
-    CctCalculationSaveRequestDto dto = request(programme()
-        .additionalTrainingTime(trainingTime(ST2, 1))
-        .acceleratedTrainingTime(trainingTime(ST2, 12)));
-    when(calculationRepository.insert(any(CctCalculation.class))).thenAnswer(
-        invocation -> invocation.getArgument(0));
-
-    CctCalculationDetailDto created = service.createCalculation(dto);
-
-    assertThat("Unexpected programme details.", created.programmeDetails(),
-        is(dto.programmeDetails()));
-  }
-
-  @Test
   void shouldNotUpdateExistingCalculationWhenSpecialtyNotListed() {
     UUID id = UUID.randomUUID();
     CctCalculation existingCalc = CctCalculation.builder()
@@ -867,20 +735,6 @@ class CctServiceTest {
     assertThat("Unexpected errors.", response.errors(), is(List.of(
         new BodyValidationError("#/programmeDetails/additionalTrainingTime/0/grade",
             "ST8 is not part of this programme's grade progression."))));
-  }
-
-  @Test
-  void shouldCalculateWithErrorsWhenEighteenMonthGradeIsNotLastFullYearBeforeHalfYear() {
-    CctCalculateRequestDto request = new CctCalculateRequestDto(
-        programme().eighteenMonthFinalGrade(ST3).eighteenMonthFinalGradeNotes("Dual CCT").build(),
-        List.of());
-
-    CctCalculateResponseDto response = service.calculate(request);
-
-    assertThat("Unexpected errors.", response.errors(), is(List.of(
-        new BodyValidationError("#/programmeDetails/eighteenMonthFinalGrade",
-            "An 18-month final year must be the last full year of a programme length that "
-                + "includes a half year, such as 66 months."))));
   }
 
   @Test
