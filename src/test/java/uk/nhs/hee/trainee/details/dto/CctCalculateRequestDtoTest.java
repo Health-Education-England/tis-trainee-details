@@ -42,6 +42,7 @@ import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST3;
 import jakarta.validation.Validation;
 import jakarta.validation.ValidatorFactory;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -65,7 +66,8 @@ import uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade;
 class CctCalculateRequestDtoTest {
 
   private static final LocalDate EARLIEST_DATE = LocalDate.of(1970, 1, 1);
-  private static final LocalDate LATEST_DATE = LocalDate.now().plusYears(50);
+  private static final LocalDate LATEST_DATE =
+      LocalDate.now(ZoneId.of("Europe/London")).plusYears(50);
   private static final String DATE_LIMITS_ERROR =
       "Date must be between 01/01/1970 and 50 years from today.";
 
@@ -287,6 +289,18 @@ class CctCalculateRequestDtoTest {
             programme().additionalTrainingTime(List.of(trainingTime(ST1, 25).build())),
             "additionalTrainingTime/0/months",
             "Training time must be a whole number of months between 1 and 24."),
+        Arguments.of("accelerated time with no months",
+            programme().acceleratedTrainingTime(List.of(trainingTime(ST1, null).build())),
+            "acceleratedTrainingTime/0/months",
+            "Training time must be a whole number of months between 1 and 12."),
+        Arguments.of("accelerated time over 12 months",
+            programme().acceleratedTrainingTime(List.of(trainingTime(ST1, 13).build())),
+            "acceleratedTrainingTime/0/months",
+            "Training time must be a whole number of months between 1 and 12."),
+        Arguments.of("accelerated time over 24 months",
+            programme().acceleratedTrainingTime(List.of(trainingTime(ST1, 30).build())),
+            "acceleratedTrainingTime/0/months",
+            "Training time must be a whole number of months between 1 and 12."),
         Arguments.of("training time without a note",
             programme().acceleratedTrainingTime(
                 List.of(trainingTime(ST2, 3).build(), trainingTime(ST1, 3).notes("  ").build())),

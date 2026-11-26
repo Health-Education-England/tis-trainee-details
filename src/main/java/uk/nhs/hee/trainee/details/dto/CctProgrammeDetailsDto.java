@@ -115,9 +115,6 @@ public record CctProgrammeDetailsDto(
       @NotNull(message = "Please choose a grade.")
       CctTrainingGrade grade,
 
-      @NotNull(message = "Training time must be a whole number of months between 1 and 24.")
-      @Range(min = 1, max = 24,
-          message = "Training time must be a whole number of months between 1 and 24.")
       @JsonDeserialize(using = WholeNumberDeserializer.class)
       Integer months,
 
