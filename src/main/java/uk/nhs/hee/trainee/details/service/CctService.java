@@ -66,6 +66,7 @@ public class CctService {
   private final CctMapper mapper;
   private final CctCalculator calculator;
   private final CctSpecialtyService specialtyService;
+  private final CctGradeProgressionValidator gradeProgressionValidator;
 
   private static final Method CALCULATE_METHOD;
   private static final MethodParameter CALCULATE_METHOD_PARAMETER;
@@ -83,19 +84,22 @@ public class CctService {
   /**
    * Create a service for CCT functionality.
    *
-   * @param traineeIdentity       The identity of the current user.
-   * @param calculationRepository The repository for CCT calculations.
-   * @param mapper                A mapper to convert between CCT data types.
-   * @param calculator            A calculator for CCT dates.
-   * @param specialtyService      A service providing the CCT specialties.
+   * @param traineeIdentity           The identity of the current user.
+   * @param calculationRepository     The repository for CCT calculations.
+   * @param mapper                    A mapper to convert between CCT data types.
+   * @param calculator                A calculator for CCT dates.
+   * @param specialtyService          A service providing the CCT specialties.
+   * @param gradeProgressionValidator A validator for the grade progression of CCT programmes.
    */
   public CctService(TraineeIdentity traineeIdentity, CctCalculationRepository calculationRepository,
-      CctMapper mapper, CctCalculator calculator, CctSpecialtyService specialtyService) {
+      CctMapper mapper, CctCalculator calculator, CctSpecialtyService specialtyService,
+      CctGradeProgressionValidator gradeProgressionValidator) {
     this.traineeIdentity = traineeIdentity;
     this.calculationRepository = calculationRepository;
     this.mapper = mapper;
     this.calculator = calculator;
     this.specialtyService = specialtyService;
+    this.gradeProgressionValidator = gradeProgressionValidator;
   }
 
   /**
@@ -146,7 +150,9 @@ public class CctService {
    * @throws MethodArgumentNotValidException If a change starts before the programme, or starts or
    *                                         ends after the calculated CCT date, or the specialty is
    *                                         not listed, or its length or start grade is overridden
-   *                                         without notes.
+   *                                         without notes, or a grade is not in the grade
+   *                                         progression, or a grade's accelerated training time is
+   *                                         not less than its length.
    */
   public CctCalculationDetailDto createCalculation(CctCalculationSaveRequestDto dto)
       throws MethodArgumentNotValidException {
@@ -169,7 +175,9 @@ public class CctService {
    * @throws MethodArgumentNotValidException If a change starts before the programme, or starts or
    *                                         ends after the calculated CCT date, or the specialty is
    *                                         not listed, or its length or start grade is overridden
-   *                                         without notes.
+   *                                         without notes, or a grade is not in the grade
+   *                                         progression, or a grade's accelerated training time is
+   *                                         not less than its length.
    */
   public Optional<CctCalculationDetailDto> updateCalculation(UUID id,
       CctCalculationSaveRequestDto dto) throws MethodArgumentNotValidException {
@@ -211,7 +219,8 @@ public class CctService {
   }
 
   /**
-   * Calculate the CCT date for a programme and its changes, and validate the changes against it.
+   * Calculate the CCT date for a programme and its changes, and validate the changes against it
+   * and the programme details against the grade progression.
    *
    * @param request The programme details and changes to calculate the CCT date for.
    * @return The calculation, with any errors that would stop it being saved.
@@ -222,20 +231,24 @@ public class CctService {
 
     BeanPropertyBindingResult validationResult = validateChangeDates(request,
         calculation.result().cctDate());
+    gradeProgressionValidator.validate(request.programmeDetails())
+        .forEach(validationResult::addError);
     return calculation.withErrors(
         BodyValidationError.fromFieldErrors(validationResult.getFieldErrors()));
   }
 
   /**
    * Calculate the CCT date for a CCT calculation being saved, and validate its changes against it
-   * and its programme details against the specialty.
+   * and its programme details against the specialty and the grade progression.
    *
    * @param dto The detail of the CCT calculation.
    * @return The changes, with the months they credit, and the CCT date calculated from them.
    * @throws MethodArgumentNotValidException If a change starts before the programme, or starts or
    *                                         ends after the calculated CCT date, or the specialty is
    *                                         not listed, or its length or start grade is overridden
-   *                                         without notes.
+   *                                         without notes, or a grade is not in the grade
+   *                                         progression, or a grade's accelerated training time is
+   *                                         not less than its length.
    */
   private CctCalculateResponseDto calculateForSave(CctCalculationSaveRequestDto dto)
       throws MethodArgumentNotValidException {
@@ -245,8 +258,10 @@ public class CctService {
     BeanPropertyBindingResult validationResult = validateChangeDates(dto,
         calculation.result().cctDate());
     validateSpecialty(dto.programmeDetails(), validationResult);
+    gradeProgressionValidator.validate(dto.programmeDetails())
+        .forEach(validationResult::addError);
     if (validationResult.hasErrors()) {
-      log.warn("CCT calculation [{}] cannot be saved: invalid change dates or specialty.",
+      log.warn("CCT calculation [{}] cannot be saved: invalid change dates, specialty or grades.",
           dto.name());
       throw new MethodArgumentNotValidException(CALCULATE_METHOD_PARAMETER, validationResult);
     }
@@ -289,8 +304,9 @@ public class CctService {
   }
 
   /**
-   * Validate the programme details against the specialty they name: it must be listed, and a length
-   * or start grade that differs from the specialty's must have notes.
+   * Validate the programme details against the specialty they name: it must be listed, a length or
+   * start grade that differs from the specialty's must have notes, and so must an 18-month final
+   * year that is not the specialty's default.
    *
    * @param details The programme details.
    * @param result  The validation result to add any errors to.
@@ -307,15 +323,22 @@ public class CctService {
     }
 
     CctSpecialtyDto specialty = listed.get();
-    if (details.lengthMonths() != specialty.lengthMonths()
-        && !StringUtils.hasText(details.lengthOverrideNotes())) {
+    boolean isDefaultLength = details.lengthMonths() == specialty.lengthMonths();
+    boolean isDefaultStartGrade = details.startGrade() == specialty.entryGrade();
+    if (!isDefaultLength && !StringUtils.hasText(details.lengthOverrideNotes())) {
       addProgrammeDetailsError(result, "lengthOverrideNotes",
           "Please enter a reason for a different programme length.");
     }
-    if (details.startGrade() != specialty.entryGrade()
-        && !StringUtils.hasText(details.startGradeOverrideNotes())) {
+    if (!isDefaultStartGrade && !StringUtils.hasText(details.startGradeOverrideNotes())) {
       addProgrammeDetailsError(result, "startGradeOverrideNotes",
           "Please enter a reason for overriding the default start grade.");
+    }
+    boolean isDefaultEighteenMonthFinalYear = specialty.eighteenMonthFinalYear()
+        && isDefaultLength && isDefaultStartGrade;
+    if (details.eighteenMonthFinalGrade() != null && !isDefaultEighteenMonthFinalYear
+        && !StringUtils.hasText(details.eighteenMonthFinalGradeNotes())) {
+      addProgrammeDetailsError(result, "eighteenMonthFinalGradeNotes",
+          "Please enter a reason for the 18-month final year.");
     }
   }
 

@@ -38,6 +38,10 @@ import static org.mockito.Mockito.when;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.LTFT;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST1;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST2;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST3;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST7;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST8;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST9;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -48,6 +52,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
@@ -62,9 +67,11 @@ import uk.nhs.hee.trainee.details.dto.CctCalculationSaveRequestDto;
 import uk.nhs.hee.trainee.details.dto.CctChangeDto;
 import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto;
 import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto.CctProgrammeDetailsDtoBuilder;
+import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto.CctTrainingTimeDto;
 import uk.nhs.hee.trainee.details.dto.CctResultDto;
 import uk.nhs.hee.trainee.details.dto.CctSpecialtyDto;
 import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
+import uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade;
 import uk.nhs.hee.trainee.details.exception.NotRecordOwnerException;
 import uk.nhs.hee.trainee.details.mapper.CctMapperImpl;
 import uk.nhs.hee.trainee.details.model.CctCalculation;
@@ -78,6 +85,8 @@ import uk.nhs.hee.trainee.details.repository.CctCalculationRepository;
 class CctServiceTest {
 
   private static final String TRAINEE_ID = UUID.randomUUID().toString();
+  private static final String DUAL_CCT_SPECIALTY =
+      "Acute internal medicine with Intensive Care and GIM";
 
   private CctService service;
   private CctCalculationRepository calculationRepository;
@@ -90,13 +99,15 @@ class CctServiceTest {
     traineeIdentity.setTraineeId(TRAINEE_ID);
 
     calculationRepository = mock(CctCalculationRepository.class);
-    calculator = new CctCalculator();
     specialtyService = mock(CctSpecialtyService.class);
-    when(specialtyService.getSpecialties()).thenReturn(
-        List.of(new CctSpecialtyDto("Paediatrics", 84, ST1)));
+    when(specialtyService.getSpecialties()).thenReturn(List.of(
+        new CctSpecialtyDto("Paediatrics", 84, ST1, false),
+        new CctSpecialtyDto(DUAL_CCT_SPECIALTY, 90, ST3, true)));
+    CctGradeProgression gradeProgression = new CctGradeProgression();
+    calculator = new CctCalculator(gradeProgression);
 
     service = new CctService(traineeIdentity, calculationRepository, new CctMapperImpl(),
-        calculator, specialtyService);
+        calculator, specialtyService, new CctGradeProgressionValidator(gradeProgression));
   }
 
   @Test
@@ -440,6 +451,94 @@ class CctServiceTest {
         is(dto.programmeDetails()));
   }
 
+  @ParameterizedTest
+  @NullSource
+  @ValueSource(strings = {"", " "})
+  void shouldNotCreateCalculationWhenEighteenMonthFinalGradeHasNoNotes(String notes) {
+    CctCalculationSaveRequestDto dto = request(programme()
+        .lengthMonths(90)
+        .lengthOverrideNotes("Agreed with local office")
+        .eighteenMonthFinalGrade(ST7)
+        .eighteenMonthFinalGradeNotes(notes));
+
+    MethodArgumentNotValidException exception = assertThrows(MethodArgumentNotValidException.class,
+        () -> service.createCalculation(dto));
+
+    assertThat("Unexpected errors.",
+        BodyValidationError.fromFieldErrors(exception.getFieldErrors()), is(List.of(
+            new BodyValidationError("#/programmeDetails/eighteenMonthFinalGradeNotes",
+                "Please enter a reason for the 18-month final year."))));
+
+    verify(calculationRepository, never()).insert(any(CctCalculation.class));
+  }
+
+  @Test
+  void shouldCreateCalculationWhenEighteenMonthFinalGradeIsSpecialtyDefaultWithoutNotes()
+      throws MethodArgumentNotValidException {
+    CctCalculationSaveRequestDto dto = request(programme()
+        .specialty(DUAL_CCT_SPECIALTY)
+        .lengthMonths(90)
+        .startGrade(ST3)
+        .eighteenMonthFinalGrade(ST9));
+    when(calculationRepository.insert(any(CctCalculation.class))).thenAnswer(
+        invocation -> invocation.getArgument(0));
+
+    CctCalculationDetailDto created = service.createCalculation(dto);
+
+    assertThat("Unexpected programme details.", created.programmeDetails(),
+        is(dto.programmeDetails()));
+  }
+
+  @ParameterizedTest
+  @CsvSource({"78, ST3, ST8", "90, ST2, ST8"})
+  void shouldNotCreateCalculationWhenSpecialtyDefaultIsOverriddenAndEighteenMonthHasNoNotes(
+      int lengthMonths, CctTrainingGrade startGrade, CctTrainingGrade eighteenMonthFinalGrade) {
+    CctCalculationSaveRequestDto dto = request(programme()
+        .specialty(DUAL_CCT_SPECIALTY)
+        .lengthMonths(lengthMonths)
+        .lengthOverrideNotes("Agreed with local office")
+        .startGrade(startGrade)
+        .startGradeOverrideNotes("Entered at " + startGrade)
+        .eighteenMonthFinalGrade(eighteenMonthFinalGrade));
+
+    MethodArgumentNotValidException exception = assertThrows(MethodArgumentNotValidException.class,
+        () -> service.createCalculation(dto));
+
+    assertThat("Unexpected errors.",
+        BodyValidationError.fromFieldErrors(exception.getFieldErrors()), is(List.of(
+            new BodyValidationError("#/programmeDetails/eighteenMonthFinalGradeNotes",
+                "Please enter a reason for the 18-month final year."))));
+
+    verify(calculationRepository, never()).insert(any(CctCalculation.class));
+  }
+
+  @Test
+  void shouldNotCreateCalculationWhenGradesNotInProgression() {
+    CctCalculationSaveRequestDto dto = request(programme()
+        .additionalTrainingTime(trainingTime(ST8, 2))
+        .acceleratedTrainingTime(trainingTime(ST9, 1))
+        .eighteenMonthFinalGrade(ST9)
+        .eighteenMonthFinalGradeNotes("Dual CCT")
+        .skippedGrade(ST8)
+        .skippedGradeNotes("Core competencies"));
+
+    MethodArgumentNotValidException exception = assertThrows(MethodArgumentNotValidException.class,
+        () -> service.createCalculation(dto));
+
+    assertThat("Unexpected errors.",
+        BodyValidationError.fromFieldErrors(exception.getFieldErrors()), is(List.of(
+            new BodyValidationError("#/programmeDetails/acceleratedTrainingTime/0/grade",
+                "ST9 is not part of this programme's grade progression."),
+            new BodyValidationError("#/programmeDetails/additionalTrainingTime/0/grade",
+                "ST8 is not part of this programme's grade progression."),
+            new BodyValidationError("#/programmeDetails/eighteenMonthFinalGrade",
+                "ST9 is not part of this programme's grade progression."),
+            new BodyValidationError("#/programmeDetails/skippedGrade",
+                "ST8 is not part of this programme's grade progression."))));
+
+    verify(calculationRepository, never()).insert(any(CctCalculation.class));
+  }
+
   @Test
   void shouldNotUpdateExistingCalculationWhenSpecialtyNotListed() {
     UUID id = UUID.randomUUID();
@@ -625,6 +724,20 @@ class CctServiceTest {
   }
 
   @Test
+  void shouldCalculateWithErrorsWhenGradeNotInProgression() {
+    CctCalculateRequestDto request = new CctCalculateRequestDto(
+        programme().additionalTrainingTime(trainingTime(ST8, 2)).build(), List.of());
+
+    CctCalculateResponseDto response = service.calculate(request);
+
+    assertThat("Unexpected CCT date.", response.result().cctDate(),
+        is(LocalDate.of(2030, 9, 28)));
+    assertThat("Unexpected errors.", response.errors(), is(List.of(
+        new BodyValidationError("#/programmeDetails/additionalTrainingTime/0/grade",
+            "ST8 is not part of this programme's grade progression."))));
+  }
+
+  @Test
   void shouldCalculateWithErrorsWhenChangeStartsBeforeProgramme() {
     CctCalculateRequestDto request = new CctCalculateRequestDto(programmeDetails(),
         List.of(CctChangeDto.builder()
@@ -732,8 +845,12 @@ class CctServiceTest {
         .startDate(LocalDate.of(2023, 8, 2))
         .lengthMonths(84)
         .startGrade(ST1)
-        .additionalMonths(0)
-        .acceleratedMonths(0);
+        .additionalTrainingTime(List.of())
+        .acceleratedTrainingTime(List.of());
+  }
+
+  private static List<CctTrainingTimeDto> trainingTime(CctTrainingGrade grade, int months) {
+    return List.of(CctTrainingTimeDto.builder().grade(grade).months(months).notes("why").build());
   }
 
   private static CctChangeDto datedLtft() {

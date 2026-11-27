@@ -78,10 +78,8 @@ public record CctCalculation(
    * @param lengthOverrideNotes          The reason the length differs from the specialty's.
    * @param startGrade                   The grade the programme starts at.
    * @param startGradeOverrideNotes      The reason the start grade differs from the specialty's.
-   * @param additionalMonths             The additional training time, in months.
-   * @param additionalMonthsNotes        The reason for the additional training time.
-   * @param acceleratedMonths            The accelerated training time, in months.
-   * @param acceleratedMonthsNotes       The reason for the accelerated training time.
+   * @param additionalTrainingTime       The additional training time in each grade.
+   * @param acceleratedTrainingTime      The accelerated training time in each grade.
    * @param eighteenMonthFinalGrade      The grade with an 18-month final year, if any.
    * @param eighteenMonthFinalGradeNotes The reason for the 18-month final year.
    * @param skippedGrade                 The grade year that is skipped, if any.
@@ -95,14 +93,27 @@ public record CctCalculation(
       String lengthOverrideNotes,
       CctTrainingGrade startGrade,
       String startGradeOverrideNotes,
-      Integer additionalMonths,
-      String additionalMonthsNotes,
-      Integer acceleratedMonths,
-      String acceleratedMonthsNotes,
+      List<CctTrainingTime> additionalTrainingTime,
+      List<CctTrainingTime> acceleratedTrainingTime,
       CctTrainingGrade eighteenMonthFinalGrade,
       String eighteenMonthFinalGradeNotes,
       CctTrainingGrade skippedGrade,
       String skippedGradeNotes) {
+
+  }
+
+  /**
+   * Additional or accelerated training time in one grade.
+   *
+   * @param grade  The grade the training time applies to.
+   * @param months The training time, in months.
+   * @param notes  The reason for the training time.
+   */
+  @Builder
+  public record CctTrainingTime(
+      CctTrainingGrade grade,
+      Integer months,
+      String notes) {
 
   }
 
@@ -151,6 +162,7 @@ public record CctCalculation(
    * @param assumedFullTimePeriods   The periods before the projection that no change covers, in
    *                                 start date order.
    * @param projection               The projection of the remaining training to the CCT date.
+   * @param gradeProgression         The grade for each year of the programme, and when it ends.
    */
   @Builder
   public record CctResult(
@@ -161,7 +173,34 @@ public record CctCalculation(
       double totalWteMonthsCompleted,
       double monthsRemaining,
       List<CctAssumedFullTimePeriod> assumedFullTimePeriods,
-      CctProjection projection) {
+      CctProjection projection,
+      List<CctGradeYear> gradeProgression) {
+
+  }
+
+  /**
+   * A year of the grade progression.
+   *
+   * @param yearNumber                The year of the programme, from 1.
+   * @param grade                     The grade for the year, or null when it would be past the
+   *                                  highest known grade.
+   * @param endDate                   The date the grade ends.
+   * @param skippedGradeBeforeThisRow The grade skipped just before this year, if any.
+   * @param extendedToEighteenMonths  Whether the grade is an 18-month final year.
+   * @param exceedsKnownTrainingGrade Whether the year is past the highest known grade.
+   * @param additionalMonths          The additional training time in the grade, in months.
+   * @param acceleratedMonths         The accelerated training time in the grade, in months.
+   */
+  @Builder
+  public record CctGradeYear(
+      int yearNumber,
+      CctTrainingGrade grade,
+      LocalDate endDate,
+      CctTrainingGrade skippedGradeBeforeThisRow,
+      boolean extendedToEighteenMonths,
+      boolean exceedsKnownTrainingGrade,
+      int additionalMonths,
+      int acceleratedMonths) {
 
   }
 
@@ -169,7 +208,7 @@ public record CctCalculation(
    * A period of training that no change covers, assumed to be full time.
    *
    * @param startDate The start date of the period.
-   * @param endDate   The end date of the period, inclusive.
+   * @param endDate                   The end date of the period, inclusive.
    * @param months    The months in the period, both calendar and whole time equivalent.
    */
   @Builder

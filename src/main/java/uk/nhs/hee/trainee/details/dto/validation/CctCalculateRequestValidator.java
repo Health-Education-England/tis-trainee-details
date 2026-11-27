@@ -28,12 +28,15 @@ import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.OOPT;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.IntStream;
 import uk.nhs.hee.trainee.details.dto.CctCalculationInput;
 import uk.nhs.hee.trainee.details.dto.CctChangeDto;
 import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto;
+import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto.CctTrainingTimeDto;
 import uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType;
 
 /**
@@ -42,8 +45,13 @@ import uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType;
 public class CctCalculateRequestValidator implements
     ConstraintValidator<CctCalculateRequestValidation, CctCalculationInput> {
 
+  private static final String ADDITIONAL_TRAINING_TIME = "additionalTrainingTime";
+  private static final String ACCELERATED_TRAINING_TIME = "acceleratedTrainingTime";
+  private static final int MAX_ADDITIONAL_MONTHS = 24;
+  private static final int MAX_ACCELERATED_MONTHS = 12;
   private static final DateTimeFormatter MESSAGE_DATE_FORMAT =
       DateTimeFormatter.ofPattern("dd/MM/yyyy");
+  private static final ZoneId TIMEZONE = ZoneId.of("Europe/London");
   private static final LocalDate EARLIEST_DATE = LocalDate.of(1970, 1, 1);
   private static final int LATEST_DATE_YEARS_AHEAD = 50;
   private static final String DATE_LIMITS_MESSAGE =
@@ -79,27 +87,32 @@ public class CctCalculateRequestValidator implements
       violations.onProgrammeDetails("startDate", DATE_LIMITS_MESSAGE);
     }
 
+    validateTrainingTimeMonths(ADDITIONAL_TRAINING_TIME, details.additionalTrainingTime(),
+        MAX_ADDITIONAL_MONTHS, violations);
+    validateTrainingTimeMonths(ACCELERATED_TRAINING_TIME, details.acceleratedTrainingTime(),
+        MAX_ACCELERATED_MONTHS, violations);
+
+    int additionalMonths = totalMonths(details.additionalTrainingTime(), MAX_ADDITIONAL_MONTHS);
+    int acceleratedMonths = totalMonths(details.acceleratedTrainingTime(),
+        MAX_ACCELERATED_MONTHS);
+    if (additionalMonths > MAX_ADDITIONAL_MONTHS) {
+      violations.onProgrammeDetails(ADDITIONAL_TRAINING_TIME,
+          "Total additional training time cannot be more than " + MAX_ADDITIONAL_MONTHS
+              + " months.");
+    }
+    if (acceleratedMonths > MAX_ACCELERATED_MONTHS) {
+      violations.onProgrammeDetails(ACCELERATED_TRAINING_TIME,
+          "Total accelerated training time cannot be more than " + MAX_ACCELERATED_MONTHS
+              + " months.");
+    }
     if (isWholeNumberBetween(details.lengthMonths(), 1, 120)
-        && isWholeNumberBetween(details.additionalMonths(), 0, 24)
-        && isWholeNumberBetween(details.acceleratedMonths(), 0, 12)
-        && details.lengthMonths() + details.additionalMonths() - details.acceleratedMonths() <= 0) {
-      violations.onProgrammeDetails("acceleratedMonths",
+        && additionalMonths <= MAX_ADDITIONAL_MONTHS
+        && acceleratedMonths <= MAX_ACCELERATED_MONTHS
+        && details.lengthMonths() + additionalMonths - acceleratedMonths <= 0) {
+      violations.onProgrammeDetails(ACCELERATED_TRAINING_TIME,
           "Adjusted training duration must be greater than zero.");
     }
 
-    if (isPositive(details.additionalMonths()) && isBlank(details.additionalMonthsNotes())) {
-      violations.onProgrammeDetails("additionalMonthsNotes",
-          "Please enter a reason for additional training time.");
-    }
-    if (isPositive(details.acceleratedMonths()) && isBlank(details.acceleratedMonthsNotes())) {
-      violations.onProgrammeDetails("acceleratedMonthsNotes",
-          "Please enter a reason for accelerated training time.");
-    }
-    if (details.eighteenMonthFinalGrade() != null
-        && isBlank(details.eighteenMonthFinalGradeNotes())) {
-      violations.onProgrammeDetails("eighteenMonthFinalGradeNotes",
-          "Please enter a reason for the 18-month final year.");
-    }
     if (details.skippedGrade() != null && isBlank(details.skippedGradeNotes())) {
       violations.onProgrammeDetails("skippedGradeNotes",
           "Please enter a reason for skipping a grade year.");
@@ -208,15 +221,37 @@ public class CctCalculateRequestValidator implements
 
   private static boolean isOutsideDateLimits(LocalDate date) {
     return date != null && (date.isBefore(EARLIEST_DATE)
-        || date.isAfter(LocalDate.now().plusYears(LATEST_DATE_YEARS_AHEAD)));
+        || date.isAfter(LocalDate.now(TIMEZONE).plusYears(LATEST_DATE_YEARS_AHEAD)));
   }
 
   private static boolean isWholeNumberBetween(Integer value, int min, int max) {
     return value != null && value >= min && value <= max;
   }
 
-  private static boolean isPositive(Integer value) {
-    return value != null && value > 0;
+  private static void validateTrainingTimeMonths(String field, List<CctTrainingTimeDto> entries,
+      int maxMonths, Violations violations) {
+    if (entries == null) {
+      return;
+    }
+    for (int index = 0; index < entries.size(); index++) {
+      CctTrainingTimeDto entry = entries.get(index);
+      if (entry != null && !isWholeNumberBetween(entry.months(), 1, maxMonths)) {
+        violations.onTrainingTime(field, index,
+            "Training time must be a whole number of months between 1 and " + maxMonths + ".");
+      }
+    }
+  }
+
+  private static int totalMonths(List<CctTrainingTimeDto> entries, int maxMonths) {
+    if (entries == null) {
+      return 0;
+    }
+    return entries.stream()
+        .filter(Objects::nonNull)
+        .map(CctTrainingTimeDto::months)
+        .filter(months -> isWholeNumberBetween(months, 1, maxMonths))
+        .mapToInt(Integer::intValue)
+        .sum();
   }
 
   private static boolean isBlank(String value) {
@@ -250,6 +285,15 @@ public class CctCalculateRequestValidator implements
       context.buildConstraintViolationWithTemplate(message)
           .addPropertyNode("programmeDetails")
           .addPropertyNode(field)
+          .addConstraintViolation();
+    }
+
+    private void onTrainingTime(String field, int index, String message) {
+      empty = false;
+      context.buildConstraintViolationWithTemplate(message)
+          .addPropertyNode("programmeDetails")
+          .addPropertyNode(field)
+          .addPropertyNode("months").inIterable().atIndex(index)
           .addConstraintViolation();
     }
 

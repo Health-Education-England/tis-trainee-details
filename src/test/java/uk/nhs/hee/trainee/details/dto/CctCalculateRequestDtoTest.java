@@ -42,6 +42,8 @@ import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST3;
 import jakarta.validation.Validation;
 import jakarta.validation.ValidatorFactory;
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.IntStream;
@@ -56,12 +58,16 @@ import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.beanvalidation.SpringValidatorAdapter;
 import uk.nhs.hee.trainee.details.dto.CctChangeDto.CctChangeDtoBuilder;
 import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto.CctProgrammeDetailsDtoBuilder;
+import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto.CctTrainingTimeDto;
+import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto.CctTrainingTimeDto.CctTrainingTimeDtoBuilder;
 import uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType;
+import uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade;
 
 class CctCalculateRequestDtoTest {
 
   private static final LocalDate EARLIEST_DATE = LocalDate.of(1970, 1, 1);
-  private static final LocalDate LATEST_DATE = LocalDate.now().plusYears(50);
+  private static final LocalDate LATEST_DATE =
+      LocalDate.now(ZoneId.of("Europe/London")).plusYears(50);
   private static final String DATE_LIMITS_ERROR =
       "Date must be between 01/01/1970 and 50 years from today.";
 
@@ -184,10 +190,40 @@ class CctCalculateRequestDtoTest {
     List<BodyValidationError> errors = validate(programme()
         .lengthOverrideNotes(notes)
         .startGradeOverrideNotes(notes)
-        .additionalMonthsNotes(notes)
-        .acceleratedMonthsNotes(notes)
         .eighteenMonthFinalGradeNotes(notes)
         .skippedGradeNotes(notes), List.of());
+
+    assertThat("Unexpected errors.", errors, hasSize(0));
+  }
+
+  @Test
+  void shouldAcceptTrainingTimeOnTheLimits() {
+    String notes = "  " + "x".repeat(1000) + "\n";
+    List<BodyValidationError> errors = validate(programme()
+        .lengthMonths(12)
+        .additionalTrainingTime(List.of(trainingTime(ST1, 24).notes(notes).build()))
+        .acceleratedTrainingTime(List.of(
+            trainingTime(ST1, 1).notes(notes).build(),
+            trainingTime(ST2, 11).build())), List.of());
+
+    assertThat("Unexpected errors.", errors, hasSize(0));
+  }
+
+  @Test
+  void shouldAcceptMaximumNumberOfTrainingTimeEntries() {
+    List<CctTrainingTimeDto> entries = IntStream.range(0, 20)
+        .mapToObj(index -> trainingTime(ST1, 1).build())
+        .toList();
+    List<BodyValidationError> errors = validate(programme().additionalTrainingTime(entries),
+        List.of());
+
+    assertThat("Unexpected errors.", errors, hasSize(0));
+  }
+
+  @Test
+  void shouldAcceptEighteenMonthFinalGradeWithoutNotes() {
+    List<BodyValidationError> errors = validate(programme().eighteenMonthFinalGrade(ST3),
+        List.of());
 
     assertThat("Unexpected errors.", errors, hasSize(0));
   }
@@ -198,15 +234,11 @@ class CctCalculateRequestDtoTest {
     List<BodyValidationError> errors = validate(programme()
         .lengthOverrideNotes(notes)
         .startGradeOverrideNotes(notes)
-        .additionalMonthsNotes(notes)
-        .acceleratedMonthsNotes(notes)
         .eighteenMonthFinalGradeNotes(notes)
         .skippedGradeNotes(notes), List.of());
 
     String detail = "Notes must be 4096 characters or less";
     assertThat("Unexpected errors.", errors, is(List.of(
-        error("#/programmeDetails/acceleratedMonthsNotes", detail),
-        error("#/programmeDetails/additionalMonthsNotes", detail),
         error("#/programmeDetails/eighteenMonthFinalGradeNotes", detail),
         error("#/programmeDetails/lengthOverrideNotes", detail),
         error("#/programmeDetails/skippedGradeNotes", detail),
@@ -239,26 +271,95 @@ class CctCalculateRequestDtoTest {
             "lengthMonths", "Programme length must be a whole number of months between 1 and 120."),
         Arguments.of("programme length over 120 months", programme().lengthMonths(121),
             "lengthMonths", "Programme length must be a whole number of months between 1 and 120."),
-        Arguments.of("additional months over 24",
-            programme().additionalMonths(25).additionalMonthsNotes("why"), "additionalMonths",
-            "Additional training time must be a whole number of months between 0 and 24."),
-        Arguments.of("accelerated months over 12",
-            programme().acceleratedMonths(13).acceleratedMonthsNotes("why"), "acceleratedMonths",
-            "Accelerated training time must be a whole number of months between 0 and 12."),
+        Arguments.of("missing training time entry",
+            programme().additionalTrainingTime(Arrays.asList((CctTrainingTimeDto) null)),
+            "additionalTrainingTime/0", "must not be null"),
+        Arguments.of("training time with no grade",
+            programme().additionalTrainingTime(List.of(trainingTime(null, 3).build())),
+            "additionalTrainingTime/0/grade", "Please choose a grade."),
+        Arguments.of("training time with no months",
+            programme().additionalTrainingTime(List.of(trainingTime(ST1, null).build())),
+            "additionalTrainingTime/0/months",
+            "Training time must be a whole number of months between 1 and 24."),
+        Arguments.of("training time of zero months",
+            programme().additionalTrainingTime(List.of(trainingTime(ST1, 0).build())),
+            "additionalTrainingTime/0/months",
+            "Training time must be a whole number of months between 1 and 24."),
+        Arguments.of("training time over 24 months",
+            programme().additionalTrainingTime(List.of(trainingTime(ST1, 25).build())),
+            "additionalTrainingTime/0/months",
+            "Training time must be a whole number of months between 1 and 24."),
+        Arguments.of("accelerated time with no months",
+            programme().acceleratedTrainingTime(List.of(trainingTime(ST1, null).build())),
+            "acceleratedTrainingTime/0/months",
+            "Training time must be a whole number of months between 1 and 12."),
+        Arguments.of("accelerated time over 12 months",
+            programme().acceleratedTrainingTime(List.of(trainingTime(ST1, 13).build())),
+            "acceleratedTrainingTime/0/months",
+            "Training time must be a whole number of months between 1 and 12."),
+        Arguments.of("accelerated time over 24 months",
+            programme().acceleratedTrainingTime(List.of(trainingTime(ST1, 30).build())),
+            "acceleratedTrainingTime/0/months",
+            "Training time must be a whole number of months between 1 and 12."),
+        Arguments.of("training time without a note",
+            programme().acceleratedTrainingTime(
+                List.of(trainingTime(ST2, 3).build(), trainingTime(ST1, 3).notes("  ").build())),
+            "acceleratedTrainingTime/1/notes", "Please enter a reason for the training time."),
+        Arguments.of("training time notes over 1000 characters",
+            programme().additionalTrainingTime(
+                List.of(trainingTime(ST1, 3).notes("x".repeat(1001)).build())),
+            "additionalTrainingTime/0/notes", "Notes must be 1000 characters or less"),
+        Arguments.of("additional time over 24 months in total",
+            programme().additionalTrainingTime(
+                List.of(trainingTime(ST1, 12).build(), trainingTime(ST2, 13).build())),
+            "additionalTrainingTime",
+            "Total additional training time cannot be more than 24 months."),
+        Arguments.of("accelerated time over 12 months in total",
+            programme().acceleratedTrainingTime(
+                List.of(trainingTime(ST1, 6).build(), trainingTime(ST2, 7).build())),
+            "acceleratedTrainingTime",
+            "Total accelerated training time cannot be more than 12 months."),
+        Arguments.of("adjusted length of zero with accelerated time over the limit",
+            programme().lengthMonths(12)
+                .additionalTrainingTime(List.of(trainingTime(ST1, 1).build()))
+                .acceleratedTrainingTime(
+                    List.of(trainingTime(ST1, 12).build(), trainingTime(ST1, 1).build())),
+            "acceleratedTrainingTime",
+            "Total accelerated training time cannot be more than 12 months."),
         Arguments.of("adjusted length of zero",
-            programme().lengthMonths(12).acceleratedMonths(12).acceleratedMonthsNotes("why"),
-            "acceleratedMonths", "Adjusted training duration must be greater than zero."),
-        Arguments.of("additional months without a note",
-            programme().additionalMonths(3).additionalMonthsNotes("  "),
-            "additionalMonthsNotes", "Please enter a reason for additional training time."),
-        Arguments.of("accelerated months without a note", programme().acceleratedMonths(3),
-            "acceleratedMonthsNotes", "Please enter a reason for accelerated training time."),
-        Arguments.of("18-month final grade without a note",
-            programme().eighteenMonthFinalGrade(ST3),
-            "eighteenMonthFinalGradeNotes", "Please enter a reason for the 18-month final year."),
+            programme().lengthMonths(12)
+                .acceleratedTrainingTime(List.of(trainingTime(ST1, 12).build())),
+            "acceleratedTrainingTime", "Adjusted training duration must be greater than zero."),
+        Arguments.of("more than 20 additional training time entries",
+            programme().additionalTrainingTime(Stream.generate(() -> trainingTime(ST1, 1).build())
+                .limit(21).toList()),
+            "additionalTrainingTime",
+            "You cannot add more than 20 additional training time entries."),
         Arguments.of("skipped grade without a note", programme().skippedGrade(ST2),
             "skippedGradeNotes", "Please enter a reason for skipping a grade year.")
     );
+  }
+
+  @Test
+  void shouldRejectMissingTrainingTimeLists() {
+    List<BodyValidationError> errors = validate(
+        programme().additionalTrainingTime(null).acceleratedTrainingTime(null), List.of());
+
+    assertThat("Unexpected errors.", errors, is(List.of(
+        error("#/programmeDetails/acceleratedTrainingTime", "must not be null"),
+        error("#/programmeDetails/additionalTrainingTime", "must not be null"))));
+  }
+
+  @Test
+  void shouldRejectMoreThanMaximumAcceleratedTrainingTimeEntries() {
+    List<BodyValidationError> errors = validate(programme().acceleratedTrainingTime(
+        Stream.generate(() -> trainingTime(ST1, 1).build()).limit(21).toList()), List.of());
+
+    assertThat("Unexpected errors.", errors, is(List.of(
+        error("#/programmeDetails/acceleratedTrainingTime",
+            "Total accelerated training time cannot be more than 12 months."),
+        error("#/programmeDetails/acceleratedTrainingTime",
+            "You cannot add more than 20 accelerated training time entries."))));
   }
 
   @ParameterizedTest(name = "{index}: {0}")
@@ -417,12 +518,17 @@ class CctCalculateRequestDtoTest {
         .lengthOverrideNotes("")
         .startGrade(ST1)
         .startGradeOverrideNotes("")
-        .additionalMonths(0)
-        .additionalMonthsNotes("")
-        .acceleratedMonths(0)
-        .acceleratedMonthsNotes("")
+        .additionalTrainingTime(List.of())
+        .acceleratedTrainingTime(List.of())
         .eighteenMonthFinalGradeNotes("")
         .skippedGradeNotes("");
+  }
+
+  private static CctTrainingTimeDtoBuilder trainingTime(CctTrainingGrade grade, Integer months) {
+    return CctTrainingTimeDto.builder()
+        .grade(grade)
+        .months(months)
+        .notes("why");
   }
 
   private static CctChangeDtoBuilder ltft() {
