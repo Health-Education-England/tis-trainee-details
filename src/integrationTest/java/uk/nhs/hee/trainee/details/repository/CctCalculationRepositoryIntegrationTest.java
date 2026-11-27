@@ -58,14 +58,13 @@ class CctCalculationRepositoryIntegrationTest {
   void shouldHaveIndexes() {
     IndexOperations indexOps = template.indexOps(CctCalculation.class);
 
-    assertThat("Unexpected index count.", indexOps.getIndexInfo().size(), is(3));
+    assertThat("Unexpected index count.", indexOps.getIndexInfo().size(), is(2));
   }
 
   @ParameterizedTest
   @CsvSource(delimiter = '|', textBlock = """
-      _id_                   | _id
-      traineeId              | traineeId
-      programmeMembership.id | programmeMembership.id
+      _id_      | _id
+      traineeId | traineeId
       """)
   void shouldHaveIndex(String name, String key) {
     IndexOperations indexOps = template.indexOps(CctCalculation.class);

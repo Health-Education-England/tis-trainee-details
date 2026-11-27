@@ -21,7 +21,7 @@
 
 package uk.nhs.hee.trainee.details.api;
 
-import com.fasterxml.jackson.core.JsonPointer;
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import java.util.Comparator;
 import java.util.List;
 import org.springframework.http.HttpHeaders;
@@ -29,6 +29,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -36,6 +37,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import uk.nhs.hee.trainee.details.dto.BodyValidationError;
 import uk.nhs.hee.trainee.details.exception.EmailAlreadyInUseException;
 
 /**
@@ -52,21 +54,29 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
       HttpHeaders headers, HttpStatusCode status, WebRequest request) {
 
     BindingResult result = ex.getBindingResult();
-    List<BodyValidationError> errors = result.getFieldErrors().stream()
-        .map(fe -> {
-          String pointer = "#/" + fe.getField().replace('.', JsonPointer.SEPARATOR);
-          return new BodyValidationError(pointer, fe.getDefaultMessage());
-        })
-        .sorted(
-            Comparator.comparing(BodyValidationError::pointer)
-                .thenComparing(BodyValidationError::detail)
-        )
-        .toList();
+    List<BodyValidationError> errors = BodyValidationError.fromFieldErrors(
+        result.getFieldErrors());
 
     ProblemDetail problemDetail = ProblemDetail.forStatus(status);
     problemDetail.setTitle(TITLE_VALIDATION_FAILURE);
     problemDetail.setProperty(ERRORS_PROPERTY, errors);
     return handleExceptionInternal(ex, problemDetail, headers, status, request);
+  }
+
+  @Override
+  protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex,
+      HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+
+    if (ex.getCause() instanceof MismatchedInputException cause && !cause.getPath().isEmpty()) {
+      List<BodyValidationError> errors = List.of(BodyValidationError.fromMappingException(cause));
+
+      ProblemDetail problemDetail = ProblemDetail.forStatus(status);
+      problemDetail.setTitle(TITLE_VALIDATION_FAILURE);
+      problemDetail.setProperty(ERRORS_PROPERTY, errors);
+      return handleExceptionInternal(ex, problemDetail, headers, status, request);
+    }
+
+    return super.handleHttpMessageNotReadable(ex, headers, status, request);
   }
 
   @Override
@@ -116,16 +126,6 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
    * @param detail    The validation failure detail.
    */
   record ParameterValidationError(String parameter, String detail) {
-
-  }
-
-  /**
-   * A detailed request body validation error.
-   *
-   * @param pointer The JSON pointer for the body's field.
-   * @param detail  The validation failure detail.
-   */
-  record BodyValidationError(String pointer, String detail) {
 
   }
 }

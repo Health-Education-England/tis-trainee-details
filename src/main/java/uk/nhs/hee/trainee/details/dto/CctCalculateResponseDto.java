@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright 2024 Crown Copyright (Health Education England)
+ * Copyright 2026 Crown Copyright (Health Education England)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -21,24 +21,25 @@
 
 package uk.nhs.hee.trainee.details.dto;
 
-import java.time.Instant;
-import java.util.UUID;
+import java.util.List;
 import lombok.Builder;
+import lombok.With;
 
 /**
- * A summary of a CCT calculation.
+ * The response to a request to calculate a CCT date.
  *
- * @param id                    The ID of the calculation.
- * @param name                  The name of the calculation.
- * @param programmeMembershipId The ID of the associated programme membership.
+ * @param changes The changes to the programme, in request order, with the months they credit.
+ * @param result  The result of the calculation.
+ * @param errors  The errors that would stop the calculation being saved, or empty if none.
  */
 @Builder
-public record CctCalculationSummaryDto(
+public record CctCalculateResponseDto(
 
-    UUID id,
-    String name,
-    UUID programmeMembershipId,
-    Instant created,
-    Instant lastModified) {
+    List<CctCalculatedChangeDto> changes,
+
+    CctResultDto result,
+
+    @With
+    List<BodyValidationError> errors) {
 
 }

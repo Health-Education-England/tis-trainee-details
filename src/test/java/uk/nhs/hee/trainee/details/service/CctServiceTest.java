@@ -23,6 +23,7 @@ package uk.nhs.hee.trainee.details.service;
 
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
@@ -31,10 +32,16 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static uk.nhs.hee.trainee.details.dto.enumeration.CctChangeType.LTFT;
-import static uk.nhs.hee.trainee.details.service.CctService.WTE_EPSILON;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST1;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST2;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST3;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST7;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST8;
+import static uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade.ST9;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -45,26 +52,46 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import uk.nhs.hee.trainee.details.dto.BodyValidationError;
+import uk.nhs.hee.trainee.details.dto.CctCalculateRequestDto;
+import uk.nhs.hee.trainee.details.dto.CctCalculateResponseDto;
+import uk.nhs.hee.trainee.details.dto.CctCalculatedChangeDto;
 import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto;
-import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto.CctChangeDto;
-import uk.nhs.hee.trainee.details.dto.CctCalculationDetailDto.CctProgrammeMembershipDto;
+import uk.nhs.hee.trainee.details.dto.CctCalculationSaveRequestDto;
+import uk.nhs.hee.trainee.details.dto.CctChangeDto;
+import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto;
+import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto.CctProgrammeDetailsDtoBuilder;
+import uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto.CctTrainingTimeDto;
+import uk.nhs.hee.trainee.details.dto.CctResultDto;
+import uk.nhs.hee.trainee.details.dto.CctSpecialtyDto;
 import uk.nhs.hee.trainee.details.dto.TraineeIdentity;
+import uk.nhs.hee.trainee.details.dto.enumeration.CctTrainingGrade;
 import uk.nhs.hee.trainee.details.exception.NotRecordOwnerException;
 import uk.nhs.hee.trainee.details.mapper.CctMapperImpl;
 import uk.nhs.hee.trainee.details.model.CctCalculation;
+import uk.nhs.hee.trainee.details.model.CctCalculation.CctAssumedFullTimePeriod;
 import uk.nhs.hee.trainee.details.model.CctCalculation.CctChange;
-import uk.nhs.hee.trainee.details.model.CctCalculation.CctProgrammeMembership;
+import uk.nhs.hee.trainee.details.model.CctCalculation.CctProgrammeDetails;
+import uk.nhs.hee.trainee.details.model.CctCalculation.CctProjection;
+import uk.nhs.hee.trainee.details.model.CctCalculation.CctResult;
 import uk.nhs.hee.trainee.details.repository.CctCalculationRepository;
 
 class CctServiceTest {
 
   private static final String TRAINEE_ID = UUID.randomUUID().toString();
+  private static final String DUAL_CCT_SPECIALTY =
+      "Acute internal medicine with Intensive Care and GIM";
 
   private CctService service;
   private CctCalculationRepository calculationRepository;
+  private CctCalculator calculator;
+  private CctSpecialtyService specialtyService;
 
   @BeforeEach
   void setUp() {
@@ -72,8 +99,15 @@ class CctServiceTest {
     traineeIdentity.setTraineeId(TRAINEE_ID);
 
     calculationRepository = mock(CctCalculationRepository.class);
+    specialtyService = mock(CctSpecialtyService.class);
+    when(specialtyService.getSpecialties()).thenReturn(List.of(
+        new CctSpecialtyDto("Paediatrics", 84, ST1, false),
+        new CctSpecialtyDto(DUAL_CCT_SPECIALTY, 90, ST3, true)));
+    CctGradeProgression gradeProgression = new CctGradeProgression();
+    calculator = new CctCalculator(gradeProgression);
 
-    service = new CctService(traineeIdentity, calculationRepository, new CctMapperImpl());
+    service = new CctService(traineeIdentity, calculationRepository, new CctMapperImpl(),
+        calculator, specialtyService, new CctGradeProgressionValidator(gradeProgression));
   }
 
   @Test
@@ -87,9 +121,8 @@ class CctServiceTest {
   }
 
   @Test
-  void shouldGetCalculationsWhenFound() {
+  void shouldGetCalculationsAsSavedWhenFound() {
     UUID calculationId1 = UUID.randomUUID();
-    UUID pmId1 = UUID.randomUUID();
     Instant created1 = Instant.now().minus(Duration.ofDays(1));
     Instant lastModified1 = Instant.now().plus(Duration.ofDays(1));
 
@@ -97,23 +130,12 @@ class CctServiceTest {
         .id(calculationId1)
         .traineeId(TRAINEE_ID)
         .name("Test Calculation 1")
-        .programmeMembership(CctProgrammeMembership.builder()
-            .id(pmId1)
-            .startDate(LocalDate.EPOCH)
-            .endDate(LocalDate.EPOCH.plusYears(1))
-            .wte(1.0)
-            .designatedBodyCode("testDbc")
-            .build())
+        .result(CctResult.builder().cctDate(LocalDate.of(2099, 1, 1)).build())
         .created(created1)
         .lastModified(lastModified1)
-        .changes(List.of(CctChange.builder()
-            .startDate(LocalDate.EPOCH.plusMonths(1))
-            .wte(0.5)
-            .build()))
         .build();
 
     UUID calculationId2 = UUID.randomUUID();
-    UUID pmId2 = UUID.randomUUID();
     Instant created2 = Instant.now().minus(Duration.ofDays(2));
     Instant lastModified2 = Instant.now().plus(Duration.ofDays(2));
 
@@ -121,17 +143,7 @@ class CctServiceTest {
         .id(calculationId2)
         .traineeId(TRAINEE_ID)
         .name("Test Calculation 2")
-        .programmeMembership(CctProgrammeMembership.builder()
-            .id(pmId2)
-            .startDate(LocalDate.EPOCH)
-            .endDate(LocalDate.EPOCH.plusYears(1))
-            .wte(1.0)
-            .designatedBodyCode("testDbc")
-            .build())
-        .changes(List.of(CctChange.builder()
-            .startDate(LocalDate.EPOCH)
-            .wte(0.75)
-            .build()))
+        .result(CctResult.builder().cctDate(LocalDate.of(2099, 2, 1)).build())
         .created(created2)
         .lastModified(lastModified2)
         .build();
@@ -146,16 +158,14 @@ class CctServiceTest {
     CctCalculationDetailDto dto1 = result.get(0);
     assertThat("Unexpected calculation ID.", dto1.id(), is(calculationId1));
     assertThat("Unexpected calculation name.", dto1.name(), is("Test Calculation 1"));
-    assertThat("Unexpected PM ID.", dto1.programmeMembership().id(), is(pmId1));
-    assertThat("Unexpected CCT date.", dto1.cctDate(), is(service.calculateCctDate(entity1)));
+    assertThat("Unexpected CCT date.", dto1.result().cctDate(), is(LocalDate.of(2099, 1, 1)));
     assertThat("Unexpected created timestamp.", dto1.created(), is(created1));
     assertThat("Unexpected last modified timestamp.", dto1.lastModified(), is(lastModified1));
 
     CctCalculationDetailDto dto2 = result.get(1);
     assertThat("Unexpected calculation ID.", dto2.id(), is(calculationId2));
     assertThat("Unexpected calculation name.", dto2.name(), is("Test Calculation 2"));
-    assertThat("Unexpected PM ID.", dto2.programmeMembership().id(), is(pmId2));
-    assertThat("Unexpected CCT date.", dto2.cctDate(), is(service.calculateCctDate(entity2)));
+    assertThat("Unexpected CCT date.", dto2.result().cctDate(), is(LocalDate.of(2099, 2, 1)));
     assertThat("Unexpected created timestamp.", dto2.created(), is(created2));
     assertThat("Unexpected last modified timestamp.", dto2.lastModified(), is(lastModified2));
   }
@@ -185,9 +195,8 @@ class CctServiceTest {
   }
 
   @Test
-  void shouldGetCalculationWhenBelongsToUser() {
+  void shouldGetCalculationAsSavedWhenBelongsToUser() {
     UUID calculationId = UUID.randomUUID();
-    UUID pmId = UUID.randomUUID();
 
     Instant created = Instant.now().minus(Duration.ofDays(1));
     Instant lastModified = Instant.now().plus(Duration.ofDays(1));
@@ -196,21 +205,41 @@ class CctServiceTest {
         .id(calculationId)
         .traineeId(TRAINEE_ID)
         .name("Test Calculation")
-        .programmeMembership(CctProgrammeMembership.builder()
-            .id(pmId)
-            .name("Test Programme")
-            .startDate(LocalDate.EPOCH)
-            .endDate(LocalDate.EPOCH.plusYears(1))
-            .wte(1.0)
-            .designatedBodyCode("testDbc")
-            .managingDeanery("Test Deanery")
+        .programmeDetails(CctProgrammeDetails.builder()
+            .specialty("Paediatrics")
+            .startDate(LocalDate.of(2023, 8, 2))
+            .lengthMonths(84)
+            .startGrade(ST1)
             .build())
-        .changes(List.of(
-            CctChange.builder().type(LTFT).startDate(LocalDate.EPOCH.plusMonths(6))
-                .wte(0.5).build(),
-            CctChange.builder().type(LTFT).startDate(LocalDate.EPOCH.plusMonths(13))
-                .wte(0.75).build()
-        ))
+        .changes(List.of(CctChange.builder()
+            .type(LTFT)
+            .startDate(LocalDate.of(2024, 2, 1))
+            .endDate(LocalDate.of(2024, 8, 1))
+            .wte(0.6)
+            .countsTowardsCompletion(true)
+            .notes("Cardiology rotation")
+            .calendarMonths(6.0)
+            .wteMonths(3.6)
+            .build()))
+        .result(CctResult.builder()
+            .cctDate(LocalDate.of(2099, 1, 1))
+            .originalProgrammeEndDate(LocalDate.of(2030, 7, 29))
+            .adjustedProgrammeEndDate(LocalDate.of(2030, 7, 29))
+            .totalCalendarMonthsCompleted(12.0)
+            .totalWteMonthsCompleted(9.6)
+            .monthsRemaining(74.4)
+            .assumedFullTimePeriods(List.of(CctAssumedFullTimePeriod.builder()
+                .startDate(LocalDate.of(2023, 8, 2))
+                .endDate(LocalDate.of(2024, 1, 31))
+                .months(6.0)
+                .build()))
+            .projection(CctProjection.builder()
+                .startDate(LocalDate.of(2024, 8, 2))
+                .wte(1.0)
+                .calendarMonths(74.4)
+                .wteMonths(74.4)
+                .build())
+            .build())
         .created(created)
         .lastModified(lastModified)
         .build();
@@ -224,327 +253,369 @@ class CctServiceTest {
     CctCalculationDetailDto dto = result.get();
     assertThat("Unexpected calculation ID.", dto.id(), is(calculationId));
     assertThat("Unexpected calculation name.", dto.name(), is("Test Calculation"));
-    assertThat("Unexpected CCT date.", dto.cctDate(), is(service.calculateCctDate(entity)));
     assertThat("Unexpected created timestamp.", dto.created(), is(created));
     assertThat("Unexpected last modified timestamp.", dto.lastModified(), is(lastModified));
 
-    CctProgrammeMembershipDto pm = dto.programmeMembership();
-    assertThat("Unexpected PM ID.", pm.id(), is(pmId));
-    assertThat("Unexpected PM name.", pm.name(), is("Test Programme"));
-    assertThat("Unexpected PM start date.", pm.startDate(), is(LocalDate.EPOCH));
-    assertThat("Unexpected PM end date.", pm.endDate(), is(LocalDate.EPOCH.plusYears(1)));
-    assertThat("Unexpected PM WTE.", pm.wte(), is(1.0));
-    assertThat("Unexpected PM DBC.", pm.designatedBodyCode(), is("testDbc"));
-    assertThat("Unexpected PM deanery.", pm.managingDeanery(), is("Test Deanery"));
+    CctProgrammeDetailsDto programmeDetails = dto.programmeDetails();
+    assertThat("Unexpected specialty.", programmeDetails.specialty(), is("Paediatrics"));
+    assertThat("Unexpected start date.", programmeDetails.startDate(),
+        is(LocalDate.of(2023, 8, 2)));
+    assertThat("Unexpected length.", programmeDetails.lengthMonths(), is(84));
+    assertThat("Unexpected start grade.", programmeDetails.startGrade(), is(ST1));
 
-    List<CctChangeDto> changes = dto.changes();
-    assertThat("Unexpected change count.", changes.size(), is(2));
+    assertThat("Unexpected changes.", dto.changes(), is(List.of(CctCalculatedChangeDto.builder()
+        .change(datedLtft())
+        .calendarMonths(6.0)
+        .wteMonths(3.6)
+        .build())));
 
-    CctChangeDto change1 = changes.get(0);
-    assertThat("Unexpected change type.", change1.type(), is(LTFT));
-    assertThat("Unexpected change type.", change1.startDate(),
-        is(LocalDate.EPOCH.plusMonths(6)));
-    assertThat("Unexpected change type.", change1.wte(), is(0.5));
-
-    CctChangeDto change2 = changes.get(1);
-    assertThat("Unexpected change type.", change2.type(), is(LTFT));
-    assertThat("Unexpected change type.", change2.startDate(),
-        is(LocalDate.EPOCH.plusMonths(13)));
-    assertThat("Unexpected change type.", change2.wte(), is(0.75));
+    CctResultDto calculationResult = dto.result();
+    assertThat("Unexpected CCT date.", calculationResult.cctDate(),
+        is(LocalDate.of(2099, 1, 1)));
+    assertThat("Unexpected original end date.", calculationResult.originalProgrammeEndDate(),
+        is(LocalDate.of(2030, 7, 29)));
+    assertThat("Unexpected adjusted end date.", calculationResult.adjustedProgrammeEndDate(),
+        is(LocalDate.of(2030, 7, 29)));
+    assertThat("Unexpected calendar months completed.",
+        calculationResult.totalCalendarMonthsCompleted(), is(12.0));
+    assertThat("Unexpected months completed.", calculationResult.totalWteMonthsCompleted(),
+        is(9.6));
+    assertThat("Unexpected months remaining.", calculationResult.monthsRemaining(), is(74.4));
+    assertThat("Unexpected gap count.", calculationResult.assumedFullTimePeriods(), hasSize(1));
+    assertThat("Unexpected gap end date.",
+        calculationResult.assumedFullTimePeriods().get(0).endDate(),
+        is(LocalDate.of(2024, 1, 31)));
+    assertThat("Unexpected projection start date.", calculationResult.projection().startDate(),
+        is(LocalDate.of(2024, 8, 2)));
+    assertThat("Unexpected projection WTE months.", calculationResult.projection().wteMonths(),
+        is(74.4));
   }
 
   @Test
-  void shouldCreateCalculation() {
-    UUID pmId = UUID.randomUUID();
-
-    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
-        .name("Test Calculation")
-        .programmeMembership(CctProgrammeMembershipDto.builder()
-            .id(pmId)
-            .name("Test Programme")
-            .startDate(LocalDate.EPOCH)
-            .endDate(LocalDate.EPOCH.plusYears(1))
-            .wte(1.0)
-            .designatedBodyCode("testDbc")
-            .build())
-        .changes(List.of(
-            CctChangeDto.builder().type(LTFT).startDate(LocalDate.EPOCH.plusMonths(6))
-                .wte(0.5).build(),
-            CctChangeDto.builder().type(LTFT).startDate(LocalDate.EPOCH.plusMonths(13))
-                .wte(0.75).build()
-        ))
-        .build();
+  void shouldCreateCalculationWithCalculatedChangesAndResult()
+      throws MethodArgumentNotValidException {
+    CctCalculationSaveRequestDto dto = request(List.of(datedLtft()));
 
     UUID calculationId = UUID.randomUUID();
-    when(calculationRepository.insert(any(CctCalculation.class))).thenAnswer(inv -> {
-      CctCalculation entity = inv.getArgument(0);
-      CctProgrammeMembership pm = entity.programmeMembership();
-      CctChange change1 = entity.changes().get(0);
-      CctChange change2 = entity.changes().get(1);
-
-      return CctCalculation.builder()
-          .id(calculationId)
-          .traineeId(entity.traineeId())
-          .name(entity.name())
-          .programmeMembership(CctProgrammeMembership.builder()
-              .id(pm.id())
-              .name(pm.name())
-              .startDate(pm.startDate())
-              .endDate(pm.endDate())
-              .wte(pm.wte())
-              .designatedBodyCode("testDbc")
-              .managingDeanery("Test Deanery")
-              .build())
-          .changes(List.of(
-              CctChange.builder()
-                  .type(change1.type())
-                  .startDate(change1.startDate())
-                  .wte(change1.wte())
-                  .build(),
-              CctChange.builder()
-                  .type(change2.type())
-                  .startDate(change2.startDate())
-                  .wte(change2.wte()).build()
-          ))
-          .build();
-    });
+    when(calculationRepository.insert(any(CctCalculation.class))).thenAnswer(
+        inv -> inv.<CctCalculation>getArgument(0).withId(calculationId));
 
     CctCalculationDetailDto savedDto = service.createCalculation(dto);
     assertThat("Unexpected calculation ID.", savedDto.id(), is(calculationId));
     assertThat("Unexpected calculation name.", savedDto.name(), is("Test Calculation"));
-    assertThat("Unexpected CCT date.", savedDto.cctDate(),
-        is(service.calculateCctDate(savedDto)));
+    assertThat("Unexpected programme details.", savedDto.programmeDetails(),
+        is(dto.programmeDetails()));
 
-    CctProgrammeMembershipDto pm = savedDto.programmeMembership();
-    assertThat("Unexpected PM ID.", pm.id(), is(pmId));
-    assertThat("Unexpected PM name.", pm.name(), is("Test Programme"));
-    assertThat("Unexpected PM start date.", pm.startDate(), is(LocalDate.EPOCH));
-    assertThat("Unexpected PM end date.", pm.endDate(), is(LocalDate.EPOCH.plusYears(1)));
-    assertThat("Unexpected PM WTE.", pm.wte(), is(1.0));
-    assertThat("Unexpected PM DBC.", pm.designatedBodyCode(), is("testDbc"));
-    assertThat("Unexpected PM deanery.", pm.managingDeanery(), is("Test Deanery"));
+    CctCalculateResponseDto calculation = calculator.calculate(dto.programmeDetails(),
+        dto.changes());
+    assertThat("Unexpected changes.", savedDto.changes(), is(calculation.changes()));
+    assertThat("Unexpected result.", savedDto.result(), is(calculation.result()));
+    assertThat("Unexpected CCT date.", savedDto.result().cctDate(),
+        is(LocalDate.of(2030, 10, 10)));
 
-    List<CctChangeDto> changes = savedDto.changes();
-    assertThat("Unexpected change count.", changes.size(), is(2));
+    ArgumentCaptor<CctCalculation> entityCaptor = ArgumentCaptor.captor();
+    verify(calculationRepository).insert(entityCaptor.capture());
 
-    CctChangeDto change1 = changes.get(0);
-    assertThat("Unexpected change type.", change1.type(), is(LTFT));
-    assertThat("Unexpected change type.", change1.startDate(),
-        is(LocalDate.EPOCH.plusMonths(6)));
-    assertThat("Unexpected change type.", change1.wte(), is(0.5));
-
-    CctChangeDto change2 = changes.get(1);
-    assertThat("Unexpected change type.", change2.type(), is(LTFT));
-    assertThat("Unexpected change type.", change2.startDate(),
-        is(LocalDate.EPOCH.plusMonths(13)));
-    assertThat("Unexpected change type.", change2.wte(), is(0.75));
+    CctCalculation entity = entityCaptor.getValue();
+    assertThat("Unexpected trainee ID.", entity.traineeId(), is(TRAINEE_ID));
+    assertThat("Unexpected created timestamp.", entity.created(), nullValue());
   }
 
   @Test
-  void shouldInsertCctDateAndIncludeOtherDetailsInReturnedDto() {
-    UUID pmId = UUID.randomUUID();
+  void shouldNotCreateCalculationWhenChangeStartsBeforeProgramme() {
+    CctCalculationSaveRequestDto dto = request(List.of(CctChangeDto.builder()
+        .type(LTFT)
+        .startDate(LocalDate.of(2023, 8, 1))
+        .endDate(LocalDate.of(2024, 7, 31))
+        .wte(0.5)
+        .countsTowardsCompletion(true)
+        .build()));
 
-    UUID calculationId = UUID.randomUUID();
-    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
-        .id(calculationId)
-        .name("Test Calculation")
-        .programmeMembership(CctProgrammeMembershipDto.builder()
-            .id(pmId)
-            .name("Test Programme")
-            .startDate(LocalDate.EPOCH)
-            .endDate(LocalDate.EPOCH.plusYears(1))
-            .wte(1.0)
-            .designatedBodyCode("testDbc")
-            .managingDeanery("Test Deanery")
-            .build())
-        .changes(List.of(
-            CctChangeDto.builder().type(LTFT).startDate(LocalDate.EPOCH.plusMonths(6))
-                .wte(0.5).build(),
-            CctChangeDto.builder().type(LTFT).startDate(LocalDate.EPOCH.plusMonths(13))
-                .wte(0.75).build()
-        ))
-        .build();
+    MethodArgumentNotValidException exception = assertThrows(MethodArgumentNotValidException.class,
+        () -> service.createCalculation(dto));
 
-    Optional<CctCalculationDetailDto> calculatedDtoOptional = service.insertCctDate(dto);
+    List<FieldError> fieldErrors = exception.getFieldErrors();
+    assertThat("Unexpected error count.", fieldErrors, hasSize(1));
 
-    assertThat("Unexpected CCT calculation.", calculatedDtoOptional.isPresent(), is(true));
-    CctCalculationDetailDto calculatedDto = calculatedDtoOptional.get();
+    FieldError fieldError = fieldErrors.get(0);
+    assertThat("Unexpected error field.", fieldError.getField(), is("changes[0].startDate"));
+    assertThat("Unexpected error message.", fieldError.getDefaultMessage(),
+        is("Start date cannot be before programme start (02/08/2023)."));
 
-    assertThat("Unexpected calculation ID.", calculatedDto.id(), is(calculationId));
-    assertThat("Unexpected calculation name.", calculatedDto.name(), is("Test Calculation"));
-    assertThat("Unexpected calculated CCT date.", calculatedDto.cctDate(),
-        is(service.calculateCctDate(calculatedDto)));
-
-    CctProgrammeMembershipDto pm = calculatedDto.programmeMembership();
-    assertThat("Unexpected PM ID.", pm.id(), is(pmId));
-    assertThat("Unexpected PM name.", pm.name(), is("Test Programme"));
-    assertThat("Unexpected PM start date.", pm.startDate(), is(LocalDate.EPOCH));
-    assertThat("Unexpected PM end date.", pm.endDate(), is(LocalDate.EPOCH.plusYears(1)));
-    assertThat("Unexpected PM WTE.", pm.wte(), is(1.0));
-    assertThat("Unexpected PM DBC.", pm.designatedBodyCode(), is("testDbc"));
-    assertThat("Unexpected PM deanery.", pm.managingDeanery(), is("Test Deanery"));
-
-    List<CctChangeDto> changes = calculatedDto.changes();
-    assertThat("Unexpected change count.", changes.size(), is(2));
-
-    CctChangeDto change1 = changes.get(0);
-    assertThat("Unexpected change type.", change1.type(), is(LTFT));
-    assertThat("Unexpected change type.", change1.startDate(),
-        is(LocalDate.EPOCH.plusMonths(6)));
-    assertThat("Unexpected change type.", change1.wte(), is(0.5));
-
-    CctChangeDto change2 = changes.get(1);
-    assertThat("Unexpected change type.", change2.type(), is(LTFT));
-    assertThat("Unexpected change type.", change2.startDate(),
-        is(LocalDate.EPOCH.plusMonths(13)));
-    assertThat("Unexpected change type.", change2.wte(), is(0.75));
+    verify(calculationRepository, never()).insert(any(CctCalculation.class));
   }
 
   @Test
-  void shouldUpdateExistingCalculationIfExistsAndOwnedByUser()
+  void shouldNotCreateCalculationWhenChangeEndsAfterCctDate() {
+    CctCalculationSaveRequestDto dto = request(List.of(overrunningLtft()));
+
+    MethodArgumentNotValidException exception = assertThrows(MethodArgumentNotValidException.class,
+        () -> service.createCalculation(dto));
+
+    List<FieldError> fieldErrors = exception.getFieldErrors();
+    assertThat("Unexpected error count.", fieldErrors, hasSize(1));
+
+    FieldError fieldError = fieldErrors.get(0);
+    assertThat("Unexpected error field.", fieldError.getField(), is("changes[0].endDate"));
+    assertThat("Unexpected error message.", fieldError.getDefaultMessage(),
+        is("End date cannot be after the current projected Completion of Training Date "
+            + "(26/02/2031)."));
+
+    verify(calculationRepository, never()).insert(any(CctCalculation.class));
+  }
+
+  @Test
+  void shouldNotCreateCalculationWhenChangeStartsAfterCctDate() {
+    CctCalculationSaveRequestDto dto = request(List.of(
+        overrunningLtft(),
+        CctChangeDto.builder()
+            .type(LTFT)
+            .startDate(LocalDate.of(2033, 1, 1))
+            .wte(0.5)
+            .countsTowardsCompletion(true)
+            .build()));
+
+    MethodArgumentNotValidException exception = assertThrows(MethodArgumentNotValidException.class,
+        () -> service.createCalculation(dto));
+
+    List<FieldError> fieldErrors = exception.getFieldErrors();
+    assertThat("Unexpected error count.", fieldErrors, hasSize(2));
+
+    FieldError fieldError = fieldErrors.get(0);
+    assertThat("Unexpected error field.", fieldError.getField(), is("changes[0].endDate"));
+    assertThat("Unexpected error message.", fieldError.getDefaultMessage(),
+        is("End date cannot be after the current projected Completion of Training Date "
+            + "(26/02/2031)."));
+
+    fieldError = fieldErrors.get(1);
+    assertThat("Unexpected error field.", fieldError.getField(), is("changes[1].startDate"));
+    assertThat("Unexpected error message.", fieldError.getDefaultMessage(),
+        is("Start date cannot be after the current projected Completion of Training Date "
+            + "(26/02/2031)."));
+
+    verify(calculationRepository, never()).insert(any(CctCalculation.class));
+  }
+
+  @Test
+  void shouldNotCreateCalculationWhenSpecialtyNotListed() {
+    CctCalculationSaveRequestDto dto = request(
+        programme().specialty("paediatrics").lengthMonths(85).startGrade(ST2));
+
+    MethodArgumentNotValidException exception = assertThrows(MethodArgumentNotValidException.class,
+        () -> service.createCalculation(dto));
+
+    assertThat("Unexpected errors.",
+        BodyValidationError.fromFieldErrors(exception.getFieldErrors()), is(List.of(
+            new BodyValidationError("#/programmeDetails/specialty",
+                "Please choose a specialty from the list."))));
+
+    verify(calculationRepository, never()).insert(any(CctCalculation.class));
+  }
+
+  @ParameterizedTest
+  @NullSource
+  @ValueSource(strings = {"", " "})
+  void shouldNotCreateCalculationWhenOverridesHaveNoNotes(String notes) {
+    CctCalculationSaveRequestDto dto = request(programme()
+        .lengthMonths(85)
+        .lengthOverrideNotes(notes)
+        .startGrade(ST2)
+        .startGradeOverrideNotes(notes));
+
+    MethodArgumentNotValidException exception = assertThrows(MethodArgumentNotValidException.class,
+        () -> service.createCalculation(dto));
+
+    assertThat("Unexpected errors.",
+        BodyValidationError.fromFieldErrors(exception.getFieldErrors()), is(List.of(
+            new BodyValidationError("#/programmeDetails/lengthOverrideNotes",
+                "Please enter a reason for a different programme length."),
+            new BodyValidationError("#/programmeDetails/startGradeOverrideNotes",
+                "Please enter a reason for overriding the default start grade."))));
+
+    verify(calculationRepository, never()).insert(any(CctCalculation.class));
+  }
+
+  @Test
+  void shouldCreateCalculationWhenOverridesHaveNotes() throws MethodArgumentNotValidException {
+    CctCalculationSaveRequestDto dto = request(programme()
+        .lengthMonths(85)
+        .lengthOverrideNotes("Agreed with local office")
+        .startGrade(ST2)
+        .startGradeOverrideNotes("Entered at ST2"));
+    when(calculationRepository.insert(any(CctCalculation.class))).thenAnswer(
+        invocation -> invocation.getArgument(0));
+
+    CctCalculationDetailDto created = service.createCalculation(dto);
+
+    assertThat("Unexpected programme details.", created.programmeDetails(),
+        is(dto.programmeDetails()));
+  }
+
+  @ParameterizedTest
+  @NullSource
+  @ValueSource(strings = {"", " "})
+  void shouldNotCreateCalculationWhenEighteenMonthFinalGradeHasNoNotes(String notes) {
+    CctCalculationSaveRequestDto dto = request(programme()
+        .lengthMonths(90)
+        .lengthOverrideNotes("Agreed with local office")
+        .eighteenMonthFinalGrade(ST7)
+        .eighteenMonthFinalGradeNotes(notes));
+
+    MethodArgumentNotValidException exception = assertThrows(MethodArgumentNotValidException.class,
+        () -> service.createCalculation(dto));
+
+    assertThat("Unexpected errors.",
+        BodyValidationError.fromFieldErrors(exception.getFieldErrors()), is(List.of(
+            new BodyValidationError("#/programmeDetails/eighteenMonthFinalGradeNotes",
+                "Please enter a reason for the 18-month final year."))));
+
+    verify(calculationRepository, never()).insert(any(CctCalculation.class));
+  }
+
+  @Test
+  void shouldCreateCalculationWhenEighteenMonthFinalGradeIsSpecialtyDefaultWithoutNotes()
       throws MethodArgumentNotValidException {
-    UUID pmId = UUID.randomUUID();
-    UUID id = UUID.randomUUID();
-    UUID changeId1 = UUID.randomUUID();
-    UUID changeId2 = UUID.randomUUID();
-    Instant created = Instant.now();
+    CctCalculationSaveRequestDto dto = request(programme()
+        .specialty(DUAL_CCT_SPECIALTY)
+        .lengthMonths(90)
+        .startGrade(ST3)
+        .eighteenMonthFinalGrade(ST9));
+    when(calculationRepository.insert(any(CctCalculation.class))).thenAnswer(
+        invocation -> invocation.getArgument(0));
 
-    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
+    CctCalculationDetailDto created = service.createCalculation(dto);
+
+    assertThat("Unexpected programme details.", created.programmeDetails(),
+        is(dto.programmeDetails()));
+  }
+
+  @ParameterizedTest
+  @CsvSource({"78, ST3, ST8", "90, ST2, ST8"})
+  void shouldNotCreateCalculationWhenSpecialtyDefaultIsOverriddenAndEighteenMonthHasNoNotes(
+      int lengthMonths, CctTrainingGrade startGrade, CctTrainingGrade eighteenMonthFinalGrade) {
+    CctCalculationSaveRequestDto dto = request(programme()
+        .specialty(DUAL_CCT_SPECIALTY)
+        .lengthMonths(lengthMonths)
+        .lengthOverrideNotes("Agreed with local office")
+        .startGrade(startGrade)
+        .startGradeOverrideNotes("Entered at " + startGrade)
+        .eighteenMonthFinalGrade(eighteenMonthFinalGrade));
+
+    MethodArgumentNotValidException exception = assertThrows(MethodArgumentNotValidException.class,
+        () -> service.createCalculation(dto));
+
+    assertThat("Unexpected errors.",
+        BodyValidationError.fromFieldErrors(exception.getFieldErrors()), is(List.of(
+            new BodyValidationError("#/programmeDetails/eighteenMonthFinalGradeNotes",
+                "Please enter a reason for the 18-month final year."))));
+
+    verify(calculationRepository, never()).insert(any(CctCalculation.class));
+  }
+
+  @Test
+  void shouldNotCreateCalculationWhenGradesNotInProgression() {
+    CctCalculationSaveRequestDto dto = request(programme()
+        .additionalTrainingTime(trainingTime(ST8, 2))
+        .acceleratedTrainingTime(trainingTime(ST9, 1))
+        .eighteenMonthFinalGrade(ST9)
+        .eighteenMonthFinalGradeNotes("Dual CCT")
+        .skippedGrade(ST8)
+        .skippedGradeNotes("Core competencies"));
+
+    MethodArgumentNotValidException exception = assertThrows(MethodArgumentNotValidException.class,
+        () -> service.createCalculation(dto));
+
+    assertThat("Unexpected errors.",
+        BodyValidationError.fromFieldErrors(exception.getFieldErrors()), is(List.of(
+            new BodyValidationError("#/programmeDetails/acceleratedTrainingTime/0/grade",
+                "ST9 is not part of this programme's grade progression."),
+            new BodyValidationError("#/programmeDetails/additionalTrainingTime/0/grade",
+                "ST8 is not part of this programme's grade progression."),
+            new BodyValidationError("#/programmeDetails/eighteenMonthFinalGrade",
+                "ST9 is not part of this programme's grade progression."),
+            new BodyValidationError("#/programmeDetails/skippedGrade",
+                "ST8 is not part of this programme's grade progression."))));
+
+    verify(calculationRepository, never()).insert(any(CctCalculation.class));
+  }
+
+  @Test
+  void shouldNotUpdateExistingCalculationWhenSpecialtyNotListed() {
+    UUID id = UUID.randomUUID();
+    CctCalculation existingCalc = CctCalculation.builder()
         .id(id)
-        .created(created)
-        .name("Test Calculation")
-        .programmeMembership(CctProgrammeMembershipDto.builder()
-            .id(pmId)
-            .name("Test Programme")
-            .startDate(LocalDate.EPOCH)
-            .endDate(LocalDate.EPOCH.plusYears(1))
-            .wte(1.0)
-            .designatedBodyCode("testDbc")
-            .build())
-        .changes(List.of(
-            CctChangeDto.builder().id(changeId1).type(LTFT).startDate(LocalDate.EPOCH.plusMonths(6))
-                .wte(0.5).build(),
-            CctChangeDto.builder().type(LTFT).startDate(LocalDate.EPOCH.plusMonths(13)).wte(0.75)
-                .build()
-        ))
+        .traineeId(TRAINEE_ID)
         .build();
+    when(calculationRepository.findById(id)).thenReturn(Optional.of(existingCalc));
+
+    CctCalculationSaveRequestDto dto = request(programme().specialty("Not listed"));
+
+    MethodArgumentNotValidException exception = assertThrows(MethodArgumentNotValidException.class,
+        () -> service.updateCalculation(id, dto));
+
+    List<FieldError> fieldErrors = exception.getFieldErrors();
+    assertThat("Unexpected error count.", fieldErrors, hasSize(1));
+    assertThat("Unexpected error field.", fieldErrors.get(0).getField(),
+        is("programmeDetails.specialty"));
+
+    verify(calculationRepository, never()).save(any());
+  }
+
+  @Test
+  void shouldUpdateExistingCalculationKeepingCreatedWhenOwnedByUser()
+      throws MethodArgumentNotValidException {
+    UUID id = UUID.randomUUID();
+    Instant created = Instant.now().minus(Duration.ofDays(1));
 
     CctCalculation existingCalc = CctCalculation.builder()
         .id(id)
         .traineeId(TRAINEE_ID)
-        .programmeMembership(CctProgrammeMembership.builder()
-            .startDate(LocalDate.EPOCH)
-            .endDate(LocalDate.EPOCH.plusYears(1))
-            .wte(1.0)
-            .designatedBodyCode("testDbc")
-            .build())
-        .changes(List.of(
-            CctChange.builder().id(changeId1).type(LTFT).startDate(LocalDate.MIN).wte(0.5).build()))
+        .name("Test Calculation")
+        .created(created)
+        .lastModified(created)
         .build();
-    when(calculationRepository.findById(any())).thenReturn(Optional.of(existingCalc));
+    when(calculationRepository.findById(id)).thenReturn(Optional.of(existingCalc));
 
-    Instant modified = created.plusSeconds(1);
-    when(calculationRepository.save(any(CctCalculation.class))).thenAnswer(inv -> {
-      CctCalculation entity = inv.getArgument(0);
-      CctProgrammeMembership pm = entity.programmeMembership();
-      CctChange change1 = entity.changes().get(0);
-      CctChange change2 = entity.changes().get(1);
+    Instant modified = Instant.now();
+    when(calculationRepository.save(any(CctCalculation.class))).thenAnswer(
+        inv -> inv.<CctCalculation>getArgument(0).withLastModified(modified));
 
-      return CctCalculation.builder()
-          .id(id)
-          .created(created)
-          .lastModified(modified)
-          .traineeId(entity.traineeId())
-          .name(entity.name())
-          .programmeMembership(CctProgrammeMembership.builder()
-              .id(pm.id())
-              .name(pm.name())
-              .startDate(pm.startDate())
-              .endDate(pm.endDate())
-              .wte(pm.wte())
-              .designatedBodyCode(pm.designatedBodyCode())
-              .managingDeanery("Test Deanery")
-              .build())
-          .changes(List.of(
-              CctChange.builder()
-                  .id(changeId1)
-                  .type(change1.type())
-                  .startDate(change1.startDate())
-                  .wte(change1.wte())
-                  .build(),
-              CctChange.builder()
-                  .id(changeId2)
-                  .type(change2.type())
-                  .startDate(change2.startDate())
-                  .wte(change2.wte()).build()
-          ))
-          .build();
-    });
+    CctCalculationSaveRequestDto dto = CctCalculationSaveRequestDto.builder()
+        .id(id)
+        .name("Test Calculation updated")
+        .programmeDetails(programmeDetails())
+        .changes(List.of(datedLtft()))
+        .build();
 
     Optional<CctCalculationDetailDto> updatedDtoOptional = service.updateCalculation(id, dto);
     assertThat("Unexpected saved calculation.", updatedDtoOptional.isPresent(), is(true));
 
+    ArgumentCaptor<CctCalculation> entityCaptor = ArgumentCaptor.captor();
+    verify(calculationRepository).save(entityCaptor.capture());
+
+    CctCalculation entity = entityCaptor.getValue();
+    assertThat("Unexpected entity ID.", entity.id(), is(id));
+    assertThat("Unexpected trainee ID.", entity.traineeId(), is(TRAINEE_ID));
+    assertThat("Unexpected created timestamp.", entity.created(), is(created));
+
     CctCalculationDetailDto updatedDto = updatedDtoOptional.get();
     assertThat("Unexpected calculation ID.", updatedDto.id(), is(id));
+    assertThat("Unexpected calculation name.", updatedDto.name(),
+        is("Test Calculation updated"));
     assertThat("Unexpected calculation created.", updatedDto.created(), is(created));
     assertThat("Unexpected calculation last modified.", updatedDto.lastModified(),
         is(modified));
-    assertThat("Unexpected calculation name.", updatedDto.name(), is("Test Calculation"));
-    assertThat("Unexpected CCT date.", updatedDto.cctDate(),
-        is(service.calculateCctDate(updatedDto)));
 
-    CctProgrammeMembershipDto pm = updatedDto.programmeMembership();
-    assertThat("Unexpected PM ID.", pm.id(), is(pmId));
-    assertThat("Unexpected PM name.", pm.name(), is("Test Programme"));
-    assertThat("Unexpected PM start date.", pm.startDate(), is(LocalDate.EPOCH));
-    assertThat("Unexpected PM end date.", pm.endDate(), is(LocalDate.EPOCH.plusYears(1)));
-    assertThat("Unexpected PM WTE.", pm.wte(), is(1.0));
-    assertThat("Unexpected PM DBC.", pm.designatedBodyCode(), is("testDbc"));
-    assertThat("Unexpected PM deanery.", pm.managingDeanery(), is("Test Deanery"));
-
-    List<CctChangeDto> changes = updatedDto.changes();
-    assertThat("Unexpected change count.", changes.size(), is(2));
-
-    CctChangeDto change1 = changes.get(0);
-    assertThat("Unexpected change ID.", change1.id(), is(changeId1));
-    assertThat("Unexpected change type.", change1.type(), is(LTFT));
-    assertThat("Unexpected change type.", change1.startDate(),
-        is(LocalDate.EPOCH.plusMonths(6)));
-    assertThat("Unexpected change type.", change1.wte(), is(0.5));
-
-    CctChangeDto change2 = changes.get(1);
-    assertThat("Unexpected change ID.", change2.id(), is(changeId2));
-    assertThat("Unexpected change type.", change2.type(), is(LTFT));
-    assertThat("Unexpected change type.", change2.startDate(),
-        is(LocalDate.EPOCH.plusMonths(13)));
-    assertThat("Unexpected change type.", change2.wte(), is(0.75));
+    CctCalculateResponseDto calculation = calculator.calculate(dto.programmeDetails(),
+        dto.changes());
+    assertThat("Unexpected changes.", updatedDto.changes(), is(calculation.changes()));
+    assertThat("Unexpected result.", updatedDto.result(), is(calculation.result()));
   }
 
   @Test
   void shouldNotUpdateExistingCalculationIfNotExists() throws MethodArgumentNotValidException {
-    UUID pmId = UUID.randomUUID();
     UUID id = UUID.randomUUID();
-    Instant created = Instant.now();
-
-    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
-        .id(id)
-        .created(created)
-        .name("Test Calculation")
-        .programmeMembership(CctProgrammeMembershipDto.builder()
-            .id(pmId)
-            .name("Test Programme")
-            .startDate(LocalDate.EPOCH)
-            .endDate(LocalDate.EPOCH.plusYears(1))
-            .wte(1.0)
-            .designatedBodyCode("testDbc")
-            .build())
-        .changes(List.of(
-            CctChangeDto.builder().type(LTFT).startDate(LocalDate.EPOCH.plusMonths(6))
-                .wte(0.5).build(),
-            CctChangeDto.builder().type(LTFT).startDate(LocalDate.EPOCH.plusMonths(13))
-                .wte(0.75).build()
-        ))
-        .build();
+    CctCalculationSaveRequestDto dto = request(List.of(datedLtft()));
 
     when(calculationRepository.findById(any())).thenReturn(Optional.empty());
 
@@ -556,253 +627,40 @@ class CctServiceTest {
   }
 
   @Test
-  void shouldNotUpdateExistingCalculationIfChangeIdsInvalid() {
-    UUID pmId = UUID.randomUUID();
+  void shouldThrowExceptionUpdatingCalculationWhenNotBelongsToUser() {
     UUID id = UUID.randomUUID();
-    UUID changeId1 = UUID.randomUUID();
-    UUID changeId2 = UUID.randomUUID();
-    UUID changeId3 = UUID.randomUUID();
-
-    CctCalculationDetailDto dto = CctCalculationDetailDto.builder()
+    CctCalculation existingCalc = CctCalculation.builder()
         .id(id)
-        .name("Test Calculation")
-        .programmeMembership(CctProgrammeMembershipDto.builder()
-            .id(pmId)
-            .name("Test Programme")
-            .startDate(LocalDate.EPOCH)
-            .endDate(LocalDate.EPOCH.plusYears(1))
-            .wte(1.0)
-            .designatedBodyCode("testDbc")
-            .build())
-        .changes(List.of(
-            CctChangeDto.builder().id(changeId1).type(LTFT)
-                .startDate(LocalDate.EPOCH.plusMonths(1)).wte(0.5)
-                .build(),
-            CctChangeDto.builder().id(changeId2).type(LTFT)
-                .startDate(LocalDate.EPOCH.plusMonths(2)).wte(1.0)
-                .build(),
-            CctChangeDto.builder().id(changeId3).type(LTFT)
-                .startDate(LocalDate.EPOCH.plusMonths(3)).wte(0.8)
-                .build(),
-            CctChangeDto.builder().id(changeId3).type(LTFT)
-                .startDate(LocalDate.EPOCH.plusMonths(4)).wte(1.0)
-                .build(),
-            CctChangeDto.builder().type(LTFT)
-                .startDate(LocalDate.EPOCH.plusMonths(5)).wte(0.5)
-                .build()
-        ))
+        .traineeId(UUID.randomUUID().toString())
         .build();
+    when(calculationRepository.findById(id)).thenReturn(Optional.of(existingCalc));
 
+    CctCalculationSaveRequestDto dto = request(List.of(datedLtft()));
+
+    assertThrows(NotRecordOwnerException.class, () -> service.updateCalculation(id, dto));
+    verify(calculationRepository, never()).save(any());
+  }
+
+  @Test
+  void shouldNotUpdateExistingCalculationWhenChangeDatesInvalid() {
+    UUID id = UUID.randomUUID();
     CctCalculation existingCalc = CctCalculation.builder()
         .id(id)
         .traineeId(TRAINEE_ID)
-        .programmeMembership(CctProgrammeMembership.builder()
-            .startDate(LocalDate.EPOCH)
-            .endDate(LocalDate.EPOCH.plusYears(1))
-            .wte(1.0)
-            .designatedBodyCode("testDbc")
-            .build())
-        .changes(List.of(
-            CctChange.builder().id(changeId1).type(LTFT).startDate(LocalDate.MIN).wte(0.5).build()))
         .build();
-    when(calculationRepository.findById(any())).thenReturn(Optional.of(existingCalc));
+    when(calculationRepository.findById(id)).thenReturn(Optional.of(existingCalc));
+
+    CctCalculationSaveRequestDto dto = request(List.of(overrunningLtft()));
 
     MethodArgumentNotValidException exception = assertThrows(MethodArgumentNotValidException.class,
         () -> service.updateCalculation(id, dto));
 
     List<FieldError> fieldErrors = exception.getFieldErrors();
-    assertThat("Unexpected error count.", fieldErrors, hasSize(4));
-
-    FieldError fieldError = fieldErrors.get(0);
-    assertThat("Unexpected error field.", fieldError.getField(), is("changes[1].id"));
-    assertThat("Unexpected error message.", fieldError.getDefaultMessage(),
-        is("must be null or match existing value"));
-
-    fieldError = fieldErrors.get(1);
-    assertThat("Unexpected error field.", fieldError.getField(), is("changes[2].id"));
-    assertThat("Unexpected error message.", fieldError.getDefaultMessage(),
-        is("must be null or match existing value"));
-
-    fieldError = fieldErrors.get(2);
-    assertThat("Unexpected error field.", fieldError.getField(), is("changes[3].id"));
-    assertThat("Unexpected error message.", fieldError.getDefaultMessage(),
-        is("must be null or match existing value"));
-
-    fieldError = fieldErrors.get(3);
-    assertThat("Unexpected error field.", fieldError.getField(), is("changes[3].id"));
-    assertThat("Unexpected error message.", fieldError.getDefaultMessage(), is("must be unique"));
+    assertThat("Unexpected error count.", fieldErrors, hasSize(1));
+    assertThat("Unexpected error field.", fieldErrors.get(0).getField(),
+        is("changes[0].endDate"));
 
     verify(calculationRepository, never()).save(any());
-  }
-
-  @Test
-  void shouldReturnNullCctDateIfNullEntity() {
-    assertThat("Unexpected CCT date.", service.calculateCctDate((CctCalculation) null),
-        is(nullValue()));
-  }
-
-  @Test
-  void shouldReturnNullCctDateIfInvalidChangeStartDate() {
-    LocalDate pmEndDate = LocalDate.EPOCH.plusMonths(12);
-    CctCalculation entity = CctCalculation.builder()
-        .traineeId(TRAINEE_ID)
-        .programmeMembership(CctProgrammeMembership.builder()
-            .startDate(LocalDate.EPOCH)
-            .endDate(pmEndDate)
-            .wte(1.0)
-            .designatedBodyCode("testDbc")
-            .build())
-        .changes(List.of(
-            CctChange.builder().type(LTFT).startDate(pmEndDate.plusDays(1))
-                .wte(0.5).build()))
-        .build();
-    assertThat("Unexpected CCT date.", service.calculateCctDate(entity),
-        is(nullValue()));
-  }
-
-  @Test
-  void shouldIgnoreChangeStartDateBeforePmStartDateForCctDate() {
-    LocalDate pmStartDate = LocalDate.EPOCH;
-    CctCalculation entityEarlyChangeStartDate = CctCalculation.builder()
-        .traineeId(TRAINEE_ID)
-        .programmeMembership(CctProgrammeMembership.builder()
-            .startDate(pmStartDate)
-            .endDate(LocalDate.EPOCH.plusYears(1))
-            .wte(1.0)
-            .designatedBodyCode("testDbc")
-            .build())
-        .changes(List.of(
-            CctChange.builder().type(LTFT).startDate(LocalDate.MIN)
-                .wte(0.5).build()))
-        .build();
-
-    CctCalculation entityNormalStartDate = CctCalculation.builder()
-        .traineeId(TRAINEE_ID)
-        .programmeMembership(CctProgrammeMembership.builder()
-            .startDate(pmStartDate)
-            .endDate(LocalDate.EPOCH.plusYears(1))
-            .wte(1.0)
-            .designatedBodyCode("testDbc")
-            .build())
-        .changes(List.of(
-            CctChange.builder().type(LTFT).startDate(pmStartDate)
-                .wte(0.5).build()))
-        .build();
-    assertThat("Unexpected CCT date.", service.calculateCctDate(entityEarlyChangeStartDate),
-        is(service.calculateCctDate(entityNormalStartDate)));
-  }
-
-  @Test
-  void shouldOrderChangesByStartDateForCctDate() {
-    LocalDate pmStartDate = LocalDate.EPOCH;
-    CctCalculation entity = CctCalculation.builder()
-        .traineeId(TRAINEE_ID)
-        .programmeMembership(CctProgrammeMembership.builder()
-            .startDate(pmStartDate)
-            .endDate(LocalDate.EPOCH.plusYears(1))
-            .wte(1.0)
-            .designatedBodyCode("testDbc")
-            .build())
-        .changes(List.of(
-            CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(3))
-                .wte(0.5).build(),
-            CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(9))
-                .wte(1.0).build(),
-            CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(6))
-                .wte(0.75).build()))
-        .build();
-
-    CctCalculation entityChangesReordered = CctCalculation.builder()
-        .traineeId(TRAINEE_ID)
-        .programmeMembership(CctProgrammeMembership.builder()
-            .startDate(pmStartDate)
-            .endDate(LocalDate.EPOCH.plusYears(1))
-            .wte(1.0)
-            .designatedBodyCode("testDbc")
-            .build())
-        .changes(List.of(
-            CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(9))
-                .wte(1.0).build(),
-            CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(3))
-                .wte(0.5).build(),
-            CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(6))
-                .wte(0.75).build()))
-        .build();
-
-    assertThat("Unexpected CCT date.", service.calculateCctDate(entity),
-        is(service.calculateCctDate(entityChangesReordered)));
-  }
-
-  @Test
-  void shouldReturnNullCctDateIfAnyChangeHasTooSmallWte() {
-    LocalDate pmStartDate = LocalDate.EPOCH;
-    CctCalculation entity = CctCalculation.builder()
-        .traineeId(TRAINEE_ID)
-        .programmeMembership(CctProgrammeMembership.builder()
-            .startDate(pmStartDate)
-            .endDate(LocalDate.EPOCH.plusYears(1))
-            .wte(1.0)
-            .designatedBodyCode("testDbc")
-            .build())
-        .changes(List.of(
-            CctChange.builder().type(LTFT).startDate(pmStartDate.plusMonths(3))
-                .wte(WTE_EPSILON - 0.001).build()))
-        .build();
-
-    assertThat("Unexpected CCT date.", service.calculateCctDate(entity),
-        is(nullValue()));
-  }
-
-  @ParameterizedTest
-  @ValueSource(doubles = {0.8, 0.7, 0.6, 0.5, 0.25})
-  void shouldCalculateCctDate(double changeWte) {
-    LocalDate pmStartDate = LocalDate.of(2024, 9, 25);
-    CctCalculation entity = CctCalculation.builder()
-        .traineeId(TRAINEE_ID)
-        .programmeMembership(CctProgrammeMembership.builder()
-            .startDate(pmStartDate)
-            .endDate(LocalDate.of(2028, 1, 1))
-            .wte(1.0)
-            .designatedBodyCode("testDbc")
-            .build())
-        .changes(List.of(
-            CctChange.builder().type(LTFT).startDate(pmStartDate)
-                .wte(changeWte).build()))
-        .build();
-
-    //examples from front-end tests
-    LocalDate expectedCctDate = switch ((int) (changeWte * 100)) {
-      case 80 -> LocalDate.of(2028, 10, 26);
-      case 70 -> LocalDate.of(2029, 5, 27);
-      case 60 -> LocalDate.of(2030, 3, 7);
-      case 50 -> LocalDate.of(2031, 4, 8);
-      case 25 -> LocalDate.of(2037, 10, 19);
-      default -> LocalDate.MIN;
-    };
-    assertThat("Unexpected CCT date.", service.calculateCctDate(entity),
-        is(expectedCctDate));
-  }
-
-  @Test
-  void shouldCalcCctDate2() {
-    //don't ask why these are the way they are, ask the FE :>
-    LocalDate pmStartDate = LocalDate.of(2024, 12, 3).plusWeeks(16);
-    LocalDate pmEndDate = LocalDate.of(2024, 12, 3).plusDays(1701);
-    CctCalculation entity = CctCalculation.builder()
-        .traineeId(TRAINEE_ID)
-        .programmeMembership(CctProgrammeMembership.builder()
-            .startDate(pmStartDate)
-            .endDate(pmEndDate)
-            .wte(1.0)
-            .designatedBodyCode("testDbc")
-            .build())
-        .changes(List.of(
-            CctChange.builder().type(LTFT).startDate(pmStartDate)
-                .wte(0.5).build()))
-        .build();
-
-    assertThat("Unexpected CCT date.", service.calculateCctDate(entity),
-        is(LocalDate.of(2033, 12, 6)));
   }
 
   @Test
@@ -824,15 +682,6 @@ class CctServiceTest {
 
     CctCalculation entity = CctCalculation.builder()
         .id(id)
-        .programmeMembership(CctProgrammeMembership.builder()
-            .startDate(LocalDate.EPOCH)
-            .endDate(LocalDate.EPOCH.plusYears(1))
-            .wte(1.0)
-            .designatedBodyCode("testDbc")
-            .build())
-        .changes(List.of(
-            CctChange.builder().type(LTFT).startDate(LocalDate.MIN)
-                .wte(0.5).build()))
         .traineeId(TRAINEE_ID)
         .build();
     when(calculationRepository.findById(any())).thenReturn(Optional.of(entity));
@@ -843,6 +692,90 @@ class CctServiceTest {
     verify(calculationRepository).findById(id);
     verify(calculationRepository).deleteById(id);
     verifyNoMoreInteractions(calculationRepository);
+  }
+
+  @Test
+  void shouldCalculateWithoutErrorsWhenChangeDatesValid() {
+    CctCalculateRequestDto request = new CctCalculateRequestDto(programmeDetails(),
+        List.of(datedLtft()));
+
+    CctCalculateResponseDto response = service.calculate(request);
+
+    CctCalculateResponseDto calculation = calculator.calculate(request.programmeDetails(),
+        request.changes());
+    assertThat("Unexpected changes.", response.changes(), is(calculation.changes()));
+    assertThat("Unexpected result.", response.result(), is(calculation.result()));
+    assertThat("Unexpected errors.", response.errors(), is(empty()));
+
+    verifyNoInteractions(calculationRepository);
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"Paediatrics", "Not listed"})
+  void shouldCalculateWithoutCheckingSpecialty(String specialty) {
+    CctCalculateRequestDto request = new CctCalculateRequestDto(
+        programme().specialty(specialty).lengthMonths(85).startGrade(ST2).build(), List.of());
+
+    CctCalculateResponseDto response = service.calculate(request);
+
+    assertThat("Unexpected errors.", response.errors(), is(empty()));
+
+    verifyNoInteractions(specialtyService);
+  }
+
+  @Test
+  void shouldCalculateWithErrorsWhenGradeNotInProgression() {
+    CctCalculateRequestDto request = new CctCalculateRequestDto(
+        programme().additionalTrainingTime(trainingTime(ST8, 2)).build(), List.of());
+
+    CctCalculateResponseDto response = service.calculate(request);
+
+    assertThat("Unexpected CCT date.", response.result().cctDate(),
+        is(LocalDate.of(2030, 9, 28)));
+    assertThat("Unexpected errors.", response.errors(), is(List.of(
+        new BodyValidationError("#/programmeDetails/additionalTrainingTime/0/grade",
+            "ST8 is not part of this programme's grade progression."))));
+  }
+
+  @Test
+  void shouldCalculateWithErrorsWhenChangeStartsBeforeProgramme() {
+    CctCalculateRequestDto request = new CctCalculateRequestDto(programmeDetails(),
+        List.of(CctChangeDto.builder()
+            .type(LTFT)
+            .startDate(LocalDate.of(2023, 8, 1))
+            .endDate(LocalDate.of(2024, 7, 31))
+            .wte(0.5)
+            .countsTowardsCompletion(true)
+            .build()));
+
+    CctCalculateResponseDto response = service.calculate(request);
+
+    assertThat("Unexpected errors.", response.errors(), is(List.of(
+        new BodyValidationError("#/changes/0/startDate",
+            "Start date cannot be before programme start (02/08/2023)."))));
+  }
+
+  @Test
+  void shouldCalculateWithErrorsWhenChangeStartsOrEndsAfterCctDate() {
+    CctCalculateRequestDto request = new CctCalculateRequestDto(programmeDetails(), List.of(
+        overrunningLtft(),
+        CctChangeDto.builder()
+            .type(LTFT)
+            .startDate(LocalDate.of(2033, 1, 1))
+            .wte(0.5)
+            .countsTowardsCompletion(true)
+            .build()));
+
+    CctCalculateResponseDto response = service.calculate(request);
+
+    assertThat("Unexpected CCT date.", response.result().cctDate(),
+        is(LocalDate.of(2031, 2, 26)));
+
+    String cctDateLimit = "cannot be after the current projected Completion of Training Date "
+        + "(26/02/2031).";
+    assertThat("Unexpected errors.", response.errors(), is(List.of(
+        new BodyValidationError("#/changes/0/endDate", "End date " + cctDateLimit),
+        new BodyValidationError("#/changes/1/startDate", "Start date " + cctDateLimit))));
   }
 
   @Test
@@ -884,5 +817,60 @@ class CctServiceTest {
     service.moveCalculations(fromTraineeId, toTraineeId);
 
     verify(calculationRepository, never()).save(any());
+  }
+
+  private static CctCalculationSaveRequestDto request(List<CctChangeDto> changes) {
+    return CctCalculationSaveRequestDto.builder()
+        .name("Test Calculation")
+        .programmeDetails(programmeDetails())
+        .changes(changes)
+        .build();
+  }
+
+  private static CctCalculationSaveRequestDto request(CctProgrammeDetailsDtoBuilder programme) {
+    return CctCalculationSaveRequestDto.builder()
+        .name("Test Calculation")
+        .programmeDetails(programme.build())
+        .changes(List.of())
+        .build();
+  }
+
+  private static CctProgrammeDetailsDto programmeDetails() {
+    return programme().build();
+  }
+
+  private static CctProgrammeDetailsDtoBuilder programme() {
+    return CctProgrammeDetailsDto.builder()
+        .specialty("Paediatrics")
+        .startDate(LocalDate.of(2023, 8, 2))
+        .lengthMonths(84)
+        .startGrade(ST1)
+        .additionalTrainingTime(List.of())
+        .acceleratedTrainingTime(List.of());
+  }
+
+  private static List<CctTrainingTimeDto> trainingTime(CctTrainingGrade grade, int months) {
+    return List.of(CctTrainingTimeDto.builder().grade(grade).months(months).notes("why").build());
+  }
+
+  private static CctChangeDto datedLtft() {
+    return CctChangeDto.builder()
+        .type(LTFT)
+        .startDate(LocalDate.of(2024, 2, 1))
+        .endDate(LocalDate.of(2024, 8, 1))
+        .wte(0.6)
+        .countsTowardsCompletion(true)
+        .notes("Cardiology rotation")
+        .build();
+  }
+
+  private static CctChangeDto overrunningLtft() {
+    return CctChangeDto.builder()
+        .type(LTFT)
+        .startDate(LocalDate.of(2030, 1, 1))
+        .endDate(LocalDate.of(2032, 12, 31))
+        .wte(0.5)
+        .countsTowardsCompletion(true)
+        .build();
   }
 }
