@@ -137,6 +137,11 @@ class CctSpecialtyServiceTest {
 
       assertThat("Unexpected 18-month final year for " + specialty.name() + ".",
           specialty.eighteenMonthFinalYear(), is(endsHalfYearPastHighestGrade));
+
+      if (!specialty.eighteenMonthFinalYear()) {
+        assertThat("Unexpected year past the highest grade for " + specialty.name() + ".",
+            years.stream().anyMatch(Year::exceedsKnownTrainingGrade), is(false));
+      }
     }
   }
 }
