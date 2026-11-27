@@ -216,8 +216,8 @@ returns them in `errors` alongside the result.
 - The 18-month grade must end the progression and run for 18 months, so it
   must be the last full year of a programme that ends in a half year (ST7 of a
   90-month programme from ST1).
-- The accelerated time on a grade must be less than that grade's months (12,
-  18, or fewer for a short final year) plus its additional time.
+- The accelerated time on a grade must be less than the months of that grade's
+  last year (12, 18, or fewer for a short final year) plus its additional time.
 
 ## Implementation outline
 

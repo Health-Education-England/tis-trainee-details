@@ -156,14 +156,15 @@ class CctGradeProgressionValidatorTest {
   }
 
   @ParameterizedTest
-  @CsvSource({"84, ST2, 12", "90, ST8, 6"})
-  void shouldHaveErrorWhenAcceleratedTimeFillsGrade(int lengthMonths, CctTrainingGrade grade,
-      int gradeMonths) {
+  @CsvSource({"84, ST1, ST2, 12", "90, ST1, ST8, 6", "24, DFT, DFT, 12", "30, DFT, DFT, 6"})
+  void shouldHaveErrorWhenAcceleratedTimeFillsGrade(int lengthMonths, CctTrainingGrade startGrade,
+      CctTrainingGrade grade, int gradeMonths) {
     List<CctTrainingTimeDto> accelerated = List.of(
         trainingTime(grade, gradeMonths - 1).get(0),
         trainingTime(grade, 1).get(0));
     CctProgrammeDetailsDto details = programme()
         .lengthMonths(lengthMonths)
+        .startGrade(startGrade)
         .acceleratedTrainingTime(accelerated)
         .build();
 

@@ -21,8 +21,7 @@
 
 package uk.nhs.hee.trainee.details.service;
 
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.summingInt;
+import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static uk.nhs.hee.trainee.details.dto.CctProgrammeDetailsDto.CctTrainingTimeDto.monthsIn;
 
@@ -59,7 +58,7 @@ public class CctGradeProgressionValidator {
   /**
    * Validate the programme details against the grade progression: each grade they name must be in
    * it, the skipped grade cannot be the start grade, and the accelerated training time in a grade
-   * must be less than the grade's length plus its additional training time.
+   * must be less than the length of the grade's last year plus its additional training time.
    *
    * @param details The programme details.
    * @return The errors, empty when the programme details are valid.
@@ -93,7 +92,7 @@ public class CctGradeProgressionValidator {
 
     Map<CctTrainingGrade, Integer> gradeMonths = years.stream()
         .filter(year -> year.grade() != null)
-        .collect(groupingBy(Year::grade, summingInt(Year::gradeMonths)));
+        .collect(toMap(Year::grade, Year::gradeMonths, (first, last) -> last));
     List<CctTrainingTimeDto> accelerated = details.acceleratedTrainingTime();
     Set<CctTrainingGrade> checked = new HashSet<>();
     for (int index = 0; index < accelerated.size(); index++) {
